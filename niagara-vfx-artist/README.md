@@ -483,6 +483,51 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“流体生产管线指南”。
 
+### `references/non-fluid-effects-playbook.md`
+
+这是 **非流体特效方案库文档**。
+
+主要内容：
+- 命中特效
+- 刀光 / Slash
+- 投射物
+- 光束 / Beam
+- 护盾
+- 法阵
+- Portal
+- Buff / Aura
+- Sparks / Debris
+- 可读性与审美原则
+
+什么时候改它：
+- 你想加强这套 skill 对常规游戏特效的理解
+- 你想让 AI 不只会做流体，也会做大量常见非流体效果
+- 你想沉淀审美与结构的共性规律
+
+这个文件更偏“非流体特效设计库”。
+
+### `references/niagara-operations-and-workflows.md`
+
+这是 **Niagara 操作与工作流文档**。
+
+主要内容：
+- 模板还是空白开始
+- System / Emitter 组织方式
+- 模块堆栈思维
+- User Parameters
+- Scratch Pad
+- Renderer 工作流
+- 动画挂接
+- Effect Type 预算
+- 实战工作习惯
+
+什么时候改它：
+- 你想让这套 skill 更懂 Unreal / Niagara 的实际操作
+- 你想让 AI 更像会落地生产的 Niagara 使用者
+- 你想沉淀团队级工作流经验
+
+这个文件更偏“Niagara 实操工作流手册”。
+
 ## 以后怎么维护最合适
 
 推荐你按下面这个原则维护：

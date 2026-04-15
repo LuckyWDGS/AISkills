@@ -105,6 +105,12 @@ Read only the files that matter for the current request:
 - [references/fluids-production-pipeline.md](references/fluids-production-pipeline.md)
   Use when the user needs an end-to-end production route for a fluid effect, including when to stay in materials, when to simulate, when to bake to flipbooks, when to move into Niagara, and when to prepare low-end variants.
 
+- [references/non-fluid-effects-playbook.md](references/non-fluid-effects-playbook.md)
+  Use when the user needs guidance for non-fluid effects such as hits, slashes, projectiles, beams, shields, sigils, portals, buffs, sparks, and related gameplay readability or art direction decisions.
+
+- [references/niagara-operations-and-workflows.md](references/niagara-operations-and-workflows.md)
+  Use when the user needs practical Niagara workflow advice, such as when to use templates, how to organize systems and emitters, how to use user parameters, scratch pad modules, renderers, animation notifies, or effect type budgeting.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
