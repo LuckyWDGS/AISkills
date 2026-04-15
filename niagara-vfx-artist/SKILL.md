@@ -90,6 +90,12 @@ Read only the files that matter for the current request:
 - [references/texture-strategy-and-ai-prompts.md](references/texture-strategy-and-ai-prompts.md)
   Use when the user needs judgment about whether a layer should use a single texture, a flipbook, or a sprite-sheet atlas, and when they need prompt text to generate those textures with an external image model.
 
+- [references/fluids-and-flowmaps.md](references/fluids-and-flowmaps.md)
+  Use when the user asks for fluid-like effects such as smoke, fire, water flow, splashes, flow maps, or Niagara Fluids, and you need to decide between material-driven flow, real fluid simulation, or baking the result to a flipbook.
+
+- [references/fluids-recipes.md](references/fluids-recipes.md)
+  Use when the user needs a concrete recipe for a fluid-style effect such as flowing water, waterfalls, splashes, smoke streams, fire streams, or lava, and you need to recommend the practical route between Flow Maps, Niagara Fluids, and baked flipbooks.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
