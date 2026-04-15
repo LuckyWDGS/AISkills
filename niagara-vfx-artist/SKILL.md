@@ -99,6 +99,9 @@ Read only the files that matter for the current request:
 - [references/fluids-parameters.md](references/fluids-parameters.md)
   Use when the user needs practical guidance on Niagara Fluids parameter tuning, including what happens visually when key simulation parameters are raised or lowered.
 
+- [references/fluids-troubleshooting.md](references/fluids-troubleshooting.md)
+  Use when the user has a fluid simulation problem such as loose smoke, flames that do not rise, blocky results, weak splashes, blurry detail, or a sim that looks good but costs too much in-game.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
