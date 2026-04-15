@@ -422,6 +422,28 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“流体实现路线库”。
 
+### `references/fluids-parameters.md`
+
+这是 **流体参数调节手册文档**。
+
+主要内容：
+- Grid Cell Size
+- Pressure Iterations
+- Density
+- Temperature
+- Buoyancy
+- Turbulence / Noise
+- Collision
+- Dissipation
+- 调大 / 调小 / 视觉变化
+
+什么时候改它：
+- 你想把 Niagara Fluids 的调参经验沉淀下来
+- 你想让 AI 更像真正会调流体的人，而不只是会说概念
+- 你想把“参数变化和视觉结果”的对应关系固定下来
+
+这个文件更偏“Niagara Fluids 调参手册”。
+
 ## 以后怎么维护最合适
 
 推荐你按下面这个原则维护：

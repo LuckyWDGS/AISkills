@@ -96,6 +96,9 @@ Read only the files that matter for the current request:
 - [references/fluids-recipes.md](references/fluids-recipes.md)
   Use when the user needs a concrete recipe for a fluid-style effect such as flowing water, waterfalls, splashes, smoke streams, fire streams, or lava, and you need to recommend the practical route between Flow Maps, Niagara Fluids, and baked flipbooks.
 
+- [references/fluids-parameters.md](references/fluids-parameters.md)
+  Use when the user needs practical guidance on Niagara Fluids parameter tuning, including what happens visually when key simulation parameters are raised or lowered.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
