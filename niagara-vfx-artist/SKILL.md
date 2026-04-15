@@ -102,6 +102,9 @@ Read only the files that matter for the current request:
 - [references/fluids-troubleshooting.md](references/fluids-troubleshooting.md)
   Use when the user has a fluid simulation problem such as loose smoke, flames that do not rise, blocky results, weak splashes, blurry detail, or a sim that looks good but costs too much in-game.
 
+- [references/fluids-production-pipeline.md](references/fluids-production-pipeline.md)
+  Use when the user needs an end-to-end production route for a fluid effect, including when to stay in materials, when to simulate, when to bake to flipbooks, when to move into Niagara, and when to prepare low-end variants.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
