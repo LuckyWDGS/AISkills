@@ -1,0 +1,7 @@
+interface:
+  display_name: "Niagara VFX Artist"
+  short_description: "UE Niagara effect design and optimization"
+  default_prompt: "Use $niagara-vfx-artist to design or analyze an Unreal Engine Niagara effect from a brief or reference image."
+
+policy:
+  allow_implicit_invocation: true
