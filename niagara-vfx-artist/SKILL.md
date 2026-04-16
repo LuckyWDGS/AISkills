@@ -111,6 +111,12 @@ Read only the files that matter for the current request:
 - [references/niagara-operations-and-workflows.md](references/niagara-operations-and-workflows.md)
   Use when the user needs practical Niagara workflow advice, such as when to use templates, how to organize systems and emitters, how to use user parameters, scratch pad modules, renderers, animation notifies, or effect type budgeting.
 
+- [references/aesthetics-and-readability-strategy.md](references/aesthetics-and-readability-strategy.md)
+  Use when the user needs stronger artistic judgment, gameplay readability, visual hierarchy, shape language, timing, or overall aesthetic refinement of an effect.
+
+- [references/self-training-and-iteration-loop.md](references/self-training-and-iteration-loop.md)
+  Use when the user wants the skill to improve its own consistency and quality by following a repeatable loop for reference analysis, self-checking, critique, and long-term iteration.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
