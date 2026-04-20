@@ -117,6 +117,9 @@ Read only the files that matter for the current request:
 - [references/self-training-and-iteration-loop.md](references/self-training-and-iteration-loop.md)
   Use when the user wants the skill to improve its own consistency and quality by following a repeatable loop for reference analysis, self-checking, critique, and long-term iteration.
 
+- [references/case-studies.md](references/case-studies.md)
+  Use when the user wants a complete, reusable implementation template for a representative effect and you need to connect reference reading, technical route selection, materials, Niagara structure, texture choices, and low-end planning into one coherent plan.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
