@@ -763,6 +763,58 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“VFX 项目启动工具”。
 
+### `references/system-integration-patterns.md`
+
+这是 **系统接入模式文档**。
+
+主要内容：
+- Niagara 和动画 / 蓝图 / GAS / Sequencer 的标准接法
+- 哪些逻辑在 Niagara
+- 哪些逻辑在蓝图 / 游戏逻辑
+- 参数驱动边界
+
+什么时候改它：
+- 你想让这套 skill 更像 Senior Tech Artist
+- 你想把系统接入方式标准化
+- 你想减少“逻辑放错层”的问题
+
+这个文件更偏“系统集成规范”。
+
+### `references/tooling-and-automation-ideas.md`
+
+这是 **工具化与自动化思路文档**。
+
+主要内容：
+- 哪些检查适合做成脚本 / Editor Utility / Python
+- 哪些流程最值得自动化
+- 资产规范如何自动验证
+- 自动化优先级
+
+什么时候改它：
+- 你想把这套 skill 往更强的工具化方向推进
+- 你想减少重复劳动和漏检查
+- 你想把团队流程进一步规模化
+
+这个文件更偏“VFX 工具化规划库”。
+
+### `references/master-material-architecture.md`
+
+这是 **主材质架构指南文档**。
+
+主要内容：
+- 主材质体系怎么搭
+- 哪些 Master Material 必须统一
+- 参数暴露边界
+- Flipbook / Flow Map / Atlas 的统一支持
+- 材质实例策略
+
+什么时候改它：
+- 你想让这套 skill 更像会搭体系的 Tech Artist
+- 你想统一项目里的主材质结构
+- 你想减少材质层的混乱和重复
+
+这个文件更偏“主材质体系设计文档”。
+
 ## 以后怎么维护最合适
 
 推荐你按下面这个原则维护：

@@ -147,6 +147,15 @@ Read only the files that matter for the current request:
 - [references/project-bootstrap-checklist.md](references/project-bootstrap-checklist.md)
   Use when the user is starting a new project and needs a concrete checklist for the first VFX production week, including which master materials, naming rules, effect types, parameter rules, and template cases should be established first.
 
+- [references/system-integration-patterns.md](references/system-integration-patterns.md)
+  Use when the user needs standard integration patterns between Niagara and animation, blueprints, GAS, or Sequencer, and when they need clarity on what logic should stay in Niagara versus the gameplay layer.
+
+- [references/tooling-and-automation-ideas.md](references/tooling-and-automation-ideas.md)
+  Use when the user wants to scale VFX production through scripts, Editor Utility tools, Python checks, or automated validation of naming, low-end variants, effect types, and asset rules.
+
+- [references/master-material-architecture.md](references/master-material-architecture.md)
+  Use when the user needs a project-wide VFX master material architecture, including which masters should be standardized, how parameters should be exposed, and how flipbooks, flow maps, atlases, and instances should be organized.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
