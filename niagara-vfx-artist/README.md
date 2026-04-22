@@ -745,6 +745,24 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“项目级 VFX 总纲模板”。
 
+### `references/project-bootstrap-checklist.md`
+
+这是 **项目启动清单文档**。
+
+主要内容：
+- 新项目第一周先建什么
+- 主材质先做哪些
+- 命名、Effect Type、Scalability、User Parameters 先定哪些
+- 哪些案例先做成模板资产
+- 早期最容易漏、后面代价很大的东西
+
+什么时候改它：
+- 你想让这套 skill 具备新项目启动能力
+- 你想把“项目一开始就该先做的事”固定下来
+- 你想减少后面基础设施层面的返工
+
+这个文件更偏“VFX 项目启动工具”。
+
 ## 以后怎么维护最合适
 
 推荐你按下面这个原则维护：

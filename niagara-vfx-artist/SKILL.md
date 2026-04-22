@@ -144,6 +144,9 @@ Read only the files that matter for the current request:
 - [references/vfx-direction-bible-template.md](references/vfx-direction-bible-template.md)
   Use when the user needs a project-level VFX leadership template that defines world style, faction differences, element mapping, skill tier distinctions, always-on versus burst boundaries, and the relationship between UI, environment, and gameplay effects.
 
+- [references/project-bootstrap-checklist.md](references/project-bootstrap-checklist.md)
+  Use when the user is starting a new project and needs a concrete checklist for the first VFX production week, including which master materials, naming rules, effect types, parameter rules, and template cases should be established first.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
