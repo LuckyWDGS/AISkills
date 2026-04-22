@@ -781,6 +781,25 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“实现可行性判断手册”。
 
+### `references/reference-deconstruction-patterns.md`
+
+这是 **参考图反推手册**。
+
+主要内容：
+- 看图先看什么
+- 哪些现象说明是材质主导
+- 哪些现象说明是 Niagara 主导
+- 哪些现象说明需要 Flipbook / Flow Map / Mesh / Fluids
+- 视频参考怎么拆关键帧
+- 最后怎么给实现优先级
+
+什么时候改它：
+- 你想让这套 skill 更系统地拆参考图和视频
+- 你想让 AI 不只是会讲方案，还会有稳定的反推方法
+- 你想提升“拿到参考后快速进入正确路线”的能力
+
+这个文件更偏“参考反推方法手册”。
+
 ### `references/system-integration-patterns.md`
 
 这是 **系统接入模式文档**。

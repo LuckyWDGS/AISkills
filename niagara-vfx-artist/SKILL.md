@@ -150,6 +150,9 @@ Read only the files that matter for the current request:
 - [references/feasibility-and-fidelity-guide.md](references/feasibility-and-fidelity-guide.md)
   Use when the user provides a reference and needs a grounded judgment about how closely it can be matched in real time, which parts can be reproduced directly, which parts require approximation or baking, and when the correct answer is that a true 1:1 match is not realistic.
 
+- [references/reference-deconstruction-patterns.md](references/reference-deconstruction-patterns.md)
+  Use when the user provides a reference image or video and you need a deeper deconstruction workflow: what to inspect first, what signals material-driven versus Niagara-driven solutions, when flipbooks or flow maps are implied, how to split keyframes, and how to prioritize implementation.
+
 - [references/system-integration-patterns.md](references/system-integration-patterns.md)
   Use when the user needs standard integration patterns between Niagara and animation, blueprints, GAS, or Sequencer, and when they need clarity on what logic should stay in Niagara versus the gameplay layer.
 
