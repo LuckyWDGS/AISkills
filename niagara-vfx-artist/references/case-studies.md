@@ -172,6 +172,81 @@
 - 有提升质感
 - 但删掉这层时主效果仍成立
 
+### 第一版参数范围
+
+#### `Emitter_FlameCore`
+
+- Spawn Rate: `18 - 40`
+- Lifetime: `0.35 - 0.8`
+- Initial Size: `12 - 28`
+- Upward Velocity: `35 - 90`
+- Drag: `0.3 - 1.2`
+- Curl Noise Strength: 中低强度起步
+
+#### `Emitter_Smoke`
+
+- Spawn Rate: `4 - 12`
+- Lifetime: `1.2 - 3.0`
+- Initial Size: `12 - 30`
+- Final Size: `40 - 90`
+- Upward Velocity: `10 - 35`
+- Drag: `0.5 - 2.0`
+
+#### `Emitter_Embers`
+
+- Spawn Rate: `3 - 12`
+- Lifetime: `0.6 - 1.8`
+- Size: `1 - 4`
+- Upward Velocity: `20 - 60`
+- X/Y Random Velocity: 小范围随机
+
+#### `Emitter_FlameDetail`
+
+- Spawn Rate: `10 - 24`
+- Lifetime: `0.2 - 0.5`
+- Size: `6 - 16`
+- Upward Velocity: `45 - 120`
+
+### 推荐材质实例参数
+
+#### `MI_FX_TorchFlame_Core_Default`
+
+- `S_EmissiveIntensity`: `4 - 10`
+- `S_NoiseStrength`: `0.2 - 0.5`
+- `S_FlowSpeed`: `0.08 - 0.2`
+- `V_CoreColor`: 白黄
+- `V_OuterColor`: 黄橙
+
+#### `MI_FX_TorchSmoke_Default`
+
+- `S_Opacity`: `0.15 - 0.35`
+- `S_NoiseStrength`: `0.1 - 0.25`
+- `S_DepthFadeDistance`: `30 - 100`
+
+#### `MI_FX_TorchEmber_Default`
+
+- `S_EmissiveIntensity`: `1.5 - 5`
+- `V_CoreColor`: 橙黄偏白
+
+### Niagara 里先调哪些值
+
+先调顺序：
+1. `Emitter_FlameCore` 的 Spawn Rate / Lifetime / Upward Velocity
+2. 再调 FlameCore 材质里的 `S_EmissiveIntensity` 和 `S_NoiseStrength`
+3. 再调 Smoke 的 Spawn Rate / Lifetime
+4. 最后才调 Embers 和 FlameDetail
+
+原因：
+- 真实火把成立与否，先看主火焰和轻烟
+- 余烬和细节层都只是补充
+
+### 最容易做错的步骤
+
+- 一开始就把 Smoke 做太重，结果像爆炸烟
+- 先调 Embers，导致误以为火焰已经成立
+- FlameCore 不先成立，就急着堆 FlameDetail
+- 烟雾直接循环同一个 plume flipbook，结果像“一次性烟团重播”
+
 ### 低配版
 
 - FlameDetail 可删
@@ -295,6 +370,62 @@ Renderer：
 验收：
 - 被打时有明显提升
 - 常驻状态和受击状态区分清楚
+
+### 第一版参数范围
+
+#### `Emitter_ShieldShell`
+
+- Spawn Rate: `1`
+- Lifetime: 持续
+- Mesh Scale: `0.9x - 1.2x` 角色包围体
+
+#### `Emitter_ShieldEnergy`
+
+- Spawn Rate: `10 - 80`
+- Lifetime: `0.4 - 1.5`
+- Size: `2 - 12`
+- Velocity: 轻度表面漂移
+
+#### `Emitter_ShieldHit`
+
+- Burst Count: `8 - 40`
+- Lifetime: `0.2 - 0.8`
+- Expansion Speed: `80 - 260`
+- Size Growth: 快速外扩
+
+### 推荐材质实例参数
+
+#### `MI_FX_ShieldShell_Default`
+
+- `S_FresnelExponent`: `2.5 - 6`
+- `S_FresnelIntensity`: `2 - 6`
+- `S_NoiseStrength`: `0.1 - 0.35`
+- `S_FlowSpeed`: `0.02 - 0.1`
+- `V_ShieldColor`: 蓝 / 青 / 紫
+
+#### `MI_FX_ShieldHit_Default`
+
+- `S_HitMaskIntensity`: `0.8 - 3`
+- `S_OpacityPeak`: `0.3 - 0.8`
+- `V_HitColor`: 白蓝 / 白紫
+
+### Niagara 里先调哪些值
+
+先调顺序：
+1. 壳层材质里的 `S_FresnelIntensity` / `S_FlowSpeed`
+2. 再调 `Emitter_ShieldEnergy` 的 Spawn Rate
+3. 最后单独调 `Emitter_ShieldHit` 的 Burst Count 和扩张速度
+
+原因：
+- 护盾最重要的是常驻状态先成立
+- 受击反馈是第二阶段问题
+
+### 最容易做错的步骤
+
+- 壳层太亮，常驻就像开大招
+- 表面点缀粒子太多，结果很杂
+- 受击层太弱，常驻和命中状态几乎没有区别
+- Mesh 壳层先天比例不对，却一直在材质上硬调
 
 ### 低配版
 
@@ -499,6 +630,62 @@ Renderer：
 验收：
 - 看起来被“激活”
 - 不是单纯贴图
+
+### 第一版参数范围
+
+#### `Emitter_SigilMain`
+
+- Spawn Rate: `1`
+- Lifetime: 持续
+- Opacity: `0.25 - 0.75`
+
+#### `Emitter_SigilOuterRing`
+
+- Spawn Rate: `1`
+- Lifetime: 持续
+- Rotation Speed: `4 - 20 deg/s`
+- Emissive Intensity: `1.5 - 6`
+
+#### `Emitter_SigilUpward`
+
+- Spawn Rate: `8 - 60`
+- Lifetime: `0.4 - 1.8`
+- Upward Velocity: `20 - 120`
+- Size: `2 - 10`
+
+### 推荐材质实例参数
+
+#### `MI_FX_Sigil_Main_Default`
+
+- `S_EmissiveIntensity`: `1.5 - 5`
+- `S_PulseSpeed`: `0.2 - 1.0`
+- `S_Opacity`: `0.25 - 0.75`
+- `V_CoreColor`: 蓝 / 紫 / 金白，按风格选
+
+#### `MI_FX_Sigil_OuterRing_Default`
+
+- `S_EmissiveIntensity`: `1.5 - 6`
+- `S_RotationSpeed`: `4 - 20`
+- `V_OuterRingColor`: 主色略浅一档
+
+### Niagara 里先调哪些值
+
+先调顺序：
+1. 主图案材质的 `S_EmissiveIntensity` / `S_Opacity`
+2. 再调外环速度
+3. 最后调上升粒子的 Spawn Rate 和上升速度
+
+原因：
+- 法阵首先要像“法阵”
+- 然后才是“激活感”
+- 最后才是空间层
+
+### 最容易做错的步骤
+
+- 一开始就加太多上升粒子，结果图案本体不清楚
+- 主图案和外环亮度一样，主次丢失
+- 图案密度过高，远看成一团
+- 外环速度和主层完全同步，像一张旋转贴图
 
 ### 低配版
 
