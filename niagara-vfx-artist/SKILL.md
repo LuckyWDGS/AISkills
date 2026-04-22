@@ -138,6 +138,9 @@ Read only the files that matter for the current request:
 - [references/engine-integration-checklist.md](references/engine-integration-checklist.md)
   Use when the user needs guidance for integrating a finished VFX asset into Unreal gameplay systems, including animation notifies, blueprint-driven parameters, user parameter exposure, effect types, scalability, and platform switching.
 
+- [references/style-consistency-guide.md](references/style-consistency-guide.md)
+  Use when the user needs project-wide VFX direction, including how multiple effects should share one visual language, how skills should differ without feeling disconnected, and how to define consistency across factions, elements, and gameplay functions.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
