@@ -126,6 +126,9 @@ Read only the files that matter for the current request:
 - [references/asset-planning-checklist.md](references/asset-planning-checklist.md)
   Use when the user is moving from design into production and needs a concrete checklist of required assets, material instances, textures, systems, emitters, naming, and low-end planning.
 
+- [references/validation-and-qa.md](references/validation-and-qa.md)
+  Use when the user needs a final acceptance checklist for a VFX implementation, including distance checks, background checks, same-screen stress, animation hookup, platform readiness, low-end validation, and delivery criteria.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
