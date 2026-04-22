@@ -147,6 +147,9 @@ Read only the files that matter for the current request:
 - [references/project-bootstrap-checklist.md](references/project-bootstrap-checklist.md)
   Use when the user is starting a new project and needs a concrete checklist for the first VFX production week, including which master materials, naming rules, effect types, parameter rules, and template cases should be established first.
 
+- [references/feasibility-and-fidelity-guide.md](references/feasibility-and-fidelity-guide.md)
+  Use when the user provides a reference and needs a grounded judgment about how closely it can be matched in real time, which parts can be reproduced directly, which parts require approximation or baking, and when the correct answer is that a true 1:1 match is not realistic.
+
 - [references/system-integration-patterns.md](references/system-integration-patterns.md)
   Use when the user needs standard integration patterns between Niagara and animation, blueprints, GAS, or Sequencer, and when they need clarity on what logic should stay in Niagara versus the gameplay layer.
 
