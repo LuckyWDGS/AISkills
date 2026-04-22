@@ -800,6 +800,24 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“参考反推方法手册”。
 
+### `references/implementation-confidence-template.md`
+
+这是 **实现程度输出模板文档**。
+
+主要内容：
+- 能做到 90% 的部分
+- 只能做到 70% 左右的部分
+- 不建议硬做的部分
+- 推荐替代方案
+- 推荐 production 路线
+
+什么时候改它：
+- 你想让这套 skill 在参考图判断时输出更稳定
+- 你想把“实现上限”表达标准化
+- 你想减少模糊承诺
+
+这个文件更偏“实现上限表达模板”。
+
 ### `references/system-integration-patterns.md`
 
 这是 **系统接入模式文档**。

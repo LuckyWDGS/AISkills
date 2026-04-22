@@ -153,6 +153,9 @@ Read only the files that matter for the current request:
 - [references/reference-deconstruction-patterns.md](references/reference-deconstruction-patterns.md)
   Use when the user provides a reference image or video and you need a deeper deconstruction workflow: what to inspect first, what signals material-driven versus Niagara-driven solutions, when flipbooks or flow maps are implied, how to split keyframes, and how to prioritize implementation.
 
+- [references/implementation-confidence-template.md](references/implementation-confidence-template.md)
+  Use when the user provides a reference and needs a standardized answer for how far the result can realistically be matched, which parts are high-fidelity, which parts require approximation, what should not be forced, and which production route is recommended.
+
 - [references/system-integration-patterns.md](references/system-integration-patterns.md)
   Use when the user needs standard integration patterns between Niagara and animation, blueprints, GAS, or Sequencer, and when they need clarity on what logic should stay in Niagara versus the gameplay layer.
 
