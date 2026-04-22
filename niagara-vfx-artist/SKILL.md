@@ -165,6 +165,12 @@ Read only the files that matter for the current request:
 - [references/master-material-architecture.md](references/master-material-architecture.md)
   Use when the user needs a project-wide VFX master material architecture, including which masters should be standardized, how parameters should be exposed, and how flipbooks, flow maps, atlases, and instances should be organized.
 
+- [references/texture-prompt-framework.md](references/texture-prompt-framework.md)
+  Use when the user needs a standardized way to generate prompts for VFX textures, including how to decide between single textures, flipbooks, atlases, seamless textures, and which kinds of assets are appropriate for generative image tools.
+
+- [references/model-turnaround-and-asset-gen-guide.md](references/model-turnaround-and-asset-gen-guide.md)
+  Use when the user needs guidance for generating model reference sheets or turnaround inputs for external asset models, including what should be modeled, what should stay as textures or particles, and how to structure multi-view prompts.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
