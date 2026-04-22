@@ -135,6 +135,9 @@ Read only the files that matter for the current request:
 - [references/production-workflow-map.md](references/production-workflow-map.md)
   Use when the user needs a standardized end-to-end VFX workflow that connects request intake, technical direction, asset planning, implementation, review, QA, and final delivery into one repeatable process.
 
+- [references/engine-integration-checklist.md](references/engine-integration-checklist.md)
+  Use when the user needs guidance for integrating a finished VFX asset into Unreal gameplay systems, including animation notifies, blueprint-driven parameters, user parameter exposure, effect types, scalability, and platform switching.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations

@@ -440,6 +440,66 @@ Renderer：
 - 外环高光
 - 轻度流动或脉冲
 
+### 逐步搭建手册
+
+#### 第 1 步：先确定最小资产
+
+先准备：
+- `T_FX_Sigil_Main`
+- `T_FX_Sigil_OuterRing`
+- `M_FX_Sigil_Main`
+- `M_FX_Sigil_OuterRing`
+- `NS_Sigil_Main`
+
+#### 第 2 步：先做主图案材质
+
+目标：
+- 单独一张 Plane 就能读出法阵主形
+
+做法：
+- 主图案纹理
+- Emissive
+- 轻度脉冲
+
+验收：
+- 单看主图案就成立
+
+#### 第 3 步：创建 `Emitter_SigilMain`
+
+Renderer：
+- `Mesh Renderer` 或 Plane
+
+目标：
+- 让主图案稳定存在
+
+#### 第 4 步：创建 `Emitter_SigilOuterRing`
+
+目标：
+- 增加外环节奏和仪式感
+
+做法：
+- 独立外环材质
+- 和主图案做不同旋转速度
+
+验收：
+- 外环增强层级
+- 但不压主图案
+
+#### 第 5 步：最后补 `Emitter_SigilUpward`
+
+目标：
+- 增加激活感和空间感
+
+模块：
+1. `Spawn Rate`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Scale Color`
+
+验收：
+- 看起来被“激活”
+- 不是单纯贴图
+
 ### 低配版
 
 - 保留主图案
@@ -478,6 +538,52 @@ Renderer：
 #### 辅助层
 - 局部白沫
 - 岸边浪花
+
+### 逐步搭建手册
+
+#### 第 1 步：先确定主网格和 UV
+
+准备：
+- 河流 Mesh
+- 正确 UV
+- `T_FX_River_FlowMap`
+- `M_FX_River_Surface`
+
+目标：
+- 先保证表面流向能成立
+
+#### 第 2 步：先做主水面材质
+
+做法：
+- Flow Map 驱动 UV
+- Normal 扰动
+- Foam Mask
+
+验收：
+- 不加 Niagara，也能看出明确流向
+
+#### 第 3 步：补局部白沫和岸边浪花
+
+做法：
+- 先用材质补局部白边
+- 再酌情加少量 Niagara 白沫
+
+验收：
+- 主流向仍由材质承担
+- 粒子只是补充
+
+#### 第 4 步：最后才考虑交互
+
+只有在需要：
+- 船尾波
+- 脚踩波纹
+- 强交互
+
+时再进入：
+- `Shallow Water`
+
+验收：
+- 没交互需求时，不把方案做重
 
 ### 什么时候升级
 
@@ -529,6 +635,54 @@ Renderer：
 #### 辅层
 - 周围轻雾
 
+### 逐步搭建手册
+
+#### 第 1 步：先做瀑布主体材质
+
+准备：
+- 瀑布 Mesh
+- `T_FX_Waterfall_FlowMap`
+- `M_FX_Waterfall_Main`
+
+目标：
+- 不依赖二级粒子，也要看出持续下落感
+
+做法：
+- Flow Map
+- Normal
+- Foam / Edge Highlight
+
+验收：
+- 单看主体不会像一块滑动蓝布
+
+#### 第 2 步：补底部 `mist`
+
+做法：
+- 用 `Flipbook` 或软烟图
+- Niagara 持续 Spawn
+
+验收：
+- 底部冲击成立
+- 不糊屏
+
+#### 第 3 步：补 `splash`
+
+做法：
+- Sprite / Flipbook
+- 冲击位置集中在底部交界
+
+验收：
+- 白水感增强
+- 主体和二级层分工清楚
+
+#### 第 4 步：最后补周围轻雾
+
+目标：
+- 增加气氛
+
+验收：
+- 删除这层时主体仍成立
+
 ### 什么时候升级
 
 只有极近景英雄镜头，才考虑更重的液体模拟
@@ -569,6 +723,59 @@ Renderer：
 
 #### 辅层
 - 少量 mist
+
+### 逐步搭建手册
+
+#### 第 1 步：先做主 `splash flipbook`
+
+准备：
+- `T_FX_Splash_Flipbook`
+- `M_FX_Splash_Main`
+- `NS_Splash_Main`
+
+目标：
+- 单看主 splash 就要有冲击感
+
+验收：
+- 不需要别的层，也能看出“炸开”
+
+#### 第 2 步：创建 `Emitter_SplashMain`
+
+Renderer：
+- `Sprite Renderer`
+
+模块：
+1. `Spawn Burst Instantaneous`
+2. `Initialize Particle`
+3. `Scale Sprite Size`
+4. `Scale Color`
+5. SubUV Animation
+
+验收：
+- 主 splash 形体成立
+
+#### 第 3 步：补 `WaterDrops`
+
+模块：
+1. `Spawn Burst Instantaneous`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Gravity Force`
+5. `Drag`
+6. `Scale Color`
+
+验收：
+- 增加散射感
+- 不会把主层打散
+
+#### 第 4 步：最后补 `Mist`
+
+目标：
+- 增加空气感
+
+验收：
+- 主 splash 仍是第一视觉点
+- mist 不会把画面弄成一团湿雾
 
 ### 什么时候升级
 

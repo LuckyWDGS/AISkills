@@ -686,6 +686,26 @@ D:\Skills\niagara-vfx-artist\
 
 这个文件更偏“特效生产工作流手册”。
 
+### `references/engine-integration-checklist.md`
+
+这是 **引擎接入检查清单文档**。
+
+主要内容：
+- 动画 Notify 接入
+- 蓝图参数驱动
+- User Parameters 暴露
+- 挂点与空间检查
+- Effect Type / Scalability
+- 平台与低配接入
+- 最终接入检查表
+
+什么时候改它：
+- 你想减少“特效本身没问题，但接进游戏就出问题”的情况
+- 你想把 Unreal 内的最后一公里接入流程标准化
+- 你想让 AI 更像真正懂落地集成的人
+
+这个文件更偏“特效引擎接入手册”。
+
 ## 以后怎么维护最合适
 
 推荐你按下面这个原则维护：
