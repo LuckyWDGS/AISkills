@@ -129,6 +129,9 @@ Read only the files that matter for the current request:
 - [references/validation-and-qa.md](references/validation-and-qa.md)
   Use when the user needs a final acceptance checklist for a VFX implementation, including distance checks, background checks, same-screen stress, animation hookup, platform readiness, low-end validation, and delivery criteria.
 
+- [references/request-intake-template.md](references/request-intake-template.md)
+  Use when the user provides an incomplete or high-level effect request and you need a structured way to fill in the missing production-critical details before committing to a technical route.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
