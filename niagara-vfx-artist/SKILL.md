@@ -171,6 +171,9 @@ Read only the files that matter for the current request:
 - [references/model-turnaround-and-asset-gen-guide.md](references/model-turnaround-and-asset-gen-guide.md)
   Use when the user needs guidance for generating model reference sheets or turnaround inputs for external asset models, including what should be modeled, what should stay as textures or particles, and how to structure multi-view prompts.
 
+- [references/idea-to-prompt-fastloop.md](references/idea-to-prompt-fastloop.md)
+  Use when the user gives a vague effect idea and needs fast image or video generation prompts to validate style, silhouette, motion, and mood before moving into technical implementation.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
