@@ -78,6 +78,100 @@
 3. 再补 Embers
 4. 最后补 FlameDetail
 
+### 逐步搭建手册
+
+#### 第 1 步：先确定资产清单
+
+最小可用版先准备：
+- `T_FX_TorchFlame_Flipbook`
+- `T_FX_TorchSmoke_Flipbook`
+- `T_FX_TorchEmber_Atlas`
+- `M_FX_TorchFlame_Core`
+- `M_FX_TorchSmoke`
+- `M_FX_TorchEmber`
+- `NS_Torch_Fire`
+
+#### 第 2 步：先做 FlameCore 材质
+
+目标：
+- 不考虑别的层，先让火焰本体成立
+
+做法：
+- Sprite 材质
+- 接入火焰 Flipbook
+- 调整 Additive 强度
+- 保证中心更亮、边缘更破
+
+验收：
+- 单独看这层就像火，不像橙色烟
+
+#### 第 3 步：创建 `Emitter_FlameCore`
+
+模块顺序：
+1. `Spawn Rate`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Drag`
+5. `Curl Noise Force`
+6. `Scale Sprite Size`
+7. `Scale Color`
+8. Sprite Renderer + SubUV
+
+第一版目标：
+- 持续上升
+- 轮廓成立
+- 有轻微翻卷
+
+#### 第 4 步：创建 `Emitter_Smoke`
+
+重点：
+- 烟雾不要直接循环同一个 plume 粒子
+- 用持续 Spawn 的方式，让每个粒子播自己的 flipbook 生命周期
+
+模块顺序：
+1. `Spawn Rate`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Drag`
+5. `Scale Sprite Size`
+6. `Scale Color`
+7. Sprite Renderer + SubUV
+
+验收：
+- 轻烟上升
+- 不糊屏
+- 不像爆炸烟
+
+#### 第 5 步：创建 `Emitter_Embers`
+
+目标：
+- 少量点缀，不抢主体
+
+模块顺序：
+1. `Spawn Rate`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Gravity Force`
+5. `Drag`
+6. `Scale Color`
+
+验收：
+- 余烬数量克制
+- 增强活性但不变技能特效
+
+#### 第 6 步：最后补 `Emitter_FlameDetail`
+
+目标：
+- 让边缘更活
+
+做法：
+- 单张火舌纹理或小型图集
+- 用更快的上升和更短寿命补边缘变化
+
+验收：
+- 有提升质感
+- 但删掉这层时主效果仍成立
+
 ### 低配版
 
 - FlameDetail 可删
@@ -138,6 +232,70 @@
 2. 再补活性点缀
 3. 最后单独做 Hit Feedback
 
+### 逐步搭建手册
+
+#### 第 1 步：先做壳层材质
+
+最小资产：
+- `M_FX_ShieldShell`
+- `MI_FX_ShieldShell_Default`
+- `NS_Shield_Main`
+
+材质目标：
+- 边缘有 Fresnel
+- 壳层轻度流动
+- 常驻状态不要过亮
+
+验收：
+- 单看材质就有防御感
+- 不像纯塑料球壳
+
+#### 第 2 步：创建 `Emitter_ShieldShell`
+
+Renderer：
+- `Mesh Renderer`
+
+模块：
+1. `Spawn Rate`
+2. `Initialize Particle`
+3. Mesh Renderer
+
+目标：
+- 让主壳层稳定存在
+
+#### 第 3 步：创建 `Emitter_ShieldEnergy`
+
+作用：
+- 补表面活性
+
+Renderer：
+- `Sprite Renderer`
+
+模块：
+1. `Spawn Rate`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Scale Color`
+
+验收：
+- 表面更有生命力
+- 但不杂乱
+
+#### 第 4 步：创建 `Emitter_ShieldHit`
+
+作用：
+- 命中反馈
+
+模块：
+1. `Spawn Burst Instantaneous`
+2. `Initialize Particle`
+3. `Scale Sprite Size`
+4. `Scale Color`
+
+验收：
+- 被打时有明显提升
+- 常驻状态和受击状态区分清楚
+
 ### 低配版
 
 - 主壳层保留
@@ -185,6 +343,52 @@
 1. 先做命中闪光
 2. 再做冲击环
 3. 最后补少量碎散粒子
+
+### 逐步搭建手册
+
+#### 第 1 步：先做 `Emitter_HitFlash`
+
+目标：
+- 先把命中的“峰值”做出来
+
+模块：
+1. `Spawn Burst Instantaneous`
+2. `Initialize Particle`
+3. `Scale Sprite Size`
+4. `Scale Color`
+
+验收：
+- 单看这一层，已经像“打到了”
+
+#### 第 2 步：再做 `Emitter_HitRing`
+
+目标：
+- 补方向感和冲击感
+
+模块：
+1. `Spawn Burst Instantaneous`
+2. `Initialize Particle`
+3. `Scale Sprite Size`
+4. `Scale Color`
+
+验收：
+- 命中位置更清楚
+
+#### 第 3 步：最后做 `Emitter_HitDebris`
+
+目标：
+- 只补少量碎散
+
+模块：
+1. `Spawn Burst Instantaneous`
+2. `Initialize Particle`
+3. `Add Velocity`
+4. `Drag`
+5. `Scale Color`
+
+验收：
+- 增加打击感
+- 但不是主角
 
 ### 低配版
 
