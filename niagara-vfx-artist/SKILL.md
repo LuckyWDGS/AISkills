@@ -141,6 +141,9 @@ Read only the files that matter for the current request:
 - [references/style-consistency-guide.md](references/style-consistency-guide.md)
   Use when the user needs project-wide VFX direction, including how multiple effects should share one visual language, how skills should differ without feeling disconnected, and how to define consistency across factions, elements, and gameplay functions.
 
+- [references/vfx-direction-bible-template.md](references/vfx-direction-bible-template.md)
+  Use when the user needs a project-level VFX leadership template that defines world style, faction differences, element mapping, skill tier distinctions, always-on versus burst boundaries, and the relationship between UI, environment, and gameplay effects.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
