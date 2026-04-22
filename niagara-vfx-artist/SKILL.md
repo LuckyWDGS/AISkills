@@ -132,6 +132,9 @@ Read only the files that matter for the current request:
 - [references/request-intake-template.md](references/request-intake-template.md)
   Use when the user provides an incomplete or high-level effect request and you need a structured way to fill in the missing production-critical details before committing to a technical route.
 
+- [references/production-workflow-map.md](references/production-workflow-map.md)
+  Use when the user needs a standardized end-to-end VFX workflow that connects request intake, technical direction, asset planning, implementation, review, QA, and final delivery into one repeatable process.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
