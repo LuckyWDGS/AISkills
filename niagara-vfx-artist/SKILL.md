@@ -120,6 +120,12 @@ Read only the files that matter for the current request:
 - [references/case-studies.md](references/case-studies.md)
   Use when the user wants a complete, reusable implementation template for a representative effect and you need to connect reference reading, technical route selection, materials, Niagara structure, texture choices, and low-end planning into one coherent plan.
 
+- [references/implementation-presets.md](references/implementation-presets.md)
+  Use when the user needs a practical starting preset for building a Niagara effect, including emitter breakdowns, module order, renderer choices, and first-pass parameter ranges.
+
+- [references/asset-planning-checklist.md](references/asset-planning-checklist.md)
+  Use when the user is moving from design into production and needs a concrete checklist of required assets, material instances, textures, systems, emitters, naming, and low-end planning.
+
 Ignore [README.md](README.md) for normal task execution. It is optional human-facing documentation rather than core skill guidance.
 
 ## Output Expectations
