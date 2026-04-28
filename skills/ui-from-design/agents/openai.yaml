@@ -1,6 +1,6 @@
 interface:
   display_name: "UI From Design"
   short_description: "Implement UI faithfully from design references"
-  icon_small: "./assets/ui-from-design-small.svg"
-  icon_large: "./assets/ui-from-design.svg"
+  icon_small: "./assets/ui-from-design-small.png"
+  icon_large: "./assets/ui-from-design.png"
   default_prompt: "Use $ui-from-design to implement UI from the provided design reference."

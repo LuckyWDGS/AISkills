@@ -1,6 +1,6 @@
 interface:
   display_name: "Mentalout Image Browser"
   short_description: "Generate unified images with image.mentalout.top."
-  icon_small: "./assets/mentalout-image-browser-small.svg"
-  icon_large: "./assets/mentalout-image-browser.svg"
+  icon_small: "./assets/mentalout-image-browser-small.png"
+  icon_large: "./assets/mentalout-image-browser.png"
   default_prompt: "Use $mentalout-image-browser to generate or edit images with a consistent visual system from local or web references."

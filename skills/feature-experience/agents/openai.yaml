@@ -1,6 +1,6 @@
 interface:
   display_name: "Feature Experience"
   short_description: "Connect feature intent, UX, code, and design"
-  icon_small: "./assets/feature-experience-small.svg"
-  icon_large: "./assets/feature-experience.svg"
+  icon_small: "./assets/feature-experience-small.png"
+  icon_large: "./assets/feature-experience.png"
   default_prompt: "Use $feature-experience to design and implement a connected product feature."
