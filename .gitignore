@@ -1,0 +1,14 @@
+# Local Codex session continuity memory
+.codex/session/
+
+# Local generated/cached files
+**/__pycache__/
+*.pyc
+Thumbs.db
+.DS_Store
+
+# Skill runtime outputs; keep durable references/assets inside the skill instead.
+skills/*/outputs/
+
+# Legacy local path kept only if a running Codex process is holding it open.
+/niagara-vfx-artist/

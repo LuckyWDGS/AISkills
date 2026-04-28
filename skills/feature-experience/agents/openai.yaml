@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Experience"
+  short_description: "Connect feature intent, UX, code, and design"
+  default_prompt: "Use $feature-experience to design and implement a connected product feature."

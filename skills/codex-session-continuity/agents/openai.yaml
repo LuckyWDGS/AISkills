@@ -1,0 +1,7 @@
+interface:
+  display_name: "Session Continuity"
+  short_description: "Carry project memory across long Codex sessions"
+  default_prompt: "Use $codex-session-continuity to checkpoint this project and prepare a clean handoff for a new Codex session."
+
+policy:
+  allow_implicit_invocation: true

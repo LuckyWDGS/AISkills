@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI From Design"
+  short_description: "Implement UI faithfully from design references"
+  default_prompt: "Use $ui-from-design to implement UI from the provided design reference."
