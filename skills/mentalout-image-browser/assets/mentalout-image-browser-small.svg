@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Mentalout Image Browser">
+  <defs>
+    <linearGradient id="bg" x1="14" y1="16" x2="115" y2="113" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#701A75"/>
+      <stop offset=".5" stop-color="#155E75"/>
+      <stop offset="1" stop-color="#1E3A8A"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <rect x="25" y="32" width="78" height="64" rx="10" fill="#F8FAFC"/>
+  <path d="M25 46h78" stroke="#CBD5E1" stroke-width="6"/>
+  <circle cx="38" cy="39" r="3.5" fill="#F472B6"/>
+  <circle cx="50" cy="39" r="3.5" fill="#22D3EE"/>
+  <circle cx="62" cy="39" r="3.5" fill="#FDE68A"/>
+  <path d="m34 88 18-22 14 15 10-11 18 18Z" fill="#0E7490"/>
+  <circle cx="80" cy="61" r="8" fill="#FDE68A"/>
+  <path d="M91 22v12M91 50v12M77 36h12M93 36h12M88 33l-8-8M94 39l8 8M94 33l8-8M88 39l-8 8" stroke="#F0FDFA" stroke-width="5" stroke-linecap="round"/>
+</svg>

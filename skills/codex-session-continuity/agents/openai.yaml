@@ -1,6 +1,8 @@
 interface:
   display_name: "Session Continuity"
   short_description: "Carry project memory across long Codex sessions"
+  icon_small: "./assets/codex-session-continuity-small.svg"
+  icon_large: "./assets/codex-session-continuity.svg"
   default_prompt: "Use $codex-session-continuity to checkpoint this project and prepare a clean handoff for a new Codex session."
 
 policy:

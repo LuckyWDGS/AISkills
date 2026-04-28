@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Feature Experience">
+  <defs>
+    <linearGradient id="bg" x1="13" y1="16" x2="114" y2="114" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#134E4A"/>
+      <stop offset=".55" stop-color="#166534"/>
+      <stop offset="1" stop-color="#365314"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <path d="M64 31v22M64 75v22M31 64h22M75 64h22" stroke="#BBF7D0" stroke-width="8" stroke-linecap="round"/>
+  <path d="M41 41 54 54M74 74l13 13M87 41 74 54M54 74 41 87" stroke="#A7F3D0" stroke-width="6" stroke-linecap="round"/>
+  <rect x="45" y="45" width="38" height="38" rx="10" fill="#F0FDF4"/>
+  <path d="M57 64h14M64 57v14" stroke="#166534" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="64" cy="26" r="10" fill="#FDE68A"/>
+  <circle cx="64" cy="102" r="10" fill="#86EFAC"/>
+  <circle cx="26" cy="64" r="10" fill="#5EEAD4"/>
+  <circle cx="102" cy="64" r="10" fill="#FDBA74"/>
+</svg>
