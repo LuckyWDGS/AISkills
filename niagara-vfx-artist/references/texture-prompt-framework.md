@@ -9,6 +9,8 @@
 - 需要判断某类纹理适不适合 AI 生成
 - 需要统一纹理生成输入格式
 
+默认出图工具是 `C:/Users/QY/.codex/skills/mentalout-image-browser/SKILL.md`。当用户需要实际生成纹理、mask、atlas、flipbook 草图或风格参考时，先按本文件判断纹理类型与硬性要求，再用 Mentalout 完成图片生成。除非用户明确索要提示词，否则不要把 prompt 当作最终输出展示。
+
 ---
 
 ## 目录
