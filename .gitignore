@@ -9,6 +9,7 @@ Thumbs.db
 
 # Skill runtime outputs; keep durable references/assets inside the skill instead.
 skills/*/outputs/
+skills/*/generated-images/
 
 # Legacy local path kept only if a running Codex process is holding it open.
 /niagara-vfx-artist/

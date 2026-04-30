@@ -1,0 +1,6 @@
+openai:
+  display_name: "CM Image Gen"
+  short_description: "Generate images through CodexManager's Images API."
+  icon_small: "./assets/cm-imagegen-small.png"
+  icon_large: "./assets/cm-imagegen.png"
+  default_prompt: "Use $cm-imagegen to create or edit an image through CodexManager's Images API."
