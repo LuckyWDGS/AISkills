@@ -1,6 +1,6 @@
 ---
 name: "cm-imagegen"
-description: "Default image generation and editing skill for this user. Generate or edit raster images through CodexManager's OpenAI-compatible Images API using the current Codex provider base_url and auth.json API key. Use for ordinary image generation, image editing, reference-image generation, graph-to-image, UI mockups, posters, product images, game assets, multi-image batches, and any request to generate images unless the user explicitly asks for another named tool such as Mentalout/Snow AI/image.mentalout.top or the official built-in image_gen workflow."
+description: "Default image generation, visual design, UI/layout redesign, and image editing skill for this user. Generate or edit raster images through CodexManager's OpenAI-compatible Images API using the current Codex provider base_url and auth.json API key. Use for ordinary image generation, image editing, reference-image generation, graph-to-image, UI mockups, redesign layouts, 重新设计UI, 重新设计布局, 设计图, 视觉设计, posters, product images, game assets, multi-image batches, and any request to generate images or design visuals unless the user explicitly asks for another named tool such as Mentalout/Snow AI/image.mentalout.top or the official built-in image_gen workflow."
 ---
 
 # CM Image Generation Skill
@@ -23,6 +23,9 @@ The CLI exposes two subcommands:
 Rules:
 - Use this skill as the default workflow for this user's raster image generation and image editing requests.
 - Use this skill for ordinary prompts like "生成一张图", "帮我生图", "按参考图生成", "图生图", "生成几张测试图", UI mockups, posters, covers, game assets, product shots, concept art, and multi-image batches.
+- Also use this skill when the user says design-oriented phrases such as "重新设计布局", "重新设计UI", "设计一下", "设计图", "UI设计", "布局设计", "视觉设计", "页面设计", "界面设计", "redesign", or "layout redesign", when the expected output is a visual concept, UI mockup, layout proposal, or design reference image.
+- Prefer this skill before `ui-from-design` when no finished design image exists yet and the user is asking to create or redesign the visual direction. Use `ui-from-design` after a design image/reference already exists and the task is to implement or match it in code.
+- If the user explicitly asks to implement or modify code directly, use the appropriate implementation workflow; if a visual design reference would materially help, generate the design image first with this skill, then continue implementation.
 - Do not route ordinary image generation to `mentalout-image-browser`. Use Mentalout only when the user explicitly names Mentalout, Snow AI, `image.mentalout.top`, or asks to drive that web page.
 - Use the official built-in `image_gen` workflow only when the user explicitly asks for the official built-in image tool or when this CodexManager route is unavailable and the user approves the fallback.
 - Do not ask the user for a separate image API key or image base URL by default.
