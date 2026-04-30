@@ -1,19 +1,50 @@
 ---
 name: mentalout-image-browser
-description: Use `https://image.mentalout.top/` to generate or edit images for UI mockups, redesign concepts, poster art, image restyling, and reference-based image generation. Trigger this skill when the user wants image generation or image editing through the Mentalout Snow AI Image page, especially for UI redesign previews, “按参考图生图”, poster/cover concepts, local-image + web-image reference generation, iterative visual exploration, or multi-image design work that must stay visually unified across many original/reference images.
+description: "Drive `https://image.mentalout.top/` in a browser only when the user explicitly asks for Mentalout, Snow AI, image.mentalout.top, or this exact web-page workflow. Do not use as the default image generation skill; ordinary image generation, reference-image generation, 图生图, UI mockups, posters, product images, and multi-image batches should use cm-imagegen unless the user names Mentalout/Snow AI/image.mentalout.top."
 ---
 
 # Mentalout Image Browser
 
 ## Overview
 
-Use the Mentalout Snow AI Image page as the default image workflow for this user. Prefer this site over other image-generation tools unless the user explicitly asks for a different tool.
+Use the Mentalout Snow AI Image page only when the user explicitly asks for Mentalout, Snow AI, `image.mentalout.top`, or the web-page workflow itself.
+
+Do not use this as the default image workflow for this user. For ordinary image generation, reference-image generation, 图生图, UI mockups, posters, product images, game assets, and multi-image batches, use `cm-imagegen` instead unless the user clearly names Mentalout/Snow AI.
 
 Read the API key from the local user environment variable `MENTALOUT_IMAGE_API_KEY`. Do not print the key in chat, commit it into repos, or duplicate it into project files.
 
 Do not ask for or fill an API domain by default. The page should use its configured backend; only fill the API key unless the user explicitly requests a custom endpoint.
 
 For multi-image projects, do not treat each image as a standalone generation. First establish a compact visual system, then reuse it for every later image so the results feel like one coherent product, campaign, or art direction board.
+
+## Invocation Contract
+
+This skill is operated by driving the Mentalout web page. There is no repo-local CLI wrapper, package command, or direct API contract to discover before starting.
+
+Preferred browser surface, in order:
+
+- A provided Codex/browser-use/in-app browser automation tool, when the session exposes one.
+- Existing Playwright or equivalent browser automation already available in the workspace.
+- If no browser automation surface is available, say so and ask the user to run this in a browser-capable Codex session instead of probing unrelated commands.
+
+Fast path:
+
+1. Open `https://image.mentalout.top/` with the available browser automation surface.
+2. Fill `API Key` from `MENTALOUT_IMAGE_API_KEY` only if the page field is empty.
+3. Add local or web reference images when the user provided them.
+4. Fill `Prompt`, `尺寸`, `数量`, `风格提示`, `生成质量`, `输出格式`, and `输出压缩`.
+5. Click `生成图片`, review `展示区` / `历史记录`, download the best result, and return the saved path.
+
+Use shell commands only for these small support tasks:
+
+- Check whether `MENTALOUT_IMAGE_API_KEY` exists without printing the raw value.
+- Resolve user-provided local image paths.
+- Create or inspect the output folder.
+- Verify that the downloaded image file exists and is usable.
+
+Do not spend time searching the current project for image-generation code, package scripts, hidden APIs, or another plugin entrypoint unless the web page cannot be loaded or driven.
+
+If the key is missing, stop and ask the user to set `MENTALOUT_IMAGE_API_KEY`. If the page controls changed, inspect the page once and continue from the visible labels above.
 
 ## Workflow
 

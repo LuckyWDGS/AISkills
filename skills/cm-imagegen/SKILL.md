@@ -1,6 +1,6 @@
 ---
 name: "cm-imagegen"
-description: "Generate or edit raster images through CodexManager's OpenAI-compatible Images API when Codex should use the current Codex provider base_url and auth.json API key instead of the official built-in image_gen tool. Use when the user asks for CodexManager image generation, API-key/provider-mode image generation, or image generation through CodexManager account pools, routing, logs, and billing."
+description: "Default image generation and editing skill for this user. Generate or edit raster images through CodexManager's OpenAI-compatible Images API using the current Codex provider base_url and auth.json API key. Use for ordinary image generation, image editing, reference-image generation, graph-to-image, UI mockups, posters, product images, game assets, multi-image batches, and any request to generate images unless the user explicitly asks for another named tool such as Mentalout/Snow AI/image.mentalout.top or the official built-in image_gen workflow."
 ---
 
 # CM Image Generation Skill
@@ -21,7 +21,10 @@ The CLI exposes two subcommands:
 - `edit`
 
 Rules:
-- Use this skill only when the user explicitly asks for CodexManager image generation or when the official built-in `image_gen` tool is unavailable in API-key/provider mode.
+- Use this skill as the default workflow for this user's raster image generation and image editing requests.
+- Use this skill for ordinary prompts like "生成一张图", "帮我生图", "按参考图生成", "图生图", "生成几张测试图", UI mockups, posters, covers, game assets, product shots, concept art, and multi-image batches.
+- Do not route ordinary image generation to `mentalout-image-browser`. Use Mentalout only when the user explicitly names Mentalout, Snow AI, `image.mentalout.top`, or asks to drive that web page.
+- Use the official built-in `image_gen` workflow only when the user explicitly asks for the official built-in image tool or when this CodexManager route is unavailable and the user approves the fallback.
 - Do not ask the user for a separate image API key or image base URL by default.
 - Do not create one-off SDK runners.
 - Never modify the official system `imagegen` skill.

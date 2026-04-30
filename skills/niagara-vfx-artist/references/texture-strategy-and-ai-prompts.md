@@ -10,7 +10,7 @@
 - 给外部 AI 生成纹理时，提示词该怎么写
 - Niagara 里怎么正确接入这些纹理
 
-当需要实际出图时，默认加载并使用 `C:/Users/QY/.codex/skills/mentalout-image-browser/SKILL.md`。本文件负责决定纹理策略和 prompt 内容，Mentalout 负责生成与迭代图片。除非用户明确索要提示词，否则最终只交付图片结果、保存路径、设置和 Niagara 接入建议。
+当需要实际出图时，默认加载并使用 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。本文件负责决定纹理策略和 prompt 内容，cm-imagegen 负责生成与迭代图片。除非用户明确索要提示词，否则最终只交付图片结果、保存路径、设置和 Niagara 接入建议。
 
 ---
 

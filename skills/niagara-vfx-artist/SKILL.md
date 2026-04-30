@@ -1,6 +1,6 @@
 ---
 name: niagara-vfx-artist
-description: Use when the user needs Unreal Engine Niagara VFX help, including effect ideation from text or images, UE-achievable visual direction, Mentalout-based concept or design image generation, visual breakdowns, emitter and system design, material or HLSL guidance, flipbooks, flow maps, scalability, and PC or Android performance optimization.
+description: Use when the user needs Unreal Engine Niagara VFX help, including effect ideation from text or images, UE-achievable visual direction, cm-imagegen-based concept or design image generation, visual breakdowns, emitter and system design, material or HLSL guidance, flipbooks, flow maps, scalability, and PC or Android performance optimization.
 ---
 
 # Niagara VFX Artist
@@ -41,17 +41,17 @@ Keep this file lightweight. Load the detailed reference documents only when they
    - a texture asset plan
    - prompt text for externally generated textures when useful
 
-## Mentalout Image Bridge
+## Image Generation Bridge
 
-When the task needs a generated image, design image, UE-achievable style target, concept board, texture reference, flipbook, atlas, or visual exploration, use `C:/Users/QY/.codex/skills/mentalout-image-browser/SKILL.md` as the default image-generation workflow.
+When the task needs a generated image, design image, UE-achievable style target, concept board, texture reference, flipbook, atlas, or visual exploration, use `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md` as the default image-generation workflow.
 
 Follow these bridge rules:
 
-- Prefer Mentalout over other image-generation tools unless the user explicitly asks for another tool.
-- When the user asks for an image, concept, design, or texture output, generate the image directly with Mentalout instead of responding with prompt text. Do not show the prompt unless the user explicitly asks for it.
+- Prefer `cm-imagegen` for image generation unless the user explicitly asks for Mentalout, Snow AI, `image.mentalout.top`, the official built-in image tool, or another named tool.
+- When the user asks for an image, concept, design, or texture output, generate the image directly with `cm-imagegen` instead of responding with prompt text. Do not show the prompt unless the user explicitly asks for it.
 - Before generating, convert the VFX request into an implementation-aware art brief: effect purpose, target platform, camera distance, silhouette, palette, material feel, particle layers, timing, and which parts are expected to be real-time Niagara versus baked textures.
 - For "UE can do this" style images, constrain prompts to real-time game VFX concept art, readable layered silhouettes, centered or gameplay-useful framing, plausible particle/material construction, and no impossible micro-detail that cannot survive Niagara implementation.
-- For texture, flipbook, atlas, mask, or model-reference generation, read the relevant Niagara reference first, then pass Mentalout a production-friendly prompt with black or transparent background, centered subject, no text, no watermark, clean alpha-friendly edges, consistent scale, and clear grid/frame requirements when applicable.
+- For texture, flipbook, atlas, mask, or model-reference generation, read the relevant Niagara reference first, then pass `cm-imagegen` a production-friendly prompt with black or transparent background, centered subject, no text, no watermark, clean alpha-friendly edges, consistent scale, and clear grid/frame requirements when applicable.
 - When using a generated concept as the target look, translate the selected image back into Niagara emitters, materials, renderer choices, curves, textures, and optimization notes instead of stopping at the image.
 - If browser or API generation cannot be completed, explain the blocker briefly and offer to retry or provide the prompt on request; do not include the prompt by default.
 
