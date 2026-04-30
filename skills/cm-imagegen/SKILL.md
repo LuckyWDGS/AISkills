@@ -156,7 +156,9 @@ After a successful call:
 - Use the first absolute `paths[]` item as the final image path unless the user requested multiple outputs.
 - Do not call a local image viewing tool for the final answer. In Codex App this can create a broken gray preview placeholder for CLI-created local images.
 - Render each final generated PNG inline in the final response using standard Markdown image syntax and the absolute local file path. Use forward slashes in the Markdown URL for Windows paths, for example `![generated image](D:/path/to/generated-images/asset.png)`.
-- For multi-image jobs, also render each completed PNG inline in a commentary update as soon as that individual image is saved, using the same absolute-path Markdown syntax.
+- Codex controls the displayed inline preview size; Markdown cannot reliably force a larger width in chat. Do not use HTML image tags or fake preview blocks to size images.
+- To make full-size viewing easy, add a concise Markdown link immediately below each inline image, for example `[打开原图](D:/path/to/generated-images/asset.png)`.
+- For multi-image jobs, also render each completed PNG inline in a commentary update as soon as that individual image is saved, using the same absolute-path Markdown syntax plus the full-size image link.
 - Do not use relative paths, `file://` URLs, HTML image tags, fake preview blocks, or unrelated file cards.
 - Do not attach or report unrelated files such as `AGENTS.md`.
 - The normal saved path should be the current working directory's `generated-images/<filename>` file, but do not print the path in the final response unless the user asks.

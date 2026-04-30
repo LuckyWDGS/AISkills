@@ -178,6 +178,20 @@ $env:CODEXMANAGER_IMAGE_BASE_URL="http://你的地址/v1"
 
 不要用相对路径，也不要用 `file://`。
 
+### 聊天里的图片预览太小
+
+Codex 聊天窗口的内嵌预览尺寸主要由客户端控制，Markdown 不能稳定强制放大。
+
+推荐让 Codex 同时返回：
+
+```markdown
+![generated image](D:/path/to/generated-images/output.png)
+
+[打开原图](D:/path/to/generated-images/output.png)
+```
+
+聊天里先看预览，需要看大图时点“打开原图”。
+
 ## 给别人的一句话说明
 
 在 Codex 里直接说：
