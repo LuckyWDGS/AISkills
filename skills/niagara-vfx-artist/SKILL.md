@@ -25,8 +25,11 @@ Keep this file lightweight. Load the detailed reference documents only when they
 
    When the closed-loop tool suite from this skill is available, prefer the tool path over ad hoc folders:
    - `tools/reference_cache.py` for cache, crop, HQ copy, and active/rejected/debug separation
+   - `tools/reference_acceptance.py` for approving and locking the authoritative anchor
+   - `tools/layer_evidence.py` for hotspot suggestions and evidence crops
    - `tools/visual_layer_map.py` for the visual evidence -> UE carrier map
    - `tools/design_compare_checklist.py` for design-gap review
+   - `tools/preview_approval.py` for gating preview approval before implementation
 
 3. Choose the right depth.
    For a quick answer, give a compact artistic direction plus the most important Niagara and material settings.
@@ -102,10 +105,16 @@ Use this validation order instead:
    Prefer asset previews, isolated render previews, deterministic bridge captures, and controlled in-level test setups. Avoid making decisions from screenshots that include the editor chrome, selection outlines, or arbitrary panel states.
 
    When a reusable audit or preview route is needed, use the local tool suite first:
+   - `tools/asset_plan.py`
+   - `tools/integration_plan.py`
    - `tools/material_audit.py`
    - `tools/niagara_audit.py`
+   - `tools/ue_write_helpers.py`
    - `tools/controlled_preview.py`
+   - `tools/visual_diff_qa.py`
    - `tools/asset_cleanup.py`
+   - `tools/delivery_package.py`
+   - `tools/learning_loop.py`
    - `tools/parameter_tuning_log.py`
 
 4. Compare against the design, not just against engine correctness.
@@ -313,6 +322,9 @@ Read only the files that matter for the current request:
 
 - [references/tool-suite.md](references/tool-suite.md)
   Use when the request is about the closed-loop production tools themselves, their folder split, CLI usage, or how to connect reference caching, layer mapping, audits, previews, cleanup, and tuning records into one repeatable workflow.
+
+- [references/capability-gap-map.md](references/capability-gap-map.md)
+  Use when you want the short list of what is still missing for a full reference-to-usable-effect pipeline.
 
 - [references/master-material-architecture.md](references/master-material-architecture.md)
   Use when the user needs a project-wide VFX master material architecture, including which masters should be standardized, how parameters should be exposed, and how flipbooks, flow maps, atlases, and instances should be organized.

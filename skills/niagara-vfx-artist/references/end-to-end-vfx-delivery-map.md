@@ -158,6 +158,15 @@ Needed behavior:
 
 These are the main gaps that would make the workflow more complete and less manual:
 
+- Reference acceptance gate: lock the chosen anchor, quarantine rejected/drifted refs, and record clarity/authority status before generation starts.
+- Layer evidence extractor: auto-suggest crops/hotspots and keep each layer tied to visible proof, not only a name.
+- Preview approval gate: side-by-side compare reference vs preview with pass/fail/revise state and preset camera/background packs.
+- Asset plan generator: derive the minimum texture/material/Niagara asset set, low-end variants, naming, and folder plan before implementation.
+- Integration hookup planner: write down socket/notify/Blueprint/GAS/Sequencer ownership, user parameters, trigger timing, and source transform contract.
+- Write-side UE helpers: create/duplicate/reset material and Niagara assets, apply EffectType/scalability/folder rules, and safely retire stale routes.
+- Visual diff QA: compare captured previews against the approved reference on silhouette, brightness, density, width, spacing, and motion path.
+- Delivery packaging: export a final manifest with approved previews, tuning recipe, fallback note, and risk note.
+- Learning loop: auto-summarize each shipped effect into a reusable case study and parameter recipe.
 - Reference cache tool: save, register, crop, upscale, and classify approved design images automatically.
 - Layer map generator: produce a structured layer map from a design image with carrier, timing, texture, material, Niagara, and validation fields.
 - Material audit script: report output-connected nodes, dead branches, stale MI overrides, compile errors, instruction/sampler cost, and cleanup candidates in one command.

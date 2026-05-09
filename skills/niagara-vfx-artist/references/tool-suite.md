@@ -32,6 +32,59 @@ python tools/reference_cache.py hq <entry_id> --scale 2.0 --sharpen 1.1
 python tools/reference_cache.py set-status <entry_id> --status rejected
 ```
 
+### `tools/reference_acceptance.py`
+
+Purpose:
+- record reference approval state
+- lock one anchor as the authoritative design image
+- keep clarity and authority notes attached to the anchor
+
+### `tools/layer_evidence.py`
+
+Purpose:
+- suggest hotspot crops from a reference
+- attach a crop and visible evidence to one layer
+- push that evidence back into the layer map
+
+### `tools/preview_approval.py`
+
+Purpose:
+- gate preview approval before implementation
+- track pass / revise / reject state with structured difference notes
+
+### `tools/asset_plan.py`
+
+Purpose:
+- derive a first-pass texture/material/Niagara asset plan from the layer map
+- attach naming and platform budget guidance before implementation
+
+### `tools/integration_plan.py`
+
+Purpose:
+- define notify / socket / owner / user-parameter hookup for runtime integration
+
+### `tools/ue_write_helpers.py`
+
+Purpose:
+- provide first-pass write-side Unreal helpers for duplicate, move, MI creation, Niagara template duplication, and system property updates
+
+### `tools/visual_diff_qa.py`
+
+Purpose:
+- compare a captured preview against a reference image
+- save metrics plus heat / edge / composite outputs
+
+### `tools/delivery_package.py`
+
+Purpose:
+- build a delivery manifest from anchors, approvals, plans, tuning logs, and final asset paths
+
+### `tools/learning_loop.py`
+
+Purpose:
+- generate reusable lessons from approvals, anchor locks, and tuning history
+- keep manual success / failure / reuse rules with the effect record
+
 ### `tools/visual_layer_map.py`
 
 Purpose:
@@ -102,14 +155,23 @@ This keeps cached references, audits, previews, cleanup reports, and tuning logs
 ## Recommended Order
 
 1. `reference_cache.py`
-2. `visual_layer_map.py`
-3. `controlled_preview.py`
-4. `material_audit.py`
-5. `niagara_audit.py`
-6. `design_compare_checklist.py`
-7. `parameter_tuning_log.py`
-8. `asset_cleanup.py`
+2. `reference_acceptance.py`
+3. `layer_evidence.py`
+4. `visual_layer_map.py`
+5. `controlled_preview.py`
+6. `preview_approval.py`
+7. `asset_plan.py`
+8. `integration_plan.py`
+9. `material_audit.py`
+10. `niagara_audit.py`
+11. `ue_write_helpers.py`
+12. `visual_diff_qa.py`
+13. `design_compare_checklist.py`
+14. `parameter_tuning_log.py`
+15. `delivery_package.py`
+16. `learning_loop.py`
+17. `asset_cleanup.py`
 
 That order matches the closed loop:
 
-reference anchor -> visual evidence map -> carrier-aware preview -> structural audit -> design gap review -> tuning record -> cleanup.
+reference anchor -> acceptance gate -> visible evidence -> carrier-aware preview -> preview approval -> plan -> integration -> audit -> write-side implementation -> diff QA -> tuning -> delivery -> learning -> cleanup.

@@ -3,6 +3,15 @@
 `tools/` contains the user-facing CLI entry points for the Niagara VFX closed-loop workflow.
 
 - `reference_cache.py`
+- `reference_acceptance.py`
+- `layer_evidence.py`
+- `preview_approval.py`
+- `asset_plan.py`
+- `integration_plan.py`
+- `ue_write_helpers.py`
+- `visual_diff_qa.py`
+- `delivery_package.py`
+- `learning_loop.py`
 - `visual_layer_map.py`
 - `material_audit.py`
 - `niagara_audit.py`
