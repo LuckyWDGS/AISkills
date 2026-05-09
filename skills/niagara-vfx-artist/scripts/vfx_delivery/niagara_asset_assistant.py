@@ -16,6 +16,7 @@ PLAN_VERSION = 1
 SUPPORTED_OPS = {
     "duplicate_asset",
     "create_material_instance",
+    "add_ribbon_renderer",
     "set_mi_params",
     "set_niagara_system_props",
     "patch_renderer_material",
@@ -126,6 +127,8 @@ def op_summary(op: dict[str, Any]) -> str:
         return f"duplicate `{op.get('source')}` -> `{op.get('target')}`"
     if kind == "create_material_instance":
         return f"create MI `{op.get('target')}` parent=`{op.get('parent')}`"
+    if kind == "add_ribbon_renderer":
+        return f"add Ribbon Renderer to `{op.get('emitter_path') or op.get('emitter_name_contains')}` material=`{op.get('material_path')}`"
     if kind == "set_mi_params":
         return f"set {len(op.get('params', []))} MI params on `{op.get('material_instance')}`"
     if kind == "set_niagara_system_props":
@@ -205,6 +208,21 @@ def build_apply_script(plan: dict[str, Any], verify: bool) -> str:
             text, ok = PROP.get_u_property_as_export_text(path, prop_name)
             return text or "", bool(ok)
 
+        def material_paths(text):
+            return sorted(set(re.findall(r"/(?:Game|Engine)/[^'\\\",)]+", text or "")))
+
+        def parse_renderer_objects(renderer_text):
+            objects = []
+            for class_path, object_path in re.findall(r"(/Script/[^']+)'([^']+)'", renderer_text or ""):
+                material_text, material_ok = read_export(object_path, "Material")
+                objects.append({{
+                    "class_path": class_path,
+                    "class_name": class_path.rsplit(".", 1)[-1],
+                    "object_path": object_path,
+                    "material": {{"success": material_ok, "text": material_text}},
+                }})
+            return objects
+
         def digest(text):
             return hashlib.sha1((text or "").encode("utf-8", errors="ignore")).hexdigest()[:12]
 
@@ -239,8 +257,16 @@ def build_apply_script(plan: dict[str, Any], verify: bool) -> str:
                     text, ok = read_export(emitter_path, prop)
                     props[prop] = {{"success": ok, "text": text, "digest": digest(text)}}
                 renderer_text = props["RendererProperties"]["text"]
-                renderers = sorted(set(re.findall(r"Niagara([A-Za-z0-9_]+RendererProperties)", renderer_text)))
-                materials = sorted(set(re.findall(r"/(?:Game|Engine)[^'\\\",)]+", renderer_text)))
+                renderer_objects = parse_renderer_objects(renderer_text)
+                renderers = sorted(set(
+                    re.findall(r"Niagara([A-Za-z0-9_]+RendererProperties)", renderer_text)
+                    + [
+                        (item.get("class_name", "")[len("Niagara"):] if item.get("class_name", "").startswith("Niagara") else item.get("class_name", ""))
+                        for item in renderer_objects
+                        if item.get("class_name")
+                    ]
+                ))
+                materials = sorted(set(path for item in renderer_objects for path in material_paths(item.get("material", {{}}).get("text", ""))))
                 emitters.append({{
                     "index": index,
                     "name": names[index] if index < len(names) else "",
@@ -249,6 +275,7 @@ def build_apply_script(plan: dict[str, Any], verify: bool) -> str:
                     "emitter_path": emitter_path,
                     "renderer_classes": renderers,
                     "renderer_materials": materials,
+                    "renderer_objects": renderer_objects,
                     "properties": props,
                 }})
             return {{"system_path": system_path, "system_properties": system_props, "emitters": emitters}}
@@ -395,6 +422,61 @@ def build_apply_script(plan: dict[str, Any], verify: bool) -> str:
                     failed.append({{"emitter_path": emitter_path, "error": "RendererProperties write failed"}})
             return {{"success": bool(changed) and not failed, "matched": matched, "changed": changed, "failed": failed}}
 
+        def add_ribbon_renderer(op):
+            material_path = op.get("material_path", "")
+            if not material_path:
+                return {{"success": False, "error": "material_path is required"}}
+            material = unreal.load_asset(material_path)
+            if material is None:
+                return {{"success": False, "error": "material not found", "material_path": material_path}}
+            ribbon_cls = unreal.load_class(None, "/Script/Niagara.NiagaraRibbonRendererProperties")
+            if ribbon_cls is None:
+                return {{"success": False, "error": "NiagaraRibbonRendererProperties class not found"}}
+            emitter_paths = as_list(op.get("emitter_path"))
+            matched = []
+            if not emitter_paths:
+                snapshot = inspect_niagara_system(op.get("system_path") or PLAN.get("target_system", ""))
+                for emitter in snapshot.get("emitters", []):
+                    if match_emitter(emitter, op):
+                        emitter_paths.append(emitter["emitter_path"])
+                        matched.append({{"name": emitter.get("name", ""), "emitter_path": emitter["emitter_path"]}})
+            changed = []
+            failed = []
+            for emitter_path in emitter_paths:
+                emitter_obj_path = full_object_path(emitter_path)
+                emitter = unreal.load_object(None, emitter_obj_path)
+                if emitter is None:
+                    failed.append({{"emitter_path": emitter_path, "error": "emitter not found"}})
+                    continue
+                existing_text, existing_ok = read_export(emitter_path, "RendererProperties")
+                if existing_ok and existing_text.strip() and not op.get("allow_existing", False):
+                    failed.append({{"emitter_path": emitter_path, "error": "RendererProperties already contains renderer data", "renderer_digest": digest(existing_text)}})
+                    continue
+                renderer_name = op.get("renderer_name") or "CodexRibbonRenderer"
+                renderer = unreal.new_object(ribbon_cls, outer=emitter, name=renderer_name)
+                if renderer is None:
+                    failed.append({{"emitter_path": emitter_path, "error": "new_object returned None"}})
+                    continue
+                renderer.set_editor_property("material", material)
+                renderer_path = renderer.get_path_name()
+                prop_values = {{
+                    "FacingMode": op.get("facing_mode", ""),
+                    "MaxNumRibbons": op.get("max_num_ribbons", ""),
+                    "WidthSegmentationCount": op.get("width_segmentation_count", ""),
+                    "CurveTension": op.get("curve_tension", ""),
+                }}
+                prop_results = {{}}
+                for prop_name, value in prop_values.items():
+                    if value not in (None, ""):
+                        prop_results[prop_name] = bool(PROP.set_u_property_from_export_text(renderer_path, prop_name, str(value), True))
+                ok = PROP.array_append_u_property(emitter_path, "RendererProperties", renderer_path, True)
+                if ok:
+                    unreal.EditorAssetLibrary.save_asset(package_path(emitter_path), False)
+                    changed.append({{"emitter_path": emitter_path, "renderer_path": renderer_path, "material": full_object_path(material_path), "prop_results": prop_results}})
+                else:
+                    failed.append({{"emitter_path": emitter_path, "renderer_path": renderer_path, "error": "RendererProperties append failed", "prop_results": prop_results}})
+            return {{"success": bool(changed) and not failed, "matched": matched, "changed": changed, "failed": failed}}
+
         def set_u_property_export(op):
             target = op.get("object_path", "")
             prop = op.get("property_path", "")
@@ -413,6 +495,7 @@ def build_apply_script(plan: dict[str, Any], verify: bool) -> str:
         HANDLERS = {{
             "duplicate_asset": duplicate_asset,
             "create_material_instance": create_material_instance,
+            "add_ribbon_renderer": add_ribbon_renderer,
             "set_mi_params": set_mi_params,
             "set_niagara_system_props": set_niagara_system_props,
             "patch_renderer_material": patch_renderer_material,
@@ -570,6 +653,29 @@ def repair_plan_command(args: argparse.Namespace) -> int:
             continue
         renderer_text = emitter.get("properties", {}).get("RendererProperties", {}).get("text", "")
         if not renderer_text.strip():
+            role = str(emitter.get("role", "")).lower()
+            if role in {"receiver", "trail-receiver"}:
+                material = args.default_material or pick_parent_for_renderers(renderers, "", parent_map)
+                if material:
+                    plan["operations"].append(
+                        {
+                            "op": "add_ribbon_renderer",
+                            "system_path": target_system,
+                            "emitter_path": emitter.get("emitter_path", ""),
+                            "material_path": material,
+                            "renderer_name": args.renderer_name,
+                            "facing_mode": args.facing_mode,
+                            "max_num_ribbons": args.max_num_ribbons,
+                            "width_segmentation_count": args.width_segmentation_count,
+                            "curve_tension": args.curve_tension,
+                            "reason": f"Create missing Ribbon Renderer on receiver emitter {emitter.get('name', '')}.",
+                        }
+                    )
+                    continue
+                plan["warnings"].append(
+                    f"Skipped receiver `{emitter.get('name', '')}` with empty RendererProperties because no material was supplied."
+                )
+                continue
             plan["warnings"].append(
                 f"Skipped emitter `{emitter.get('name', '')}` because RendererProperties is empty; material binding repair needs an existing renderer slot."
             )
@@ -699,6 +805,11 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("--default-material", default="")
     repair.add_argument("--material-by-renderer", action="append", default=[], help="Renderer=/Game/Path/MI_Fix")
     repair.add_argument("--fixed-bounds", default="")
+    repair.add_argument("--renderer-name", default="CodexRibbonRenderer")
+    repair.add_argument("--facing-mode", default="Screen")
+    repair.add_argument("--max-num-ribbons", default="")
+    repair.add_argument("--width-segmentation-count", default="1")
+    repair.add_argument("--curve-tension", default="0.0")
     repair.add_argument("--project", default="")
     repair.add_argument("--notes", default="")
     repair.add_argument("--out")

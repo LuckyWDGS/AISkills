@@ -48,6 +48,18 @@ def build_ue_script(system_path: str) -> str:
             text, ok = PROP.get_u_property_as_export_text(path, prop_name)
             return {{"success": bool(ok), "text": text}}
 
+        def parse_renderer_objects(renderer_text):
+            objects = []
+            for class_path, object_path in re.findall(r"(/Script/[^']+)'([^']+)'", renderer_text or ""):
+                material = read_export(object_path, "Material")
+                objects.append({{
+                    "class_path": class_path,
+                    "class_name": class_path.rsplit(".", 1)[-1],
+                    "object_path": object_path,
+                    "material": material,
+                }})
+            return objects
+
         system_path = {system_path!r}
         system_props = {{name: read_export(system_path, name) for name in {SYSTEM_PROPS!r}}}
         handle_text = system_props["EmitterHandles"]["text"]
@@ -60,6 +72,7 @@ def build_ue_script(system_path: str) -> str:
         emitters = []
         for index, emitter_path in enumerate(emitter_paths):
             props = {{name: read_export(emitter_path, name) for name in {EMITTER_PROPS!r}}}
+            renderer_objects = parse_renderer_objects(props["RendererProperties"]["text"])
             emitters.append({{
                 "index": index,
                 "name": names[index] if index < len(names) else "",
@@ -67,6 +80,7 @@ def build_ue_script(system_path: str) -> str:
                 "enabled": enabled[index] if index < len(enabled) else "",
                 "emitter_path": emitter_path,
                 "properties": props,
+                "renderer_objects": renderer_objects,
             }})
 
         payload = {{
@@ -79,13 +93,28 @@ def build_ue_script(system_path: str) -> str:
     ).strip()
 
 
-def renderer_classes(text: str) -> list[str]:
+def renderer_classes(text: str, renderer_objects: list[dict[str, Any]] | None = None) -> list[str]:
     classes = re.findall(r"Niagara([A-Za-z0-9_]+RendererProperties)", text)
+    for item in renderer_objects or []:
+        class_name = item.get("class_name", "")
+        if class_name.startswith("Niagara"):
+            class_name = class_name[len("Niagara") :]
+        if class_name:
+            classes.append(class_name)
     return sorted(dict.fromkeys(classes))
 
 
 def material_paths(text: str) -> list[str]:
-    return sorted(dict.fromkeys(re.findall(r"/(?:Game|Engine)[^'\",)]+", text)))
+    return sorted(dict.fromkeys(re.findall(r"/(?:Game|Engine)/[^'\",)]+", text or "")))
+
+
+def renderer_material_paths(renderer_objects: list[dict[str, Any]]) -> list[str]:
+    paths: list[str] = []
+    for item in renderer_objects:
+        material = item.get("material", {})
+        if material.get("success"):
+            paths.extend(material_paths(material.get("text", "")))
+    return sorted(dict.fromkeys(paths))
 
 
 def text_digest(text: str) -> str:
@@ -134,14 +163,16 @@ def summarize(payload: dict[str, Any]) -> dict[str, Any]:
     system_bounds = payload["system_properties"]["FixedBounds"]["text"]
     for emitter in payload["emitters"]:
         renderer_text = emitter["properties"]["RendererProperties"]["text"]
+        renderer_objects = emitter.get("renderer_objects", [])
         event_text = emitter["properties"]["EventHandlerScriptProps"]["text"]
         module_text = " ".join(
             emitter["properties"][key]["text"]
             for key in ("SpawnScriptProps", "UpdateScriptProps", "EmitterSpawnScriptProps", "EmitterUpdateScriptProps", "SimulationStages", "GraphSource", "GPUComputeScript")
         )
         parsed = {
-            "renderer_classes": renderer_classes(renderer_text),
-            "renderer_materials": material_paths(renderer_text),
+            "renderer_classes": renderer_classes(renderer_text, renderer_objects),
+            "renderer_materials": renderer_material_paths(renderer_objects),
+            "renderer_objects": renderer_objects,
             "event_handler_summary": parse_event_handlers(event_text),
             "sim_target": emitter["properties"]["SimTarget"]["text"],
             "fixed_bounds": emitter["properties"]["FixedBounds"]["text"],

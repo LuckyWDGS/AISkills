@@ -187,6 +187,7 @@ For real Niagara asset creation or repair, prefer the mutation-plan workflow:
 Important boundary:
 - Template-first Niagara creation is the preferred safe path because it preserves valid emitter graphs and renderer setup.
 - Renderer material repair can patch an existing renderer slot; if `RendererProperties` is empty, treat that as a missing renderer/emitter construction problem, not a material-binding problem.
+- In UE 5.7, do not call `NiagaraPythonEmitter.get_modules()` on arbitrary loaded/template emitters as a discovery shortcut. It can trigger a NiagaraEditor `SharedPointer IsValid()` assertion and crash the editor. Prefer UPROPERTY export audits and known-safe renderer object construction first.
 
 ## Image Generation Bridge
 

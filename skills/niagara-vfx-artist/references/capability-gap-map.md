@@ -107,6 +107,7 @@ What it adds:
 - dry-run-first Niagara mutation plans
 - template-first system creation
 - MI creation and parameter override setup
+- missing Ribbon Renderer construction for receiver emitters
 - existing renderer material binding repair
 - generated UE Python apply scripts
 - optional `unreal-bridge` apply and readback verification
@@ -160,7 +161,8 @@ Current first-pass tool:
 - Preview approval should eventually integrate side-by-side visual diff automatically at review time.
 - Asset planning should eventually understand project-specific naming conventions and existing reusable masters.
 - Integration planning should eventually read real skeleton/socket/notify context from the target project.
-- Write-side UE helpers and the Niagara asset assistant should eventually cover richer emitter construction, renderer creation, user-parameter authoring, and safe retirement of stale assets.
+- Write-side UE helpers and the Niagara asset assistant should eventually cover richer emitter construction, user-parameter authoring, source/event wiring, and safe retirement of stale assets.
+- Niagara stack discovery still needs a safer route than `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters; that path crashed UE 5.7 during live testing.
 - Visual diff QA should eventually compare motion clips, not only still frames.
 - Delivery packaging should eventually pull final active assets directly from the project instead of relying on manual final lists.
 - Learning loop should eventually auto-build stronger case studies from shipped effects without manual curation.

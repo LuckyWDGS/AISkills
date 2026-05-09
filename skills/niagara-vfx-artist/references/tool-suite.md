@@ -69,6 +69,7 @@ Purpose:
 - generate reviewable Niagara asset mutation plans
 - create systems from templates without losing valid emitter graphs
 - create and tune material instances for planned layers
+- add a missing Ribbon Renderer to a receiver emitter when `RendererProperties` is empty
 - repair existing renderer material bindings when a renderer slot is present
 - render the UE Python apply script in dry-run mode
 - optionally execute through `unreal-bridge` with `apply-plan --apply`
@@ -86,7 +87,9 @@ python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-del
 Safety notes:
 - `apply-plan` is dry-run unless `--apply` is provided.
 - The generated UE Python script is saved beside the plan so it can be inspected before execution.
-- Material binding repair only patches an existing renderer `Material=` slot. If an emitter has empty `RendererProperties`, the assistant records the gap instead of pretending a material swap can fix it.
+- Material binding repair only patches an existing renderer `Material=` slot.
+- Empty receiver `RendererProperties` can be repaired with `add_ribbon_renderer`; empty source emitters remain source-only unless a separate implementation plan says otherwise.
+- Avoid using `NiagaraPythonEmitter.get_modules()` as a generic template-discovery probe in UE 5.7. A real project test crashed NiagaraEditor with a `SharedPointer IsValid()` assertion; use property exports and renderer object readback instead.
 
 ### `tools/ue_write_helpers.py`
 

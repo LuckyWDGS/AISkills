@@ -103,6 +103,8 @@ Needed behavior:
 - Validate emitter roles and data flow before visual tuning.
 - Capture in a controlled runtime/preview setup only after structural validation.
 - If an audit shows empty `RendererProperties`, classify it as missing renderer construction instead of treating it as a simple material-binding fix.
+- For receiver emitters, a missing Ribbon Renderer can be constructed by loading `/Script/Niagara.NiagaraRibbonRendererProperties`, creating a renderer UObject under the emitter, setting its material, and appending it to `RendererProperties` with the property bridge.
+- Avoid `NiagaraPythonEmitter.get_modules()` as a broad inspection shortcut in UE 5.7 because live testing showed it can crash the editor on template/loaded emitters.
 
 ### 7. Integration Hookup
 
@@ -167,6 +169,7 @@ These are the main gaps that would make the workflow more complete and less manu
 - Integration hookup planner: write down socket/notify/Blueprint/GAS/Sequencer ownership, user parameters, trigger timing, and source transform contract.
 - Write-side UE helpers: create/duplicate/reset material and Niagara assets, apply EffectType/scalability/folder rules, and safely retire stale routes.
 - Niagara asset assistant: produce dry-run mutation plans, generate UE Python apply scripts, optionally execute through `unreal-bridge`, and read back the asset structure after writing.
+- Safe Niagara renderer construction: add missing Ribbon Renderer objects and verify nested renderer material bindings from the renderer object, not from the parent emitter export string alone.
 - Visual diff QA: compare captured previews against the approved reference on silhouette, brightness, density, width, spacing, and motion path.
 - Delivery packaging: export a final manifest with approved previews, tuning recipe, fallback note, and risk note.
 - Learning loop: auto-summarize each shipped effect into a reusable case study and parameter recipe.
