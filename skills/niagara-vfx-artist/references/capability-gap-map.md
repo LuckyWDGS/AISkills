@@ -100,6 +100,17 @@ Why it matters:
 Current first-pass tool:
 - `tools/ue_write_helpers.py`
 
+Current higher-level assistant:
+- `tools/niagara_asset_assistant.py`
+
+What it adds:
+- dry-run-first Niagara mutation plans
+- template-first system creation
+- MI creation and parameter override setup
+- existing renderer material binding repair
+- generated UE Python apply scripts
+- optional `unreal-bridge` apply and readback verification
+
 ### 7. Visual Diff QA
 
 Needed:
@@ -149,7 +160,7 @@ Current first-pass tool:
 - Preview approval should eventually integrate side-by-side visual diff automatically at review time.
 - Asset planning should eventually understand project-specific naming conventions and existing reusable masters.
 - Integration planning should eventually read real skeleton/socket/notify context from the target project.
-- Write-side UE helpers should eventually cover richer Niagara authoring and safe retirement of stale assets.
+- Write-side UE helpers and the Niagara asset assistant should eventually cover richer emitter construction, renderer creation, user-parameter authoring, and safe retirement of stale assets.
 - Visual diff QA should eventually compare motion clips, not only still frames.
 - Delivery packaging should eventually pull final active assets directly from the project instead of relying on manual final lists.
 - Learning loop should eventually auto-build stronger case studies from shipped effects without manual curation.

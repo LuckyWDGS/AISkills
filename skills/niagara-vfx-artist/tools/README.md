@@ -8,6 +8,7 @@
 - `preview_approval.py`
 - `asset_plan.py`
 - `integration_plan.py`
+- `niagara_asset_assistant.py`
 - `ue_write_helpers.py`
 - `visual_diff_qa.py`
 - `delivery_package.py`

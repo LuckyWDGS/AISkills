@@ -109,6 +109,7 @@ Use this validation order instead:
    - `tools/integration_plan.py`
    - `tools/material_audit.py`
    - `tools/niagara_audit.py`
+   - `tools/niagara_asset_assistant.py`
    - `tools/ue_write_helpers.py`
    - `tools/controlled_preview.py`
    - `tools/visual_diff_qa.py`
@@ -174,6 +175,18 @@ The expectation is:
 - be able to read and explain the live setup you built
 - be able to tune it intentionally
 - be able to hand over an asset that is already usable, not just discussable
+
+For real Niagara asset creation or repair, prefer the mutation-plan workflow:
+
+1. Run or reuse `niagara_audit.py` and relevant material audits first.
+2. Generate a `niagara_asset_assistant.py` plan with `plan-template`, `repair-plan`, or `new-plan`.
+3. Review the JSON/Markdown operations and generated UE Python script in dry-run mode.
+4. Only use `apply-plan --apply` when the target project and assets are intentional.
+5. Use `--verify` to read the system back after writing and compare the live structure against the expected carrier route.
+
+Important boundary:
+- Template-first Niagara creation is the preferred safe path because it preserves valid emitter graphs and renderer setup.
+- Renderer material repair can patch an existing renderer slot; if `RendererProperties` is empty, treat that as a missing renderer/emitter construction problem, not a material-binding problem.
 
 ## Image Generation Bridge
 

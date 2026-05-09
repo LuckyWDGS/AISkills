@@ -92,6 +92,7 @@ Required capability:
 - Build emitter structure that matches the carrier route.
 - Verify source/receiver/event/data flow, renderer type, material binding, simulation space, bounds, lifetime, width, color, opacity, and spawn timing.
 - For trail effects, prove the trail is driven by motion or source points, not faked as an unrelated static card unless that is the approved route.
+- Use a reviewable mutation plan before writing real project assets, especially for template duplication, material instance creation, renderer binding repair, bounds, and warmup/scalability changes.
 
 Common gap:
 - Building emitters that exist but do not produce valid source events.
@@ -101,6 +102,7 @@ Common gap:
 Needed behavior:
 - Validate emitter roles and data flow before visual tuning.
 - Capture in a controlled runtime/preview setup only after structural validation.
+- If an audit shows empty `RendererProperties`, classify it as missing renderer construction instead of treating it as a simple material-binding fix.
 
 ### 7. Integration Hookup
 
@@ -164,6 +166,7 @@ These are the main gaps that would make the workflow more complete and less manu
 - Asset plan generator: derive the minimum texture/material/Niagara asset set, low-end variants, naming, and folder plan before implementation.
 - Integration hookup planner: write down socket/notify/Blueprint/GAS/Sequencer ownership, user parameters, trigger timing, and source transform contract.
 - Write-side UE helpers: create/duplicate/reset material and Niagara assets, apply EffectType/scalability/folder rules, and safely retire stale routes.
+- Niagara asset assistant: produce dry-run mutation plans, generate UE Python apply scripts, optionally execute through `unreal-bridge`, and read back the asset structure after writing.
 - Visual diff QA: compare captured previews against the approved reference on silhouette, brightness, density, width, spacing, and motion path.
 - Delivery packaging: export a final manifest with approved previews, tuning recipe, fallback note, and risk note.
 - Learning loop: auto-summarize each shipped effect into a reusable case study and parameter recipe.

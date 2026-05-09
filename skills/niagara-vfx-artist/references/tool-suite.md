@@ -63,6 +63,31 @@ Purpose:
 Purpose:
 - define notify / socket / owner / user-parameter hookup for runtime integration
 
+### `tools/niagara_asset_assistant.py`
+
+Purpose:
+- generate reviewable Niagara asset mutation plans
+- create systems from templates without losing valid emitter graphs
+- create and tune material instances for planned layers
+- repair existing renderer material bindings when a renderer slot is present
+- render the UE Python apply script in dry-run mode
+- optionally execute through `unreal-bridge` with `apply-plan --apply`
+- read the Niagara system back after writing with `--verify`
+
+Key commands:
+
+```powershell
+python tools/niagara_asset_assistant.py plan-template --effect WingEcho --template-system /Game/VFX/Templates/NS_RibbonTrail_Template --target-system /Game/VFX/WingEcho/NS_WingEcho_Assisted --material-parent /Game/VFX/Masters/MFX_RibbonTrail
+python tools/niagara_asset_assistant.py repair-plan --audit .codex/session/vfx-delivery/audits/niagara/.../niagara-audit.json --default-material /Game/VFX/WingEcho/MI_Ribbon
+python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --verify
+python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --verify --apply
+```
+
+Safety notes:
+- `apply-plan` is dry-run unless `--apply` is provided.
+- The generated UE Python script is saved beside the plan so it can be inspected before execution.
+- Material binding repair only patches an existing renderer `Material=` slot. If an emitter has empty `RendererProperties`, the assistant records the gap instead of pretending a material swap can fix it.
+
 ### `tools/ue_write_helpers.py`
 
 Purpose:
@@ -164,14 +189,15 @@ This keeps cached references, audits, previews, cleanup reports, and tuning logs
 8. `integration_plan.py`
 9. `material_audit.py`
 10. `niagara_audit.py`
-11. `ue_write_helpers.py`
-12. `visual_diff_qa.py`
-13. `design_compare_checklist.py`
-14. `parameter_tuning_log.py`
-15. `delivery_package.py`
-16. `learning_loop.py`
-17. `asset_cleanup.py`
+11. `niagara_asset_assistant.py`
+12. `ue_write_helpers.py`
+13. `visual_diff_qa.py`
+14. `design_compare_checklist.py`
+15. `parameter_tuning_log.py`
+16. `delivery_package.py`
+17. `learning_loop.py`
+18. `asset_cleanup.py`
 
 That order matches the closed loop:
 
-reference anchor -> acceptance gate -> visible evidence -> carrier-aware preview -> preview approval -> plan -> integration -> audit -> write-side implementation -> diff QA -> tuning -> delivery -> learning -> cleanup.
+reference anchor -> acceptance gate -> visible evidence -> carrier-aware preview -> preview approval -> plan -> integration -> audit -> mutation plan -> write-side implementation -> diff QA -> tuning -> delivery -> learning -> cleanup.
