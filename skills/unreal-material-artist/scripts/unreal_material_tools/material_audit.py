@@ -245,7 +245,7 @@ def render_markdown(material_path: str, report: dict[str, Any]) -> str:
 
 def command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, timeout_seconds=args.timeout)
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
     client.ping()
     raw = client.exec_json(build_ue_script(args.material_path, args.instruction_budget, args.sampler_budget))
     report = {
@@ -273,6 +273,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("material_path")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
+    parser.add_argument("--endpoint")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--instruction-budget", type=int, default=0)
     parser.add_argument("--sampler-budget", type=int, default=0)
@@ -287,3 +288,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

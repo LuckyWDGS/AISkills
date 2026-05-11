@@ -333,8 +333,8 @@
 - `references/platform-optimization.md`
   用于确定性能预算和平台约束
 
-- `references/material-recipes.md`
-  用于在定位材质问题后快速替换成成熟配方
+- `D:/Skills/skills/unreal-material-artist/references/material-recipes.md`
+  用于在定位到材质问题后交给 `unreal-material-artist` 替换或审查成熟配方
 
 - `references/core.md`
   用于回到整体设计思路，确认问题是不是从方案层面就不合理

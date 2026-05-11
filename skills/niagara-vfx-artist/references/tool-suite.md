@@ -128,15 +128,6 @@ python tools/visual_layer_map.py add-layer --effect WingEcho --name 翅膀声波
 python tools/visual_layer_map.py export-md --effect WingEcho
 ```
 
-### `tools/material_audit.py`
-
-Purpose:
-- read live material graph structure through Unreal Bridge
-- report output-connected chains
-- report dead branches
-- report stale MI overrides
-- report compile findings, instruction counts, and sampler counts
-
 ### `tools/niagara_audit.py`
 
 Purpose:
@@ -190,12 +181,11 @@ This keeps cached references, audits, previews, cleanup reports, and tuning logs
 6. `preview_approval.py`
 7. `asset_plan.py`
 8. `integration_plan.py`
-9. `material_audit.py`
-10. `niagara_audit.py`
-11. `niagara_asset_assistant.py`
-12. `ue_write_helpers.py`
-13. `visual_diff_qa.py`
-14. `design_compare_checklist.py`
+9. `niagara_audit.py`
+10. `niagara_asset_assistant.py`
+11. `ue_write_helpers.py`
+12. `visual_diff_qa.py`
+13. `design_compare_checklist.py`
 15. `parameter_tuning_log.py`
 16. `delivery_package.py`
 17. `learning_loop.py`
@@ -203,4 +193,6 @@ This keeps cached references, audits, previews, cleanup reports, and tuning logs
 
 That order matches the closed loop:
 
-reference anchor -> acceptance gate -> visible evidence -> carrier-aware preview -> preview approval -> plan -> integration -> audit -> mutation plan -> write-side implementation -> diff QA -> tuning -> delivery -> learning -> cleanup.
+reference anchor -> acceptance gate -> visible evidence -> carrier-aware preview -> preview approval -> plan -> integration -> Niagara audit -> mutation plan -> write-side implementation -> diff QA -> tuning -> delivery -> learning -> cleanup.
+
+Material graph auditing moved to `D:/Skills/skills/unreal-material-artist/tools/material_audit.py`; use it before Niagara tuning when renderer materials are part of the risk.

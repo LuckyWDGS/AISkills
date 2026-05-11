@@ -494,7 +494,7 @@
 
 再结合：
 - `references/common-effect-patterns.md`
-- `references/material-recipes.md`
+- `D:/Skills/skills/unreal-material-artist/references/material-recipes.md`
 - `references/niagara-fundamentals.md`
 
 把艺术方向进一步落成可执行的 Niagara 方案。

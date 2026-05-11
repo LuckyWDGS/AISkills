@@ -108,7 +108,7 @@
 - Static Switch：`SS_`
 
 建议直接参考：
-- `material-recipes.md`
+- `D:/Skills/skills/unreal-material-artist/references/material-recipes.md`
 - `asset-planning-checklist.md`
 
 ---

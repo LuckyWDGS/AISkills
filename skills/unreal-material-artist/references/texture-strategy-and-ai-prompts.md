@@ -1,4 +1,4 @@
-# Niagara 纹理策略、Flipbook、图集与 AI 提示词
+# UE 材质纹理策略、Flipbook、图集与 AI 提示词
 
 ## 用途
 
@@ -8,9 +8,9 @@
 - 要用单张图、Flipbook，还是图集随机格子
 - 哪些纹理适合外部 AI 生成
 - 给外部 AI 生成纹理时，提示词该怎么写
-- Niagara 里怎么正确接入这些纹理
+- UE 材质和 Niagara Renderer 里怎么正确接入这些纹理
 
-当需要实际出图时，默认加载并使用 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。本文件负责决定纹理策略和 prompt 内容，cm-imagegen 负责生成与迭代图片。除非用户明确索要提示词，否则最终只交付图片结果、保存路径、设置和 Niagara 接入建议。
+当需要实际出图时，默认加载并使用 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。本文件负责决定纹理策略和 prompt 内容，cm-imagegen 负责生成与迭代图片。如果已有设计图、参考图、已批准概念图或上一张选定输出，必须先缓存到本地，再把它作为 reference image 传入 cm-imagegen，用来锁定风格、结构、色彩和材质语言。对明显属于 Ribbon、Mesh Afterimage、Skeletal Mask 的层，先确认材质承载方式和运行时载体，再决定最终纹理长什么样。除非用户明确索要提示词，否则最终只交付图片结果、保存路径、设置和 UE 接入建议。
 
 ---
 
@@ -18,7 +18,7 @@
 
 1. 三种常见纹理方案
 2. 什么时候该用哪一种
-3. Niagara 接入方式
+3. UE / Niagara 接入方式
 4. 真实火把的纹理决策
 5. 火焰纹理 AI 提示词
 6. 余烬 / 火星纹理 AI 提示词
@@ -160,7 +160,7 @@ Niagara Sprite Renderer 支持：
 
 ---
 
-## 3. Niagara 接入方式
+## 3. UE / Niagara 接入方式
 
 ### Flipbook / SubUV 动画
 

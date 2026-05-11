@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unreal Material Artist"
+  short_description: "UE material authoring, auditing, HLSL, textures, and performance"
+  default_prompt: "Use $unreal-material-artist to design, generate, audit, optimize, or texture-plan Unreal Engine materials."

@@ -112,7 +112,7 @@
 
 使用：
 - `references/asset-planning-checklist.md`
-- `references/texture-strategy-and-ai-prompts.md`
+- `D:/Skills/skills/unreal-material-artist/references/texture-strategy-and-ai-prompts.md`
 
 这一步要产出：
 - 主纹理清单
@@ -143,7 +143,7 @@
 使用：
 - `references/implementation-presets.md`
 - `references/niagara-operations-and-workflows.md`
-- `references/material-recipes.md`
+- `D:/Skills/skills/unreal-material-artist/references/material-recipes.md`
 
 原则：
 - 先主层

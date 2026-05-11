@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from vfx_delivery.material_audit import main
+from unreal_material_tools.material_audit import main
 
 
 if __name__ == "__main__":

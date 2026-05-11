@@ -69,7 +69,7 @@
 
 ### 关键材质方向
 
-- 核心层：`material-recipes.md` 中的爆炸火球核心
+- 核心层：交给 `unreal-material-artist` 参考爆炸火球核心材质配方
 - 冲击层：圆环冲击波材质
 - 烟雾层：基础烟雾材质
 
@@ -642,7 +642,7 @@
 ## 使用建议
 
 实际回答时，可以先从这份模板里找最近的一类效果，再补上：
-- `references/material-recipes.md` 的材质实现
+- `unreal-material-artist` 的材质实现或材质合同
 - `references/platform-optimization.md` 的平台约束
 - `references/debugging.md` 的风险和排错方式
 

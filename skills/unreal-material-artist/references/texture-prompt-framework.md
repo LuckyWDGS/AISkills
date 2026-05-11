@@ -9,7 +9,9 @@
 - 需要判断某类纹理适不适合 AI 生成
 - 需要统一纹理生成输入格式
 
-默认出图工具是 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。当用户需要实际生成纹理、mask、atlas、flipbook 草图或风格参考时，先按本文件判断纹理类型与硬性要求，再用 cm-imagegen 完成图片生成。除非用户明确索要提示词，否则不要把 prompt 当作最终输出展示。
+默认出图工具是 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。当用户需要实际生成纹理、mask、atlas、flipbook 草图或风格参考时，先按本文件判断纹理类型与硬性要求，再用 cm-imagegen 完成图片生成。如果当前任务已有设计图、参考图、已批准概念图或上一张选定输出，必须先缓存到本地，再用 cm-imagegen 的 edit/reference-image 路线把该图作为锚点传入，不能只靠文字 prompt 重生成。除非用户明确索要提示词，否则不要把 prompt 当作最终输出展示。
+
+参考图清晰度优先级很高。生成纹理时不要把多个关键局部缩小拼成一张 reference pack 后当主要锚点；这会让模型误读材质细节和层级关系。优先使用完整设计图 + 单独高清局部裁切作为多个 `--image` 输入。小裁切应先在 `hq-crops/` 中保存清晰放大版本，最多做轻锐化，不要重绘细节。只有在工具不支持多图或链路稳定性被证明无法承受多图时，才使用拼图 reference pack，并在记录中标明这是 fallback。
 
 ---
 

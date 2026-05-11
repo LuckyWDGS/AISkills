@@ -14,7 +14,6 @@
 - `delivery_package.py`
 - `learning_loop.py`
 - `visual_layer_map.py`
-- `material_audit.py`
 - `niagara_audit.py`
 - `controlled_preview.py`
 - `design_compare_checklist.py`
@@ -22,3 +21,4 @@
 - `parameter_tuning_log.py`
 
 Each CLI bootstraps the shared implementation from `scripts/vfx_delivery/`.
+Material auditing now lives in `D:/Skills/skills/unreal-material-artist/tools/material_audit.py`.

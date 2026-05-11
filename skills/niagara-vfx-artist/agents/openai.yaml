@@ -1,9 +1,9 @@
 interface:
   display_name: "Niagara VFX Artist"
-  short_description: "UE Niagara VFX, cm-imagegen concepts, and optimization"
+  short_description: "UE Niagara systems, emitters, renderers, integration, and QA"
   icon_small: "./assets/niagara-vfx-artist-small.png"
   icon_large: "./assets/niagara-vfx-artist.png"
-  default_prompt: "Use $niagara-vfx-artist to design, generate concept references for, or analyze an Unreal Engine Niagara effect from a brief or reference image."
+  default_prompt: "Use $niagara-vfx-artist to design, implement, validate, or optimize an Unreal Engine Niagara effect from a brief, reference image, or existing asset."
 
 policy:
   allow_implicit_invocation: true
