@@ -48,7 +48,10 @@ Default team model:
 9. Check domain, blend, shading model, and render contract for non-standard materials.
    For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Run `tools/material_domain_audit.py` when UnrealBridge is available.
 
-10. Report tradeoffs clearly.
+10. Use case studies for external references.
+   When matching an online material tutorial or reference, read [references/material-case-study-playbook.md](references/material-case-study-playbook.md). Extract the source contract, build a minimal UE reproduction, audit/read back the asset, preview on the closest carrier, then record whether mismatches are structural, visual, texture, carrier, or engine-version issues.
+
+11. Report tradeoffs clearly.
    Explain the material output chain, material contract, required material inputs, performance risks, required textures, import settings, platform fallback, and any unresolved visual gap.
 
 ## Hard Rules
@@ -183,6 +186,9 @@ Current preview carrier note:
 
 - [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md)
   Use when auditing `Material Domain`, `Blend Mode`, output pins, post process, UI, decal, light-function, volume, RVT, WPO/PDO, or whether a material is in the wrong render path.
+
+- [references/material-case-study-playbook.md](references/material-case-study-playbook.md)
+  Use when learning from online material examples, matching a reference material, creating UE reproductions, comparing audit/preview results to the source, and promoting reusable lessons.
 
 - [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md)
   Use for Substrate, Material Layers, Material Attributes, layered master materials, layer masks, BSDF layering, and layer-stack cost review.

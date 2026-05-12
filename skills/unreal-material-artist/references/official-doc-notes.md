@@ -22,7 +22,11 @@ Use these notes as source-backed anchors, then verify details against the curren
 - Material Parameter Collections: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-material-parameter-collections-in-unreal-engine?application_version=5.6
 - Post Process Materials legacy English page: https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-materials?application_version=4.27
 - Post Process Effects: https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-effects-in-unreal-engine?application_version=5.6
+- Shading Models: https://dev.epicgames.com/documentation/en-us/unreal-engine/shading-models-in-unreal-engine
+- Using Light Functions: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-light-functions-in-unreal-engine
 - Light Functions legacy English page: https://dev.epicgames.com/documentation/en-us/unreal-engine/light-functions?application_version=4.27
+- Epic Wiki Two-Sided Foliage Material: https://michaeljcole.github.io/wiki.unrealengine.com/Two-Sided_Foliage_Material/
+- Epic clear coat tech blog: https://www.unrealengine.com/tech-blog/improved-shading-models-in-unreal-engine-4-25-and-beyond?lang=en-US
 - Niagara Mesh Material Override API: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/Niagara/FNiagaraMeshMaterialOverride
 - Niagara Renderer MID behavior: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/Niagara/UNiagaraRendererProperties/NeedsMIDsForMaterials
 
@@ -40,6 +44,8 @@ Use these notes as source-backed anchors, then verify details against the curren
 - Material Parameter Collections are global scalar/vector stores referenced by materials; use them for scene/level/global state, not actor-specific or per-particle variation.
 - Post Process Materials should use the Post Process domain and usually output through Emissive Color. Scene data is read with SceneTexture/PostProcessInput routes, and Blendable Location affects precision, timing, and cost.
 - Light Functions are materials that filter light intensity. They do not directly change light color, do not work on static lights, and have forward-rendering caveats, so keep them simple and intentional.
+- The two-sided foliage tutorial's key contract is `Masked` + `TwoSidedFoliage` + `Two Sided`, with diffuse alpha/opacity, Subsurface Color, Specular, and Roughness exposed for instances.
+- Epic's clear coat writeup states that setting the Clear Coat shading model enables Clear Coat and Clear Coat Roughness inputs. In bridge output names, audit these as `CustomData0` and `CustomData1`.
 - Texture properties matter to shader correctness and cost: sRGB, compression, mip generation, LOD group, filter mode, virtual texture streaming, and power-of-two assumptions can change how a material looks and performs.
 - Shader Complexity view modes are helpful but incomplete. Epic's docs note that Shader Complexity is based on instruction count and does not always reflect texture sample cost equally, so a material with fewer instructions can still be slower if it adds expensive sampling or bandwidth pressure.
 - Material Editor Stats, Platform Stats, and generated HLSL views are useful review surfaces. Platform Stats may need external compiler setup for Android, so bridge/tool reports should note when platform stats are unavailable rather than pretending the material was fully benchmarked.
