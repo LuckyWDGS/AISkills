@@ -56,9 +56,60 @@ def build_ue_script(material_path: str) -> str:
                 "dst_property_name": connection.dst_property_name,
             }}
 
+        def enum_token(value):
+            text = str(value)
+            if "." in text and ":" in text:
+                return text.split(".")[-1].split(":")[0]
+            return text
+
+        def map_domain(value):
+            return {{
+                "MD_SURFACE": "Surface",
+                "MD_DEFERRED_DECAL": "DeferredDecal",
+                "MD_LIGHT_FUNCTION": "LightFunction",
+                "MD_VOLUME": "Volume",
+                "MD_POST_PROCESS": "PostProcess",
+                "MD_UI": "UI",
+                "MD_RUNTIME_VIRTUAL_TEXTURE": "RuntimeVirtualTexture",
+            }}.get(enum_token(value), enum_token(value))
+
+        def map_blend(value):
+            return {{
+                "BLEND_OPAQUE": "Opaque",
+                "BLEND_MASKED": "Masked",
+                "BLEND_TRANSLUCENT": "Translucent",
+                "BLEND_ADDITIVE": "Additive",
+                "BLEND_MODULATE": "Modulate",
+                "BLEND_ALPHA_COMPOSITE": "AlphaComposite",
+                "BLEND_ALPHA_HOLDOUT": "AlphaHoldout",
+            }}.get(enum_token(value), enum_token(value))
+
+        def read_raw_editor_info(path, bridge_info):
+            raw = {{}}
+            try:
+                asset_path = path.split(".")[0]
+                asset = unreal.EditorAssetLibrary.load_asset(asset_path)
+                base = asset
+                try:
+                    if bridge_info.is_material_instance and bridge_info.base_path:
+                        base = unreal.EditorAssetLibrary.load_asset(bridge_info.base_path.split(".")[0])
+                    elif hasattr(asset, "get_base_material"):
+                        base = asset.get_base_material() or asset
+                except Exception:
+                    base = asset
+                if base:
+                    raw["material_domain"] = map_domain(base.get_editor_property("material_domain"))
+                    raw["blend_mode"] = map_blend(base.get_editor_property("blend_mode"))
+                    raw["two_sided"] = bool(base.get_editor_property("two_sided"))
+                    raw["use_material_attributes"] = bool(base.get_editor_property("use_material_attributes"))
+            except Exception as exc:
+                raw["error"] = str(exc)
+            return raw
+
         info = MAT.get_material_info({material_path!r})
         graph = MAT.get_material_graph({material_path!r})
         analysis = MAT.analyze_material({material_path!r}, 0, 0)
+        raw_editor_info = read_raw_editor_info({material_path!r}, info)
 
         payload = {{
             "material_info": {{
@@ -100,6 +151,7 @@ def build_ue_script(material_path: str) -> str:
                 "compile_errors": list(analysis.compile_errors),
                 "shader_stats_ready": analysis.shader_stats_ready,
             }},
+            "raw_editor_info": raw_editor_info,
         }}
         print(json.dumps(payload, ensure_ascii=False))
         """
@@ -215,6 +267,7 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
     info = raw["material_info"]
     graph = raw["graph"]
     analysis = raw["analysis"]
+    raw_editor_info = raw.get("raw_editor_info") or {}
     nodes = graph.get("nodes") or []
     props = _output_properties(graph)
     counters = _node_counters(nodes)
@@ -222,8 +275,34 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
 
     domain = _norm(info.get("material_domain"))
     blend = _norm(info.get("blend_mode"))
+    bridge_domain = domain
+    bridge_blend = blend
+    raw_domain = _norm(raw_editor_info.get("material_domain"))
+    raw_blend = _norm(raw_editor_info.get("blend_mode"))
+    if raw_domain and raw_domain != domain:
+        domain = raw_domain
+        _add(
+            findings,
+            "warning",
+            "bridge_domain_mismatch",
+            "Bridge material info domain differs from raw editor property.",
+            evidence=f"bridge={bridge_domain} raw={raw_domain}",
+            recommendation="Treat raw editor property as ground truth and verify UnrealBridge get_material_info.",
+        )
+    if raw_blend and raw_blend != blend:
+        blend = raw_blend
+        _add(
+            findings,
+            "warning",
+            "bridge_blend_mismatch",
+            "Bridge material info blend mode differs from raw editor property.",
+            evidence=f"bridge={bridge_blend} raw={raw_blend}",
+            recommendation="Treat raw editor property as ground truth and verify UnrealBridge get_material_info.",
+        )
     shading_models = [_norm(item) for item in info.get("shading_models") or [] if _norm(item)]
     use_attrs = bool(info.get("use_material_attributes"))
+    if isinstance(raw_editor_info.get("use_material_attributes"), bool):
+        use_attrs = bool(raw_editor_info["use_material_attributes"])
     usage_flags = set(info.get("usage_flags") or [])
     props_lower = {_prop_key(prop) for prop in props}
     node_blob = counters["text_blob"]
@@ -553,12 +632,15 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
         "tool": "material_domain_audit",
         "material_path": raw.get("material_info", {}).get("path") or "",
         "material_info": info,
+        "raw_editor_info": raw_editor_info,
         "analysis": analysis,
         "domain_contract": {
             "domain": domain,
             "blend_mode": blend,
+            "bridge_domain": bridge_domain,
+            "bridge_blend_mode": bridge_blend,
             "shading_models": shading_models,
-            "two_sided": bool(info.get("two_sided")),
+            "two_sided": bool(raw_editor_info.get("two_sided", info.get("two_sided"))),
             "use_material_attributes": use_attrs,
             "usage_flags": sorted(usage_flags),
             "wired_outputs": sorted(props),
