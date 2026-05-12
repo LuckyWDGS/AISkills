@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "updated_utc": "2026-05-12T01:12:36+00:00",
+  "stages": [
+    "approved",
+    "candidates",
+    "rejected"
+  ],
+  "categories": [
+    "noise",
+    "mask",
+    "distortion",
+    "flipbook",
+    "atlas",
+    "ramp",
+    "packed",
+    "surface",
+    "decal",
+    "other"
+  ],
+  "assets": []
+}

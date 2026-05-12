@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "defaults": {
+    "sprite": "niagara_sprite_basic",
+    "ribbon": "niagara_ribbon_trail",
+    "decal": "decal_surface_basic",
+    "post_process": "post_process_basic"
+  },
+  "presets": {
+    "niagara_sprite_basic": {
+      "carrier": "sprite",
+      "preview_route": "niagara",
+      "template_system": "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem",
+      "usage_flags_required": ["NiagaraSprites"],
+      "subuv_grid": null,
+      "dynamic_parameters": ["ParticleColor", "DynamicParameter"],
+      "semantic_bindings": {
+        "ParticleColor": {
+          "renderer_binding_name": "ColorBinding",
+          "expected_attribute": "Particles.Color"
+        },
+        "DynamicParameter": {
+          "renderer_binding_name": "DynamicMaterialBinding",
+          "expected_attribute": "Particles.DynamicMaterialParameter"
+        }
+      },
+      "renderer_contract": {
+        "renderer_class_contains": ["Sprite"],
+        "material_binding_required": true,
+        "subuv_required": false
+      },
+      "system_contract": {
+        "verify_real_system": true,
+        "expected_renderer_classes": ["Sprite"],
+        "expected_material_binding_required": true
+        ,
+        "expected_renderer_bindings_any": ["color_binding", "dynamic_material_binding"],
+        "expected_renderer_binding_text_any": ["Particles.Color", "Particles.DynamicMaterialParameter"]
+      },
+      "notes": "Default Niagara sprite preview for general additive/translucent sprite materials."
+    },
+    "niagara_sprite_subuv_4x4": {
+      "carrier": "sprite",
+      "preview_route": "niagara",
+      "template_system": "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem",
+      "usage_flags_required": ["NiagaraSprites"],
+      "subuv_grid": "4x4",
+      "dynamic_parameters": ["ParticleColor", "DynamicParameter", "SubImageIndex"],
+      "semantic_bindings": {
+        "ParticleColor": {
+          "renderer_binding_name": "ColorBinding",
+          "expected_attribute": "Particles.Color"
+        },
+        "DynamicParameter": {
+          "renderer_binding_name": "DynamicMaterialBinding",
+          "expected_attribute": "Particles.DynamicMaterialParameter"
+        },
+        "SubImageIndex": {
+          "renderer_binding_name": "SubImageIndexBinding",
+          "expected_attribute": "Particles.SubImageIndex"
+        }
+      },
+      "renderer_contract": {
+        "renderer_class_contains": ["Sprite"],
+        "material_binding_required": true,
+        "subuv_required": true
+      },
+      "system_contract": {
+        "verify_real_system": true,
+        "expected_renderer_classes": ["Sprite"],
+        "expected_material_binding_required": true,
+        "subuv_required": true,
+        "expected_renderer_bindings_any": ["sub_image_index_binding", "color_binding", "dynamic_material_binding"],
+        "expected_renderer_binding_text_any": ["Particles.SubImageIndex", "Particles.Color", "Particles.DynamicMaterialParameter"]
+      },
+      "notes": "Sprite preview preset for 4x4 SubUV atlas materials."
+    },
+    "niagara_sprite_subuv_8x8": {
+      "carrier": "sprite",
+      "preview_route": "niagara",
+      "template_system": "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem",
+      "usage_flags_required": ["NiagaraSprites"],
+      "subuv_grid": "8x8",
+      "dynamic_parameters": ["ParticleColor", "DynamicParameter", "SubImageIndex"],
+      "semantic_bindings": {
+        "ParticleColor": {
+          "renderer_binding_name": "ColorBinding",
+          "expected_attribute": "Particles.Color"
+        },
+        "DynamicParameter": {
+          "renderer_binding_name": "DynamicMaterialBinding",
+          "expected_attribute": "Particles.DynamicMaterialParameter"
+        },
+        "SubImageIndex": {
+          "renderer_binding_name": "SubImageIndexBinding",
+          "expected_attribute": "Particles.SubImageIndex"
+        }
+      },
+      "renderer_contract": {
+        "renderer_class_contains": ["Sprite"],
+        "material_binding_required": true,
+        "subuv_required": true
+      },
+      "system_contract": {
+        "verify_real_system": true,
+        "expected_renderer_classes": ["Sprite"],
+        "expected_material_binding_required": true,
+        "subuv_required": true,
+        "expected_renderer_bindings_any": ["sub_image_index_binding", "color_binding", "dynamic_material_binding"],
+        "expected_renderer_binding_text_any": ["Particles.SubImageIndex", "Particles.Color", "Particles.DynamicMaterialParameter"]
+      },
+      "notes": "Sprite preview preset for 8x8 SubUV atlas materials."
+    },
+    "niagara_ribbon_trail": {
+      "carrier": "ribbon",
+      "preview_route": "niagara",
+      "template_system": "/Niagara/DefaultAssets/Templates/Systems/AttributeReaderTrails.AttributeReaderTrails",
+      "emitter_name_hint": "Followers",
+      "usage_flags_required": ["NiagaraRibbons"],
+      "ribbon_uv_mode": "U along ribbon length, V across width",
+      "dynamic_parameters": ["ParticleColor", "DynamicParameter", "RibbonWidth"],
+      "semantic_bindings": {
+        "ParticleColor": {
+          "renderer_binding_name": "ColorBinding",
+          "expected_attribute": "Particles.Color"
+        },
+        "DynamicParameter": {
+          "renderer_binding_name": "DynamicMaterialBinding",
+          "expected_attribute": "Particles.DynamicMaterialParameter"
+        },
+        "RibbonWidth": {
+          "renderer_binding_name": "RibbonWidthBinding",
+          "expected_attribute": "Particles.RibbonWidth"
+        }
+      },
+      "renderer_contract": {
+        "renderer_class_contains": ["Ribbon"],
+        "material_binding_required": true,
+        "subuv_required": false
+      },
+      "system_contract": {
+        "verify_real_system": true,
+        "expected_renderer_classes": ["Ribbon"],
+        "expected_material_binding_required": true,
+        "expected_emitter_name_hint": "Followers",
+        "expected_functions_any": ["SpawnParticlesFromOtherEmitter", "SampleParticlesFromOtherEmitter"],
+        "expected_data_interfaces_any": ["ParticleRead"],
+        "expected_dynamic_bindings_any": ["ParticleColor", "DynamicParameter", "RibbonWidth"],
+        "expected_renderer_bindings_any": ["material", "renderer_class"],
+        "expected_renderer_binding_text_any": ["Particles.Color", "Particles.DynamicMaterialParameter", "Ribbon"]
+      },
+      "notes": "Trail-oriented Niagara ribbon preview using AttributeReaderTrails and a dedicated follower emitter."
+    },
+    "decal_surface_basic": {
+      "carrier": "decal",
+      "preview_route": "world_harness",
+      "usage_flags_required": ["DeferredDecal"],
+      "notes": "Temporary wall plus DecalActor preview for deferred decal materials."
+    },
+    "post_process_basic": {
+      "carrier": "post_process",
+      "preview_route": "world_harness",
+      "usage_flags_required": [],
+      "notes": "Temporary post-process volume plus neutral geometry preview."
+    }
+  }
+}
