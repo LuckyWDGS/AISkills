@@ -8,14 +8,14 @@
 
 ## Image Generation Strategy
 
-Start from the material contract, not from a pretty prompt.
+Start from the material contract and the target look, not from a pretty prompt or a cheap stock substitute.
 
 Define:
 
 - carrier: sprite, ribbon, mesh, decal, UI, surface, post process
 - texture role: sprite, mask, flipbook, atlas, ramp, noise, flow, normal, packed channels
 - runtime use: alpha, emissive shape, UV distortion, color ramp, random variant, SubUV animation, surface detail
-- target platform and budget
+- target platform and budget after the target look is understood
 - desired import settings
 - whether a reference image or approved concept must anchor the generation
 
@@ -24,6 +24,8 @@ If a design/reference image exists, use it as an image reference through `cm-ima
 Before generating, search the reusable material asset library. If an `approved` asset already fits the need closely enough, reuse it instead of generating a new one. For custom/reference-driven materials, "fits" means it matches the visual reference and the technical role, not just the category name.
 
 When reproducing an online material case, missing textures are a production input gap, not a reason to stop at a constant-color placeholder. Use `cm-imagegen` by default after the library search fails, then record the output as `candidates` or `rejected` instead of promoting it straight to stock.
+
+Do not let texture size or stock availability decide the look before the look is proven. Generate or build the texture that matches the reference first, preferably at a safe power-of-two working size. After preview, downsize, repack, compress, or make LOD/fallback variants only if the important silhouette, edge quality, pattern language, and motion still survive.
 
 ## Reference-Driven Generation Gate
 
@@ -112,6 +114,7 @@ Before importing to UE:
 - Compression matches role: Masks for data masks, Normalmap for normals, HDR only if truly needed.
 - Placeholder/default textures must obey the same rule as final textures. A mask/packed/ORM slot cannot safely default to an ordinary color sRGB white texture; use or create a role-correct default such as `TC_Masks` with `sRGB=false`.
 - Texture is not larger than the visual value justifies.
+- Texture downsizing or compression has not destroyed the visual identity that made the material match the reference.
 - Generated black-background masks without alpha are acceptable only when the material explicitly samples luminance/R as the mask; otherwise regenerate or extract a real alpha channel before import.
 - For reference-driven work, the texture preserves the reference's style, pattern scale, value range, color logic, and edge language; technically valid but visually generic assets are not final.
 - Mips will not destroy tiny linework, rune strokes, or thin lightning branches.

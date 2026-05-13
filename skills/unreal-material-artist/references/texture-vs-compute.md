@@ -8,6 +8,8 @@
 
 ## Decision Rule
 
+Effect fidelity comes first. For custom or reference-driven materials, choose the route that matches the target look first, then optimize that route. Do not choose a cheaper texture or cheaper procedural approximation if it changes the material identity.
+
 Use textures when the visual information is detailed, organic, reusable, high frequency, or expensive to regenerate per pixel.
 
 Use computation when the visual information is simple, low frequency, strongly parameterized, resolution independent, or cheaper than fetching texture memory.
@@ -53,6 +55,8 @@ Do not compare only sampler count either. A material with one sampler can still 
 
 ## Performance Review
 
+Run this after the look is close enough to judge. Before that, cost estimates should be warnings and design constraints, not a reason to quietly lower the requested visual target.
+
 Evaluate:
 
 - `TextureSample` count and sampler state.
@@ -71,6 +75,8 @@ Typical VFX starting budgets:
 - Android richer VFX material: 50-80 instructions, 1-3 samples only with controlled overdraw.
 
 Treat these as first-pass guardrails, not universal truth. A full-screen translucent material at 60 instructions can be worse than a tiny spark material at 180.
+
+If the first visually correct version exceeds a budget, prefer optimizations that preserve the look: channel pack masks, shrink non-dominant helper maps, bake stable expensive math, share samplers, split optional layers behind switches, reduce off-camera/LOD variants, or add platform-specific instances. Only reduce the visible style, silhouette, motion, lighting model, or blend mode when it is explicitly documented as a visual tradeoff.
 
 Special-case budgets:
 

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Read the live material, understand what actually affects the output, identify cost and cleanup risks, then verify the visual result.
+Read the live material, understand what actually affects the output, verify the visual result, then identify cost and cleanup risks without weakening the approved look.
 
 ## Audit Order
 
@@ -33,6 +33,9 @@ Read the live material, understand what actually affects the output, identify co
 
 8. Verify.
    Use compile results, material preview, controlled capture, or in-level capture. Do not accept a material based only on editor UI graph screenshots.
+
+9. Optimize from the verified look.
+   Once the effect reads correctly, classify cost issues into no-look-change fixes, acceptable prototype risks, and visual tradeoffs. Apply no-look-change fixes first. Do not replace the target look with a cheaper approximation unless the user or lead accepts that visible change.
 
 ## CLI
 
@@ -80,6 +83,13 @@ Treat these as tuning risks:
 - Flow map or packed mask is AI-generated but unvalidated.
 - Parameter names describe node history instead of user intent.
 
+Treat these as visual-regression risks:
+
+- Replacing a reference-specific mask, foam pattern, leaf cutout, rune shape, water ripple language, or painterly texture with generic noise because it is cheaper.
+- Lowering texture size until the important silhouette, brushwork, thin lines, edge breakup, or alpha shape no longer matches the target.
+- Removing a layer, motion path, refraction, translucency, subsurface, clear coat, WPO, or special shading model before proving an equivalent lower-cost route.
+- Passing shader budget while the preview no longer matches the material contract.
+
 ## Acceptance Criteria
 
 A production material should have:
@@ -92,3 +102,4 @@ A production material should have:
 - Known texture requirements and import settings.
 - Platform-appropriate instruction and sampler cost.
 - Preview or runtime capture checked in the intended visual context.
+- Visual target confirmed before final performance optimization, with any visible simplification labeled as a tradeoff variant rather than the default result.

@@ -13,8 +13,8 @@ The goal is not to copy a graph blindly. The goal is to extract the material con
    Convert tutorial steps into a checklist:
    `domain`, `blend`, `shading`, `two_sided`, `outputs`, `texture channels`, `parameters`, `carrier`, `platform risk`.
 
-3. Build a minimal UE reproduction.
-   Use a temporary path such as `/Game/CodexTemp/MaterialCaseStudies/M_Case_*`. Keep it minimal first, then add texture/visual fidelity only after the contract is clean.
+3. Build a truthful UE reproduction.
+   Use a temporary path such as `/Game/CodexTemp/MaterialCaseStudies/M_Case_*`. Start minimal only to prove the graph contract, then keep going until the preview has the required texture, carrier, lighting, and visual identity. A contract-only material is a structural checkpoint, not the finished case study.
 
 4. Resolve required texture and carrier gaps.
    If the source depends on diffuse/alpha, leaf cards, masks, normals, flow, packed channels, atlases, or a specific preview carrier, search the reusable asset library before calling the result a visual mismatch. For custom/reference-driven cases, reuse only assets that pass the reference-fidelity gate; generic category matches may be helper-only or rejected. If no approved asset fits, generate with `cm-imagegen`; use the user's reference image as image input when available. QA generated textures with `texture_asset_report.py`, import/audit/fix them when they enter UE, and regenerate rejected candidates instead of accepting placeholders.
@@ -23,7 +23,7 @@ The goal is not to copy a graph blindly. The goal is to extract the material con
    Do not trust the create call. Read `get_material_info`, `get_material_graph`, and raw editor properties for `MaterialDomain`, `BlendMode`, `ShadingModel`, `TwoSided`, and `UseMaterialAttributes`.
 
 6. Audit and preview.
-   Run `material_domain_audit.py` first, then `material_audit.py`, then preview on the closest available carrier. Use shader complexity where relevant.
+   Run `material_domain_audit.py` first, then `material_audit.py`, then preview on the closest available carrier. Use shader complexity where relevant after the look is established; performance findings should guide preservation-first optimization, not justify an unfinished placeholder.
 
 7. Compare to the source.
    Check structural match first, then visual match:
@@ -33,7 +33,10 @@ The goal is not to copy a graph blindly. The goal is to extract the material con
 8. Fix mismatches by cause.
    Do not average your graph toward the screenshot. Identify the missing contract item.
 
-9. Promote the lesson.
+9. Optimize without erasing the lesson.
+   If the visually faithful version is expensive, keep it as the fidelity baseline. Produce cheaper variants only by documenting what changed, whether the preview still matches, and which tradeoffs the user or project lead must approve.
+
+10. Promote the lesson.
    Add a short rule to this skill only when it generalizes beyond the one case.
 
 ## Mismatch Categories
@@ -230,6 +233,8 @@ Fire case:
 - Keep a difference log: source expectation, UE readback, audit finding, visual mismatch, fix.
 - If the source uses a texture, do not claim visual equivalence from a constant-color placeholder.
 - If the source depends on a carrier, use that carrier or explicitly mark the preview as only a structural material check.
+- Do not stop at the cheapest structurally valid version when the source/reference depends on texture identity, motion, lighting model, or carrier shape.
+- Performance optimization comes after the case visually matches closely enough to evaluate; cheaper variants need a mismatch/tradeoff note.
 - If no approved library asset exists for a needed texture, default to `cm-imagegen`, run `texture_asset_report.py`, import/fix UE settings if used, and register the stored result as `candidates` or `rejected` before reuse.
 - Candidate assets are not stock. Promote only after self-review, first-pass reports, and any role-specific visual/technical checks pass on the library-stored copy.
 - For custom/reference-driven cases, asset reuse must not lower visual fidelity. A library asset must match the reference style and technical role, or be documented as a non-dominant helper only.

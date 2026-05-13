@@ -7,9 +7,9 @@ description: Use when Codex needs a Material/Shader Specialist for Unreal Engine
 
 ## Overview
 
-Use this skill as the Material/Shader Specialist for production-facing Unreal Engine material work: turn a visual target into a usable material, read and critique existing graphs, decide when textures beat pure math, generate needed texture assets, write or review HLSL, and validate performance before calling the asset done.
+Use this skill as the Material/Shader Specialist for production-facing Unreal Engine material work: turn a visual target into a usable material, read and critique existing graphs, decide when textures beat pure math, generate needed texture assets, write or review HLSL, and validate performance after the target look is proven.
 
-Treat material work as both art direction and engineering. A material is not finished just because it compiles; it must read correctly in context, expose useful controls, avoid dead graph branches, and fit the target platform.
+Treat material work as both art direction and engineering. Default to effect fidelity first: build the intended look before optimizing it. A material is not finished just because it compiles or fits a budget; it must read correctly in context, expose useful controls, avoid dead graph branches, then be optimized as much as possible without breaking the confirmed look.
 
 Default team model:
 
@@ -22,42 +22,51 @@ Default team model:
 ## Core Workflow
 
 1. Capture the material target.
-   Identify domain, carrier, target platform, camera distance, blend mode expectations, lighting model, texture availability, runtime controls, and whether the material is for mesh, sprite, ribbon, decal, UI, post process, landscape, or surface shading. If the user provides a reference image, online example, approved concept, or asks for a custom material, treat that visual target as the source of truth and record the style/fidelity contract before choosing reusable assets.
+   Identify domain, carrier, target platform, camera distance, blend mode expectations, lighting model, texture availability, runtime controls, and whether the material is for mesh, sprite, ribbon, decal, UI, post process, landscape, or surface shading. If the user provides a reference image, online example, approved concept, or asks for a custom material, treat that visual target as the source of truth and record the style/fidelity contract before choosing reusable assets or performance shortcuts.
 
-2. Create or request a material contract for effect work.
+2. Build the visual target first.
+   Make the first usable material version prioritize the requested effect, reference fidelity, motion/readability, texture identity, and carrier match. Do not downgrade a custom look just because an early budget estimate looks high. Only simplify before the first visual pass when the requested route is technically impossible, unsafe, or clearly incompatible with the material domain.
+
+3. Create or request a material contract for effect work.
    For Niagara/VFX layers, record renderer carrier, UV expectations, Particle Color, Dynamic Parameters, texture channels, blend mode, sorting risk, and platform budget before graph work. Use [references/material-contract-and-tooling.md](references/material-contract-and-tooling.md) and `tools/material_contract.py`.
 
-3. Read before writing.
+4. Read before writing.
    For existing assets, inspect `MaterialInfo`, graph outputs, expression nodes, parameter lists, Material Instance override chains, compile errors, instruction counts, sampler counts, and stale overrides before editing or tuning.
 
-4. Choose texture versus computation deliberately.
+5. Choose texture versus computation deliberately.
    Use [references/texture-vs-compute.md](references/texture-vs-compute.md) when the material might use procedural noise, masks, flow, distance fields, flipbooks, atlases, or baked lookup textures.
 
-5. Search the reusable asset library before generating.
+6. Search the reusable asset library before generating.
    Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search`. Reuse `approved` assets first only when they pass the material contract and reference-fidelity gate. In reference-driven or custom work, library assets are candidates, not authority: reject generic/simple matches that would change the intended style, scale, pattern language, color, motion, alpha shape, or material identity. Only generate a new texture when the library does not already have a suitable reviewed asset.
 
-6. Build the material route.
+7. Build the material route.
    Prefer clear graph nodes for ordinary math and engine-tracked texture samples. Use Custom HLSL only when it meaningfully improves fidelity, reduces graph complexity, or implements math that nodes cannot express cleanly.
 
-7. Plan, generate, and QA textures when needed.
+8. Plan, generate, and QA textures when needed.
    Read [references/texture-strategy-and-ai-prompts.md](references/texture-strategy-and-ai-prompts.md), [references/texture-prompt-framework.md](references/texture-prompt-framework.md), and [references/generated-texture-qa.md](references/generated-texture-qa.md). Use `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md` for actual image generation, then run `tools/texture_asset_report.py` before treating generated files as UE-ready. If a generated asset passes review and looks reusable, register it into the library. If it fails review, reject or regenerate it instead of silently keeping it as future stock.
    For foliage or vegetation cards, missing leaf diffuse/alpha or a believable leaf-card carrier is an asset gap to resolve, not just a visual caveat: search the `foliage` library category first; if no approved asset fits, use `cm-imagegen` from the user's reference image when available, QA with `--role foliage`, import/audit/fix settings, then preview on a masked two-sided card.
 
-8. Audit and self-review.
-   Use structural checks first, then controlled previews or in-level captures. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the review loop and CLI tool. Use `tools/material_preview.py` for repeatable mesh, shaderball, complexity, parameter sweep, and carrier previews. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
+9. Audit and self-review.
+   Use structural checks first, then controlled previews or in-level captures. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the review loop and CLI tool. Treat performance findings as evidence and triage, not automatic permission to lower the look. Use `tools/material_preview.py` for repeatable mesh, shaderball, complexity, parameter sweep, and carrier previews. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
 
-9. Check domain, blend, shading model, and render contract for non-standard materials.
+10. Check domain, blend, shading model, and render contract for non-standard materials.
    For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Run `tools/material_domain_audit.py` when UnrealBridge is available.
 
-10. Use case studies for external references.
+11. Use case studies for external references.
    When matching an online material tutorial or reference, read [references/material-case-study-playbook.md](references/material-case-study-playbook.md). Extract the source contract, build a minimal UE reproduction, audit/read back the asset, preview on the closest carrier, then record whether mismatches are structural, visual, texture, carrier, or engine-version issues. If the source needs a texture that is missing and no approved library asset fits, `cm-imagegen` is the default generation route; generated assets must be QA'd, imported with role-correct settings, and registered as candidate or rejected library assets before future reuse.
 
-11. Report tradeoffs clearly.
-   Explain the material output chain, material contract, required material inputs, performance risks, required textures, import settings, platform fallback, and any unresolved visual gap.
+12. Optimize after the effect is accepted.
+   Once the look is correct enough to judge, reduce cost by preserving the same visible result first: pack channels, lower non-dominant texture sizes, bake stable procedural work, share samplers, add quality switches, remove dead branches, split expensive optional layers, tune LOD/import settings, or create fallback material instances. If an optimization visibly changes the effect, report it as a variant or tradeoff instead of silently replacing the approved look.
+
+13. Report tradeoffs clearly.
+   Explain the material output chain, material contract, required material inputs, performance risks, required textures, import settings, platform fallback, any unresolved visual gap, and which optimizations preserve the look versus change it.
 
 ## Hard Rules
 
 - Do not rely on screenshots of the Material Editor graph as proof. Read the material graph and output connections through tooling when possible.
+- Do not let performance be the default first priority for custom, reference-driven, or look-development material work. Build the target effect first, then optimize from that baseline.
+- Do not silently reduce texture resolution, remove layers, replace art-directed masks with generic noise, switch blend/shading models, or flatten motion just to pass an early budget if that changes the requested look.
+- Do not present a cheaper variant as the final material unless it preserves the approved visual result or the user explicitly accepts the visual tradeoff.
 - Do not leave dead branches, stale MI overrides, or mystery parameters in a production material after the route is confirmed.
 - Do not sample textures manually inside Custom HLSL when a normal TextureSample node keeps UE dependency tracking, sampler state, and audit visibility clearer.
 - Do not assume lower instruction count means cheaper if the "optimization" adds large textures, many samples, high overdraw, expensive translucency, or poor cache locality.
@@ -83,6 +92,14 @@ When judging cost, consider all of these:
 - Runtime control: Dynamic Parameters, Material Parameter Collections, Niagara user params, and per-instance overrides should be intentional and named for use, not for node history.
 
 Use `FeatureLevelSwitch`, `QualitySwitch`, material instances, and texture LOD/import settings when the target platform has materially different budgets.
+
+Performance review order:
+
+1. Confirm the material reaches the intended visual target in the right carrier/context.
+2. Measure instructions, samples, texture memory, overdraw, shader complexity, and platform risk.
+3. Classify each issue as must-fix, optimize-without-look-change, acceptable-for-prototype, or visual-tradeoff-needed.
+4. Apply no-look-change optimizations first.
+5. Ask for or clearly label tradeoff variants when performance requires visible simplification.
 
 ## Tooling
 

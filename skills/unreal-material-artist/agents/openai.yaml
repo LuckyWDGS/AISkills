@@ -1,4 +1,4 @@
 interface:
   display_name: "Unreal Material Artist"
   short_description: "UE Material/Shader Specialist for graphs, domains, HLSL, textures, and audits"
-  default_prompt: "Use $unreal-material-artist as the Material/Shader Specialist to design, generate, audit, optimize, or texture-plan Unreal Engine materials."
+  default_prompt: "Use $unreal-material-artist as the effect-first Material/Shader Specialist to design, generate, audit, then optimize Unreal Engine materials without losing the target look."
