@@ -134,6 +134,45 @@ Lesson:
 
 - Do not stop at setting the `ClearCoat` shading model. The material must also expose coat amount and coat roughness, and complex car paint may need second-normal/bottom-normal support at the project-setting level.
 
+### Difficulty Ladder: Fresnel, Clear Coat, Chrome Snow
+
+Source anchors:
+
+- Epic Fresnel material guide.
+- Epic Shading Models / Clear Coat documentation and clear-coat tech blog.
+- Epic Layered Materials / Creating Layered Materials documentation.
+
+UE reproductions were built under `/Game/CodexTemp/MaterialDifficultyCases/20260513_092331/`.
+
+Simple case:
+
+- Asset: `/Game/CodexTemp/MaterialDifficultyCases/20260513_092331/M_D01_Simple_FresnelRim`
+- Contract: `Surface`, `Opaque`, `DefaultLit`; `BaseColor`, `Roughness`, flat `Normal`, Fresnel-driven `EmissiveColor`.
+- Audit: `236` instructions, `0` samplers, no compile errors, no findings after adding an explicit flat normal.
+- Lesson: even a simple lit material should wire `Normal` deliberately when the audit standard expects a complete PBR contract. Do not use VFX-sized instruction budgets for ordinary `DefaultLit` surface materials.
+
+Medium case:
+
+- Asset: `/Game/CodexTemp/MaterialDifficultyCases/20260513_092331/M_D02_Medium_ClearCoatCarPaint`
+- Contract: `Surface`, `Opaque`, `ClearCoat`; `BaseColor`, `Metallic`, `Roughness`, flat `Normal`, `CustomData0` for clear-coat amount, `CustomData1` for clear-coat roughness.
+- Audit: `247` instructions, `0` samplers, no compile errors, no findings.
+- Lesson: clear coat is not complete just because the shading model is set. The material must expose and wire the coat amount and coat roughness pins; in bridge/audit output these appear as `CustomData0` and `CustomData1`.
+
+Complex case:
+
+- Final asset: `/Game/CodexTemp/MaterialDifficultyCases/20260513_092331/M_D03_Complex_ChromeSnowLayered`
+- Contract: `Surface`, `Opaque`, `DefaultLit`; chrome layer and snow layer blended by `VertexNormalWS.Z` slope mask; outputs `BaseColor`, `Metallic`, `Roughness`, flat `Normal`.
+- Audit: `231` instructions, `0` samplers, no compile errors, no findings.
+- Lesson: a complex material does not need to be texture-heavy. A procedural slope mask can be cheaper and more inspectable than generating a mask texture when the effect is geometric and camera-stable.
+
+Superseded complex experiment:
+
+- Asset: `/Game/CodexTemp/MaterialDifficultyCases/20260513_092331/M_D03_Complex_LayeredWetProp`
+- Initial audit caught a real sampler/import bug: `TextureSampleParameter2D` nodes used `SAMPLERTYPE_Masks` while their default texture was `/Engine/EngineResources/WhiteSquareTexture`, which is color/sRGB, causing a compile error.
+- Fix applied: replace `ORMTex` and `OverlayORMTex` defaults with `/Game/BridgeTemplates/_System/T_White_Masks`, a `TC_Masks` + `sRGB=false` project-local system texture.
+- A `QualitySwitch` was added to demonstrate cost-governance for sample-heavy masters. Its showcase MI also produced static-switch permutation info, which is acceptable but should be reported.
+- Lesson: placeholder textures are still real shader inputs. Mask/packed default textures must have mask compression and sRGB off; otherwise a complex master can fail before any artist texture is assigned.
+
 ## Rules To Carry Forward
 
 - For external examples, judge by contract first and screenshot second.

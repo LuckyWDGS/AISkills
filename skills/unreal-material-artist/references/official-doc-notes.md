@@ -9,6 +9,7 @@ Use these notes as source-backed anchors, then verify details against the curren
 - Custom Material Expressions: https://dev.epicgames.com/documentation/en-us/unreal-engine/custom-material-expressions-in-unreal-engine?application_version=5.7
 - Material Functions Overview: https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-functions-overview?application_version=5.6
 - Creating and Using Material Functions: https://dev.epicgames.com/documentation/en-us/unreal-engine/creating-and-using-material-functions-in-unreal-engine?application_version=5.6
+- Using Fresnel in Your Unreal Engine Materials: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-fresnel-in-your-unreal-engine-materials
 - Textures in Unreal Engine: https://dev.epicgames.com/documentation/en-us/unreal-engine/textures-in-unreal-engine?application_version=5.6
 - Viewport Modes and Shader Complexity: https://dev.epicgames.com/documentation/en-us/unreal-engine/viewport-modes-in-unreal-engine
 - Materials landing page: https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-materials
@@ -17,6 +18,7 @@ Use these notes as source-backed anchors, then verify details against the curren
 - Material Editor UI, Stats, HLSL Code, and Platform Stats: https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-editor-ui?application_version=5.6
 - Substrate Materials: https://dev.epicgames.com/documentation/en-us/unreal-engine/substrate-materials-in-unreal-engine?application_version=5.6
 - Layered Materials: https://dev.epicgames.com/documentation/en-us/unreal-engine/layered-materials-in-unreal-engine?application_version=5.6
+- Creating Layered Materials: https://dev.epicgames.com/documentation/en-us/unreal-engine/creating-layered-materials-in-unreal-engine?application_version=5.6
 - Using Material Layers: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-material-layers-in-unreal-engine?application_version=5.6
 - Runtime Virtual Texturing: https://dev.epicgames.com/documentation/en-us/unreal-engine/runtime-virtual-texturing-in-unreal-engine?application_version=5.6
 - Material Parameter Collections: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-material-parameter-collections-in-unreal-engine?application_version=5.6
@@ -38,6 +40,7 @@ Use these notes as source-backed anchors, then verify details against the curren
 - Material Expressions define the building blocks of graph authoring; read the graph as a dataflow program from outputs backward.
 - Custom Material Expressions allow HLSL, but they can reduce visibility and may prevent some graph-level optimizations. Use them intentionally, not as a default replacement for clear native nodes.
 - Material Functions are the right home for reusable material logic that would otherwise drift across many master materials.
+- Fresnel is a good simple-case material study because it is visually obvious, cheap when kept node-native, and easy to audit: the rim term should feed a deliberate output such as Emissive or a controlled Lerp, not become an unexplained magic multiplier.
 - Layered Materials and Material Layers are powerful for complex per-pixel blends, but Epic's docs warn they can become heavy because layers are evaluated and blended per pixel. Prefer geometry/material-element separation when it is cheaper and artistically sufficient.
 - Substrate is documented by Epic as a Beta feature in UE 5.6. It is more expressive than the legacy fixed shading-model set, but should be treated as an expert route that needs platform, version, and cost review before shipping.
 - Runtime Virtual Texturing is a material-system contract involving RVT assets, volumes, writers, samplers, and material types. RVT can cache large-area shading, especially landscapes and terrain decals, but the material nodes and RVT asset material type must match.
