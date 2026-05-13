@@ -850,6 +850,8 @@ V_ColorScaleBehindWater
 
 ### 7.4 Additive Unlit 火焰 Mask
 
+火、燃烧、余烬、烟、热扭曲、熔岩和能量火不要只看这一小节。实际制作前必须读取 `references/fire-energy-material-playbook.md`，按其中的路线选择、贴图策略、节点图、预览 gate 和专项审查执行。这里的单张 mask 方案只适合原型、细节层或明确风格化的小火焰，不是 hero fire 的默认最终方案。
+
 **推荐设置**：
 - Blend Mode: Additive
 - Shading Model: Unlit
@@ -874,6 +876,8 @@ T_FireMask.R × ParticleColor.A
 - 黑底火焰 mask 可用于 additive 原型，但如果材质期望 alpha，就要生成透明 alpha 或做提取/归一化。
 - 单张火舌 mask + Panner 适合原型和细节层；火焰主体更适合 flipbook/SubUV。
 - Additive 火材质成本不能只看 1 sampler。两面卡片、粒子数量、屏幕覆盖和 overdraw 会决定真实成本。
+- 如果用户要求写实火把、篝火、爆炸火、魔法火、蓝焰、火焰包裹物体或参考图匹配，先写视觉目标和承载方式，再决定是 flipbook、mask+panner、burn edge、lava surface 还是 heat haze。不能直接套这一段。
+- 做完要读回材质图并跑审查；火材质的验收至少包含可见火舌/色带/alpha 形状、运动方案、背景可读性和 shader complexity/overdraw 风险。
 
 ---
 

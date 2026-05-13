@@ -1,6 +1,6 @@
 ---
 name: unreal-material-artist
-description: Use when Codex needs a Material/Shader Specialist for Unreal Engine material work, including designing, authoring, reading, reviewing, optimizing, or debugging Materials, Material Instances, Material Functions, Material Layers, Material Attributes, Substrate, texture plans, Custom HLSL nodes, shader complexity, instruction and sampler budgets, material graph cleanup, or cm-imagegen texture generation for UE assets. Trigger for requests about UE material nodes, material domains, blend modes, shading models, texture-vs-procedural tradeoffs, material performance, VFX material shaders, Niagara renderer materials, mesh/surface/landscape/foliage/character/environment/UI/post-process/decal/light-function/volume/RVT materials, specialized shading models such as Hair, Cloth, Eye, Clear Coat, Subsurface, Single Layer Water, Thin Translucent, or audits of existing material assets.
+description: Use when Codex needs a Material/Shader Specialist for Unreal Engine material work, including designing, authoring, reading, reviewing, optimizing, or debugging Materials, Material Instances, Material Functions, Material Layers, Material Attributes, Substrate, texture plans, Custom HLSL nodes, shader complexity, instruction and sampler budgets, material graph cleanup, or cm-imagegen texture generation for UE assets. Trigger for requests about UE material nodes, material domains, blend modes, shading models, texture-vs-procedural tradeoffs, material performance, VFX material shaders, Niagara renderer materials, fire/flame/burning/ember/smoke/heat-haze/lava/energy materials, mesh/surface/landscape/foliage/character/environment/UI/post-process/decal/light-function/volume/RVT materials, specialized shading models such as Hair, Cloth, Eye, Clear Coat, Subsurface, Single Layer Water, Thin Translucent, or audits of existing material assets.
 ---
 
 # Unreal Material Artist
@@ -52,6 +52,7 @@ Default team model:
 10. Check domain, blend, shading model, and render contract for non-standard materials.
    For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Run `tools/material_domain_audit.py` when UnrealBridge is available.
    For custom or complex water, also read [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md) before authoring. A water material needs a concrete route, node plan, texture roles, carrier preview, and water-specific audit; do not stop at naming the shading model.
+   For fire, flame, burning, ember, smoke, heat-haze, lava, magma, plasma, or energy-flame materials, read [references/fire-energy-material-playbook.md](references/fire-energy-material-playbook.md) before authoring. A fire-family material needs a concrete route, carrier, texture plan, node graph, motion plan, preview, and audit; do not stop at `Additive + Unlit + Emissive`.
 
 11. Use case studies for external references.
    When matching an online material tutorial or reference, read [references/material-case-study-playbook.md](references/material-case-study-playbook.md). Extract the source contract, build a minimal UE reproduction, audit/read back the asset, preview on the closest carrier, then record whether mismatches are structural, visual, texture, carrier, or engine-version issues. If the source needs a texture that is missing and no approved library asset fits, `cm-imagegen` is the default generation route; generated assets must be QA'd, imported with role-correct settings, and registered as candidate or rejected library assets before future reuse.
@@ -80,6 +81,9 @@ Default team model:
 - Do not treat every generated image as reusable stock. Only `approved` library assets are default reuse candidates.
 - Do not promote or reuse a simple stock water/noise/ripple texture as the visual identity of a custom water material unless it visually matches the reference. Generic ripple, noise, foam, or flow data may support the shader as a technical helper, but the reference controls the final water style.
 - Do not let an online case study silently degrade because it lacks texture art. Search the library first; if missing, use `cm-imagegen`, prefer power-of-two output, self-audit the generated image, import/fix UE settings, and store the asset with category/stage metadata.
+- Do not answer "I can make fire" from vague memory. For fire/flame/burning/ember/smoke/heat-haze/lava/energy materials, use the learn-build-audit loop: route selection, texture strategy, real graph, preview, readback, and audit. If missing knowledge blocks the route, research official/source material first, then build and review.
+- Do not present `Additive + Unlit + Emissive` as a finished fire material by itself. Fire needs shape language, color bands, alpha/mask or flipbook logic, motion, carrier context, and overdraw review.
+- Do not use a single panning fire mask as a hero flame unless the target is explicitly stylized/static and the preview proves it. Hero fire usually needs flipbook/SubUV or a richer carrier contract.
 - Do not read, trace, debug, or write live Niagara emitter/system parameter wiring as part of this skill. Return the material-side contract and let `niagara-vfx-artist` own the real Niagara hookup.
 
 ## Performance Judgment
@@ -222,6 +226,9 @@ Current preview carrier note:
 
 - [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md)
   Use for concrete water material authoring: Single Layer Water, stylized water, glass/transparent liquid, depth color, foam, caustics, normals, flow maps, WPO waves, texture generation, preview gates, and water-specific audit.
+
+- [references/fire-energy-material-playbook.md](references/fire-energy-material-playbook.md)
+  Use for concrete fire-family material authoring: flame, torch, campfire, ember, smoke material, burning/dissolve edge, heat haze, lava, magma, plasma, energy flame, additive/unlit emissive routes, flipbook/SubUV texture strategy, generated fire masks, carrier preview gates, and overdraw/shader-complexity audit.
 
 - [references/complex-master-material-playbook.md](references/complex-master-material-playbook.md)
   Use when designing or reviewing a large multi-feature master material for characters, environments, overlays, wetness, wear, detail systems, or heavy runtime control.

@@ -225,6 +225,7 @@ Fire case:
 - Contract: `Surface`, `Additive`, `Unlit`, `TwoSided=true`; generated black-background fire mask is panned, tinted, multiplied by `ParticleColor`, and routed to `EmissiveColor` and `Opacity`.
 - Audit: `305` instructions, `1` sampler, no compile errors. This exceeds a simple VFX budget but can be acceptable as a PC prototype if overdraw and particle count are controlled.
 - Lesson: fire material cost is dominated by overdraw, coverage, and blend path as much as graph size. For hero fire, prefer flipbook/SubUV; for detail layers, a single mask plus panner is a reasonable prototype.
+- Follow-up rule: future fire, flame, ember, burning-edge, heat-haze, lava, or energy-flame tasks must load `fire-energy-material-playbook.md`. The case above is a starter additive-mask proof, not a complete hero-fire recipe. A complete fire material must include route choice, carrier, texture/flipbook decision, motion plan, readback, preview, and overdraw/shader-complexity audit.
 
 ## Rules To Carry Forward
 
