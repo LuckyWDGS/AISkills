@@ -12,6 +12,8 @@
 
 当需要实际出图时，默认加载并使用 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。本文件负责决定纹理策略和 prompt 内容，cm-imagegen 负责生成与迭代图片。如果已有设计图、参考图、已批准概念图或上一张选定输出，必须先缓存到本地，再把它作为 reference image 传入 cm-imagegen，用来锁定风格、结构、色彩和材质语言。对明显属于 Ribbon、Mesh Afterimage、Skeletal Mask 的层，先确认材质承载方式和运行时载体，再决定最终纹理长什么样。除非用户明确索要提示词，否则最终只交付图片结果、保存路径、设置和 UE 接入建议。
 
+如果用户说的是“定制材质”、提供参考图、或明确要求匹配某个视觉风格，参考图优先级高于资产库复用。资产库搜索仍然要做，但搜索结果只是候选；只有当它同时匹配参考图的风格、尺度、图案语言、颜色/明度、运动意图和技术用途时，才能作为最终贴图复用。否则最多作为不主导外观的辅助噪声/扰动/遮罩，或者直接拒用并走 cm-imagegen 参考图生成。
+
 ---
 
 ## 目录
@@ -25,7 +27,8 @@
 7. 烟雾纹理 AI 提示词
 8. 闪电图集与随机格子
 9. 叶片 diffuse/alpha 与叶片卡
-10. 生成纹理时的硬规则
+10. 定制水材质的参考图优先规则
+11. 生成纹理时的硬规则
 
 ---
 
@@ -469,7 +472,32 @@ for Unreal masked TwoSidedFoliage material on a two-sided card
 
 ---
 
-## 10. 生成纹理时的硬规则
+## 10. 定制水材质的参考图优先规则
+
+水材质尤其容易被“资产库里刚好有一张水波纹”带偏，所以要先区分两件事：
+
+- **视觉身份**：用户参考图里真正让水成立的东西，例如泡沫形状、颜色层次、透明度、浪尖、岸边湿痕、卡通描边、油膜彩虹、深浅水过渡、caustics、污浊颗粒、风格化笔触。
+- **技术辅助**：支撑 shader 的噪声、ripple height、normal、flow、foam breakup、depth mask、roughness breakup。
+
+复用规则：
+
+- 如果资产库水纹只是一张普通 ripple/noise，它不能替代参考图里的视觉身份。
+- 普通 ripple 可以作为很弱的 normal/roughness breakup，但要防止它把最终外观变成“通用水”。
+- 如果参考图决定了泡沫、caustics、颜色纹理、风格化笔触或特殊液体表面，这些贴图应从参考图生成、手工/DCC 制作、或专门程序生成。
+- AI 生成的 water height / flow / normal 只能当草图；final normal/flow/vector 数据必须检查 seam、方向、通道语义和导入设置。
+- 预览时要看 carrier：平面水面、河道、岸边、泳池、屏幕空间 post-process、水下体积或 stylized mesh。单看一张贴图不能证明材质匹配参考。
+
+定制水 prompt 要先写参考读法，再写技术输出，例如：
+
+```text
+custom stylized water foam mask from reference image, preserve painterly cyan-white foam streak shapes, shallow tropical color rhythm, medium-scale shoreline breakup, seamless horizontal tiling, 1024x1024 power-of-two, grayscale mask, no text, no watermark
+```
+
+如果参考图是写实湖面、深海、浅滩、卡通水、油污水、魔法水，它们需要不同的纹理策略。不要用同一张库内通用水波纹去套所有水。
+
+---
+
+## 11. 生成纹理时的硬规则
 
 - 背景纯黑，或明确透明
 - 每格主体居中

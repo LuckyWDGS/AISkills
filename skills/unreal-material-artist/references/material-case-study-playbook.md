@@ -17,7 +17,7 @@ The goal is not to copy a graph blindly. The goal is to extract the material con
    Use a temporary path such as `/Game/CodexTemp/MaterialCaseStudies/M_Case_*`. Keep it minimal first, then add texture/visual fidelity only after the contract is clean.
 
 4. Resolve required texture and carrier gaps.
-   If the source depends on diffuse/alpha, leaf cards, masks, normals, flow, packed channels, atlases, or a specific preview carrier, search the reusable asset library before calling the result a visual mismatch. If no approved asset fits, generate with `cm-imagegen`; use the user's reference image as image input when available. QA generated textures with `texture_asset_report.py`, import/audit/fix them when they enter UE, and regenerate rejected candidates instead of accepting placeholders.
+   If the source depends on diffuse/alpha, leaf cards, masks, normals, flow, packed channels, atlases, or a specific preview carrier, search the reusable asset library before calling the result a visual mismatch. For custom/reference-driven cases, reuse only assets that pass the reference-fidelity gate; generic category matches may be helper-only or rejected. If no approved asset fits, generate with `cm-imagegen`; use the user's reference image as image input when available. QA generated textures with `texture_asset_report.py`, import/audit/fix them when they enter UE, and regenerate rejected candidates instead of accepting placeholders.
 
 5. Read back the asset.
    Do not trust the create call. Read `get_material_info`, `get_material_graph`, and raw editor properties for `MaterialDomain`, `BlendMode`, `ShadingModel`, `TwoSided`, and `UseMaterialAttributes`.
@@ -232,5 +232,6 @@ Fire case:
 - If the source depends on a carrier, use that carrier or explicitly mark the preview as only a structural material check.
 - If no approved library asset exists for a needed texture, default to `cm-imagegen`, run `texture_asset_report.py`, import/fix UE settings if used, and register the stored result as `candidates` or `rejected` before reuse.
 - Candidate assets are not stock. Promote only after self-review, first-pass reports, and any role-specific visual/technical checks pass on the library-stored copy.
+- For custom/reference-driven cases, asset reuse must not lower visual fidelity. A library asset must match the reference style and technical role, or be documented as a non-dominant helper only.
 - Treat special shading models, especially `SingleLayerWater`, with domain-specific budgets and scanner exceptions instead of forcing ordinary surface-material thresholds.
 - Good lessons become skill references; one-off quirks stay in the case report.

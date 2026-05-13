@@ -21,9 +21,23 @@ Define:
 
 If a design/reference image exists, use it as an image reference through `cm-imagegen`. Do not regenerate from text alone unless the user explicitly wants independent exploration.
 
-Before generating, search the reusable material asset library. If an `approved` asset already fits the need closely enough, reuse it instead of generating a new one.
+Before generating, search the reusable material asset library. If an `approved` asset already fits the need closely enough, reuse it instead of generating a new one. For custom/reference-driven materials, "fits" means it matches the visual reference and the technical role, not just the category name.
 
 When reproducing an online material case, missing textures are a production input gap, not a reason to stop at a constant-color placeholder. Use `cm-imagegen` by default after the library search fails, then record the output as `candidates` or `rejected` instead of promoting it straight to stock.
+
+## Reference-Driven Generation Gate
+
+For custom materials, the reference image is the art direction contract. Do this before accepting either a library asset or a generated texture:
+
+1. Write a compact reference read: style, palette/value, pattern language, scale, surface type, motion intent, edge/alpha behavior, and carrier.
+2. Decide which parts are visual identity and which parts are technical helpers.
+3. Search the library for each texture role.
+4. Reuse only assets that pass the reference read; mark generic matches as helper-only or reject them.
+5. If the library cannot match the visual identity, call `cm-imagegen` with the reference image or a focused crop.
+6. QA the generated result against both the reference and the file/UE import rules.
+7. Regenerate or refine when the result is structurally usable but visually off-style.
+
+Example: for a custom water material, a stock ripple height can be reused as subtle normal breakup only if it does not dominate the look. If the reference shows painterly cyan foam streaks, stylized cel bands, dark choppy ocean, shallow caustic sand water, or oily alien liquid, generate or build the visible foam/caustic/color/mask assets from that reference instead of using a generic ripple as the final look.
 
 ## cm-imagegen Tactics
 
@@ -99,6 +113,7 @@ Before importing to UE:
 - Placeholder/default textures must obey the same rule as final textures. A mask/packed/ORM slot cannot safely default to an ordinary color sRGB white texture; use or create a role-correct default such as `TC_Masks` with `sRGB=false`.
 - Texture is not larger than the visual value justifies.
 - Generated black-background masks without alpha are acceptable only when the material explicitly samples luminance/R as the mask; otherwise regenerate or extract a real alpha channel before import.
+- For reference-driven work, the texture preserves the reference's style, pattern scale, value range, color logic, and edge language; technically valid but visually generic assets are not final.
 - Mips will not destroy tiny linework, rune strokes, or thin lightning branches.
 - The generated image has no text, watermark, border, hidden frame labels, or UI artifacts.
 

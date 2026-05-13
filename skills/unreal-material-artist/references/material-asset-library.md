@@ -22,6 +22,30 @@ For material tasks that may need textures:
 
 Do not silently treat every generated image as reusable library material.
 
+## Reference Fidelity Gate
+
+When the user provides a reference image, online example, approved concept, or asks for a custom material, the reference outranks the asset library.
+
+In that mode, asset-library search is still required, but it only returns candidates. Before reuse, explicitly compare each candidate against the reference contract:
+
+- Style family: realistic, stylized, painterly, anime, graphic, technical, horror, sci-fi, natural, or other stated art direction.
+- Pattern language: wave shape, noise frequency, foam breakup, cracks, veins, brush strokes, leaf silhouettes, fire tongues, or other recognizable forms.
+- Scale and tiling: texel density, repeat scale, large/medium/small detail balance, visible repetition risk, and whether the material is meant to tile at all.
+- Color and value: hue range, contrast, opacity/alpha shape, emissive brightness, roughness/wetness read, and whether color belongs in the texture or in parameters.
+- Motion intent: panning, flow, SubUV, distortion, ripple travel, dissolve direction, or whether the texture is static data.
+- Technical role: albedo, mask, opacity, foam mask, ripple height, normal source, flow map, packed data, atlas, flipbook, or pure helper noise.
+- Carrier fit: plane, mesh, landscape, water surface, decal, UI, card, sprite/ribbon preview harness, or other material carrier.
+
+Reject the candidate if it only matches the category name. A generic `water ripple` texture is not acceptable for a custom water reference if the reference shows stylized brushy foam, shallow tropical caustics, dark storm waves, painterly anime water, oily sci-fi liquid, or a specific shoreline pattern.
+
+Allowed reuse levels:
+
+- **Final reuse**: the asset matches both the technical role and the reference style closely enough after preview.
+- **Helper reuse**: the asset can drive subtle breakup, perturbation, or masking without defining the visible style. Record that it is a helper, not the visual identity.
+- **Reject/regenerate**: the asset is generic, too simple, wrong scale, wrong style, wrong channel semantics, or would make the material look unlike the reference.
+
+If no approved asset passes this gate, use `cm-imagegen` with the reference image or create a custom texture by DCC/script. Do not simplify the material to fit the library.
+
 ## Library Layout
 
 Skill-local root:
@@ -105,6 +129,7 @@ An asset is reusable only when you can answer:
 - What UE import settings does it want?
 - What kind of material job is it actually good for?
 - For foliage, does it contain a real cutout alpha and avoid visible edge halos on a two-sided masked card?
+- If the task is custom/reference-driven, what exact reference traits does it match, and what traits does it not match?
 
 If you cannot answer those, it belongs in `candidates` or `rejected`, not `approved`.
 

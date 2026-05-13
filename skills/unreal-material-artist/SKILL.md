@@ -22,7 +22,7 @@ Default team model:
 ## Core Workflow
 
 1. Capture the material target.
-   Identify domain, carrier, target platform, camera distance, blend mode expectations, lighting model, texture availability, runtime controls, and whether the material is for mesh, sprite, ribbon, decal, UI, post process, landscape, or surface shading.
+   Identify domain, carrier, target platform, camera distance, blend mode expectations, lighting model, texture availability, runtime controls, and whether the material is for mesh, sprite, ribbon, decal, UI, post process, landscape, or surface shading. If the user provides a reference image, online example, approved concept, or asks for a custom material, treat that visual target as the source of truth and record the style/fidelity contract before choosing reusable assets.
 
 2. Create or request a material contract for effect work.
    For Niagara/VFX layers, record renderer carrier, UV expectations, Particle Color, Dynamic Parameters, texture channels, blend mode, sorting risk, and platform budget before graph work. Use [references/material-contract-and-tooling.md](references/material-contract-and-tooling.md) and `tools/material_contract.py`.
@@ -34,7 +34,7 @@ Default team model:
    Use [references/texture-vs-compute.md](references/texture-vs-compute.md) when the material might use procedural noise, masks, flow, distance fields, flipbooks, atlases, or baked lookup textures.
 
 5. Search the reusable asset library before generating.
-   Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search`. Reuse `approved` assets first. Only generate a new texture when the library does not already have a suitable reviewed asset.
+   Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search`. Reuse `approved` assets first only when they pass the material contract and reference-fidelity gate. In reference-driven or custom work, library assets are candidates, not authority: reject generic/simple matches that would change the intended style, scale, pattern language, color, motion, alpha shape, or material identity. Only generate a new texture when the library does not already have a suitable reviewed asset.
 
 6. Build the material route.
    Prefer clear graph nodes for ordinary math and engine-tracked texture samples. Use Custom HLSL only when it meaningfully improves fidelity, reduces graph complexity, or implements math that nodes cannot express cleanly.
@@ -62,11 +62,13 @@ Default team model:
 - Do not sample textures manually inside Custom HLSL when a normal TextureSample node keeps UE dependency tracking, sampler state, and audit visibility clearer.
 - Do not assume lower instruction count means cheaper if the "optimization" adds large textures, many samples, high overdraw, expensive translucency, or poor cache locality.
 - Do not generate final textures from text alone when a design/reference image is available. Cache or use the reference and pass it into `cm-imagegen` as an image input.
+- Do not let reusable assets override a custom/reference-driven material target. An approved library texture is still wrong if it is only a generic category match and does not match the reference's style, scale, pattern language, color/roughness read, edge/alpha shape, motion intent, carrier, and technical role.
 - Do not accept a foliage material as visually matched when it only has constant colors or a solid plane; leaf/bush materials need a diffuse/alpha texture or separate opacity mask plus a believable card/cluster carrier.
 - Do not treat AI-generated Flow Maps, Normal Maps, packed masks, or precision lookup textures as final without technical validation; generate drafts only, then verify channels and import settings.
 - Do not use ordinary color/sRGB white textures as defaults for mask, packed, ORM, roughness, metallic, opacity, flow, or scalar-data sampler slots. Their placeholder textures must match the sampler role, such as `TC_Masks` plus `sRGB=false` for Masks data, or the material can compile incorrectly before any artist texture is assigned.
 - Do not skip the reusable asset library search when the task needs generic texture building blocks such as noise, masks, distortion, ramps, atlases, or flipbooks.
 - Do not treat every generated image as reusable stock. Only `approved` library assets are default reuse candidates.
+- Do not promote or reuse a simple stock water/noise/ripple texture as the visual identity of a custom water material unless it visually matches the reference. Generic ripple, noise, foam, or flow data may support the shader as a technical helper, but the reference controls the final water style.
 - Do not let an online case study silently degrade because it lacks texture art. Search the library first; if missing, use `cm-imagegen`, prefer power-of-two output, self-audit the generated image, import/fix UE settings, and store the asset with category/stage metadata.
 - Do not read, trace, debug, or write live Niagara emitter/system parameter wiring as part of this skill. Return the material-side contract and let `niagara-vfx-artist` own the real Niagara hookup.
 
