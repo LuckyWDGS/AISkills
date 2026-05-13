@@ -16,21 +16,24 @@ The goal is not to copy a graph blindly. The goal is to extract the material con
 3. Build a minimal UE reproduction.
    Use a temporary path such as `/Game/CodexTemp/MaterialCaseStudies/M_Case_*`. Keep it minimal first, then add texture/visual fidelity only after the contract is clean.
 
-4. Read back the asset.
+4. Resolve required texture and carrier gaps.
+   If the source depends on diffuse/alpha, leaf cards, masks, normals, flow, packed channels, atlases, or a specific preview carrier, search the reusable asset library before calling the result a visual mismatch. If no approved asset fits, generate with `cm-imagegen`; use the user's reference image as image input when available. QA generated textures with `texture_asset_report.py`, import/audit/fix them when they enter UE, and regenerate rejected candidates instead of accepting placeholders.
+
+5. Read back the asset.
    Do not trust the create call. Read `get_material_info`, `get_material_graph`, and raw editor properties for `MaterialDomain`, `BlendMode`, `ShadingModel`, `TwoSided`, and `UseMaterialAttributes`.
 
-5. Audit and preview.
+6. Audit and preview.
    Run `material_domain_audit.py` first, then `material_audit.py`, then preview on the closest available carrier. Use shader complexity where relevant.
 
-6. Compare to the source.
+7. Compare to the source.
    Check structural match first, then visual match:
    - Structural: same domain/blend/shading/outputs/texture roles.
    - Visual: same carrier, mesh/card shape, lighting, camera, textures, masks, and parameter values.
 
-7. Fix mismatches by cause.
+8. Fix mismatches by cause.
    Do not average your graph toward the screenshot. Identify the missing contract item.
 
-8. Promote the lesson.
+9. Promote the lesson.
    Add a short rule to this skill only when it generalizes beyond the one case.
 
 ## Mismatch Categories
@@ -39,7 +42,7 @@ The goal is not to copy a graph blindly. The goal is to extract the material con
 |---|---|---|
 | Source says `Masked`, audit says `Opaque` | create/write API did not persist the property or info readback is stale/wrong | Cross-check raw editor property and recompile/save; fix bridge readback if needed |
 | Correct graph but wrong look | carrier, texture, mesh, lighting, or camera mismatch | Preview on the source carrier and use equivalent texture inputs |
-| Foliage looks like a glowing plane | no leaf diffuse/alpha texture and no leaf card mesh | Add leaf albedo/alpha, OpacityMask, SubsurfaceColor, two-sided card preview |
+| Foliage looks like a glowing plane | no leaf diffuse/alpha texture and no leaf card mesh/carrier | Search the `foliage` library category; if missing, generate a POT leaf diffuse/alpha card with `cm-imagegen`, QA with `--role foliage`, import as color+mask data correctly, then preview on a two-sided masked card or cluster |
 | Clear coat lacks a second highlight | missing Clear Coat / Clear Coat Roughness or bottom-normal setup | Wire Clear Coat amount/roughness; enable and route bottom normal only when the project needs it |
 | Light function changes color instead of intensity | treating light function as a surface emissive material | Use grayscale/intensity mask logic and verify actual light application |
 | Post process compiles but ignores surface pins | wrong output route for PostProcess domain | Output final color through EmissiveColor and use SceneTexture/PostProcessInput where needed |
@@ -98,10 +101,12 @@ UE reproduction result:
 Visual note:
 
 - A minimal constant-color plane is structurally correct but not visually equivalent to the tutorial's bush result. Visual equivalence requires a leaf/bush mesh or card, a diffuse texture with alpha, and backlit foliage preview.
+- If those textures are missing, the correct next action is to search the foliage asset library. If no approved asset matches the species/reference, generate a leaf diffuse/alpha card from the reference with `cm-imagegen`, require power-of-two output, clean cutout alpha, no background pollution, no shadow baked into alpha, and rerun `texture_asset_report.py --role foliage` on the stored library copy.
 
 Lesson:
 
 - For foliage, structural pass is not enough. Always verify alpha/mask texture, two-sided geometry, and lighting/transmission context before saying it matches the reference.
+- A missing leaf texture or card carrier is not an excuse to stop at "visual mismatch"; it is a material asset-production step owned by this skill.
 
 ### Clear Coat Car Paint
 
@@ -137,4 +142,3 @@ Lesson:
 - If the source uses a texture, do not claim visual equivalence from a constant-color placeholder.
 - If the source depends on a carrier, use that carrier or explicitly mark the preview as only a structural material check.
 - Good lessons become skill references; one-off quirks stay in the case report.
-

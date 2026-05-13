@@ -24,7 +24,8 @@
 6. 余烬 / 火星纹理 AI 提示词
 7. 烟雾纹理 AI 提示词
 8. 闪电图集与随机格子
-9. 生成纹理时的硬规则
+9. 叶片 diffuse/alpha 与叶片卡
+10. 生成纹理时的硬规则
 
 ---
 
@@ -435,7 +436,40 @@ for game VFX texture atlas, no text, no watermark, no border
 
 ---
 
-## 9. 生成纹理时的硬规则
+## 9. 叶片 diffuse/alpha 与叶片卡
+
+Foliage、灌木、草叶卡片这类材质不能只靠常量颜色判断“做对了”。如果缺少叶片 diffuse/alpha 或真实叶片卡载体，流程是：
+
+1. 先查资产库：
+   - `category=foliage`
+   - `role=leaf-card`、`leaf-cluster`、`albedo-alpha` 等标签
+   - 优先 power-of-two、已通过 alpha QA 的 approved 资产
+
+2. 没有合适资产再调用 `cm-imagegen`：
+   - 有参考图时必须走参考图 / image-to-image
+   - 明确要“贴图卡”，不是摆拍照片或渲染图
+   - 要透明背景或干净 alpha，不要阴影、地面、文字、水印
+
+3. 自审后才导入 UE：
+   - `texture_asset_report.py --role foliage`
+   - alpha 不是全白，也不是脏边
+   - 分辨率优先 `512x512`、`1024x1024`、`2048x2048`
+   - 导入后颜色 diffuse 用 sRGB，OpacityMask / packed mask 用 sRGB off
+
+提示词模板：
+
+```text
+single foliage leaf-card diffuse alpha texture, 1024x1024 power-of-two,
+top-down flat scanned leaf cluster, transparent background with clean cutout alpha,
+natural green albedo, no cast shadow, no ground, no text, no watermark,
+for Unreal masked TwoSidedFoliage material on a two-sided card
+```
+
+如果用户提供的是某种具体植物参考，就把物种、叶型、颜色状态、枯黄/湿润/季节特征写进去，并用参考图锁住形态。生成后要在真实 masked two-sided card 或小簇卡片上预览；单看 PNG 好看不代表进材质后能用。
+
+---
+
+## 10. 生成纹理时的硬规则
 
 - 背景纯黑，或明确透明
 - 每格主体居中

@@ -25,14 +25,27 @@ Foliage materials care about:
 - masked cost
 - wind / WPO
 - subsurface or two-sided foliage behavior
+- diffuse/alpha leaf-card texture quality
 - billboards / LOD transitions
 - per-instance variation
 
 Key risks:
 
 - heavy masked overdraw
+- fake structural matches that use a solid plane instead of a real leaf/bush card
 - too much vertex displacement on large foliage counts
 - dynamic complexity that does not scale with view distance
+
+## Leaf Card Asset Standard
+
+When a foliage reference depends on real leaf cards, require a diffuse/alpha asset or separate albedo plus opacity mask before accepting visual equivalence.
+
+- Search the reusable library with `--category foliage` first.
+- If no approved asset fits, generate with `cm-imagegen`; use the user's plant/reference image when available.
+- Prefer power-of-two sizes such as `512x512`, `1024x1024`, or `2048x2048`.
+- Require clean cutout alpha, alpha-friendly RGB edge bleed, no baked ground/shadow, and no watermarks/text.
+- QA with `texture_asset_report.py --role foliage`, then audit UE import settings after import.
+- Preview on a two-sided masked card or small leaf-card cluster; a standalone PNG preview is not enough.
 
 ## Recommended Runtime Controls
 

@@ -41,6 +41,7 @@ Default team model:
 
 7. Plan, generate, and QA textures when needed.
    Read [references/texture-strategy-and-ai-prompts.md](references/texture-strategy-and-ai-prompts.md), [references/texture-prompt-framework.md](references/texture-prompt-framework.md), and [references/generated-texture-qa.md](references/generated-texture-qa.md). Use `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md` for actual image generation, then run `tools/texture_asset_report.py` before treating generated files as UE-ready. If a generated asset passes review and looks reusable, register it into the library. If it fails review, reject or regenerate it instead of silently keeping it as future stock.
+   For foliage or vegetation cards, missing leaf diffuse/alpha or a believable leaf-card carrier is an asset gap to resolve, not just a visual caveat: search the `foliage` library category first; if no approved asset fits, use `cm-imagegen` from the user's reference image when available, QA with `--role foliage`, import/audit/fix settings, then preview on a masked two-sided card.
 
 8. Audit and self-review.
    Use structural checks first, then controlled previews or in-level captures. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the review loop and CLI tool. Use `tools/material_preview.py` for repeatable mesh, shaderball, complexity, parameter sweep, and carrier previews. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
@@ -61,6 +62,7 @@ Default team model:
 - Do not sample textures manually inside Custom HLSL when a normal TextureSample node keeps UE dependency tracking, sampler state, and audit visibility clearer.
 - Do not assume lower instruction count means cheaper if the "optimization" adds large textures, many samples, high overdraw, expensive translucency, or poor cache locality.
 - Do not generate final textures from text alone when a design/reference image is available. Cache or use the reference and pass it into `cm-imagegen` as an image input.
+- Do not accept a foliage material as visually matched when it only has constant colors or a solid plane; leaf/bush materials need a diffuse/alpha texture or separate opacity mask plus a believable card/cluster carrier.
 - Do not treat AI-generated Flow Maps, Normal Maps, packed masks, or precision lookup textures as final without technical validation; generate drafts only, then verify channels and import settings.
 - Do not skip the reusable asset library search when the task needs generic texture building blocks such as noise, masks, distortion, ramps, atlases, or flipbooks.
 - Do not treat every generated image as reusable stock. Only `approved` library assets are default reuse candidates.

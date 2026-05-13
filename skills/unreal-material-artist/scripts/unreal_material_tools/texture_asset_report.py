@@ -156,8 +156,21 @@ def analyze_texture(info: dict[str, Any], role: str, grid: tuple[int, int] | Non
                     warnings.append("atlas cells are not square; confirm SubUV expectations")
                 elif not info["grid"]["cell_power_of_two"]:
                     warnings.append("atlas cells are not power-of-two; prefer 32/64/128/256-sized cells when possible")
-        if role in {"sprite", "mask", "flipbook", "atlas"} and info.get("has_alpha") is False:
+        if role in {"sprite", "mask", "flipbook", "atlas", "foliage"} and info.get("has_alpha") is False:
             warnings.append("role usually needs alpha or clean black-background extraction")
+        if role == "foliage":
+            stats = info.get("stats") or {}
+            channel_min = stats.get("channel_min") or []
+            channel_max = stats.get("channel_max") or []
+            if info.get("has_alpha") is True and len(channel_min) >= 4 and len(channel_max) >= 4:
+                alpha_min = channel_min[3]
+                alpha_max = channel_max[3]
+                if alpha_max <= 5:
+                    warnings.append("foliage alpha appears fully transparent; verify the leaf cutout")
+                elif alpha_min >= 250:
+                    warnings.append("foliage diffuse/alpha needs real cutout transparency, not a fully opaque alpha channel")
+                elif alpha_max - alpha_min < 32:
+                    warnings.append("foliage alpha has very little range; verify masked leaf edges and mip stability")
         if role in {"mask", "packed", "flow", "normal"}:
             warnings.append("technical/data texture: import with sRGB disabled and validate channels")
     else:
@@ -218,7 +231,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("paths", nargs="+")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--effect")
-    parser.add_argument("--role", default="sprite", choices=["sprite", "mask", "packed", "normal", "flow", "flipbook", "atlas", "albedo", "ramp", "noise"])
+    parser.add_argument("--role", default="sprite", choices=["sprite", "mask", "packed", "normal", "flow", "flipbook", "atlas", "albedo", "foliage", "ramp", "noise"])
     parser.add_argument("--grid", help="Atlas or flipbook grid, such as 4x4 or 8x8.")
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

@@ -37,6 +37,14 @@ For stronger generated material assets:
 - Generate 2-4 variants, then pick one and refine from that accepted result instead of averaging multiple unrelated outputs.
 - Keep prompts technical and short enough to obey. Put hard constraints near the front.
 
+For foliage diffuse/alpha cards:
+
+- Use the reference image as `cm-imagegen` input when the user provides a plant, leaf, bush, or desired species.
+- Generate a flat card texture, not a beauty render: top-down or orthographic leaf cluster, transparent background or clean alpha, no ground plane, no cast shadow, no text, no watermark.
+- Prefer `512x512`, `1024x1024`, or `2048x2048` power-of-two output; use rectangular POT only when the card aspect is intentional.
+- Require enough RGB bleed beyond the alpha edge to avoid dark mip halos; reject hard black/white fringe around leaves.
+- Treat the card carrier as part of QA: the texture must read correctly on a masked two-sided plane/card or small cluster, not only as a standalone PNG.
+
 Bad prompt shape:
 
 ```text
@@ -47,6 +55,12 @@ Better prompt shape:
 
 ```text
 4x4 ember sprite atlas, 16 centered ember alpha shapes, consistent scale per cell, high contrast black background, no text, no watermark, for Unreal Niagara additive particles
+```
+
+Foliage prompt shape:
+
+```text
+single foliage leaf-card diffuse alpha texture, 1024x1024 power-of-two, top-down flat scanned broadleaf cluster, transparent background with clean cutout alpha, natural green albedo, no cast shadow, no ground, no text, no watermark, for Unreal masked TwoSidedFoliage material
 ```
 
 ## What AI Should Not Be Trusted To Finalize
@@ -71,6 +85,8 @@ Before importing to UE:
 - Flipbook or atlas dimensions divide evenly by the grid.
 - Each cell has consistent subject scale and center.
 - Alpha exists or black-background extraction is intentional.
+- Foliage diffuse/alpha textures have real cutout alpha; a fully opaque alpha channel is not enough.
+- Leaf-card RGB edges are not polluted by black/white background fringes that will halo in mips.
 - RGB edge pixels will not create dark halos.
 - Mask, packed, flow, and normal textures will import with sRGB disabled.
 - Compression matches role: Masks for data masks, Normalmap for normals, HDR only if truly needed.
@@ -82,6 +98,7 @@ Run:
 
 ```powershell
 python D:/Skills/skills/unreal-material-artist/tools/texture_asset_report.py path/to/textures --role atlas --grid 4x4 --markdown
+python D:/Skills/skills/unreal-material-artist/tools/texture_asset_report.py path/to/leaf-card.png --role foliage --markdown
 python D:/Skills/skills/unreal-material-artist/tools/channel_packer.py --r D:/Masks/AO.png@L --g D:/Masks/Roughness.png@L --b D:/Masks/Metallic.png@L --a D:/Masks/Opacity.png@L --markdown
 python D:/Skills/skills/unreal-material-artist/tools/flipbook_normalizer.py D:/Flipbook/Frames --grid 8x8 --cell-size 256 --markdown
 ```

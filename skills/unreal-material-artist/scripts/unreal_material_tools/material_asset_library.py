@@ -21,6 +21,7 @@ CATEGORIES = (
     "ramp",
     "packed",
     "surface",
+    "foliage",
     "decal",
     "other",
 )
@@ -33,6 +34,7 @@ TEXTURE_REPORT_ROLE_BY_CATEGORY = {
     "ramp": "ramp",
     "packed": "packed",
     "surface": "albedo",
+    "foliage": "foliage",
     "decal": "albedo",
     "other": "sprite",
 }
