@@ -51,6 +51,7 @@ Default team model:
 
 10. Check domain, blend, shading model, and render contract for non-standard materials.
    For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Run `tools/material_domain_audit.py` when UnrealBridge is available.
+   For custom or complex water, also read [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md) before authoring. A water material needs a concrete route, node plan, texture roles, carrier preview, and water-specific audit; do not stop at naming the shading model.
 
 11. Use case studies for external references.
    When matching an online material tutorial or reference, read [references/material-case-study-playbook.md](references/material-case-study-playbook.md). Extract the source contract, build a minimal UE reproduction, audit/read back the asset, preview on the closest carrier, then record whether mismatches are structural, visual, texture, carrier, or engine-version issues. If the source needs a texture that is missing and no approved library asset fits, `cm-imagegen` is the default generation route; generated assets must be QA'd, imported with role-correct settings, and registered as candidate or rejected library assets before future reuse.
@@ -218,6 +219,9 @@ Current preview carrier note:
 
 - [references/specialized-shading-models.md](references/specialized-shading-models.md)
   Use for Hair, Cloth, Eye, Clear Coat, Subsurface, TwoSidedFoliage, Single Layer Water, Thin Translucent, FromMaterialExpression, or other non-DefaultLit shading decisions.
+
+- [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md)
+  Use for concrete water material authoring: Single Layer Water, stylized water, glass/transparent liquid, depth color, foam, caustics, normals, flow maps, WPO waves, texture generation, preview gates, and water-specific audit.
 
 - [references/complex-master-material-playbook.md](references/complex-master-material-playbook.md)
   Use when designing or reviewing a large multi-feature master material for characters, environments, overlays, wetness, wear, detail systems, or heavy runtime control.

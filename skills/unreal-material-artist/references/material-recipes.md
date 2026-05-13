@@ -788,6 +788,8 @@ abs(Noise - S_DissolveThreshold)
 
 ### 7.3 Single Layer Water 水材质
 
+复杂水材质不要只看这一小节。实际制作前必须读取 `references/complex-water-material-playbook.md`，按其中的路线选择、节点图、纹理角色、预览 gate 和水专项审查执行。
+
 **推荐设置**：
 - Material Domain: Surface
 - Blend Mode: Opaque
@@ -802,13 +804,49 @@ abs(Noise - S_DissolveThreshold)
 - PhaseG
 - ColorScaleBehindWater
 
+**基础节点路线**：
+```text
+T_WaterNormalA
+  <- TextureCoordinate * S_NormalTilingA + Time * V_NormalSpeedA
+
+T_WaterNormalB
+  <- TextureCoordinate * S_NormalTilingB + Time * V_NormalSpeedB
+
+BlendAngleCorrectedNormals(T_WaterNormalA, T_WaterNormalB)
+  × S_NormalStrength
+  -> Normal
+
+DepthTerm 或手工 shallow/deep mask
+  -> Lerp(V_ShallowColor, V_DeepColor)
+  -> BaseColor
+
+T_FoamMask.R
+  × DepthFoamMask
+  × S_FoamIntensity
+  -> Lerp(BaseWaterColor, V_FoamColor)
+
+V_ScatteringCoefficients
+  -> SingleLayerWaterMaterialOutput.ScatteringCoefficients
+
+V_AbsorptionCoefficients
+  -> SingleLayerWaterMaterialOutput.AbsorptionCoefficients
+
+S_PhaseG
+  -> SingleLayerWaterMaterialOutput.PhaseG
+
+V_ColorScaleBehindWater
+  -> SingleLayerWaterMaterialOutput.ColorScaleBehindWater
+```
+
 **经验规则**：
 - Single Layer Water 不是普通透明材质；不要因为“水是透明的”就默认改成 Translucent。
+- Single Layer Water 的 `Opacity` 不是普通半透明 alpha；它控制 water volume BSDF 与 surface BRDF 的混合比例，调参和审查都要按水模型理解。
 - 水材质要单独预算。一个结构很小的 Single Layer Water 也可能显示很高指令数，这是 shading model 成本，不应按普通 DefaultLit 或简单 VFX 预算误判。
 - 定制水材质必须先读参考图：泡沫形状、caustics、深浅水颜色、透明度、浪尖、污浊/油膜/魔法感、风格化笔触或卡通边线，哪些是视觉身份，哪些只是技术辅助。
 - 资产库里的普通 ripple/noise/foam 图只能在匹配参考图时作为最终视觉贴图；否则最多作为弱 normal、roughness 或 breakup 辅助，不能把参考图风格替换成“通用水”。
 - AI 生成的 ripple/height 图可以做原型，但 normal/flow/vector 数据必须技术验证后才能 approved。
 - 用 generated height 临时推 normal 时，要标记为 draft；生产版建议用真实 normal、flow map、或 DCC/程序生成并检查 seam。
+- 复杂水的最低交付不是一个材质球，而是材质图、参数化 MI、必要贴图/候选贴图、真实水面/岸边/深浅预览和审查报告。
 
 ### 7.4 Additive Unlit 火焰 Mask
 
