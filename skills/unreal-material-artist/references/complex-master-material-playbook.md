@@ -102,3 +102,13 @@ Complex masters should still publish:
 - expected fallback strategy
 
 Complex does not mean unbounded.
+
+## Default Texture Safety
+
+Default textures are part of the shader contract, not harmless placeholders.
+
+- Use color/sRGB defaults only for color, albedo, emissive, or other artist-color inputs.
+- Use mask-compatible defaults for mask, packed, ORM, roughness, metallic, opacity, flow, and scalar-data inputs.
+- For `SAMPLERTYPE_Masks`, create or reuse a tiny project-local white/black texture with `TC_Masks` and `sRGB=false`.
+- Do not use `/Engine/EngineResources/WhiteSquareTexture` as the default for mask/packed sampler slots; it is a color sRGB texture and can trigger sampler-type compile errors.
+- Audit the master before artist textures exist. If the empty master fails because of placeholder texture settings, the master is not production-safe yet.

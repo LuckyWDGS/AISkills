@@ -64,6 +64,7 @@ Default team model:
 - Do not generate final textures from text alone when a design/reference image is available. Cache or use the reference and pass it into `cm-imagegen` as an image input.
 - Do not accept a foliage material as visually matched when it only has constant colors or a solid plane; leaf/bush materials need a diffuse/alpha texture or separate opacity mask plus a believable card/cluster carrier.
 - Do not treat AI-generated Flow Maps, Normal Maps, packed masks, or precision lookup textures as final without technical validation; generate drafts only, then verify channels and import settings.
+- Do not use ordinary color/sRGB white textures as defaults for mask, packed, ORM, roughness, metallic, opacity, flow, or scalar-data sampler slots. Their placeholder textures must match the sampler role, such as `TC_Masks` plus `sRGB=false` for Masks data, or the material can compile incorrectly before any artist texture is assigned.
 - Do not skip the reusable asset library search when the task needs generic texture building blocks such as noise, masks, distortion, ramps, atlases, or flipbooks.
 - Do not treat every generated image as reusable stock. Only `approved` library assets are default reuse candidates.
 - Do not read, trace, debug, or write live Niagara emitter/system parameter wiring as part of this skill. Return the material-side contract and let `niagara-vfx-artist` own the real Niagara hookup.

@@ -90,6 +90,7 @@ Before importing to UE:
 - RGB edge pixels will not create dark halos.
 - Mask, packed, flow, and normal textures will import with sRGB disabled.
 - Compression matches role: Masks for data masks, Normalmap for normals, HDR only if truly needed.
+- Placeholder/default textures must obey the same rule as final textures. A mask/packed/ORM slot cannot safely default to an ordinary color sRGB white texture; use or create a role-correct default such as `TC_Masks` with `sRGB=false`.
 - Texture is not larger than the visual value justifies.
 - Mips will not destroy tiny linework, rune strokes, or thin lightning branches.
 - The generated image has no text, watermark, border, hidden frame labels, or UI artifacts.
@@ -115,6 +116,7 @@ First-pass rules:
 
 - Color/albedo/emissive art usually uses sRGB on.
 - Masks, packed data, flow maps, roughness, metallic, opacity masks, and scalar data usually use sRGB off.
+- Mask/packed sampler slots need mask-compatible placeholder assets too. Do not wire `/Engine/EngineResources/WhiteSquareTexture` or another color/sRGB texture into a `SAMPLERTYPE_Masks` parameter just because it is "only a default"; create a small project-local white mask texture with `TC_Masks` and `sRGB=false`.
 - Normal maps use normal map compression and should not be treated as color art.
 - Flipbooks and atlases need correct grid metadata recorded for Niagara or material SubUV usage.
 - Power-of-two sizes are the safest default for generated runtime textures because they play better with mip generation, streaming, and cross-platform assumptions.
