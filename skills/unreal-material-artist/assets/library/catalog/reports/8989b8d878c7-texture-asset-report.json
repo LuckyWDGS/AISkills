@@ -1,0 +1,46 @@
+{
+  "tool": "texture_asset_report",
+  "role": "noise",
+  "grid": null,
+  "textures": [
+    {
+      "path": "D:\\Skills\\skills\\unreal-material-artist\\assets\\library\\candidates\\noise\\T_Case_TileableNoiseMask.png",
+      "exists": true,
+      "format": "PNG",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB",
+      "has_alpha": false,
+      "metadata_source": "pillow",
+      "stats": {
+        "channel_min": [
+          2,
+          3,
+          2,
+          255
+        ],
+        "channel_max": [
+          245,
+          245,
+          245,
+          255
+        ],
+        "channel_mean": [
+          132.184,
+          131.956,
+          132.363,
+          255.0
+        ]
+      },
+      "power_of_two": true,
+      "square": true,
+      "megapixels": 1.049,
+      "recommended_power_of_two": {
+        "width": 1024,
+        "height": 1024
+      },
+      "role": "noise",
+      "warnings": []
+    }
+  ]
+}

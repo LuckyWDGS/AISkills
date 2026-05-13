@@ -14,9 +14,12 @@ Use computation when the visual information is simple, low frequency, strongly p
 
 Do not compare “one texture” against “one math node.” Compare the whole route: samples, texture size, overdraw, cache behavior, mip quality, instruction count, platform, and how much screen area the material covers.
 
+Do not compare only sampler count either. A material with one sampler can still be expensive because of the shading model, blend path, Custom HLSL, derivatives, refraction, translucency, Single Layer Water, or full-screen coverage.
+
 ## Textures Are Usually Better For
 
 - Organic noise with recognizable shape detail.
+- Dissolve breakup masks when the edge shape needs art direction, tiling, and stable cross-platform cost.
 - Smoke, fire, splashes, clouds, sparks, ember shapes, leaf breakup, decals, runes, silhouettes, dirt, wear, cracks, and painterly masks.
 - Flipbooks and SubUV animation where motion shape matters more than live simulation.
 - Random atlas variants for sparks, lightning, shards, impact marks, and non-continuous shape variation.
@@ -26,6 +29,7 @@ Do not compare “one texture” against “one math node.” Compare the whole 
 ## Computation Is Usually Better For
 
 - Simple gradients, linear fades, UV math, panners, radial rings, Fresnel, depth fade, camera distance, vertex color, world position masks, and scalar remaps.
+- Simple geometric masks such as slope, height, object position, distance bands, or world-aligned fades.
 - Parameterized shapes that must scale cleanly without texture resolution limits.
 - Small math chains that avoid a texture fetch and do not create high instruction count.
 - Procedural controls that designers must tune per instance.
@@ -37,6 +41,7 @@ Do not compare “one texture” against “one math node.” Compare the whole 
 - The graph uses several Custom nodes or repeated noise branches to approximate one stable art-directed pattern.
 - The material is visually muddy because the procedural detail has no authored silhouette.
 - A layer needs frame-to-frame shape evolution such as fire, smoke, splash, or explosion body.
+- UE procedural Noise is being used for a large visible surface or many overlapping translucent cards just to get static breakup. A single tiled mask often costs less and is easier to audit.
 
 ## Warning Signs That Pure Texture Is Wrong
 
@@ -44,6 +49,7 @@ Do not compare “one texture” against “one math node.” Compare the whole 
 - The material needs simple distance, ring, or Fresnel math but uses a large mask because it was easy to generate.
 - Texture scale, mip bleeding, compression, or UV seams are more visible than the effect.
 - The texture is generated AI output with imprecise channels, dirty alpha, inconsistent frame scale, or fake normal/flow data.
+- A technical water normal/flow/ripple route uses unvalidated AI data where exact vector direction, tiling, or derivative scale matters.
 
 ## Performance Review
 
@@ -65,6 +71,12 @@ Typical VFX starting budgets:
 - Android richer VFX material: 50-80 instructions, 1-3 samples only with controlled overdraw.
 
 Treat these as first-pass guardrails, not universal truth. A full-screen translucent material at 60 instructions can be worse than a tiny spark material at 180.
+
+Special-case budgets:
+
+- `SingleLayerWater` is not comparable to ordinary `DefaultLit` or simple unlit VFX materials. Even a minimal water setup can report far higher instruction counts because the shading model carries specialized lighting/transmission work. Judge it against a water-specific budget and target platform.
+- Additive/unlit fire using one mask can still exceed a simple VFX budget if it uses panners, ParticleColor, high emissive, two-sided planes, or large overdraw. Judge the full screen coverage, not just the graph.
+- Procedural Noise can look cheap because it uses zero samplers, but it can replace texture bandwidth with ALU. Prefer a baked mask when the noise is stable and reused.
 
 ## Baked Versus Live
 

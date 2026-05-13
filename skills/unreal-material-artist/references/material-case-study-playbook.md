@@ -173,6 +173,56 @@ Superseded complex experiment:
 - A `QualitySwitch` was added to demonstrate cost-governance for sample-heavy masters. Its showcase MI also produced static-switch permutation info, which is acceptable but should be reported.
 - Lesson: placeholder textures are still real shader inputs. Mask/packed default textures must have mask compression and sRGB off; otherwise a complex master can fail before any artist texture is assigned.
 
+### Dissolve, Noise, Single Layer Water, Fire
+
+Source anchors:
+
+- [Epic community dissolve/disintegration discussion](https://forums.unrealengine.com/t/disintegration-dissolve/16399): noise/mask drives opacity threshold, with separate color/emissive controls for the dissolve edge.
+- [Epic/Ryan Brucks noise guidance](https://www.unrealengine.com/en-US/tech-blog/getting-the-most-out-of-noise-in-ue4): procedural Noise is powerful but can be expensive; use baked textures when a stable organic pattern is enough.
+- [Epic Single Layer Water documentation](https://dev.epicgames.com/documentation/zh-cn/unreal-engine/single-layer-water-shading-model-in-unreal-engine): water uses the `SingleLayerWater` shading model on the opaque or masked path with water-specific scattering/absorption outputs.
+- [Epic material inputs documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/material-inputs-in-unreal-engine?application_version=5.6) and [material expression placement docs](https://dev.epicgames.com/documentation/en-us/unreal-engine/placing-material-expression-and-functions?application_version=4.27): masked/additive opacity behavior and `Panner` UV motion are core to dissolve/fire prototypes.
+
+Generated texture gap:
+
+- The reusable library had no approved assets for these cases, so `cm-imagegen` was used by default.
+- Generated assets were stored under `D:\UnrealBridge\.codex\session\material-delivery\case-studies\20260513_dissolve_noise_water_fire\generated-textures\`.
+- All three generated textures were `1024x1024` power-of-two PNGs.
+- `T_Case_TileableNoiseMask` passed first-pass texture report as a noise texture and was imported into UE as `TC_Masks` + `sRGB=false`.
+- `T_Case_FireTongueMask` passed POT checks but had no alpha; it is valid only for black-background/luminance mask usage unless regenerated or alpha-extracted.
+- `T_Case_WaterRippleHeight` passed first-pass size checks but remains draft technical data, not an approved final normal/flow asset.
+- Library entries were registered as `candidates`, not `approved`, because first-pass reports do not prove tiling quality, alpha correctness, or vector-data semantics.
+
+UE reproductions were built under `/Game/CodexTemp/MaterialCaseStudies/20260513_DissolveNoiseWaterFire/`.
+
+Dissolve case:
+
+- Asset: `/Game/CodexTemp/MaterialCaseStudies/20260513_DissolveNoiseWaterFire/M_Case_Dissolve_NoiseEdge`
+- Contract: `Surface`, `Masked`, `Unlit`, `TwoSided=true`; generated noise mask routes to `OpacityMask`; Custom edge band routes to `EmissiveColor`.
+- Audit: `140` instructions, `1` sampler, no compile errors. Finding: informational quality-gate warning because it uses a Custom node without a `QualitySwitch`.
+- Lesson: dissolve shape belongs in a mask texture when the breakup is art-directed and reused. The threshold/edge math is cheap control logic around that texture.
+
+Procedural noise case:
+
+- Asset: `/Game/CodexTemp/MaterialCaseStudies/20260513_DissolveNoiseWaterFire/M_Case_Procedural_Noise_Surface`
+- Contract: `Surface`, `Opaque`, `Unlit`; `Noise` node multiplied by tint into `EmissiveColor`.
+- Audit: `155` instructions, `0` samplers, no compile errors, no findings.
+- Lesson: 0 samplers does not mean free. Procedural noise trades texture bandwidth for ALU; keep it when live/world-space parameterization matters, but bake it when it is just a static breakup mask.
+
+Single Layer Water case:
+
+- Asset: `/Game/CodexTemp/MaterialCaseStudies/20260513_DissolveNoiseWaterFire/M_Case_SingleLayerWater_Ripple`
+- Contract: `Surface`, `Opaque`, `SingleLayerWater`; ripple height draft feeds a Custom height-to-normal prototype; `SingleLayerWaterMaterialOutput` carries scattering, absorption, phase, and behind-water color.
+- Audit with ordinary surface budget first reported `1028` instructions, `1` sampler, no compile errors, plus dead-node findings for the water output node because the graph scanner currently treats it as not connected to a main material output.
+- Re-audit with a water-specific budget (`1200`) passed the instruction threshold but still showed conservative dead-node findings for `SingleLayerWaterMaterialOutput`.
+- Lesson: Single Layer Water needs a specialized audit mental model. Do not compare it to simple DefaultLit or VFX budgets, and do not treat water-output dead-node findings as definitive until the scanner understands water material output semantics.
+
+Fire case:
+
+- Asset: `/Game/CodexTemp/MaterialCaseStudies/20260513_DissolveNoiseWaterFire/M_Case_Fire_AdditiveMask`
+- Contract: `Surface`, `Additive`, `Unlit`, `TwoSided=true`; generated black-background fire mask is panned, tinted, multiplied by `ParticleColor`, and routed to `EmissiveColor` and `Opacity`.
+- Audit: `305` instructions, `1` sampler, no compile errors. This exceeds a simple VFX budget but can be acceptable as a PC prototype if overdraw and particle count are controlled.
+- Lesson: fire material cost is dominated by overdraw, coverage, and blend path as much as graph size. For hero fire, prefer flipbook/SubUV; for detail layers, a single mask plus panner is a reasonable prototype.
+
 ## Rules To Carry Forward
 
 - For external examples, judge by contract first and screenshot second.
@@ -180,4 +230,7 @@ Superseded complex experiment:
 - Keep a difference log: source expectation, UE readback, audit finding, visual mismatch, fix.
 - If the source uses a texture, do not claim visual equivalence from a constant-color placeholder.
 - If the source depends on a carrier, use that carrier or explicitly mark the preview as only a structural material check.
+- If no approved library asset exists for a needed texture, default to `cm-imagegen`, run `texture_asset_report.py`, import/fix UE settings if used, and register the stored result as `candidates` or `rejected` before reuse.
+- Candidate assets are not stock. Promote only after self-review, first-pass reports, and any role-specific visual/technical checks pass on the library-stored copy.
+- Treat special shading models, especially `SingleLayerWater`, with domain-specific budgets and scanner exceptions instead of forcing ordinary surface-material thresholds.
 - Good lessons become skill references; one-off quirks stay in the case report.

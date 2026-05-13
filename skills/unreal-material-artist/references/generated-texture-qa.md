@@ -23,6 +23,8 @@ If a design/reference image exists, use it as an image reference through `cm-ima
 
 Before generating, search the reusable material asset library. If an `approved` asset already fits the need closely enough, reuse it instead of generating a new one.
 
+When reproducing an online material case, missing textures are a production input gap, not a reason to stop at a constant-color placeholder. Use `cm-imagegen` by default after the library search fails, then record the output as `candidates` or `rejected` instead of promoting it straight to stock.
+
 ## cm-imagegen Tactics
 
 For stronger generated material assets:
@@ -30,7 +32,10 @@ For stronger generated material assets:
 - Generate one texture role at a time. Do not ask for a fire flipbook, smoke mask, sparks, and flow map in one image.
 - Use stable canvas requirements: `1024x1024`, `2048x2048`, `4x4 grid`, `8x8 grid`, centered cells.
 - Prefer power-of-two output sizes whenever possible: `256`, `512`, `1024`, `2048`. Avoid odd sizes like `1000x1000` for runtime textures unless there is a specific reason.
+- For dissolve/noise masks, ask for a grayscale tileable data-like texture, no directional lighting, no vignette, no unique center landmark, and no RGB color variation if the material samples it as a mask.
 - For sprite masks, ask for black background or transparent background, centered subject, high contrast, clean alpha-friendly edges.
+- For fire masks, decide whether the material consumes alpha or luminance. A black-background fire tongue can work for additive prototypes through the `R` channel, but production sprite cards usually need real alpha or a normalized flipbook/atlas.
+- For water ripple/flow/normal sources, treat AI output as draft shape only. Height-style grayscale can seed a prototype, but final normals, flow maps, or vector displacement need DCC/script validation before approval.
 - For atlases, require consistent scale, centered content per cell, no border, no text, no watermark, no lighting change between cells.
 - For flipbooks, require fixed camera, same subject scale, same center point, smooth temporal evolution, no cropping, no sudden frame jumps.
 - For seamless textures, explicitly ask for tileable, no directional lighting, no vignette, no unique center landmark.
@@ -69,6 +74,7 @@ Treat these as drafts unless technically validated:
 
 - flow maps with meaningful RG vector direction
 - normal maps
+- water ripple normals derived from generated height without checking scale, seams, and derivative artifacts
 - packed masks with exact channel semantics
 - signed distance fields
 - LUTs or ramps that need exact numeric response
@@ -92,6 +98,7 @@ Before importing to UE:
 - Compression matches role: Masks for data masks, Normalmap for normals, HDR only if truly needed.
 - Placeholder/default textures must obey the same rule as final textures. A mask/packed/ORM slot cannot safely default to an ordinary color sRGB white texture; use or create a role-correct default such as `TC_Masks` with `sRGB=false`.
 - Texture is not larger than the visual value justifies.
+- Generated black-background masks without alpha are acceptable only when the material explicitly samples luminance/R as the mask; otherwise regenerate or extract a real alpha channel before import.
 - Mips will not destroy tiny linework, rune strokes, or thin lightning branches.
 - The generated image has no text, watermark, border, hidden frame labels, or UI artifacts.
 
@@ -121,6 +128,7 @@ First-pass rules:
 - Flipbooks and atlases need correct grid metadata recorded for Niagara or material SubUV usage.
 - Power-of-two sizes are the safest default for generated runtime textures because they play better with mip generation, streaming, and cross-platform assumptions.
 - Large translucent VFX textures need stricter size control than small opaque surface textures because overdraw multiplies the cost.
+- AI-generated water height/ripple textures imported as mask/data should use `TC_Masks` or another non-sRGB data compression route. Do not import them as color art just because they are PNGs.
 
 ## Acceptance Language
 
