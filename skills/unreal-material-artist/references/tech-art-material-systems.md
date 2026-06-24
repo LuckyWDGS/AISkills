@@ -11,6 +11,14 @@ This reference is for decisions like:
 - how MPC, MID, Niagara, Blueprint, C++, and actor state should divide responsibility
 - how to keep a project's material system scalable instead of becoming a pile of one-off instances
 
+## Table Of Contents
+
+- [System Layers](#system-layers)
+- [Division Of Responsibility](#division-of-responsibility)
+- [Anti-Patterns](#anti-patterns)
+- [Runtime Trace Thinking](#runtime-trace-thinking)
+- [Project-Level Design Rule](#project-level-design-rule)
+
 ## System Layers
 
 Think in five layers:

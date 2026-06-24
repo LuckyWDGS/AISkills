@@ -10,6 +10,17 @@
 - advanced UV systems
 - runtime variant-heavy materials
 
+## Table Of Contents
+
+- [Design Rules](#design-rules)
+- [Recommended Sections](#recommended-sections)
+- [Parameter Discipline](#parameter-discipline)
+- [Switch Strategy](#switch-strategy)
+- [Layout Strategy](#layout-strategy)
+- [High-Value Function Library](#high-value-function-library)
+- [Cost Control](#cost-control)
+- [Default Texture Safety](#default-texture-safety)
+
 ## Design Rules
 
 Keep complex masters:

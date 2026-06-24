@@ -13,6 +13,15 @@ This map describes what is still missing to turn a reference image or text brief
 - Asset cleanup
 - Parameter tuning log
 - End-to-end workflow docs
+- Safe local Niagara emitter authoring via UnrealBridge overlay APIs for add / duplicate / remove / enable emitter operations inside an existing Niagara system
+- First-pass upstream UnrealBridge baseline sync with local overlay preservation and generated-surface regeneration
+- Official Niagara fourth-wave closure is now live-proven:
+  - emitter data read/write
+  - renderer data read/write
+  - system user variable add/remove/read
+  - component variable get/set/read
+  - official Blueprint wrapper creation
+  - official stack issue fix application with real fix-style issues
 
 ## First-Pass Coverage Added
 
@@ -162,10 +171,19 @@ Current first-pass tool:
 - Asset planning should eventually understand project-specific naming conventions and existing reusable masters.
 - Integration planning should eventually read real skeleton/socket/notify context from the target project.
 - Write-side UE helpers and the Niagara asset assistant should eventually cover richer emitter construction, user-parameter authoring, source/event wiring, and safe retirement of stale assets.
+- The local safe emitter-authoring route now exists, but it still needs broader higher-level helpers on top: emitter renaming, role assignment presets, common fire/smoke/trail recipes, and stronger post-write graph validation for complex systems.
+- Upstream sync is now baseline-capable, but still needs more hardening around stale-local file retirement, helper-clone cleanliness, and future cases where upstream adds a file path that overlaps a preserved local overlay path.
+- Live test result on 2026-05-13: directly writing `NiagaraSystem.EmitterHandles` via export-text was rejected by the engine and round-tripped back unchanged. Treat raw `EmitterHandles` export-text overwrite as a non-viable route for safe emitter authoring in the current bridge/tooling stack.
 - Niagara stack discovery still needs a safer route than `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters; that path crashed UE 5.7 during live testing.
 - Visual diff QA should eventually compare motion clips, not only still frames.
 - Delivery packaging should eventually pull final active assets directly from the project instead of relying on manual final lists.
 - Learning loop should eventually auto-build stronger case studies from shipped effects without manual curation.
+- Component variable editing is now bridged and proven, but not through raw ToolsetRegistry JSON round-trip:
+  - direct ToolsetRegistry execution for `NiagaraToolset_Component.GetVariable/SetVariable` proved fragile around `FNiagaraTypeDefinition` JSON input shape
+  - the local bridge now owns the stable path with authoritative `UNiagaraComponent` variable read/write underneath the same path-driven API
+- Bridge runtime hygiene is now part of Niagara delivery capability:
+  - a user script rebinding top-level `sys` can poison older UnrealBridge exec wrappers
+  - hardened wrapper logic is now required capability, not optional polish, because Niagara delivery depends on long-running safe exec sessions
 
 ## Priority Order
 

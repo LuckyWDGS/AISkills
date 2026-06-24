@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_utc": "2026-05-13T03:10:02+00:00",
+  "updated_utc": "2026-05-18T04:35:20+00:00",
   "stages": [
     "approved",
     "candidates",
@@ -17,7 +17,8 @@
     "surface",
     "foliage",
     "decal",
-    "other"
+    "other",
+    "post_process"
   ],
   "assets": [
     {
@@ -53,7 +54,9 @@
         "D:\\Skills\\skills\\unreal-material-artist\\assets\\library\\catalog\\reports\\8989b8d878c7-texture-asset-report.json"
       ],
       "created_utc": "2026-05-13T03:08:02+00:00",
-      "updated_utc": "2026-05-13T03:08:02+00:00"
+      "updated_utc": "2026-05-13T03:08:02+00:00",
+      "asset_kind": "texture",
+      "storage_mode": "library-file"
     },
     {
       "id": "bca32298aa39",
@@ -88,7 +91,9 @@
         "D:\\Skills\\skills\\unreal-material-artist\\assets\\library\\catalog\\reports\\bca32298aa39-texture-asset-report.json"
       ],
       "created_utc": "2026-05-13T03:09:13+00:00",
-      "updated_utc": "2026-05-13T03:09:13+00:00"
+      "updated_utc": "2026-05-13T03:09:13+00:00",
+      "asset_kind": "texture",
+      "storage_mode": "library-file"
     },
     {
       "id": "04c3b10bcfc8",
@@ -124,7 +129,89 @@
         "D:\\Skills\\skills\\unreal-material-artist\\assets\\library\\catalog\\reports\\04c3b10bcfc8-texture-asset-report.json"
       ],
       "created_utc": "2026-05-13T03:10:02+00:00",
-      "updated_utc": "2026-05-13T03:10:02+00:00"
+      "updated_utc": "2026-05-13T03:10:02+00:00",
+      "asset_kind": "texture",
+      "storage_mode": "library-file"
+    },
+    {
+      "asset_kind": "material",
+      "storage_mode": "external-ue-asset",
+      "id": "1440a80a24aa",
+      "name": "M_OfficialTemplateSmoke_Decal",
+      "stage": "approved",
+      "category": "decal",
+      "role": "decal-material",
+      "ue_asset_path": "/Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke_Decal.M_OfficialTemplateSmoke_Decal",
+      "source_kind": "rebuilt",
+      "original_source": "/Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke",
+      "source_material_path": "/Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke",
+      "library_relpath": "",
+      "file_name": "",
+      "tags": [],
+      "notes": "Auto-rebuilt during decal preview recovery from /Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke.",
+      "qa_status": "approved",
+      "material_domain": "DeferredDecal",
+      "blend_mode": "Opaque",
+      "shading_models": [
+        "DefaultLit"
+      ],
+      "num_expressions": 9,
+      "source_report_paths": [],
+      "report_paths": [
+        "D:\\Skills\\skills\\niagara-vfx-artist\\.codex\\session\\material-delivery\\previews\\Game-CodexTemp-OfficialToolsetSmoke-M_OfficialTemplateSmoke_Decal.M_OfficialTemplateSmoke_Decal\\Game-CodexTemp-OfficialToolsetSmoke-M_OfficialTemplateSmoke_Decal.M_OfficialTemplateSmoke_Decal-preview.json"
+      ],
+      "created_utc": "2026-05-18T03:35:10+00:00",
+      "updated_utc": "2026-05-18T04:34:56+00:00",
+      "review_gate": {
+        "reviewed_utc": "2026-05-18T03:39:03+00:00",
+        "self_review": "approved",
+        "allow_warnings": false,
+        "errors": 0,
+        "warnings": 0
+      },
+      "delivery_report_paths": [
+        "D:\\Skills\\skills\\niagara-vfx-artist\\.codex\\session\\material-delivery\\deliveries\\M_OfficialTemplateSmoke_Decal\\1440a80a24aa-delivery-report.json"
+      ]
+    },
+    {
+      "asset_kind": "material",
+      "storage_mode": "external-ue-asset",
+      "id": "12af8fe28fe0",
+      "name": "M_OfficialTemplateSmoke_PostProcess",
+      "stage": "approved",
+      "category": "post_process",
+      "role": "post-process-material",
+      "ue_asset_path": "/Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke_PostProcess.M_OfficialTemplateSmoke_PostProcess",
+      "source_kind": "rebuilt",
+      "original_source": "/Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke",
+      "source_material_path": "/Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke",
+      "library_relpath": "",
+      "file_name": "",
+      "tags": [],
+      "notes": "Auto-rebuilt during post_process preview recovery from /Game/CodexTemp/OfficialToolsetSmoke/M_OfficialTemplateSmoke.",
+      "qa_status": "approved",
+      "material_domain": "PostProcess",
+      "blend_mode": "Opaque",
+      "shading_models": [
+        "Unlit"
+      ],
+      "num_expressions": 6,
+      "source_report_paths": [],
+      "report_paths": [
+        "D:\\Skills\\skills\\niagara-vfx-artist\\.codex\\session\\material-delivery\\previews\\Game-CodexTemp-OfficialToolsetSmoke-M_OfficialTemplateSmoke_PostProcess.M_OfficialTemplateSmoke_PostProcess\\Game-CodexTemp-OfficialToolsetSmoke-M_OfficialTemplateSmoke_PostProcess.M_OfficialTemplateSmoke_PostProcess-preview.json"
+      ],
+      "created_utc": "2026-05-18T03:35:10+00:00",
+      "updated_utc": "2026-05-18T04:35:20+00:00",
+      "review_gate": {
+        "reviewed_utc": "2026-05-18T03:35:41+00:00",
+        "self_review": "approved",
+        "allow_warnings": false,
+        "errors": 0,
+        "warnings": 0
+      },
+      "delivery_report_paths": [
+        "D:\\Skills\\skills\\niagara-vfx-artist\\.codex\\session\\material-delivery\\deliveries\\M_OfficialTemplateSmoke_PostProcess\\12af8fe28fe0-delivery-report.json"
+      ]
     }
   ]
 }

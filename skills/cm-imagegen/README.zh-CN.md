@@ -1,247 +1,176 @@
-# cm-imagegen 傻瓜式使用文档
+# cm-imagegen 中文说明
 
-这份文档给想在 Codex 里直接用 `cm-imagegen` 生图的人看。照着做就行。
+`cm-imagegen` 是这个用户环境里的默认图片生成编排 skill。它默认使用本地 CLI 调用当前 Codex 配置 provider 的兼容图片接口：文生图走 `/v1/images/generations`，图生图/参考图走 `/v1/images/edits`。默认流只尝试主通道一次；如果这一次发生非策略失败，Codex 应在 skill 层改用系统内建 `imagegen`。专用 fallback API 目前暂不参与默认路由。
 
-## 这个 skill 是做什么的
+## 路由顺序
 
-`cm-imagegen` 用当前 Codex/CodexManager 的账号和接口来生成或编辑图片。
+默认顺序固定为：
 
-你可以让 Codex：
+1. 主通道兼容接口：当前 Codex 配置 provider 的 `/v1/images/generations` 或 `/v1/images/edits`。
+2. 最后兜底：系统内建 `imagegen`，只在主通道单次尝试发生非策略失败后使用。
 
-- 直接文生图
-- 按参考图生成新图
-- 修改已有图片
-- 一次生成多张图
-- 生成完成后直接在聊天窗口里显示图片
-- 先生成 UI / 页面 / 布局 / 视觉设计图
+`/v1/responses + image_generation` 只作为显式测试入口保留：传 `--api responses` 才会使用。它不是默认主通道。
 
-## 第一次使用前
+## 名词区分
 
-先确认这个 skill 已经安装到 Codex 的技能目录。
+- 系统主通道：Codex skill 层面的选择。普通生图、图生图、参考图、UI 设计图等任务优先使用 `cm-imagegen`。
+- CLI 主通道：`scripts/cm_image_gen.py` 默认调用当前 Codex 配置 provider 的兼容图片接口。
+- 备用接口：本地保留的专用 fallback provider 配置；当前暂不参与默认路由。
+- 系统 `imagegen`：skill 层最后兜底，不是 CLI 内部 HTTP provider。
 
-在 PowerShell 里运行：
+CLI 输出里的关键字段用于说明实际调用了哪里：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File D:\Skills\tools\install.ps1 -RepoRoot D:\Skills -CodexSkillsDir C:\Users\QY\.codex\skills -Skills cm-imagegen
-```
+- `api_channel`: `configured_provider`；显式 `--api responses` 时为 `configured_provider_responses`
+- `api_provider`: 实际 provider 名称
+- `endpoint`: `/images/generations` 或 `/images/edits`
+- `transport`: `images_json` 或 `images_multipart`
+- `request_url`: 实际 HTTP 请求地址
 
-然后重启 Codex。
+旧字段 `provider` 和 `fallback_used` 仍保留给兼容调用方，但它们只表示 CLI 内部 provider 结果，不表示系统 skill 主通道。
 
-如果不重启，Codex 可能还看不到新 skill。
+## 显式 Responses 测试入口
 
-## 配置要求
-
-通常不需要额外配置。这个 skill 会自动读取：
-
-- `C:\Users\QY\.codex\config.toml` 里的当前 `model_provider`
-- 当前 provider 的 `base_url`
-- `C:\Users\QY\.codex\auth.json` 里的 `OPENAI_API_KEY`
-
-如果你用了 `cc switch`，要确保 `config.toml` 里的 `base_url` 是当前真实地址。
-
-也可以临时指定图片接口地址：
+如果需要测试工具注入，可以显式传：
 
 ```powershell
-$env:CODEXMANAGER_IMAGE_BASE_URL="http://你的地址/v1"
+python "$HOME\.codex\skills\cm-imagegen\scripts\cm_image_gen.py" generate --api responses --prompt "测试图"
 ```
 
-## 在 Codex 里怎么说
+这条路线会调用 `/v1/responses`，`stream: true`，并自动注入 `image_generation`。图片工具默认模型仍是 `gpt-image-2`。也可以用 `--tools` 显式透传工具数组。
 
-最简单的用法：
-
-```text
-用 cm-imagegen 生成一张图：一只玻璃质感的小猫，坐在白色桌面上，干净产品摄影风格
-```
-
-或者：
-
-```text
-调用 cm-imagegen 生图：未来感台灯，透明材质，柔和蓝色光，方图
-```
-
-Codex 会生成图片，并把结果直接显示在聊天窗口里。
-
-## 设计、UI、布局重做也会触发
-
-如果你说的是偏视觉设计的需求，也可以直接让 Codex 用这个 skill。
-
-常见说法：
-
-```text
-重新设计这个页面布局，先给我一张设计图
-```
-
-```text
-把这个 UI 重新设计一下，生成 3 个方向
-```
-
-```text
-参考这张截图，重新设计一个更高级的界面
-```
-
-触发词包括：
-
-- 重新设计布局
-- 重新设计 UI
-- 设计图
-- UI 设计
-- 布局设计
-- 页面设计
-- 界面设计
-- 视觉设计
-- redesign
-- layout redesign
-
-如果你明确说“直接改代码实现”，Codex 会进入实现流程；如果先需要视觉参考图，会先用 `cm-imagegen` 出设计图，再继续实现。
-
-## 生成多张图
-
-直接告诉 Codex 要几张：
-
-```text
-用 cm-imagegen 生成 4 张测试图，主题是未来感桌面小物，每张风格稍微不同
-```
-
-规则：
-
-- 多张图会拆成多次独立请求。
-- 不依赖接口的 `--n` 批量返回。
-- 每完成一张，Codex 就会立刻在聊天里显示一张。
-- 不需要等全部生成完才看到结果。
-
-## 使用参考图
-
-如果你有本地图片路径，可以这样说：
-
-```text
-用 cm-imagegen 参考这张图生成 3 个新图标：
-D:\path\to\reference.png
-要求：保持清爽的 3D 图标风格，但不要复制文字
-```
-
-规则：
-
-- 每一张生成图都会单独请求。
-- 每次请求都会带上同一张参考图。
-- 如果你给了多张参考图，Codex 会把相关参考图都带上。
-
-## 修改已有图片
-
-可以这样说：
-
-```text
-用 cm-imagegen 修改这张图：
-D:\path\to\input.png
-只把背景换成浅蓝色工作室背景，主体不要变
-```
-
-修改类任务会尽量保留原图主体，非破坏性保存新文件。
-
-## 失败时会怎样
-
-如果生图失败，Codex 会用中文告诉你原因。
-
-比如：
-
-- 参考图文件不存在
-- 接口地址不通
-- 鉴权失败
-- 参数不支持
-- 服务临时繁忙
-
-重试规则：
-
-- 每张图最多尝试 3 次。
-- 网络超时、连接中断、`429`、`5xx` 这类临时问题会重试。
-- 文件不存在、鉴权失败、参数错误、内容安全拒绝这类明确错误不会盲目重试。
-- 多图任务里，一张失败不会影响已经成功的图片。
-
-## 图片保存在哪里
-
-默认保存在当前工作目录的：
-
-```text
-generated-images/
-```
-
-例如这个 skill 目录里运行时，会保存到：
-
-```text
-D:\Skills\skills\cm-imagegen\generated-images\
-```
-
-Codex 会在聊天窗口里直接显示图片。你一般不需要手动找文件。
-
-## 常见问题
-
-### Codex 说找不到 cm-imagegen
-
-先运行安装脚本，然后重启 Codex：
+## 文生图
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\Skills\tools\install.ps1 -RepoRoot D:\Skills -CodexSkillsDir C:\Users\QY\.codex\skills -Skills cm-imagegen
+python "$HOME\.codex\skills\cm-imagegen\scripts\cm_image_gen.py" generate --prompt "一张精致的产品海报，干净构图，高级布光"
 ```
 
-### 地址不对或接口 404
-
-如果你用了 `cc switch`，检查：
+默认会调用：
 
 ```text
-C:\Users\QY\.codex\config.toml
+POST <configured_base_url>/images/generations
 ```
 
-确认当前 provider 的 `base_url` 是真实可用地址。
-
-也可以临时指定：
+常用参数：
 
 ```powershell
-$env:CODEXMANAGER_IMAGE_BASE_URL="http://你的地址/v1"
+--size 1024x1024
+--filename "poster.png"
+--out-dir "D:\path\to\output"
+--quality high
+--background transparent
+--output-format png
+--response-format b64_json
+--timeout 600
 ```
 
-### 鉴权失败 401/403
+## 图生图或参考图
 
-通常是当前 `auth.json` 里的 key 不被这个 CodexManager 服务接受。需要切换到正确账号、正确 provider，或修正 CodexManager 的鉴权配置。
+使用 `edit`，把本地图片作为编辑目标或视觉参考：
 
-### 聊天窗口看不到图片
-
-让 Codex 确认最终回复里使用的是绝对路径 Markdown 图片，并且 Windows 路径用正斜杠：
-
-```markdown
-![generated image](D:/path/to/generated-images/output.png)
+```powershell
+python "$HOME\.codex\skills\cm-imagegen\scripts\cm_image_gen.py" edit `
+  --image "D:\path\to\reference.png" `
+  --prompt "保留主体轮廓和姿态，重绘为精致商业插画风格"
 ```
 
-不要用相对路径，也不要用 `file://`。
-
-### 聊天里的图片预览太小
-
-Codex 聊天窗口的内嵌预览尺寸主要由客户端控制，Markdown 不能稳定强制放大。
-
-推荐让 Codex 同时返回：
-
-```markdown
-![generated image](D:/path/to/generated-images/output.png)
-
-[打开原图](D:/path/to/generated-images/output.png)
-```
-
-聊天里先看预览，需要看大图时点“打开原图”。
-
-## 给别人的一句话说明
-
-在 Codex 里直接说：
+默认会调用：
 
 ```text
-用 cm-imagegen 生成图片：<你的描述>
+POST <configured_base_url>/images/edits
 ```
 
-如果要多张：
+多个参考图可以重复传 `--image`。
 
-```text
-用 cm-imagegen 生成 4 张图片：<你的描述>
+## 配置来源
+
+主通道 base URL 来自：
+
+1. `CODEXMANAGER_IMAGE_BASE_URL`
+2. `$CODEX_HOME/config.toml` 里的当前 `model_provider`
+
+主通道 key 来自：
+
+1. `CODEXMANAGER_IMAGE_API_KEY`
+2. provider 配置里的 `api_key` 或 key 环境变量
+3. `$CODEX_HOME/auth.json` 里的 `OPENAI_API_KEY`
+
+备用接口配置仍然可以保留在本地私有环境里，但当前默认流不会自动使用它。相关配置来源仍是：
+
+1. `CODEXMANAGER_IMAGE_FALLBACK_BASE_URL` 和 `CODEXMANAGER_IMAGE_FALLBACK_API_KEY`
+2. 本地私有 `$CODEX_HOME/cm-imagegen/fallback.json`
+3. `$CODEX_HOME/auth.json` 里的 fallback 风格字段
+
+不要把 fallback key 写进 skill 仓库、文档、提示词、日志或 handoff。
+
+## 不生图检查配置
+
+如果只想确认会调用哪个 provider 和 endpoint，不消耗图片请求，可以用：
+
+```powershell
+python "$HOME\.codex\skills\cm-imagegen\scripts\cm_image_gen.py" doctor
 ```
 
-如果要参考图：
+或只看文生图路线：
 
-```text
-用 cm-imagegen 参考这张图生成 3 张：D:\path\to\ref.png，要求：<你的描述>
+```powershell
+python "$HOME\.codex\skills\cm-imagegen\scripts\cm_image_gen.py" check-config --operation generate
 ```
+
+这两个命令不会发起网络请求，不会打印 API key，只会显示 `api_key_present`、`base_url`、`endpoint`、`transport`、`request_url` 等路由诊断字段。备用接口如果已在本地配置，也会显示为 `configured: true`，但默认流仍会标记 `used_for_default_route: false`。
+
+如果还想确认请求会带哪些安全字段，但不显示真实 prompt 或图片 bytes，可以加：
+
+```powershell
+python "$HOME\.codex\skills\cm-imagegen\scripts\cm_image_gen.py" check-config --operation edit --show-payload-shape
+```
+
+这会显示 `model`、`size`、`response_format` 等字段形状；图生图会显示 `content_type: multipart/form-data`，并把图片文件部分标记为 `<redacted>`。
+
+## 输出示例
+
+成功时 CLI 打印 JSON：
+
+```json
+{
+  "ok": true,
+  "operation": "generate",
+  "skill_primary_channel": "cm_image_gen_cli",
+  "execution_channel": "cm_image_gen_cli",
+  "api_channel": "configured_provider",
+  "api_provider": "yunyi",
+  "api_fallback_used": false,
+  "request_url": "https://example.com/v1/images/generations",
+  "provider": "yunyi",
+  "fallback_used": false,
+  "base_url": "https://example.com/v1",
+  "endpoint": "/images/generations",
+  "transport": "images_json",
+  "model": "gpt-image-2",
+  "paths": ["D:\\path\\to\\generated-images\\asset.png"]
+}
+```
+
+默认流不再自动切到兼容 fallback provider，所以普通 `generate` / `edit` 成功结果里 `api_channel` 应保持为 `configured_provider`，`api_fallback_used` 应保持为 `false`。如果主通道失败，CLI 会直接报告这一次主通道失败；随后由 Codex 在 skill 层决定是否改用系统内建 `imagegen`。
+
+如果兼容图片接口意外返回 SSE 流，CLI 会尝试解析 SSE 事件里的图片结果。只有找到图片 base64 或 URL 时才会保存图片；如果 SSE 里没有图片，会输出 `sse_event_count`、`sse_event_types`、`sse_json_payload_count`、`sse_image_item_count` 等诊断。
+
+## 失败处理
+
+- 默认主通道只尝试一次，不做额外自动重试。
+- 缺 key、缺 base URL、HTTP 400 参数错误、模型不支持、缺本地图片等不做盲目重试。
+- 策略或安全拒绝不允许切换路线绕过。
+- 主通道单次尝试发生非策略失败后，Codex 可以使用系统内建 `imagegen` 作为最后兜底。
+
+## 多张图片
+
+后端不一定可靠支持 `n`。如果用户要 4 张图，推荐运行 4 次独立 CLI 调用，并用不同文件名保存。带参考图时，每次调用都重复传同一组 `--image`。
+
+## 离线测试
+
+开发或修改脚本后，可以运行不访问网络的 mock 测试：
+
+```powershell
+python "$HOME\.codex\skills\cm-imagegen\scripts\test_cm_image_gen.py"
+```
+
+当前覆盖默认 `/images/*` 路由、单次主通道失败行为、SSE 图片恢复、无图片 JSON 诊断和 `doctor` 路由预览。

@@ -57,7 +57,7 @@ Do not add:
 ## Input images and references
 - Do not assume that every provided image is an edit target.
 - Label each image by index and role (`Image 1: edit target`, `Image 2: style reference`).
-- If the user provides images for style, composition, or mood guidance and does not ask to modify them, treat the request as generation with references.
+- If the user provides images for style, composition, or mood guidance and does not ask to modify them, treat the visual intent as generation with references, but execute it with the `edit` command because image inputs go through `/images/edits`.
 - If the user asks to preserve an existing image while changing specific parts, treat the request as an edit.
 - For compositing, describe how the images interact (`place the subject from Image 2 into Image 1`).
 

@@ -2,17 +2,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import textwrap
 from pathlib import Path
 from typing import Any
 
 from .bridge import BridgeClient
-from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
+from .core import default_report_path, load_json, resolve_root_context, save_json, slugify, utc_now_iso, write_text
 from .material_audit import build_ue_script as build_material_audit_script
+from .material_domain_rebuilder import build_ue_script as build_domain_rebuilder_script, _default_target_path
 from .niagara_contract_audit import build_ue_script as build_niagara_contract_script, summarize as summarize_niagara_contract
 
 
 VFX_CARRIERS = {"sprite", "ribbon", "sprite_card", "ribbon_card", "decal", "post_process"}
+
+
+def _norm(value: Any) -> str:
+    return str(value or "").strip()
 
 
 def skill_root() -> Path:
@@ -41,6 +47,94 @@ def resolve_preview_preset(carrier: str, preset_name: str | None) -> tuple[str |
     if not isinstance(preset, dict):
         return None, {}
     return str(resolved_name), preset
+
+
+def transient_preview_registry_path(ctx) -> Path:
+    return ctx.session_root / "transient-preview-registry.json"
+
+
+def load_transient_preview_registry(ctx) -> dict[str, Any]:
+    return load_json(
+        transient_preview_registry_path(ctx),
+        {
+            "version": 1,
+            "updated_at": "",
+            "entries": [],
+        },
+    )
+
+
+def _save_transient_preview_registry(ctx, payload: dict[str, Any]) -> Path:
+    payload["updated_at"] = utc_now_iso()
+    path = transient_preview_registry_path(ctx)
+    save_json(path, payload)
+    return path
+
+
+def transient_template_leaf(template_system: str) -> str:
+    package_path = str(template_system or "").split(".", 1)[0]
+    leaf = package_path.rsplit("/", 1)[-1]
+    token = re.sub(r"[^0-9A-Za-z_]+", "_", leaf).strip("_")
+    return token or "Template"
+
+
+def derive_transient_preview_name(carrier: str, template_system: str) -> str:
+    carrier_token = re.sub(r"[^0-9A-Za-z_]+", "_", str(carrier or "").strip()).strip("_") or "carrier"
+    return f"NS_CodexPreview_Transient_{carrier_token}_{transient_template_leaf(template_system)}"
+
+
+def derive_transient_preview_path(carrier: str, template_system: str) -> str:
+    return f"/Engine/Transient.{derive_transient_preview_name(carrier, template_system)}"
+
+
+def upsert_transient_preview_entry(
+    ctx,
+    *,
+    carrier: str,
+    template_system: str,
+    transient_system_path: str,
+    material_path: str,
+    report_path: str,
+    preview_png: str,
+    source_tool: str,
+    live_exists: bool | None = None,
+    recycled: bool = False,
+) -> dict[str, Any]:
+    payload = load_transient_preview_registry(ctx)
+    key = f"{carrier}|{template_system}"
+    entries = payload.get("entries") or []
+    existing = next((item for item in entries if item.get("key") == key), None)
+    now = utc_now_iso()
+    if existing is None:
+        existing = {
+            "key": key,
+            "carrier": carrier,
+            "template_system": template_system,
+            "transient_name": derive_transient_preview_name(carrier, template_system),
+            "transient_system_path": transient_system_path,
+            "created_at": now,
+            "preview_count": 0,
+        }
+        entries.append(existing)
+    existing["transient_system_path"] = transient_system_path
+    if material_path:
+        existing["last_material_path"] = material_path
+    if report_path:
+        existing["last_report_path"] = report_path
+    if preview_png:
+        existing["last_preview_png"] = preview_png
+    if source_tool:
+        existing["last_source_tool"] = source_tool
+    existing["last_used_at"] = now
+    if live_exists is not None:
+        existing["last_live_exists"] = bool(live_exists)
+    if recycled:
+        existing["last_recycled_at"] = now
+    else:
+        existing["preview_count"] = int(existing.get("preview_count", 0) or 0) + 1
+    payload["entries"] = entries
+    _save_transient_preview_registry(ctx, payload)
+    return existing
 
 
 def audit_material_snapshot(
@@ -87,6 +181,16 @@ def build_preview_contract_scan(snapshot: dict[str, Any], preset: dict[str, Any]
     if missing_flags:
         add("warning", "usage_flags", f"Material is missing required usage flags: {', '.join(missing_flags)}")
 
+    if "two_sided_expected" in preset:
+        expected_two_sided = bool(preset.get("two_sided_expected"))
+        current_two_sided = bool(info.get("two_sided"))
+        if current_two_sided != expected_two_sided:
+            add(
+                "warning",
+                "two_sided_contract",
+                f"Preset expects Two Sided `{expected_two_sided}` but material reports `{current_two_sided}`.",
+            )
+
     subuv_grid = preset.get("subuv_grid")
     if subuv_grid:
         if not any(token in captions for token in ("flipbook", "subuv", "sub-image", "subimage")):
@@ -111,6 +215,58 @@ def build_preview_contract_scan(snapshot: dict[str, Any], preset: dict[str, Any]
         "usage_flags": sorted(current_flags),
         "parameter_names": sorted(param_names),
         "findings": findings,
+    }
+
+
+def build_post_process_gate(snapshot: dict[str, Any], preset: dict[str, Any]) -> dict[str, Any]:
+    info = snapshot["material_info"]
+    graph = snapshot["graph"]
+    findings: list[dict[str, str]] = []
+
+    def add(severity: str, rule: str, message: str) -> None:
+        findings.append({"severity": severity, "rule": rule, "message": message})
+
+    domain = str(info.get("material_domain") or "")
+    if domain != "PostProcess":
+        add("error", "post_process_domain", f"Material domain is `{domain or 'Unknown'}`, but post_process preview requires `PostProcess`.")
+
+    output_names = {
+        _norm(connection.get("dst_property_name"))
+        for connection in graph.get("output_connections") or []
+        if _norm(connection.get("dst_property_name"))
+    }
+    if output_names and "EmissiveColor" not in output_names:
+        add("warning", "post_process_output", f"Post-process preview expects `EmissiveColor` output, but current outputs are `{sorted(output_names)}`.")
+
+    return {
+        "domain": domain,
+        "output_names": sorted(output_names),
+        "findings": findings,
+        "blocked": any(item["severity"] == "error" for item in findings),
+    }
+
+
+def build_decal_gate(snapshot: dict[str, Any], preset: dict[str, Any]) -> dict[str, Any]:
+    info = snapshot["material_info"]
+    findings: list[dict[str, str]] = []
+
+    def add(severity: str, rule: str, message: str) -> None:
+        findings.append({"severity": severity, "rule": rule, "message": message})
+
+    domain = str(info.get("material_domain") or "")
+    if domain != "DeferredDecal":
+        add("error", "decal_domain", f"Material domain is `{domain or 'Unknown'}`, but decal preview requires `DeferredDecal`.")
+
+    usage_flags = set(info.get("usage_flags") or [])
+    required_flags = set(preset.get("usage_flags_required") or [])
+    missing_flags = sorted(required_flags - usage_flags)
+    if missing_flags:
+        add("warning", "usage_flags", f"Material is missing required usage flags: {', '.join(missing_flags)}")
+
+    return {
+        "domain": domain,
+        "findings": findings,
+        "blocked": any(item["severity"] == "error" for item in findings),
     }
 
 
@@ -410,6 +566,9 @@ def build_vfx_carrier_script(
     height: int,
     fov: float,
     out_png: str,
+    background_preset: str,
+    exposure_bias: float,
+    light_rig: str,
 ) -> str:
     return textwrap.dedent(
         f"""
@@ -424,11 +583,15 @@ def build_vfx_carrier_script(
         HEIGHT = {height}
         FOV = {fov}
         OUT_PNG = {out_png!r}
+        BACKGROUND_PRESET = {background_preset!r}
+        EXPOSURE_BIAS = {exposure_bias}
+        LIGHT_RIG = {light_rig!r}
 
         os.makedirs(os.path.dirname(OUT_PNG) or ".", exist_ok=True)
 
         L = unreal.UnrealBridgeLevelLibrary
         M = unreal.UnrealBridgeMaterialLibrary
+        TR = unreal.UnrealBridgeToolsetRegistryLibrary
         actor_sub = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
         editor_sub = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
         world = editor_sub.get_editor_world()
@@ -439,22 +602,163 @@ def build_vfx_carrier_script(
         base = unreal.Vector(500000.0, 500000.0, 500000.0)
         spawned = []
         post_process_volume = None
+        bridge_route = "official-toolset"
+
+        def run_tool(name, payload):
+            result = TR.execute_qualified_tool(name, json.dumps(payload, ensure_ascii=False), True)
+            output = None
+            if result.json_output:
+                try:
+                    output = json.loads(result.json_output)
+                except Exception:
+                    output = result.json_output
+            return result.success, result.error, output
 
         def spawn_static_mesh(mesh_path, location, rotation, scale, label):
-            actor = actor_sub.spawn_actor_from_class(unreal.StaticMeshActor, location)
-            actor.set_actor_label(label)
-            actor.set_actor_rotation(rotation, False)
-            actor.set_actor_scale3d(scale)
+            ok, err, out = run_tool(
+                'toolset_registry.toolsets.core.scene.SceneTools.add_to_scene_from_asset',
+                {{
+                    'asset_path': mesh_path,
+                    'name': label,
+                    'xform': {{
+                        'location': {{'x': location.x, 'y': location.y, 'z': location.z}},
+                        'rotation': {{'pitch': rotation.pitch, 'yaw': rotation.yaw, 'roll': rotation.roll}},
+                        'scale': {{'x': scale.x, 'y': scale.y, 'z': scale.z}},
+                    }},
+                }},
+            )
+            if not ok:
+                raise RuntimeError(f"SceneTools.add_to_scene_from_asset failed: {{err}}")
+            actor_ref = (out or {{}}).get('returnValue') or {{}}
+            actor = unreal.load_object(None, actor_ref.get('refPath', ''))
+            if not actor:
+                raise RuntimeError("Could not resolve spawned StaticMeshActor from official SceneTools asset route.")
+            label_ok, _, _ = run_tool(
+                'toolset_registry.toolsets.core.actor.ActorTools.set_label',
+                {{
+                    'actor': {{'refPath': actor.get_path_name()}},
+                    'label': label,
+                }},
+            )
+            if not label_ok:
+                actor.set_actor_label(label)
             smc = actor.get_editor_property('static_mesh_component')
             mesh = unreal.EditorAssetLibrary.load_asset(mesh_path)
             smc.set_editor_property('static_mesh', mesh)
             spawned.append(actor)
             return actor, smc
 
+        def spawn_post_process_volume(label, location):
+            ok, err, out = run_tool(
+                'toolset_registry.toolsets.core.scene.SceneTools.add_to_scene_from_class',
+                {{
+                    'actor_type': {{'refPath': '/Script/Engine.PostProcessVolume'}},
+                    'name': label,
+                    'xform': {{
+                        'location': {{'x': location.x, 'y': location.y, 'z': location.z}},
+                        'rotation': {{'pitch': 0.0, 'yaw': 0.0, 'roll': 0.0}},
+                        'scale': {{'x': 1.0, 'y': 1.0, 'z': 1.0}},
+                    }},
+                }},
+            )
+            if not ok:
+                raise RuntimeError(f"SceneTools add_to_scene_from_class failed for PostProcessVolume: {{err}}")
+            actor_ref = (out or {{}}).get('returnValue') or {{}}
+            volume = unreal.load_object(None, actor_ref.get('refPath', ''))
+            if not volume:
+                raise RuntimeError("Could not resolve spawned PostProcessVolume from official SceneTools route.")
+            volume.set_actor_label(label)
+            volume.set_editor_property('priority', 900.0)
+            volume.set_editor_property('blend_weight', 1.0)
+            volume.set_editor_property('unbound', True)
+            spawned.append(volume)
+            return volume
+
+        def apply_exposure(volume, bias):
+            try:
+                settings = volume.get_editor_property('settings')
+                try:
+                    settings.override_auto_exposure_bias = True
+                except Exception:
+                    pass
+                try:
+                    settings.auto_exposure_bias = float(bias)
+                except Exception:
+                    pass
+                try:
+                    settings.override_auto_exposure_min_brightness = True
+                    settings.override_auto_exposure_max_brightness = True
+                    settings.auto_exposure_min_brightness = 1.0
+                    settings.auto_exposure_max_brightness = 1.0
+                except Exception:
+                    pass
+                volume.set_editor_property('settings', settings)
+            except Exception:
+                pass
+
+        def rig_bias():
+            if LIGHT_RIG == 'bright':
+                return 0.5
+            if LIGHT_RIG == 'dark':
+                return -0.5
+            if LIGHT_RIG == 'contrast':
+                return 0.2
+            return 0.0
+
+        def add_environment():
+            subject_center = unreal.Vector(base.x, base.y, base.z)
+            if BACKGROUND_PRESET in ('neutral', 'bright', 'busy'):
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Plane.Plane',
+                    unreal.Vector(base.x - 120.0, base.y, base.z),
+                    unreal.Rotator(-90.0, 0.0, 0.0),
+                    unreal.Vector(8.0, 8.0, 1.0),
+                    'CodexPreview_Backdrop'
+                )
+            if BACKGROUND_PRESET in ('bright', 'busy') or LIGHT_RIG in ('bright', 'contrast'):
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Plane.Plane',
+                    unreal.Vector(base.x, base.y, base.z - 80.0),
+                    unreal.Rotator(0.0, 0.0, 0.0),
+                    unreal.Vector(7.0, 7.0, 1.0),
+                    'CodexPreview_EnvFloor'
+                )
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Cube.Cube',
+                    unreal.Vector(base.x - 60.0, base.y + 90.0, base.z),
+                    unreal.Rotator(0.0, 25.0, 0.0),
+                    unreal.Vector(0.9, 0.9, 0.9),
+                    'CodexPreview_EnvCube'
+                )
+            if BACKGROUND_PRESET == 'busy' or LIGHT_RIG == 'contrast':
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Sphere.Sphere',
+                    unreal.Vector(base.x - 95.0, base.y - 110.0, base.z + 10.0),
+                    unreal.Rotator(0.0, 0.0, 0.0),
+                    unreal.Vector(1.0, 1.0, 1.0),
+                    'CodexPreview_EnvSphere'
+                )
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Plane.Plane',
+                    unreal.Vector(base.x - 70.0, base.y + 150.0, base.z + 40.0),
+                    unreal.Rotator(-90.0, 45.0, 0.0),
+                    unreal.Vector(2.5, 2.5, 1.0),
+                    'CodexPreview_EnvWing'
+                )
+            total_bias = float(EXPOSURE_BIAS) + rig_bias()
+            if abs(total_bias) > 0.001:
+                volume = post_process_volume if post_process_volume is not None else spawn_post_process_volume('CodexPreview_Exposure', subject_center)
+                apply_exposure(volume, total_bias)
+
         def destroy_spawned():
             for actor in reversed(spawned):
                 try:
-                    actor_sub.destroy_actor(actor)
+                    ok, _, _ = run_tool(
+                        'toolset_registry.toolsets.core.scene.SceneTools.remove_from_scene',
+                        {{'actor': {{'refPath': actor.get_path_name()}}}},
+                    )
+                    if not ok:
+                        actor_sub.destroy_actor(actor)
                 except Exception:
                     pass
 
@@ -490,7 +794,24 @@ def build_vfx_carrier_script(
                     unreal.Vector(5.0, 5.0, 1.0),
                     'CodexPreview_DecalWall'
                 )
-                decal = actor_sub.spawn_actor_from_class(unreal.DecalActor, unreal.Vector(base.x - 5.0, base.y, base.z))
+                ok, err, out = run_tool(
+                    'toolset_registry.toolsets.core.scene.SceneTools.add_to_scene_from_class',
+                    {{
+                        'actor_type': {{'refPath': '/Script/Engine.DecalActor'}},
+                        'name': 'CodexPreview_Decal',
+                        'xform': {{
+                            'location': {{'x': base.x - 5.0, 'y': base.y, 'z': base.z}},
+                            'rotation': {{'pitch': 0.0, 'yaw': 0.0, 'roll': 0.0}},
+                            'scale': {{'x': 1.0, 'y': 1.0, 'z': 1.0}},
+                        }},
+                    }},
+                )
+                if not ok:
+                    raise RuntimeError(f"SceneTools add_to_scene_from_class failed for DecalActor: {{err}}")
+                actor_ref = (out or {{}}).get('returnValue') or {{}}
+                decal = unreal.load_object(None, actor_ref.get('refPath', ''))
+                if not decal:
+                    raise RuntimeError("Could not resolve spawned DecalActor from official SceneTools route.")
                 decal.set_actor_label('CodexPreview_Decal')
                 decal.set_actor_rotation(unreal.Rotator(0.0, 0.0, 0.0), False)
                 decal.set_actor_scale3d(unreal.Vector(1.0, 1.0, 1.0))
@@ -520,7 +841,25 @@ def build_vfx_carrier_script(
                     unreal.Vector(1.0, 1.0, 1.0),
                     'CodexPreview_Sphere'
                 )
-                post_process_volume = actor_sub.spawn_actor_from_class(unreal.PostProcessVolume, unreal.Vector(base.x, base.y, base.z))
+                ok, err, out = run_tool(
+                    'toolset_registry.toolsets.core.scene.SceneTools.add_to_scene_from_class',
+                    {{
+                        'actor_type': {{'refPath': '/Script/Engine.PostProcessVolume'}},
+                        'name': 'CodexPreview_PPV',
+                        'xform': {{
+                            'location': {{'x': base.x, 'y': base.y, 'z': base.z}},
+                            'rotation': {{'pitch': 0.0, 'yaw': 0.0, 'roll': 0.0}},
+                            'scale': {{'x': 1.0, 'y': 1.0, 'z': 1.0}},
+                        }},
+                    }},
+                )
+                if not ok:
+                    raise RuntimeError(f"SceneTools add_to_scene_from_class failed for PostProcessVolume: {{err}}")
+                actor_ref = (out or {{}}).get('returnValue') or {{}}
+                post_process_volume = unreal.load_object(None, actor_ref.get('refPath', ''))
+                if not post_process_volume:
+                    raise RuntimeError("Could not resolve spawned PostProcessVolume from official SceneTools route.")
+                bridge_route = "mixed-official-and-local"
                 post_process_volume.set_actor_label('CodexPreview_PPV')
                 post_process_volume.set_editor_property('priority', 1000.0)
                 post_process_volume.set_editor_property('blend_weight', 1.0)
@@ -533,6 +872,7 @@ def build_vfx_carrier_script(
             else:
                 raise RuntimeError(f"Unsupported carrier: {{CARRIER}}")
 
+            add_environment()
             shaded_ok = L.capture_from_pose(view_location, view_rotation, FOV, WIDTH, HEIGHT, OUT_PNG)
         finally:
             if post_process_volume is not None:
@@ -546,6 +886,7 @@ def build_vfx_carrier_script(
             "material_path": MATERIAL_PATH,
             "carrier": CARRIER,
             "shaded_ok": bool(shaded_ok),
+            "preview_route": bridge_route,
             "camera": {{
                 "location": [view_location.x, view_location.y, view_location.z],
                 "rotation": [view_rotation.pitch, view_rotation.yaw, view_rotation.roll],
@@ -569,6 +910,9 @@ def build_niagara_preview_script(
     template_system: str | None,
     emitter_name_hint: str | None,
     subuv_grid: str | None,
+    background_preset: str,
+    exposure_bias: float,
+    light_rig: str,
 ) -> str:
     template = template_system or "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem"
     subuv_grid_payload = json.dumps(subuv_grid or "", ensure_ascii=False)
@@ -578,7 +922,6 @@ def build_niagara_preview_script(
         import json
         import math
         import os
-        import uuid
         import unreal
 
         MATERIAL_PATH = {material_path!r}
@@ -589,31 +932,218 @@ def build_niagara_preview_script(
         FOV = {fov}
         SIM_TIME = {sim_time}
         OUT_PNG = {out_png!r}
+        BACKGROUND_PRESET = {background_preset!r}
+        EXPOSURE_BIAS = {exposure_bias}
+        LIGHT_RIG = {light_rig!r}
         EMITTER_HINT = json.loads({emitter_hint_payload!r})
         SUBUV_GRID = json.loads({subuv_grid_payload!r})
 
         os.makedirs(os.path.dirname(OUT_PNG) or ".", exist_ok=True)
 
         LV = unreal.UnrealBridgeLevelLibrary
+        TR = unreal.UnrealBridgeToolsetRegistryLibrary
         actor_sub = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-        system_asset = unreal.EditorAssetLibrary.load_asset(TEMPLATE_SYSTEM)
-        if not system_asset:
-            raise RuntimeError(f"Could not load Niagara template system: {{TEMPLATE_SYSTEM}}")
+        transient_pkg = unreal.find_package('/Engine/Transient')
+
         material = unreal.EditorAssetLibrary.load_asset(MATERIAL_PATH)
         if not material:
             raise RuntimeError(f"Could not load material: {{MATERIAL_PATH}}")
-
-        temp_pkg = f"/Game/CodexTemp/MaterialPreview/NS_CodexPreview_{{CARRIER}}_{{uuid.uuid4().hex[:8]}}"
-        if not unreal.EditorAssetLibrary.duplicate_asset(TEMPLATE_SYSTEM.split('.', 1)[0], temp_pkg):
-            raise RuntimeError(f"Could not duplicate Niagara template into {{temp_pkg}}")
-        temp_object_path = temp_pkg + "." + temp_pkg.rsplit("/", 1)[-1]
-        duplicated_system = unreal.EditorAssetLibrary.load_asset(temp_pkg)
+        template_asset = unreal.EditorAssetLibrary.load_asset(TEMPLATE_SYSTEM.split('.', 1)[0])
+        if not template_asset:
+            raise RuntimeError(f"Could not load Niagara template: {{TEMPLATE_SYSTEM}}")
+        template_leaf = TEMPLATE_SYSTEM.split('.', 1)[0].rsplit('/', 1)[-1]
+        transient_name = f"NS_CodexPreview_Transient_{{CARRIER}}_{{template_leaf}}"
+        expected_path = f"/Engine/Transient.{{transient_name}}"
+        existing_before = unreal.load_object(None, expected_path) is not None
+        duplicated_system = unreal.SystemLibrary.duplicate_object(template_asset, transient_pkg, transient_name)
         if not duplicated_system:
-            raise RuntimeError(f"Could not load duplicated Niagara system: {{temp_pkg}}")
+            raise RuntimeError(f"Could not duplicate Niagara template into transient package: {{TEMPLATE_SYSTEM}}")
+        temp_object_path = duplicated_system.get_path_name()
+        try:
+            duplicated_system.set_editor_property('determinism', True)
+        except Exception:
+            pass
+        try:
+            duplicated_system.set_editor_property('random_seed', 0)
+        except Exception:
+            pass
 
-        renderers = list(unreal.UnrealBridgeNiagaraLibrary.list_system_renderers(temp_object_path))
-        if not renderers:
-            raise RuntimeError("Duplicated Niagara template has no renderers to patch.")
+        bound_material_path = ""
+        actual_renderer_class = ""
+        actual_subuv_grid = ""
+        shaded_ok = False
+        center = unreal.Vector(500000.0, 500000.0, 500000.0)
+        camera = unreal.Vector(0.0, 0.0, 0.0)
+        rotation = unreal.Rotator(0.0, 0.0, 0.0)
+        editor_actor = None
+        niagara_component = None
+        spawned_env = []
+        cleanup = {{
+            "actor_destroyed": False,
+            "asset_deleted": True,
+            "asset_delete_error": "",
+            "asset_editor_closed": False,
+            "delete_method": "transient-no-content-asset",
+            "content_asset_created": False,
+            "transient_system_path": temp_object_path,
+            "transient_reused": bool(existing_before),
+        }}
+
+        def run_tool(name, payload):
+            result = TR.execute_qualified_tool(name, json.dumps(payload, ensure_ascii=False), True)
+            output = None
+            if result.json_output:
+                try:
+                    output = json.loads(result.json_output)
+                except Exception:
+                    output = result.json_output
+            return result.success, result.error, output
+
+        def set_emitter_determinism(emitter_name):
+            payload = {{
+                "emitter": {{
+                    "system": {{"refPath": temp_object_path}},
+                    "emitterName": emitter_name,
+                    "scriptName": "",
+                    "moduleName": "",
+                    "rendererIndex": -1,
+                    "inputNameStack": [],
+                }},
+                "emitterData": {{
+                    "propertyValues": json.dumps(
+                        {{
+                            "Name": emitter_name,
+                            "bDeterminism": True,
+                            "RandomSeed": 0,
+                        }},
+                        ensure_ascii=False,
+                    )
+                }},
+            }}
+            result = TR.execute_qualified_tool(
+                "NiagaraToolsets.NiagaraToolset_System.SetEmitterData",
+                json.dumps(payload, ensure_ascii=False),
+                True,
+            )
+            if not result.success:
+                raise RuntimeError(f"Failed to set emitter determinism for {{emitter_name}}: {{result.error}}")
+
+        def spawn_static_mesh(mesh_path, location, rotation_value, scale, label):
+            ok, err, out = run_tool(
+                'toolset_registry.toolsets.core.scene.SceneTools.add_to_scene_from_asset',
+                {{
+                    'asset_path': mesh_path,
+                    'name': label,
+                    'xform': {{
+                        'location': {{'x': location.x, 'y': location.y, 'z': location.z}},
+                        'rotation': {{'pitch': rotation_value.pitch, 'yaw': rotation_value.yaw, 'roll': rotation_value.roll}},
+                        'scale': {{'x': scale.x, 'y': scale.y, 'z': scale.z}},
+                    }},
+                }},
+            )
+            if not ok:
+                raise RuntimeError(f"SceneTools.add_to_scene_from_asset failed: {{err}}")
+            actor_ref = (out or {{}}).get('returnValue') or {{}}
+            actor = unreal.load_object(None, actor_ref.get('refPath', ''))
+            if not actor:
+                raise RuntimeError("Could not resolve spawned environment actor.")
+            actor.set_actor_label(label)
+            spawned_env.append(actor)
+            return actor
+
+        def spawn_post_process_volume(label, location):
+            ok, err, out = run_tool(
+                'toolset_registry.toolsets.core.scene.SceneTools.add_to_scene_from_class',
+                {{
+                    'actor_type': {{'refPath': '/Script/Engine.PostProcessVolume'}},
+                    'name': label,
+                    'xform': {{
+                        'location': {{'x': location.x, 'y': location.y, 'z': location.z}},
+                        'rotation': {{'pitch': 0.0, 'yaw': 0.0, 'roll': 0.0}},
+                        'scale': {{'x': 1.0, 'y': 1.0, 'z': 1.0}},
+                    }},
+                }},
+            )
+            if not ok:
+                raise RuntimeError(f"SceneTools add_to_scene_from_class failed for PostProcessVolume: {{err}}")
+            actor_ref = (out or {{}}).get('returnValue') or {{}}
+            volume = unreal.load_object(None, actor_ref.get('refPath', ''))
+            if not volume:
+                raise RuntimeError("Could not resolve spawned PostProcessVolume.")
+            volume.set_actor_label(label)
+            volume.set_editor_property('priority', 900.0)
+            volume.set_editor_property('blend_weight', 1.0)
+            volume.set_editor_property('unbound', True)
+            spawned_env.append(volume)
+            return volume
+
+        def apply_exposure(volume, bias):
+            try:
+                settings = volume.get_editor_property('settings')
+                try:
+                    settings.override_auto_exposure_bias = True
+                except Exception:
+                    pass
+                try:
+                    settings.auto_exposure_bias = float(bias)
+                except Exception:
+                    pass
+                try:
+                    settings.override_auto_exposure_min_brightness = True
+                    settings.override_auto_exposure_max_brightness = True
+                    settings.auto_exposure_min_brightness = 1.0
+                    settings.auto_exposure_max_brightness = 1.0
+                except Exception:
+                    pass
+                volume.set_editor_property('settings', settings)
+            except Exception:
+                pass
+
+        def rig_bias():
+            if LIGHT_RIG == 'bright':
+                return 0.5
+            if LIGHT_RIG == 'dark':
+                return -0.5
+            if LIGHT_RIG == 'contrast':
+                return 0.2
+            return 0.0
+
+        def add_environment():
+            if BACKGROUND_PRESET in ('neutral', 'bright', 'busy'):
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Plane.Plane',
+                    unreal.Vector(center.x - 150.0, center.y, center.z),
+                    unreal.Rotator(-90.0, 0.0, 0.0),
+                    unreal.Vector(8.0, 8.0, 1.0),
+                    'CodexPreview_Backdrop'
+                )
+            if BACKGROUND_PRESET in ('bright', 'busy') or LIGHT_RIG in ('bright', 'contrast'):
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Plane.Plane',
+                    unreal.Vector(center.x, center.y, center.z - 120.0),
+                    unreal.Rotator(0.0, 0.0, 0.0),
+                    unreal.Vector(7.0, 7.0, 1.0),
+                    'CodexPreview_EnvFloor'
+                )
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Cube.Cube',
+                    unreal.Vector(center.x - 120.0, center.y + 140.0, center.z),
+                    unreal.Rotator(0.0, 30.0, 0.0),
+                    unreal.Vector(1.0, 1.0, 1.0),
+                    'CodexPreview_EnvCube'
+                )
+            if BACKGROUND_PRESET == 'busy' or LIGHT_RIG == 'contrast':
+                spawn_static_mesh(
+                    '/Engine/BasicShapes/Sphere.Sphere',
+                    unreal.Vector(center.x - 160.0, center.y - 140.0, center.z + 20.0),
+                    unreal.Rotator(0.0, 0.0, 0.0),
+                    unreal.Vector(1.0, 1.0, 1.0),
+                    'CodexPreview_EnvSphere'
+                )
+            total_bias = float(EXPOSURE_BIAS) + rig_bias()
+            if abs(total_bias) > 0.001:
+                volume = spawn_post_process_volume('CodexPreview_Exposure', center)
+                apply_exposure(volume, total_bias)
 
         def parse_grid(text):
             if not text:
@@ -624,106 +1154,150 @@ def build_niagara_preview_script(
             left, right = normalized.split("x", 1)
             return float(int(left)), float(int(right))
 
-        if CARRIER == 'sprite':
-            bound_material_path = ""
-            actual_renderer_class = ""
-            actual_subuv_grid = ""
-            patched = 0
-            for renderer in renderers:
-                if 'SpriteRendererProperties' not in renderer.renderer_class:
-                    continue
-                if EMITTER_HINT and renderer.emitter_name != EMITTER_HINT:
-                    continue
-                renderer_obj = unreal.load_object(None, renderer.renderer_path)
-                if renderer_obj:
-                    renderer_obj.set_editor_property('material', material)
-                    grid = parse_grid(SUBUV_GRID)
-                    if grid:
-                        renderer_obj.set_editor_property('sub_image_size', unreal.Vector2D(grid[0], grid[1]))
-                        actual_subuv_grid = f"{{int(grid[0])}}x{{int(grid[1])}}"
-                    else:
-                        try:
-                            sub = renderer_obj.get_editor_property('sub_image_size')
-                            actual_subuv_grid = f"{{int(sub.x)}}x{{int(sub.y)}}"
-                        except Exception:
-                            actual_subuv_grid = ""
-                    try:
-                        bound_material_path = renderer_obj.get_editor_property('material').get_path_name()
-                    except Exception:
-                        bound_material_path = MATERIAL_PATH
-                    actual_renderer_class = renderer.renderer_class
-                    patched += 1
-            if patched == 0:
-                raise RuntimeError("No sprite renderer found on duplicated Niagara template.")
-        elif CARRIER == 'ribbon':
-            emitter_name = EMITTER_HINT or renderers[0].emitter_name
-            result = unreal.UnrealBridgeNiagaraLibrary.add_ribbon_renderer_to_emitter(
-                temp_object_path,
-                emitter_name,
-                MATERIAL_PATH,
-                "CodexPreviewRibbonRenderer",
-                "Screen",
-                1,
-                0.0,
-                True,
-                True,
-            )
-            if not result.success:
-                raise RuntimeError(f"Failed to add ribbon renderer: {{result.error}}")
-            bound_material_path = result.material_path
-            actual_renderer_class = "/Script/Niagara.NiagaraRibbonRendererProperties"
-            actual_subuv_grid = ""
-        else:
-            raise RuntimeError(f"Unsupported Niagara preview carrier: {{CARRIER}}")
-
-        unreal.EditorAssetLibrary.save_asset(temp_pkg, False)
-
-        center = unreal.Vector(500000.0, 500000.0, 500000.0)
-        actor_name = LV.spawn_actor("/Script/Niagara.NiagaraActor", center, unreal.Rotator(0, 0, 0))
-        editor_actor = None
-        for actor in actor_sub.get_all_level_actors():
-            if actor.get_name() == actor_name or actor.get_actor_label() == actor_name:
-                editor_actor = actor
-                break
-        if editor_actor is None:
-            raise RuntimeError(f"Could not resolve spawned Niagara preview actor: {{actor_name}}")
-        niagara_components = list(editor_actor.get_components_by_class(unreal.NiagaraComponent))
-        niagara_component = niagara_components[-1] if niagara_components else None
-        if niagara_component is None:
-            raise RuntimeError("Could not find NiagaraComponent on preview actor.")
-
-        niagara_component.set_asset(duplicated_system)
-        niagara_component.set_world_location(center, False, False)
-        niagara_component.set_bounds_scale(12.0)
-        niagara_component.set_can_render_while_seeking(True)
-        niagara_component.set_rendering_enabled(True)
-        niagara_component.set_age_update_mode(unreal.NiagaraAgeUpdateMode.DESIRED_AGE)
-        niagara_component.set_seek_delta(1.0 / 60.0)
-        niagara_component.set_desired_age(SIM_TIME)
-        niagara_component.activate(True)
-        niagara_component.seek_to_desired_age(SIM_TIME)
-
-        yaw = 35.0 if CARRIER == 'sprite' else 28.0
-        pitch = 10.0 if CARRIER == 'sprite' else 12.0
-        distance = 420.0 if CARRIER == 'sprite' else 520.0
-        yaw_rad = math.radians(yaw)
-        pitch_rad = math.radians(pitch)
-        camera = unreal.Vector(
-            center.x + math.cos(pitch_rad) * math.cos(yaw_rad) * distance,
-            center.y + math.cos(pitch_rad) * math.sin(yaw_rad) * distance,
-            center.z + math.sin(pitch_rad) * distance,
-        )
-        rotation = unreal.MathLibrary.find_look_at_rotation(camera, center)
-
-        shaded_ok = False
         try:
+            add_environment()
+            renderers = list(unreal.UnrealBridgeNiagaraLibrary.list_system_renderers(temp_object_path))
+            if not renderers:
+                raise RuntimeError("Duplicated Niagara template has no renderers to patch.")
+            deterministic_emitters = set()
+
+            if CARRIER == 'sprite':
+                patched = 0
+                for renderer in renderers:
+                    if 'SpriteRendererProperties' not in renderer.renderer_class:
+                        continue
+                    if EMITTER_HINT and renderer.emitter_name != EMITTER_HINT:
+                        continue
+                    renderer_obj = unreal.load_object(None, renderer.renderer_path)
+                    if renderer_obj:
+                        renderer_obj.set_editor_property('material', material)
+                        grid = parse_grid(SUBUV_GRID)
+                        if grid:
+                            renderer_obj.set_editor_property('sub_image_size', unreal.Vector2D(grid[0], grid[1]))
+                            actual_subuv_grid = f"{{int(grid[0])}}x{{int(grid[1])}}"
+                        else:
+                            try:
+                                sub = renderer_obj.get_editor_property('sub_image_size')
+                                actual_subuv_grid = f"{{int(sub.x)}}x{{int(sub.y)}}"
+                            except Exception:
+                                actual_subuv_grid = ""
+                        try:
+                            bound_material_path = renderer_obj.get_editor_property('material').get_path_name()
+                        except Exception:
+                            bound_material_path = MATERIAL_PATH
+                        actual_renderer_class = renderer.renderer_class
+                        deterministic_emitters.add(str(renderer.emitter_name))
+                        patched += 1
+                if patched == 0:
+                    raise RuntimeError("No sprite renderer found on duplicated Niagara template.")
+            elif CARRIER == 'ribbon':
+                emitter_name = EMITTER_HINT or renderers[0].emitter_name
+                result = unreal.UnrealBridgeNiagaraLibrary.add_ribbon_renderer_to_emitter(
+                    temp_object_path,
+                    emitter_name,
+                    MATERIAL_PATH,
+                    "CodexPreviewRibbonRenderer",
+                    "Screen",
+                    1,
+                    0.0,
+                    True,
+                    True,
+                )
+                if not result.success:
+                    raise RuntimeError(f"Failed to add ribbon renderer: {{result.error}}")
+                bound_material_path = result.material_path
+                actual_renderer_class = "/Script/Niagara.NiagaraRibbonRendererProperties"
+                actual_subuv_grid = ""
+                deterministic_emitters.add(str(emitter_name))
+            else:
+                raise RuntimeError(f"Unsupported Niagara preview carrier: {{CARRIER}}")
+
+            for emitter_name in sorted(name for name in deterministic_emitters if name):
+                set_emitter_determinism(emitter_name)
+
+            actor_name = LV.spawn_actor("/Script/Niagara.NiagaraActor", center, unreal.Rotator(0, 0, 0))
+            for actor in actor_sub.get_all_level_actors():
+                if actor.get_name() == actor_name or actor.get_actor_label() == actor_name:
+                    editor_actor = actor
+                    break
+            if editor_actor is None:
+                raise RuntimeError(f"Could not resolve spawned Niagara preview actor: {{actor_name}}")
+            niagara_components = list(editor_actor.get_components_by_class(unreal.NiagaraComponent))
+            niagara_component = niagara_components[-1] if niagara_components else None
+            if niagara_component is None:
+                raise RuntimeError("Could not find NiagaraComponent on preview actor.")
+
+            niagara_component.set_asset(duplicated_system)
+            niagara_component.set_world_location(center, False, False)
+            niagara_component.set_bounds_scale(12.0)
+            niagara_component.set_can_render_while_seeking(False)
+            niagara_component.set_rendering_enabled(True)
+            niagara_component.set_random_seed_offset(0)
+            niagara_component.set_seek_delta(1.0 / 60.0)
+            try:
+                niagara_component.reset_system()
+            except Exception:
+                pass
+            try:
+                niagara_component.reinitialize_system()
+            except Exception:
+                pass
+            niagara_component.activate(True)
+            niagara_component.advance_simulation_by_time(SIM_TIME, 1.0 / 60.0)
+            niagara_component.set_paused(True)
+            niagara_component.set_component_tick_enabled(False)
+
+            yaw = 35.0 if CARRIER == 'sprite' else 28.0
+            pitch = 10.0 if CARRIER == 'sprite' else 12.0
+            distance = 420.0 if CARRIER == 'sprite' else 520.0
+            yaw_rad = math.radians(yaw)
+            pitch_rad = math.radians(pitch)
+            camera = unreal.Vector(
+                center.x + math.cos(pitch_rad) * math.cos(yaw_rad) * distance,
+                center.y + math.cos(pitch_rad) * math.sin(yaw_rad) * distance,
+                center.z + math.sin(pitch_rad) * distance,
+            )
+            rotation = unreal.MathLibrary.find_look_at_rotation(camera, center)
             shaded_ok = LV.capture_from_pose(camera, rotation, FOV, WIDTH, HEIGHT, OUT_PNG)
         finally:
             try:
-                actor_sub.destroy_actor(editor_actor)
+                if niagara_component is not None:
+                    try:
+                        niagara_component.deactivate()
+                    except Exception:
+                        pass
+                    try:
+                        niagara_component.set_asset(None)
+                    except Exception:
+                        pass
+                if editor_actor is not None:
+                    actor_sub.destroy_actor(editor_actor)
+                    cleanup["actor_destroyed"] = True
             except Exception:
                 pass
-            unreal.EditorAssetLibrary.delete_asset(temp_pkg)
+            for actor in reversed(spawned_env):
+                try:
+                    actor_sub.destroy_actor(actor)
+                except Exception:
+                    pass
+            try:
+                try:
+                    unreal.SystemLibrary.collect_garbage()
+                except Exception:
+                    pass
+            except Exception as cleanup_exc:
+                cleanup["asset_delete_error"] = str(cleanup_exc)
+            duplicated_system = None
+            renderers = []
+            editor_actor = None
+            niagara_component = None
+            template_asset = None
+            transient_pkg = None
+            material = None
+            try:
+                unreal.SystemLibrary.collect_garbage()
+            except Exception:
+                pass
 
         print(json.dumps({{
             "material_path": MATERIAL_PATH,
@@ -743,8 +1317,145 @@ def build_niagara_preview_script(
                 "fov": FOV,
                 "width": WIDTH,
                 "height": HEIGHT
-            }}
+            }},
+            "cleanup": cleanup,
         }}, ensure_ascii=False))
+        """
+    ).strip()
+
+
+def build_delete_temp_niagara_asset_script(asset_object_path: str) -> str:
+    return textwrap.dedent(
+        f"""
+        import json
+        import unreal
+
+        TR = unreal.UnrealBridgeToolsetRegistryLibrary
+        asset_object_path = {asset_object_path!r}
+        asset_path = asset_object_path.split(".", 1)[0]
+        asset = unreal.load_asset(asset_path)
+        asset_editor = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
+        result = {{
+            "asset_path": asset_path,
+            "asset_object_path": asset_object_path,
+            "success": False,
+            "editor_closed": False,
+            "delete_error": "",
+            "delete_method": "AssetTools.delete",
+        }}
+        try:
+            if asset is not None:
+                try:
+                    asset_editor.close_all_editors_for_asset(asset)
+                    result["editor_closed"] = True
+                except Exception:
+                    pass
+            try:
+                unreal.SystemLibrary.collect_garbage()
+            except Exception:
+                pass
+            tool = TR.execute_qualified_tool(
+                'toolset_registry.toolsets.core.asset.AssetTools.delete',
+                json.dumps({{"path": asset_object_path}}, ensure_ascii=False),
+                True,
+            )
+            output = None
+            if tool.json_output:
+                try:
+                    output = json.loads(tool.json_output)
+                except Exception:
+                    output = tool.json_output
+            result["tool_success"] = bool(tool.success)
+            result["tool_output"] = output
+            result["success"] = bool(tool.success) and bool((output or {{}}).get("returnValue", False))
+            result["exists_after"] = bool(unreal.EditorAssetLibrary.does_asset_exist(asset_object_path))
+            if result["exists_after"]:
+                result["success"] = False
+            if not result["success"]:
+                result["delete_error"] = tool.error or f"AssetTools.delete returned {{output!r}}"
+        except Exception as exc:
+            result["delete_error"] = str(exc)
+        asset = None
+        try:
+            unreal.SystemLibrary.collect_garbage()
+        except Exception:
+            pass
+        print(json.dumps(result, ensure_ascii=False))
+        """
+    ).strip()
+
+
+def build_probe_transient_niagara_preview_script(entries: list[dict[str, Any]]) -> str:
+    payload = json.dumps(entries, ensure_ascii=False)
+    return textwrap.dedent(
+        f"""
+        import json
+        import unreal
+
+        rows = json.loads({payload!r})
+        result = []
+        for row in rows:
+            path = str(row.get("transient_system_path") or "")
+            obj = unreal.load_object(None, path) if path else None
+            item = {{
+                "key": row.get("key", ""),
+                "transient_system_path": path,
+                "exists": obj is not None,
+                "class": obj.get_class().get_path_name() if obj else "",
+                "renderer_count": 0,
+            }}
+            if obj is not None:
+                try:
+                    item["renderer_count"] = len(list(unreal.UnrealBridgeNiagaraLibrary.list_system_renderers(path)))
+                except Exception:
+                    item["renderer_count"] = 0
+            result.append(item)
+        print(json.dumps(result, ensure_ascii=False))
+        """
+    ).strip()
+
+
+def build_recycle_transient_niagara_preview_script(entries: list[dict[str, Any]]) -> str:
+    payload = json.dumps(entries, ensure_ascii=False)
+    return textwrap.dedent(
+        f"""
+        import json
+        import unreal
+
+        transient_pkg = unreal.find_package('/Engine/Transient')
+        rows = json.loads({payload!r})
+        result = []
+        for row in rows:
+            carrier = str(row.get("carrier") or "")
+            template_system = str(row.get("template_system") or "")
+            transient_name = str(row.get("transient_name") or "")
+            expected_path = str(row.get("transient_system_path") or "")
+            template_asset = unreal.EditorAssetLibrary.load_asset(template_system.split('.', 1)[0]) if template_system else None
+            item = {{
+                "key": row.get("key", ""),
+                "carrier": carrier,
+                "template_system": template_system,
+                "transient_name": transient_name,
+                "transient_system_path": expected_path,
+                "success": False,
+                "reused_existing": False,
+                "error": "",
+            }}
+            try:
+                existing = unreal.load_object(None, expected_path) if expected_path else None
+                item["reused_existing"] = existing is not None
+                if template_asset is None:
+                    item["error"] = "template asset missing"
+                else:
+                    dup = unreal.SystemLibrary.duplicate_object(template_asset, transient_pkg, transient_name)
+                    item["success"] = dup is not None
+                    item["transient_system_path"] = dup.get_path_name() if dup else expected_path
+                    if not item["success"]:
+                        item["error"] = "duplicate_object returned null"
+            except Exception as exc:
+                item["error"] = str(exc)
+            result.append(item)
+        print(json.dumps(result, ensure_ascii=False))
         """
     ).strip()
 
@@ -804,21 +1515,45 @@ def render_markdown(report: dict[str, Any]) -> str:
                 f"- Preset: `{report['options'].get('preset_name') or 'none'}`",
                 f"- Mesh: `{report['options']['mesh']}`",
                 f"- Lighting: `{report['options']['lighting']}`",
+                f"- Background preset: `{report['options'].get('background_preset', 'neutral')}`",
+                f"- Exposure bias: `{report['options'].get('exposure_bias', 0.0)}`",
+                f"- Light rig: `{report['options'].get('light_rig', 'studio')}`",
                 f"- Resolution: `{report['options']['resolution']}`",
                 f"- Shaded output: `{report['outputs']['shaded_png']}`",
                 f"- Shaded ok: `{report['outputs']['shaded_ok']}`",
             ]
         )
+        transient = report.get("transient_preview") or {}
+        if transient:
+            lines.extend(
+                [
+                    f"- Transient path: `{transient.get('transient_system_path', '')}`",
+                    f"- Transient reused: `{transient.get('transient_reused')}`",
+                    f"- Registry key: `{transient.get('key', '')}`",
+                ]
+            )
         preset_contract = report['options'].get('preset_contract') or {}
         if preset_contract:
             lines.append(f"- Usage flags: `{', '.join(preset_contract.get('usage_flags_required') or []) or 'none'}`")
             lines.append(f"- SubUV grid: `{preset_contract.get('subuv_grid') or 'none'}`")
+            if "two_sided_expected" in preset_contract:
+                lines.append(f"- Two sided expected: `{preset_contract.get('two_sided_expected')}`")
             lines.append(f"- Ribbon UV: `{preset_contract.get('ribbon_uv_mode') or 'none'}`")
             lines.append(f"- Dynamic parameters: `{', '.join(preset_contract.get('dynamic_parameters') or []) or 'none'}`")
         contract_scan = report.get("contract_scan") or {}
         if contract_scan.get("findings"):
             lines.extend(["", "Contract Scan:"])
             for finding in contract_scan["findings"]:
+                lines.append(f"- [{finding['severity']}] `{finding['rule']}` {finding['message']}")
+        decal_gate = contract_scan.get("decal_gate") or {}
+        if decal_gate.get("findings"):
+            lines.extend(["", "Decal Gate:"])
+            for finding in decal_gate["findings"]:
+                lines.append(f"- [{finding['severity']}] `{finding['rule']}` {finding['message']}")
+        post_process_gate = contract_scan.get("post_process_gate") or {}
+        if post_process_gate.get("findings"):
+            lines.extend(["", "Post Process Gate:"])
+            for finding in post_process_gate["findings"]:
                 lines.append(f"- [{finding['severity']}] `{finding['rule']}` {finding['message']}")
         renderer_scan = contract_scan.get("renderer_scan") or {}
         if renderer_scan.get("findings"):
@@ -827,7 +1562,7 @@ def render_markdown(report: dict[str, Any]) -> str:
                 lines.append(f"- [{finding['severity']}] `{finding['rule']}` {finding['message']}")
         system_scan = contract_scan.get("system_scan") or {}
         if system_scan.get("findings"):
-            lines.extend(["", "Real System Scan:"])
+            lines.extend(["", "Provided Niagara System Scan (external, material-side only):"])
             for finding in system_scan["findings"]:
                 lines.append(f"- [{finding['severity']}] `{finding['rule']}` {finding['message']}")
         semantic_binding_hits = system_scan.get("semantic_binding_hits") or {}
@@ -859,6 +1594,18 @@ def render_markdown(report: dict[str, Any]) -> str:
         if report["outputs"].get("complexity_png"):
             lines.append(f"- Complexity output: `{report['outputs']['complexity_png']}`")
             lines.append(f"- Complexity ok: `{report['outputs']['complexity_ok']}`")
+        candidate_record = report.get("candidate_record") or {}
+        if candidate_record:
+            lines.extend(
+                [
+                    "",
+                    "Candidate Registration:",
+                    f"- Asset ID: `{candidate_record.get('id')}`",
+                    f"- Stage: `{candidate_record.get('stage')}`",
+                    f"- Category: `{candidate_record.get('category')}`",
+                    f"- Role: `{candidate_record.get('role')}`",
+                ]
+            )
     else:
         lines.extend(
             [
@@ -880,6 +1627,10 @@ def command_render(args: argparse.Namespace) -> int:
     if preset:
         snapshot = audit_material_snapshot(client, args.material_path)
         contract_scan = build_preview_contract_scan(snapshot, preset)
+        if args.carrier == "decal":
+            contract_scan["decal_gate"] = build_decal_gate(snapshot, preset)
+        if args.carrier == "post_process":
+            contract_scan["post_process_gate"] = build_post_process_gate(snapshot, preset)
 
     effect = slugify(args.effect or args.material_path)
     base_dir = default_report_path(ctx, "previews", effect, slugify(args.material_path), "")
@@ -914,9 +1665,27 @@ def command_render(args: argparse.Namespace) -> int:
                 args.template_system or preset.get("template_system"),
                 preset.get("emitter_name_hint"),
                 preset.get("subuv_grid"),
+                args.background_preset,
+                args.exposure_bias,
+                args.light_rig,
             ),
             no_preflight=True,
         )
+        temp_system = str(raw.get("temp_system") or "")
+        cleanup = raw.get("cleanup") or {}
+        content_asset_created = bool(cleanup.get("content_asset_created", temp_system.startswith("/Game/")))
+        final_cleanup = {}
+        if temp_system and content_asset_created:
+            final_cleanup = client.exec_json(
+                build_delete_temp_niagara_asset_script(temp_system),
+                no_preflight=True,
+            )
+            raw["post_exec_cleanup"] = final_cleanup
+            if final_cleanup.get("success"):
+                cleanup["asset_deleted"] = True
+                cleanup["asset_delete_error"] = ""
+                cleanup["delete_method"] = "AssetTools.delete (post-exec)"
+                raw["cleanup"] = cleanup
         if preset:
             contract_scan["renderer_scan"] = build_renderer_contract_scan(raw, preset)
             verify_system_path = args.verify_system_path or preset.get("verify_system_path")
@@ -925,6 +1694,52 @@ def command_render(args: argparse.Namespace) -> int:
                 real_report = summarize_niagara_contract(real_raw)
                 contract_scan["system_scan"] = build_real_system_contract_scan(real_report, preset, args.material_path)
     else:
+        if args.carrier == "decal":
+            gate = contract_scan.get("decal_gate") or {}
+            if gate.get("blocked"):
+                rebuilt_path = _default_target_path(args.material_path, "DeferredDecal")
+                rebuilt = client.exec_json(
+                    build_domain_rebuilder_script(
+                        args.material_path,
+                        "DeferredDecal",
+                        rebuilt_path,
+                        "AfterTonemapping",
+                        False,
+                        True,
+                    )
+                )
+                args.material_path = rebuilt.get("target_material_ref") or rebuilt_path
+                effect = slugify(args.effect or args.material_path)
+                base_dir = default_report_path(ctx, "previews", effect, slugify(args.material_path), "")
+                shaded_out = str(Path(args.out) if args.out else base_dir.with_name(f"preview-{slugify(args.carrier)}-shaded.png"))
+                if preset:
+                    snapshot = audit_material_snapshot(client, args.material_path)
+                    contract_scan = build_preview_contract_scan(snapshot, preset)
+                    contract_scan["decal_gate"] = build_decal_gate(snapshot, preset)
+                    contract_scan["rebuilt_from"] = rebuilt
+        if args.carrier == "post_process":
+            gate = contract_scan.get("post_process_gate") or {}
+            if gate.get("blocked"):
+                rebuilt_path = _default_target_path(args.material_path, "PostProcess")
+                rebuilt = client.exec_json(
+                    build_domain_rebuilder_script(
+                        args.material_path,
+                        "PostProcess",
+                        rebuilt_path,
+                        "AfterTonemapping",
+                        False,
+                        True,
+                    )
+                )
+                args.material_path = rebuilt.get("target_material_ref") or rebuilt_path
+                effect = slugify(args.effect or args.material_path)
+                base_dir = default_report_path(ctx, "previews", effect, slugify(args.material_path), "")
+                shaded_out = str(Path(args.out) if args.out else base_dir.with_name(f"preview-{slugify(args.carrier)}-shaded.png"))
+                if preset:
+                    snapshot = audit_material_snapshot(client, args.material_path)
+                    contract_scan = build_preview_contract_scan(snapshot, preset)
+                    contract_scan["post_process_gate"] = build_post_process_gate(snapshot, preset)
+                    contract_scan["rebuilt_from"] = rebuilt
         raw = client.exec_json(
             build_vfx_carrier_script(
                 args.material_path,
@@ -933,8 +1748,12 @@ def command_render(args: argparse.Namespace) -> int:
                 args.height or args.resolution,
                 args.fov,
                 shaded_out,
+                args.background_preset,
+                args.exposure_bias,
+                args.light_rig,
             )
         )
+    report_path = default_report_path(ctx, "previews", effect, f"{slugify(args.material_path)}-preview", ".json")
     report = {
         "tool": "material_preview",
         "mode": "render",
@@ -952,6 +1771,9 @@ def command_render(args: argparse.Namespace) -> int:
             "fov": args.fov,
             "template_system": args.template_system,
             "sim_time": args.sim_time,
+            "background_preset": args.background_preset,
+            "exposure_bias": args.exposure_bias,
+            "light_rig": args.light_rig,
             "preset_name": preset_name,
             "preset_contract": preset,
             "preview_route": raw.get("preview_route") or ("niagara" if args.carrier in {"sprite", "ribbon"} else "world_harness" if args.carrier in {"sprite_card", "ribbon_card", "decal", "post_process"} else "mesh"),
@@ -964,13 +1786,244 @@ def command_render(args: argparse.Namespace) -> int:
         },
         "contract_scan": contract_scan,
     }
+    if args.carrier in {"sprite", "ribbon"}:
+        temp_system = str(raw.get("temp_system") or "")
+        resolved_template_system = str(raw.get("template_system") or args.template_system or preset.get("template_system") or "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem")
+        if temp_system.startswith("/Engine/Transient."):
+            entry = upsert_transient_preview_entry(
+                ctx,
+                carrier=args.carrier,
+                template_system=resolved_template_system,
+                transient_system_path=temp_system,
+                material_path=args.material_path,
+                report_path=str(report_path),
+                preview_png=shaded_out,
+                source_tool="material_preview.render",
+                live_exists=True,
+            )
+            report["transient_preview"] = {
+                "key": entry.get("key", ""),
+                "transient_name": entry.get("transient_name", ""),
+                "transient_system_path": temp_system,
+                "transient_reused": bool((raw.get("cleanup") or {}).get("transient_reused")),
+                "registry_path": str(transient_preview_registry_path(ctx)),
+            }
+    if args.register_rebuilt_candidate and "rebuilt_from" in contract_scan:
+        from .material_asset_library import upsert_material_record
+
+        category = "decal" if args.carrier == "decal" else "post_process"
+        role = "decal-material" if args.carrier == "decal" else "post-process-material"
+        rebuilt_from = contract_scan.get("rebuilt_from") or {}
+        source_material_path = rebuilt_from.get("source_material_path") or getattr(args, "original_material_path", args.material_path)
+        record = upsert_material_record(
+            ue_asset_path=args.material_path,
+            stage="candidates",
+            category=category,
+            role=role,
+            name=None,
+            tags=[],
+            notes=f"Auto-rebuilt during {args.carrier} preview recovery from {source_material_path}.",
+            qa_status="candidate",
+            source_kind="rebuilt",
+            source_material_path=source_material_path,
+            report_paths=[str(report_path)],
+            material_info=audit_material_snapshot(client, args.material_path)["material_info"],
+        )
+        report["candidate_record"] = record
     if "camera" in raw:
         report["camera"] = raw["camera"]
-    report_path = default_report_path(ctx, "previews", effect, f"{slugify(args.material_path)}-preview", ".json")
     save_json(report_path, report)
     if args.markdown:
         write_text(report_path.with_suffix(".md"), render_markdown(report))
     print(report_path)
+    return 0
+
+
+def command_transient_list(args: argparse.Namespace) -> int:
+    ctx = resolve_root_context(args.root)
+    payload = load_transient_preview_registry(ctx)
+    entries = list(payload.get("entries") or [])
+    if args.carrier:
+        entries = [item for item in entries if item.get("carrier") == args.carrier]
+    if args.template_system:
+        entries = [item for item in entries if item.get("template_system") == args.template_system]
+    probe_results = []
+    if (args.project or args.endpoint) and entries:
+        client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
+        client.ping()
+        probe_results = client.exec_json(build_probe_transient_niagara_preview_script(entries), no_preflight=True)
+    by_key = {item.get("key", ""): item for item in probe_results}
+    report = {
+        "tool": "material_preview_transient",
+        "mode": "list",
+        "registry_path": str(transient_preview_registry_path(ctx)),
+        "entry_count": len(entries),
+        "entries": [
+            {
+                **item,
+                "live_probe": by_key.get(item.get("key", ""), {}),
+            }
+            for item in entries
+        ],
+    }
+    out = Path(args.out) if args.out else default_report_path(ctx, "previews", "transient-preview", "transient-preview-list", ".json")
+    save_json(out, report)
+    if args.markdown:
+        lines = ["# Transient Preview Registry", ""]
+        for item in report["entries"]:
+            probe = item.get("live_probe") or {}
+            lines.extend(
+                [
+                    f"- Key: `{item.get('key', '')}`",
+                    f"Carrier: `{item.get('carrier', '')}`",
+                    f"Template: `{item.get('template_system', '')}`",
+                    f"Transient path: `{item.get('transient_system_path', '')}`",
+                    f"Exists now: `{probe.get('exists')}`",
+                    f"Preview count: `{item.get('preview_count', 0)}`",
+                    f"Last used: `{item.get('last_used_at', '')}`",
+                    "",
+                ]
+            )
+        write_text(out.with_suffix(".md"), "\n".join(lines).rstrip() + "\n")
+    print(out)
+    return 0
+
+
+def command_transient_recycle(args: argparse.Namespace) -> int:
+    ctx = resolve_root_context(args.root)
+    payload = load_transient_preview_registry(ctx)
+    entries = list(payload.get("entries") or [])
+    if args.carrier:
+        entries = [item for item in entries if item.get("carrier") == args.carrier]
+    if args.template_system:
+        entries = [item for item in entries if item.get("template_system") == args.template_system]
+    if args.key:
+        wanted = set(args.key)
+        entries = [item for item in entries if item.get("key") in wanted]
+    if not entries:
+        raise SystemExit("No transient preview entries matched the requested filters.")
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
+    client.ping()
+    raw = client.exec_json(build_recycle_transient_niagara_preview_script(entries), no_preflight=True)
+    for item in raw:
+        if item.get("success"):
+            upsert_transient_preview_entry(
+                ctx,
+                carrier=str(item.get("carrier") or ""),
+                template_system=str(item.get("template_system") or ""),
+                transient_system_path=str(item.get("transient_system_path") or ""),
+                material_path="",
+                report_path="",
+                preview_png="",
+                source_tool="material_preview.transient.recycle",
+                live_exists=True,
+                recycled=True,
+            )
+    report = {
+        "tool": "material_preview_transient",
+        "mode": "recycle",
+        "registry_path": str(transient_preview_registry_path(ctx)),
+        "results": raw,
+    }
+    out = Path(args.out) if args.out else default_report_path(ctx, "previews", "transient-preview", "transient-preview-recycle", ".json")
+    save_json(out, report)
+    if args.markdown:
+        lines = ["# Transient Preview Recycle", ""]
+        for item in raw:
+            lines.extend(
+                [
+                    f"- Key: `{item.get('key', '')}`",
+                    f"Success: `{item.get('success')}`",
+                    f"Reused existing: `{item.get('reused_existing')}`",
+                    f"Transient path: `{item.get('transient_system_path', '')}`",
+                    f"Error: {item.get('error', '') or 'none'}",
+                    "",
+                ]
+            )
+        write_text(out.with_suffix(".md"), "\n".join(lines).rstrip() + "\n")
+    print(out)
+    return 0
+
+
+def command_transient_recycle_all(args: argparse.Namespace) -> int:
+    if not hasattr(args, "carrier"):
+        args.carrier = None
+    if not hasattr(args, "template_system"):
+        args.template_system = None
+    if not hasattr(args, "key"):
+        args.key = []
+    return command_transient_recycle(args)
+
+
+def command_transient_prune(args: argparse.Namespace) -> int:
+    ctx = resolve_root_context(args.root)
+    payload = load_transient_preview_registry(ctx)
+    entries = list(payload.get("entries") or [])
+    if not entries:
+        report = {
+            "tool": "material_preview_transient",
+            "mode": "prune",
+            "registry_path": str(transient_preview_registry_path(ctx)),
+            "dry_run": not args.apply,
+            "entry_count_before": 0,
+            "pruned_count": 0,
+            "kept_count": 0,
+            "stale_entries": [],
+        }
+        out = Path(args.out) if args.out else default_report_path(ctx, "previews", "transient-preview", "transient-preview-prune", ".json")
+        save_json(out, report)
+        print(out)
+        return 0
+
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
+    client.ping()
+    probe_results = client.exec_json(build_probe_transient_niagara_preview_script(entries), no_preflight=True)
+    by_key = {item.get("key", ""): item for item in probe_results}
+
+    stale_entries = []
+    kept_entries = []
+    for entry in entries:
+        probe = by_key.get(entry.get("key", ""), {})
+        stale = not bool(probe.get("exists"))
+        if stale:
+            stale_entries.append({**entry, "live_probe": probe})
+        else:
+            kept_entries.append({**entry, "live_probe": probe})
+
+    if args.apply:
+        payload["entries"] = [{key: value for key, value in item.items() if key != "live_probe"} for item in kept_entries]
+        _save_transient_preview_registry(ctx, payload)
+
+    report = {
+        "tool": "material_preview_transient",
+        "mode": "prune",
+        "registry_path": str(transient_preview_registry_path(ctx)),
+        "dry_run": not args.apply,
+        "entry_count_before": len(entries),
+        "pruned_count": len(stale_entries),
+        "kept_count": len(kept_entries),
+        "stale_entries": stale_entries,
+    }
+    out = Path(args.out) if args.out else default_report_path(ctx, "previews", "transient-preview", "transient-preview-prune", ".json")
+    save_json(out, report)
+    if args.markdown:
+        lines = ["# Transient Preview Prune", ""]
+        lines.append(f"- Dry run: `{report['dry_run']}`")
+        lines.append(f"- Entries before: `{report['entry_count_before']}`")
+        lines.append(f"- Pruned: `{report['pruned_count']}`")
+        lines.append(f"- Kept: `{report['kept_count']}`")
+        lines.append("")
+        for item in stale_entries:
+            lines.extend(
+                [
+                    f"- Key: `{item.get('key', '')}`",
+                    f"Transient path: `{item.get('transient_system_path', '')}`",
+                    f"Exists now: `{(item.get('live_probe') or {}).get('exists')}`",
+                    "",
+                ]
+            )
+        write_text(out.with_suffix(".md"), "\n".join(lines).rstrip() + "\n")
+    print(out)
     return 0
 
 
@@ -1041,8 +2094,17 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument("--carrier", default="mesh", choices=["mesh", "sprite", "ribbon", "sprite_card", "ribbon_card", "decal", "post_process"])
     render.add_argument("--preset")
     render.add_argument("--template-system")
-    render.add_argument("--verify-system-path")
+    render.add_argument(
+        "--verify-system-path",
+        help=(
+            "Optionally scan a provided Niagara System for material-side contract comparison. "
+            "This is not full live Niagara integration validation; use niagara-vfx-artist for that gate."
+        ),
+    )
     render.add_argument("--lighting", default="hdri")
+    render.add_argument("--background-preset", default="neutral")
+    render.add_argument("--exposure-bias", type=float, default=0.0)
+    render.add_argument("--light-rig", default="studio")
     render.add_argument("--resolution", type=int, default=512)
     render.add_argument("--width", type=int)
     render.add_argument("--height", type=int)
@@ -1054,8 +2116,54 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument("--with-complexity", action="store_true")
     render.add_argument("--out")
     render.add_argument("--complexity-out")
+    render.add_argument("--register-rebuilt-candidate", action="store_true")
     render.add_argument("--markdown", action="store_true")
     render.set_defaults(func=command_render)
+
+    transient = sub.add_parser("transient", help="List or recycle stable transient Niagara preview objects.")
+    transient_sub = transient.add_subparsers(dest="transient_command", required=True)
+
+    transient_list = transient_sub.add_parser("list", help="List known transient preview objects from the local registry.")
+    transient_list.add_argument("--root", default="auto")
+    transient_list.add_argument("--project")
+    transient_list.add_argument("--endpoint")
+    transient_list.add_argument("--timeout", type=int, default=180)
+    transient_list.add_argument("--carrier")
+    transient_list.add_argument("--template-system")
+    transient_list.add_argument("--out")
+    transient_list.add_argument("--markdown", action="store_true")
+    transient_list.set_defaults(func=command_transient_list)
+
+    transient_recycle = transient_sub.add_parser("recycle", help="Reset one or more transient preview objects back to their template state.")
+    transient_recycle.add_argument("--root", default="auto")
+    transient_recycle.add_argument("--project")
+    transient_recycle.add_argument("--endpoint")
+    transient_recycle.add_argument("--timeout", type=int, default=180)
+    transient_recycle.add_argument("--carrier")
+    transient_recycle.add_argument("--template-system")
+    transient_recycle.add_argument("--key", action="append")
+    transient_recycle.add_argument("--out")
+    transient_recycle.add_argument("--markdown", action="store_true")
+    transient_recycle.set_defaults(func=command_transient_recycle)
+
+    transient_recycle_all = transient_sub.add_parser("recycle-all", help="Reset every registered transient preview object back to its template state.")
+    transient_recycle_all.add_argument("--root", default="auto")
+    transient_recycle_all.add_argument("--project")
+    transient_recycle_all.add_argument("--endpoint")
+    transient_recycle_all.add_argument("--timeout", type=int, default=180)
+    transient_recycle_all.add_argument("--out")
+    transient_recycle_all.add_argument("--markdown", action="store_true")
+    transient_recycle_all.set_defaults(func=command_transient_recycle_all)
+
+    transient_prune = transient_sub.add_parser("prune", help="Remove stale transient preview registry entries whose live objects no longer exist.")
+    transient_prune.add_argument("--root", default="auto")
+    transient_prune.add_argument("--project")
+    transient_prune.add_argument("--endpoint")
+    transient_prune.add_argument("--timeout", type=int, default=180)
+    transient_prune.add_argument("--apply", action="store_true")
+    transient_prune.add_argument("--out")
+    transient_prune.add_argument("--markdown", action="store_true")
+    transient_prune.set_defaults(func=command_transient_prune)
 
     sweep = sub.add_parser("sweep", help="Sweep a single MI parameter and render a comparison grid.")
     sweep.add_argument("material_instance_path")
@@ -1082,6 +2190,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if hasattr(args, "material_path"):
+        args.original_material_path = args.material_path
     return args.func(args)
 
 

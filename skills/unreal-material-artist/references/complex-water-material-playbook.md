@@ -4,6 +4,25 @@ Use this when the user asks for custom water, ocean, pool, river, shallow tropic
 
 This file exists because "use Single Layer Water" is not enough. A water material is a stack of shading model, surface motion, color/depth response, normals, foam/caustics masks, carrier geometry, and preview conditions.
 
+## Table Of Contents
+
+- [Source-Backed Engine Contract](#source-backed-engine-contract)
+- [First Decision](#first-decision)
+- [Reference Read](#reference-read)
+- [Hero Single Layer Water Route](#hero-single-layer-water-route)
+- [Node Route: Normal Motion](#node-route-normal-motion)
+- [Node Route: Depth Color](#node-route-depth-color)
+- [Node Route: Single Layer Water Output](#node-route-single-layer-water-output)
+- [Node Route: Foam](#node-route-foam)
+- [Node Route: Caustics](#node-route-caustics)
+- [Node Route: WPO Waves](#node-route-wpo-waves)
+- [Stylized Water Route](#stylized-water-route)
+- [Translucent Or Thin Glass Water Route](#translucent-or-thin-glass-water-route)
+- [Texture Generation Rules For Water](#texture-generation-rules-for-water)
+- [Preview Gates](#preview-gates)
+- [Audit Checklist](#audit-checklist)
+- [Minimum Deliverable For A Custom Water Request](#minimum-deliverable-for-a-custom-water-request)
+
 ## Source-Backed Engine Contract
 
 Official Epic references to keep in mind:

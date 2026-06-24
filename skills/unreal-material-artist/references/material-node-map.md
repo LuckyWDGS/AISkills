@@ -23,17 +23,25 @@ Common outputs:
 
 Always check Material Domain, Blend Mode, Shading Model, and usage flags; not every input is meaningful for every material configuration.
 
+## Table Of Contents
+
+- [Node Families](#node-families)
+- [VFX Material Types](#vfx-material-types)
+- [Read Graph Intent Fast](#read-graph-intent-fast)
+
 ## Node Families
 
 Coordinates:
 
 - `TextureCoordinate`, `Panner`, `Rotator`, `WorldPosition`, `ObjectPosition`, `CameraPositionWS`, `ScreenPosition`, `VertexNormalWS`, `Transform`, `ComponentMask`, `AppendVector`.
 - Use for UVs, world-space masks, camera distance, object-space projection, panning flows, and screen/post-process coordinates.
+- For low-poly cone/cylinder/shell VFX meshes, Fresnel can inherit visible faceting from `VertexNormalWS`. When mesh reauthoring is out of scope, a radial virtual normal can be tested as `LocalPosition -> ComponentMask RG -> Append Z=0 -> Normalize -> Transform Local to World`, but treat it as a look variant and revert if it changes the intended falloff.
 
 Texture and data fetch:
 
 - `TextureSample`, `TextureSampleParameter2D`, `TextureObject`, `TextureObjectParameter`, `SceneTexture`, `VirtualTextureSample`, `RuntimeVirtualTextureSample`, `FontSample`.
-- Audit sampler type, sampler source, texture settings, channel use, duplicate samples, and dependency visibility.
+- Audit sampler type, sampler source, texture settings, channel use, duplicate samples, dependency visibility, and `MipValueMode`.
+- For stretched/panned noise on wrapped mesh carriers, `MipValueMode=Derivative` should use `DDX` / `DDY` nodes fed by clean `TextureCoordinate` when the goal is to keep mip selection independent from tiling/panner math.
 
 Math and shaping:
 

@@ -1,0 +1,64 @@
+{
+  "task": "",
+  "root": "",
+  "platform": "",
+  "canvas": "",
+  "activeVersion": "",
+  "nodes": [
+    {
+      "id": "home",
+      "version": "home-v1",
+      "title": "Primary Anchor",
+      "status": "active-reference",
+      "scope": "screen/default",
+      "image": "assets/active/example-home.png",
+      "implements": ["screen-shell"],
+      "parent": null,
+      "supersededBy": null,
+      "replacementScope": null,
+      "sync": {
+        "contract": "done",
+        "hotspotReview": "done",
+        "approvedBaseline": "pending"
+      },
+      "doNotImplement": false
+    },
+    {
+      "id": "failed-example",
+      "version": "home-v0",
+      "title": "Failed Candidate",
+      "status": "superseded-failed-reference",
+      "scope": "screen/default",
+      "image": "assets/rejected/example-failed.png",
+      "implements": [],
+      "parent": null,
+      "supersededBy": "home",
+      "replacementScope": "screen/default",
+      "sync": {
+        "contract": "done",
+        "hotspotReview": "done",
+        "approvedBaseline": "done"
+      },
+      "doNotImplement": true
+    }
+  ],
+  "edges": [
+    {
+      "from": "failed-example",
+      "to": "home",
+      "type": "superseded-by"
+    }
+  ],
+  "interactions": [
+    {
+      "source": "home",
+      "control": "Primary action",
+      "behavior": "Opens the next covered UI state.",
+      "target": null,
+      "alternateTargets": [],
+      "covered": "no",
+      "missingReference": "next-state-reference",
+      "requiresFocusContract": true
+    }
+  ]
+}

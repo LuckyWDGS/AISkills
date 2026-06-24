@@ -4,6 +4,22 @@ Use this when the user asks for fire, flame, torch, campfire, magical fire, burn
 
 This file exists because "use Additive + Emissive" is not enough. A usable fire-family material needs a route, carrier, texture plan, node graph, motion plan, preview, and audit.
 
+## Table Of Contents
+
+- [Source-Backed Engine Contract](#source-backed-engine-contract)
+- [Learn-Build-Audit Rule](#learn-build-audit-rule)
+- [First Decision](#first-decision)
+- [Reference Read](#reference-read)
+- [Route: Hero Fire Flipbook](#route-hero-fire-flipbook)
+- [Route: Single-Mask Panning Fire Detail](#route-single-mask-panning-fire-detail)
+- [Route: Burning Dissolve Edge](#route-burning-dissolve-edge)
+- [Route: Lava / Magma Surface](#route-lava--magma-surface)
+- [Route: Heat Haze / Distortion](#route-heat-haze--distortion)
+- [Texture Strategy](#texture-strategy)
+- [Preview Gates](#preview-gates)
+- [Audit Checklist](#audit-checklist)
+- [Minimum Deliverable For A Fire-Family Request](#minimum-deliverable-for-a-fire-family-request)
+
 ## Source-Backed Engine Contract
 
 Official Epic references to keep in mind:
@@ -45,7 +61,7 @@ Pick the route from the target look:
 
 | Target | Preferred Material Route | Texture Need | Boundary |
 |---|---|---|---|
-| Hero torch, campfire, realistic flame body | `Surface` + `Additive` or `AlphaComposite` + `Unlit`, usually two-sided sprite/card | fire flipbook/SubUV atlas, optional detail mask | Niagara owns spawn rate, frame timing, sorting, bounds |
+| Hero torch, campfire, realistic flame body | `Surface` + `Additive` or `AlphaComposite` + `Unlit`, one-sided for camera-facing Niagara sprites/SubUV | fire flipbook/SubUV atlas, optional detail mask | Niagara owns spawn rate, frame timing, sorting, bounds |
 | Stylized flame card or magic fire patch | `Additive` + `Unlit`, sometimes `Translucent` for softer alpha | flame tongue mask, color ramp, noise/detail mask | Material owns graph and textures; carrier still declared |
 | Ember/spark material | `Additive` + `Unlit` | single ember alpha or small random atlas | Niagara owns particle count, velocity, random SubImageIndex |
 | Smoke from fire | `Translucent` or `AlphaComposite` + `Unlit` | smoke flipbook or soft alpha mask | Smoke material is separate from flame material |
@@ -61,6 +77,7 @@ Before building, write a compact read of:
 - Flame type: torch, campfire, gas flame, magical flame, stylized anime flame, electric/plasma, lava, burn edge, heat haze.
 - Visual identity: white-hot core, yellow/orange/red bands, blue core, smoky edges, black soot, tongues, flicker speed, ember density, crack shapes, lava crust, stylized outline.
 - Carrier: sprite, card mesh, ribbon, decal, surface mesh, post process, or material instance animation.
+- Carrier topology: flat/open card, closed cone/cylinder/shell, wrapped mesh UV seam, one-sided or two-sided rendering, and expected number of additive layers visible at once.
 - Motion: flipbook, panner, threshold animation, vertex/WPO flicker, UV distortion, random atlas cells, or external Niagara timing.
 - Required texture roles: fire flipbook, flame tongue mask, ember atlas, smoke flipbook, dissolve mask, crack mask, flow/noise, distortion normal.
 
@@ -74,7 +91,7 @@ Material settings:
 Material Domain: Surface
 Blend Mode: Additive or AlphaComposite
 Shading Model: Unlit
-Two Sided: true for cards/sprites
+Two Sided: false for camera-facing Niagara sprites/SubUV; only enable for a non-camera-facing mesh/card carrier with a documented reason
 Outputs: EmissiveColor, Opacity
 Expected carrier: sprite/card with SubUV or equivalent flipbook frame selection
 ```
@@ -82,7 +99,7 @@ Expected carrier: sprite/card with SubUV or equivalent flipbook frame selection
 Core parameters:
 
 ```text
-T_FireFlipbook
+T_FireFlipbook_VFX
 V_CoreColor
 V_OuterColor
 S_CoreIntensity
@@ -96,13 +113,13 @@ S_DistortionStrength
 Node route:
 
 ```text
-T_FireFlipbook.RGB or Color
+T_FireFlipbook_VFX.RGB or Color
   -> color ramp or multiply V_CoreColor / V_OuterColor
   -> * S_CoreIntensity / S_OuterIntensity
   -> * ParticleColor.RGB if carrier supplies it
   -> EmissiveColor
 
-T_FireFlipbook.A or luminance
+T_FireFlipbook_VFX.A or luminance
   -> contrast/remap
   -> * S_Opacity
   -> * ParticleColor.A if carrier supplies it
@@ -114,6 +131,7 @@ Notes:
 - If the flipbook is black-background RGB with no alpha, it is a prototype mask unless luminance extraction is intentional and tested.
 - If using `AlphaComposite`, verify premultiplied behavior and black-edge cleanliness.
 - The material can declare SubUV expectations, but Niagara owns frame timing and renderer bindings.
+- VFX texture asset names should end in `_VFX`, for example `T_FireFlipbook_VFX`.
 
 ## Route: Single-Mask Panning Fire Detail
 
@@ -124,7 +142,7 @@ Material settings:
 ```text
 Blend Mode: Additive
 Shading Model: Unlit
-Two Sided: true for cards
+Two Sided: false for camera-facing Niagara sprites; enable only for special non-camera-facing card/mesh cases
 ```
 
 Node route:
@@ -276,11 +294,11 @@ Search the reusable asset library first, but only reuse an asset if it matches t
 Common roles:
 
 ```text
-T_FireFlipbook
+T_FireFlipbook_VFX
   role: flipbook / color+alpha
   typical size: 4x4 or 8x8 cells, 1024/2048/4096 depending budget
 
-T_FireTongueMask
+T_FireTongueMask_VFX
   role: alpha/mask
   typical size: 512 or 1024 POT
 
@@ -366,6 +384,7 @@ Must verify:
 - Mask textures use data import settings when sampled as masks.
 - Fire/smoke/lava textures match the reference, not merely the category.
 - Additive/translucent overdraw is measured or called out.
+- Two-sided additive carriers are compensated for front/back layer multiplication; high emissive values are judged with bloom/exposure enabled, not only by raw parameter values.
 - Bloom/exposure are not hiding bad shape language.
 - Stale parameters and dead branches are removed after the route is confirmed.
 

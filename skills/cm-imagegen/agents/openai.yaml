@@ -1,6 +1,9 @@
-openai:
+interface:
   display_name: "CM Image Gen"
-  short_description: "Default image generation through CodexManager."
+  short_description: "Default image generation through CM routes"
   icon_small: "./assets/cm-imagegen-small.png"
   icon_large: "./assets/cm-imagegen.png"
-  default_prompt: "Use $cm-imagegen as the default image generation workflow to create or edit images through CodexManager's Images API."
+  default_prompt: "Use $cm-imagegen to generate or edit images through the configured compatibility image provider."
+
+policy:
+  allow_implicit_invocation: true

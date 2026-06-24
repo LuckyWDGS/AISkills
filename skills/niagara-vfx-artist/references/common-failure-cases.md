@@ -126,12 +126,15 @@
 - Ribbon 很长，但没质感
 - 看起来软塌塌
 - 没有速度感
+- 明明调亮了，但仍然不像设计图里的分段残影或翼波
 
 ### 检查步骤
 
-1. 检查头尾亮度是否一致
-2. 检查宽度是否从头到尾都差不多
-3. 检查是否完全没有内部流动
+1. 先判断是形态问题还是材质问题
+2. 检查头尾亮度是否一致
+3. 检查宽度是否从头到尾都差不多
+4. 检查是否完全没有内部流动
+5. 检查 RibbonID / LinkOrder / source-receiver 数据是否把本应分开的残影连成一条
 
 ### 修复参数建议
 
@@ -139,6 +142,9 @@
 - `S_TrailTailOpacity`: 降低
 - Ribbon Width: 做头尾宽度变化
 - `S_FlowSpeed`: 加入轻微内部流动
+- 如果是“连续蛇形”而不是“多道残影”，优先修 Niagara 的 RibbonID 分段、LinkOrder 或触发时序，不要继续只加亮度
+- 如果轮廓已经对但像塑料带，才优先修材质的软边、噪声、UV flow 和 alpha falloff
+- 如果材质逻辑对但内部纹理糊，回到纹理/mask 生成质量，不要硬靠粒子数补细节
 
 ---
 
@@ -232,6 +238,49 @@
 ---
 
 ## 10. 多特效同屏一团乱
+
+---
+
+## 11. 官方 Stack Fix 只会读不会修
+
+### 失败症状
+
+- `GetStackIssues` 能返回问题
+- 但一直没有真实验证过 `ApplyOfficialStackIssueFix`
+- 或者只看到 `Info`，没有 `Fix` 按钮类问题
+
+### 常见误判
+
+- 把“wrapper 编译成功”当成“fix 真可用”
+- 把 `Info` 注释类 issue 当成 fix-style 证据
+- 在没有 compile settle 的情况下立刻读 issue，误以为 fix 没生效
+
+### 已验证的真实 fix-case
+
+2026-05-15 已在 `/Game/CodexTemp/ToolsetRegistrySmoke/NS_Toolset_ModuleSmoke` 跑通两个真实 fix：
+
+- `GPU上不支持事件处理器`
+  - 造法：把 emitter `Smoke` 设成 `GPUComputeSim`，再给它挂粒子 event handler
+  - 官方 fix：`设置CPU模拟`
+  - 结果：`ApplyOfficialStackIssueFix` 后，`Smoke.SimTarget` 真读回为 `CPUSim`
+
+- `堆栈数据无效`
+  - 同一个 event-handler 测试路线上产生
+  - 官方 fix：`修复无效堆栈图表`
+  - 结果：应用后最终 stack issue 收敛到 `0 errors / 0 warnings`
+
+### 修复建议
+
+1. 先造一个源码里明确会给 `Fix` 的问题，不要在 `Info`-only 系统上空等
+2. `ApplyOfficialStackIssueFix` 之后必须做三次验证：
+   - 返回结果里 `applied=true`
+   - 目标属性或结构真读回变化
+   - compile settle 后重新读 `GetStackIssues`
+3. 如果 `GetStackIssues` 提示正在编译，不要立即下结论，先等 compile 完
+
+### 一句话经验
+
+`ApplyOfficialStackIssueFix` 只有在“造出真实 fix-style 问题 -> 应用 fix -> 读回结构和 issue 状态”三步都闭环后，才算真的可用。
 
 ### 失败症状
 

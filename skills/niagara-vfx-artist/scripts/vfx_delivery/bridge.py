@@ -51,15 +51,24 @@ def parse_json_output(text: str) -> Any:
 
 
 class BridgeClient:
-    def __init__(self, skill_root: Path, project: str | None = None, timeout_seconds: int = 120) -> None:
+    def __init__(
+        self,
+        skill_root: Path,
+        project: str | None = None,
+        endpoint: str | None = None,
+        timeout_seconds: int = 120,
+    ) -> None:
         self.bridge_script = find_bridge_script(skill_root)
         self.project = project
+        self.endpoint = endpoint
         self.timeout_seconds = timeout_seconds
 
     def _base_command(self) -> list[str]:
         command = [sys.executable, str(self.bridge_script)]
         if self.project:
             command.append(f"--project={self.project}")
+        if self.endpoint:
+            command.append(f"--endpoint={self.endpoint}")
         command.append(f"--timeout={self.timeout_seconds}")
         return command
 
@@ -87,8 +96,10 @@ class BridgeClient:
             time.sleep(1.0 + attempt)
         raise BridgeError(last_error)
 
-    def exec_python(self, script_text: str) -> BridgeResult:
+    def exec_python(self, script_text: str, *, no_preflight: bool = False) -> BridgeResult:
         command = self._base_command() + ["exec", "--stdin"]
+        if no_preflight:
+            command.insert(len(self._base_command()), "--no-preflight")
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.run(
@@ -106,6 +117,6 @@ class BridgeClient:
             raise BridgeError(proc.stderr.strip() or proc.stdout.strip() or "Bridge exec failed")
         return BridgeResult(stdout=proc.stdout, stderr=proc.stderr)
 
-    def exec_json(self, script_text: str) -> Any:
-        result = self.exec_python(script_text)
+    def exec_json(self, script_text: str, *, no_preflight: bool = False) -> Any:
+        result = self.exec_python(script_text, no_preflight=no_preflight)
         return parse_json_output(result.stdout)

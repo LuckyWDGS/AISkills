@@ -8,6 +8,7 @@ from .core import (
     RootContext,
     default_report_path,
     load_json,
+    normalize_cli_global_args,
     resolve_root_context,
     save_json,
     set_dotted_field,
@@ -15,6 +16,7 @@ from .core import (
     utc_now_iso,
     write_text,
 )
+from .reference_gate import assert_anchor_ready
 
 
 def map_path(ctx: RootContext, effect: str) -> Path:
@@ -111,6 +113,7 @@ def init_command(args: argparse.Namespace) -> int:
 
 def add_layer_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
+    assert_anchor_ready(ctx, args.effect)
     payload = load_map(ctx, args.effect)
     if any(layer["name"] == args.name for layer in payload["layers"]):
         raise SystemExit(f"Layer already exists: {args.name}")
@@ -130,6 +133,7 @@ def add_layer_command(args: argparse.Namespace) -> int:
 
 def update_layer_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
+    assert_anchor_ready(ctx, args.effect)
     payload = load_map(ctx, args.effect)
     layer = find_layer(payload, args.layer)
     for key, value in parse_kv_list(args.field).items():
@@ -228,6 +232,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = normalize_cli_global_args(
+        argv,
+        known_subcommands={"init", "add-layer", "update-layer", "export-md", "show"},
+    )
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

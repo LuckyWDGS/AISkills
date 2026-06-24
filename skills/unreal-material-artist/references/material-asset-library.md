@@ -6,6 +6,19 @@ Make reusable material-facing textures compound over time instead of re-solving 
 
 The library is not a dump folder. It is a reviewed asset collection with stage, category, role, QA state, and search metadata.
 
+## Table Of Contents
+
+- [Hard Workflow](#hard-workflow)
+- [Reference Fidelity Gate](#reference-fidelity-gate)
+- [Library Layout](#library-layout)
+- [Search First](#search-first)
+- [Register A Candidate](#register-a-candidate)
+- [Promote Or Reject](#promote-or-reject)
+- [Review Standard](#review-standard)
+- [Generation Fallback](#generation-fallback)
+
+Related lifecycle step: before registering generated stock, use [generated-texture-qa.md](generated-texture-qa.md) to decide whether the image is a draft, candidate, rejected asset, or UE-ready texture.
+
 ## Hard Workflow
 
 For material tasks that may need textures:
@@ -73,6 +86,7 @@ Categories:
 - `surface`
 - `foliage`
 - `decal`
+- `post_process`
 - `other`
 
 ## Search First
@@ -102,6 +116,27 @@ python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py r
 
 This stores the asset under the skill-local library, indexes it, and records searchable metadata.
 
+Register a UE material asset directly into the reusable library:
+
+```powershell
+python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py register-material /Game/Materials/M_Foo_Decal --stage candidates --category decal --role decal-material --project UnrealAI --endpoint 127.0.0.1:8628
+python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py register-material /Game/Materials/M_Foo_PostProcess --stage candidates --category post_process --role post-process-material --project UnrealAI --endpoint 127.0.0.1:8628
+```
+
+For auto-rebuilt legal materials, use the direct rebuild path:
+
+```powershell
+python D:/Skills/skills/unreal-material-artist/tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike DeferredDecal --register-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
+python D:/Skills/skills/unreal-material-artist/tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike PostProcess --register-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
+```
+
+Or let preview recovery rebuild and register in one pass:
+
+```powershell
+python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
+python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier post_process --register-rebuilt-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --width 320 --height 180 --markdown
+```
+
 ## Promote Or Reject
 
 When a candidate proves reusable:
@@ -109,6 +144,22 @@ When a candidate proves reusable:
 ```powershell
 python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py promote <asset-id> --stage approved --qa-status approved
 ```
+
+Or gate it through report-backed self-review:
+
+```powershell
+python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py auto-promote <asset-id> --self-review approved --report-path D:/path/to/material-preview.json --apply
+```
+
+When a material asset reaches `approved`, the library now also writes a higher-level delivery report under the session material-delivery folder. That report summarizes:
+
+- whether the asset is approved for reuse
+- the rebuilt source and target material
+- the preview carrier and preview image used for approval
+- gate warnings/errors
+- the review gate decision
+
+This means rebuilt-material approval is no longer only visible inside the catalog state change.
 
 When it turns out misleading or poor:
 

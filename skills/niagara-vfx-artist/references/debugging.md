@@ -255,6 +255,47 @@
 - [ ] 相机位置能看到发射区域
 - [ ] 平台支持当前模拟方式和材质复杂度
 
+### 新建 Niagara 后的自查清单
+
+不要把“资产创建成功”当成“效果创建成功”。
+
+- [ ] 系统和发射器读回后，角色分工还是你预期的 source / receiver / trail route
+- [ ] renderer 类型和命名目标一致
+  例：名字叫 `RibbonTrail`，live receiver 却仍然只有 `SpriteRendererProperties`，这就是未完成测试资产
+- [ ] live renderer material 真的存在，不是空绑定
+- [ ] 如果只是测试系统，路径应该在临时/调试区域，而不是正式 VFX 目录
+- [ ] 打开后如果图看起来奇怪，不要先猜截图，先读回 graph/function/renderers/material bindings
+
+### 临时测试资产留在正式目录
+
+这是一类非常常见但容易忽视的问题。
+
+#### 症状
+
+- 资产名字像正式方案，例如 `RibbonTrail`
+- 但打开后怎么看都不对
+- 结构读回发现 receiver 仍是 sprite-only，或没有目标材质
+- 团队会误以为“这是已实现的一版”
+
+#### 原因
+
+- 创建 Niagara 时做了一个中间验证系统
+- 后面又做了正式系统，但没有把测试系统清掉或挪走
+- 没做写后读回审查，导致测试资产长期混在正式目录里
+
+#### 处理方式
+
+- 读回系统结构，而不是只看资产名
+- 如果是中间测试资产：
+  - 标记为 debug/test
+  - 移到临时目录，或删除，或在 handoff 中明确不是候选实现
+- 如果名字已经暗示了最终 carrier，但 live route 还不是那个 carrier：
+  - 把它当失败的中间产物，不要继续在上面调材质或调参数
+
+#### 一句话经验
+
+测试资产留在正式目录，本身就是一种错误状态。
+
 ### 材质异常检查清单
 
 - [ ] Blend Mode 是否正确
@@ -263,6 +304,81 @@
 - [ ] `Particle Color` 是否接反
 - [ ] 纹理采样是否正常
 - [ ] 是否有过强的 Clamp / Power 让结果失真
+
+### 跨层归因检查清单
+
+看着不对时，先判断问题属于哪一层，不要抓着同一层一直改。
+
+- [ ] 参考图/设计理解：当前锚点是不是用户确认的那张，裁切和高清图是否足够清楚
+- [ ] 纹理/源图：mask、alpha、噪声、羽片、火花图集、flipbook 帧是否本身就缺细节
+- [ ] 材质/shader：Blend、Emissive、Opacity、UV 流动、Dynamic Parameter、Depth Fade、Fresnel 是否导致风格偏差
+- [ ] Niagara 粒子/Renderer：Spawn、Lifetime、Width、RibbonID、LinkOrder、Renderer Binding、排序、Bounds 是否导致形态偏差
+- [ ] 动画/接入：是否绑定到正确骨骼/Socket，是否在挥动峰值触发，方向和缩放是否正确
+- [ ] 预览 harness：相机、焦点、DesiredAge、背景亮度、截帧时机是否让效果看起来偏弱或裁切
+
+### 症状到层级的快速判断
+
+| 看到的现象 | 优先怀疑 |
+|---|---|
+| 轮廓/轨迹方向错，但亮度和材质质感还可以 | Niagara carrier、RibbonID、spawn/link order、动画触发 |
+| 轮廓对，但颜色、亮度、软边、流动感不对 | 材质参数或材质图 |
+| 材质逻辑对，但细节像糊掉、羽片/噪声/火花形状不对 | 纹理源图、AI 生成质量、参考 crop 清晰度 |
+| 每张截图位置、大小、强弱差很多 | 受控预览相机、焦点、截帧时机、bounds |
+| 编辑器里有节点但最终看不到 | 死节点、未连接输出、stale MI override、Renderer 未绑定 |
+| 静帧对但动起来不对 | Niagara 时序、动画 Notify、事件触发、生命周期曲线 |
+
+### 调参前记录
+
+在改参数前，至少写下：
+
+- 视觉症状：哪里和设计图不一致
+- 疑似层级：纹理、材质、Niagara、Renderer、动画接入、预览，或参考理解
+- 证据：为什么不是另外几层
+- 下一步：只改能验证这个判断的最小参数或结构
+
+如果改完没有改善这个具体症状，要重新归因，不要继续把同一个参数推得更极端。
+
+### UnrealBridge 执行层污染
+
+这不是 Niagara 参数问题，但会直接影响 Niagara 自动化调试。
+
+#### 症状
+
+- `bridge.py ping` 正常
+- `gen_manifest.py` 一类固定脚本可能正常
+- 但普通 `exec` / `exec-file` 开始返回：
+  - `success=false`
+  - `error="None"`
+- 或 UE log 里出现：
+  - `AttributeError: 'str' object has no attribute 'stdout'`
+
+#### 真实原因
+
+2026-05-15 的一次 smoke script 把顶层变量命名成了 `sys`：
+
+```python
+sys = '/Game/CodexTemp/...'
+```
+
+UnrealBridge server 的 Python 包装器本来会在 `finally` 里恢复 `sys.stdout` / `sys.stderr`。
+如果用户脚本把顶层 `sys` 重新绑定成字符串，旧包装器就可能在收尾时访问到错误对象，导致后续 `exec` 会话被污染。
+
+#### 处理方式
+
+1. 先看 UE log 是否有 `str has no attribute stdout`
+2. 如果有：
+   - 不要继续怀疑 Niagara 资产本体
+   - 这是 bridge exec 包装器/脚本命名污染
+3. 已落地修复：
+   - server wrapper 改成使用私有别名保存 Python `sys` 模块
+   - 输出恢复走 `__stdout__` / `__stderr__` fallback
+4. 实操建议：
+   - ad hoc bridge smoke script 不要把顶层变量命名成 `sys`
+   - 如果会话已经污染，重开 UE editor 进入新会话最稳
+
+#### 一句话经验
+
+当 `ping` 正常但 `exec` 突然统一返回 `error=None` 时，先查 bridge Python wrapper 是否被脚本全局名污染，不要先改 Niagara。
 
 ### 性能问题检查清单
 
@@ -338,3 +454,53 @@
 
 - `references/core.md`
   用于回到整体设计思路，确认问题是不是从方案层面就不合理
+
+---
+
+## 8. 不要靠界面截图猜
+
+很多“看起来没连上”“看起来坏了”的问题，其实是编辑器界面截图误导出来的。
+
+尤其在下面这些场景里，单看界面截图很危险：
+
+- 材质图里有历史实验分支
+- Material Instance 里残留父材质已经不存在的 override
+- Niagara 里有旧 emitter、旧 renderer、旧材质绑定
+- 视口里带选中描边、调试显示、编辑器 UI 干扰
+- Capture 的不是资产本身，而是某个临时编辑状态
+
+### 更稳的排查方式
+
+先验证结构，再看图：
+
+1. 先查资产结构
+   - 材质：查输出链路、参数列表、编译状态、MI override 是否仍对父材质有效
+   - Niagara：查 emitter 数量、事件链、renderer 绑定、材质引用、是否真的是当前路线
+
+2. 再区分“活线”和“死线”
+   - 活线：能从最终输出反追到的节点
+   - 死线：已经不参与输出但还留在图里的旧实验
+   - 脏实例参数：父材质已经没这个参数，但 MI 里还保留 override
+
+3. 最后再做可视化验证
+   - 优先用资产预览、独立预览场景、受控运行时 capture
+   - 不要把带界面 chrome 的截图当成资产正确性的主证据
+
+### 材质实战规则
+
+- 如果节点无法反追到最终输出，它就不该继续充当“参考逻辑”
+- 如果 MI override 对父材质已经无效，它就该清掉，不要继续误导调参
+- 如果主图太乱，先清理死线，再谈视觉调优
+
+### Niagara 实战规则
+
+- 不要因为面板里“有 3 个 emitter”就默认结构正确
+- 先确认：
+  - source emitter 是不是在真正产生驱动数据
+  - receiver/trail emitter 是不是在真正消费这些数据
+  - renderer 和材质绑定是不是落在当前交付路线
+- 如果当前路线已确认是 Ribbon/Trail，就不要让旧 mesh/card 试验体继续混在同一判断链里
+
+### 一句话原则
+
+界面截图只能辅助理解，不能替代对资产结构的验证。

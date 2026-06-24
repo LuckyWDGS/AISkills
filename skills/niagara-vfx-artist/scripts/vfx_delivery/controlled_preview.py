@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 import textwrap
 from pathlib import Path
 
@@ -102,8 +103,11 @@ def actor_script(actor_name: str, out_png: str, yaw: float, pitch: float, distan
             old_flags[flag] = ED.get_viewport_show_flag(flag)
 
         bounds = LV.get_actor_bounds({actor_name!r})
-        center = bounds.bounds_origin
-        radius = max(bounds.bounds_sphere_radius, 50.0)
+        center = getattr(bounds, "origin", None) or getattr(bounds, "bounds_origin", None)
+        radius_value = getattr(bounds, "sphere_radius", None)
+        if radius_value is None:
+            radius_value = getattr(bounds, "bounds_sphere_radius", 0.0)
+        radius = max(radius_value, 50.0)
         distance = max(radius * {distance_scale}, 150.0)
 
         yaw_rad = math.radians({yaw})
@@ -140,17 +144,134 @@ def actor_script(actor_name: str, out_png: str, yaw: float, pitch: float, distan
     ).strip()
 
 
-def niagara_script(system_path: str, out_png: str, yaw: float, pitch: float, distance_scale: float, fov: float, mode: str, cleanup_after: bool) -> str:
+def niagara_script(system_path: str, out_png: str, yaw: float, pitch: float, distance_scale: float, fov: float, mode: str, cleanup_after: bool, sim_time: float) -> str:
     return textwrap.dedent(
         f"""
         import json
+        import math
         import unreal
 
+        ED = unreal.UnrealBridgeEditorLibrary
         LV = unreal.UnrealBridgeLevelLibrary
 
-        actor_name = LV.spawn_actor("/Script/Engine.Actor", unreal.Vector(0, 0, 0), unreal.Rotator(0, 0, 0))
-        LV.add_actor_tag(actor_name, "CodexVFXPreviewTemp")
-        component_name = LV.add_component_of_class(actor_name, "/Script/Niagara.NiagaraComponent")
+        old_camera = ED.get_editor_viewport_camera()
+        old_mode = ED.get_viewport_view_mode()
+        old_realtime = ED.is_viewport_realtime()
+        flags = ["Grid", "SelectionOutline", "ModeWidgets", "BillboardSprites"]
+        old_flags = {{}}
+        for flag in flags:
+            try:
+                old_flags[flag] = ED.get_viewport_show_flag(flag)
+            except Exception:
+                pass
+
+        actor_name = ""
+        result = {{"success": False, "out_png": {out_png!r}}}
+        try:
+            center = unreal.Vector(0, 0, 180)
+            # A plain AActor has no root scene component in this project, so its
+            # transform can read back as origin and make captures aim at empty sky.
+            actor_name = LV.spawn_actor("/Script/Niagara.NiagaraActor", center, unreal.Rotator(0, 0, 0))
+            LV.add_actor_tag(actor_name, "CodexVFXPreviewTemp")
+            LV.set_actor_transform(actor_name, center, unreal.Rotator(0, 0, 0), unreal.Vector(1, 1, 1))
+
+            editor_actor = None
+            subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+            for actor in subsystem.get_all_level_actors():
+                if actor.get_name() == actor_name or actor.get_actor_label() == actor_name:
+                    editor_actor = actor
+                    break
+
+            if editor_actor is None:
+                raise RuntimeError(f"Unable to resolve spawned preview actor: {{actor_name}}")
+
+            niagara_components = list(editor_actor.get_components_by_class(unreal.NiagaraComponent))
+            niagara_component = niagara_components[-1] if niagara_components else None
+            if niagara_component is None:
+                raise RuntimeError(f"Unable to resolve Niagara component on preview actor: {{actor_name}}")
+
+            system_asset = unreal.load_asset({system_path!r})
+            niagara_component.set_asset(system_asset)
+            niagara_component.set_world_location(center, False, False)
+            niagara_component.set_bounds_scale(12.0)
+            niagara_component.set_can_render_while_seeking(True)
+            niagara_component.set_rendering_enabled(True)
+            niagara_component.reset_system()
+            niagara_component.activate(True)
+            niagara_component.advance_simulation_by_time({sim_time}, 1.0 / 60.0)
+
+            yaw_rad = math.radians({yaw})
+            pitch_rad = math.radians({pitch})
+            distance = max(220.0 * {distance_scale}, 450.0)
+            camera = unreal.Vector(
+                center.x + math.cos(pitch_rad) * math.cos(yaw_rad) * distance,
+                center.y + math.cos(pitch_rad) * math.sin(yaw_rad) * distance,
+                center.z + math.sin(pitch_rad) * distance,
+            )
+            rotation = unreal.MathLibrary.find_look_at_rotation(camera, center)
+
+            LV.deselect_all_actors()
+            ED.set_viewport_realtime(True)
+            ED.set_viewport_view_mode({mode!r})
+            for flag in flags:
+                try:
+                    ED.set_viewport_show_flag(flag, False)
+                except Exception:
+                    pass
+            ED.set_editor_viewport_camera(camera, rotation, {fov})
+            ED.capture_active_viewport({out_png!r}, False)
+
+            result.update({{
+                "success": True,
+                "actor_name": actor_name,
+                "component_name": niagara_component.get_name(),
+                "camera_location": [camera.x, camera.y, camera.z],
+                "camera_rotation": [rotation.pitch, rotation.yaw, rotation.roll],
+                "simulated_seconds": {sim_time},
+            }})
+        finally:
+            try:
+                ED.set_editor_viewport_camera(old_camera.location, old_camera.rotation, old_camera.fov)
+                ED.set_viewport_view_mode(old_mode)
+                ED.set_viewport_realtime(old_realtime)
+                for flag, value in old_flags.items():
+                    ED.set_viewport_show_flag(flag, value)
+            finally:
+                if {cleanup_after!r} and actor_name:
+                    LV.destroy_actor(actor_name)
+
+        print(json.dumps(result, ensure_ascii=False))
+        """
+    ).strip()
+
+
+def niagara_spawn_script(
+    system_path: str,
+    yaw: float,
+    pitch: float,
+    distance_scale: float,
+    fov: float,
+    mode: str,
+    sim_time: float,
+    preview_tag: str,
+    focus_x: float,
+    focus_y: float,
+    focus_z: float,
+) -> str:
+    return textwrap.dedent(
+        f"""
+        import json
+        import math
+        import unreal
+
+        ED = unreal.UnrealBridgeEditorLibrary
+        LV = unreal.UnrealBridgeLevelLibrary
+
+        center = unreal.Vector(0, 0, 180)
+        focus = unreal.Vector({focus_x}, {focus_y}, {focus_z})
+        actor_name = LV.spawn_actor("/Script/Niagara.NiagaraActor", center, unreal.Rotator(0, 0, 0))
+        LV.add_actor_tag(actor_name, {preview_tag!r})
+        LV.set_actor_transform(actor_name, center, unreal.Rotator(0, 0, 0), unreal.Vector(1, 1, 1))
 
         editor_actor = None
         subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -162,29 +283,95 @@ def niagara_script(system_path: str, out_png: str, yaw: float, pitch: float, dis
         if editor_actor is None:
             raise RuntimeError(f"Unable to resolve spawned preview actor: {{actor_name}}")
 
-        niagara_component = None
-        for component in editor_actor.get_components_by_class(unreal.NiagaraComponent):
-            if component.get_name() == component_name:
-                niagara_component = component
-                break
+        niagara_components = list(editor_actor.get_components_by_class(unreal.NiagaraComponent))
+        niagara_component = niagara_components[-1] if niagara_components else None
         if niagara_component is None:
-            raise RuntimeError(f"Unable to resolve Niagara component: {{component_name}}")
+            raise RuntimeError(f"Unable to resolve Niagara component on preview actor: {{actor_name}}")
 
         system_asset = unreal.load_asset({system_path!r})
         niagara_component.set_asset(system_asset)
+        niagara_component.set_world_location(center, False, False)
+        niagara_component.set_bounds_scale(12.0)
+        niagara_component.set_can_render_while_seeking(True)
+        niagara_component.set_rendering_enabled(True)
+        niagara_component.set_age_update_mode(unreal.NiagaraAgeUpdateMode.DESIRED_AGE)
+        niagara_component.set_seek_delta(1.0 / 60.0)
+        niagara_component.set_desired_age({sim_time})
         niagara_component.activate(True)
+        niagara_component.seek_to_desired_age({sim_time})
 
-        exec({actor_script("__PREVIEW_ACTOR__", out_png, yaw, pitch, distance_scale, fov, mode)!r}.replace("__PREVIEW_ACTOR__", actor_name))
+        yaw_rad = math.radians({yaw})
+        pitch_rad = math.radians({pitch})
+        distance = max(220.0 * {distance_scale}, 450.0)
+        camera = unreal.Vector(
+            focus.x + math.cos(pitch_rad) * math.cos(yaw_rad) * distance,
+            focus.y + math.cos(pitch_rad) * math.sin(yaw_rad) * distance,
+            focus.z + math.sin(pitch_rad) * distance,
+        )
+        rotation = unreal.MathLibrary.find_look_at_rotation(camera, focus)
 
-        if {cleanup_after!r}:
-            LV.destroy_actor(actor_name)
+        ED.set_viewport_realtime(True)
+        ED.set_viewport_view_mode({mode!r})
+        for flag in ["Grid", "SelectionOutline", "ModeWidgets", "BillboardSprites"]:
+            try:
+                ED.set_viewport_show_flag(flag, False)
+            except Exception:
+                pass
+        ED.set_editor_viewport_camera(camera, rotation, {fov})
+
+        print(json.dumps({{
+            "success": True,
+            "actor_name": actor_name,
+            "component_name": niagara_component.get_name(),
+            "camera_location": [camera.x, camera.y, camera.z],
+            "camera_rotation": [rotation.pitch, rotation.yaw, rotation.roll],
+            "focus_location": [focus.x, focus.y, focus.z],
+            "simulated_seconds": {sim_time},
+            "preview_tag": {preview_tag!r},
+        }}, ensure_ascii=False))
+        """
+    ).strip()
+
+
+def niagara_capture_script(out_png: str) -> str:
+    return textwrap.dedent(
+        f"""
+        import json
+        import unreal
+
+        ED = unreal.UnrealBridgeEditorLibrary
+        ED.capture_active_viewport({out_png!r}, False)
+        print(json.dumps({{"success": True, "out_png": {out_png!r}}}, ensure_ascii=False))
+        """
+    ).strip()
+
+
+def niagara_cleanup_script(preview_tag: str) -> str:
+    return textwrap.dedent(
+        f"""
+        import json
+        import unreal
+
+        LV = unreal.UnrealBridgeLevelLibrary
+        subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+        removed = []
+        for actor in list(subsystem.get_all_level_actors()):
+            try:
+                if {preview_tag!r} not in [str(tag) for tag in actor.tags]:
+                    continue
+                actor_name = actor.get_actor_label() or actor.get_name()
+                LV.destroy_actor(actor_name)
+                removed.append(actor_name)
+            except Exception:
+                pass
+        print(json.dumps({{"success": True, "removed": removed, "preview_tag": {preview_tag!r}}}, ensure_ascii=False))
         """
     ).strip()
 
 
 def material_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, timeout_seconds=args.timeout)
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
     client.ping()
     out_png = Path(args.out) if args.out else default_report_path(ctx, "previews/material", slugify(args.material_path), "material-preview", ".png")
     result = client.exec_json(
@@ -197,7 +384,7 @@ def material_command(args: argparse.Namespace) -> int:
 
 def actor_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, timeout_seconds=args.timeout)
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
     client.ping()
     out_png = Path(args.out) if args.out else default_report_path(ctx, "previews/actor", slugify(args.actor_name), "actor-preview", ".png")
     result = client.exec_json(actor_script(args.actor_name, str(out_png), args.yaw, args.pitch, args.distance_scale, args.fov, args.view_mode))
@@ -276,22 +463,45 @@ def preset_export_command(args: argparse.Namespace) -> int:
 
 def niagara_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, timeout_seconds=args.timeout)
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
     client.ping()
     preset = load_preset(ctx, args.preset or "niagara-sandbox")
     out_png = Path(args.out) if args.out else default_report_path(ctx, "previews/niagara", slugify(args.system_path), "niagara-preview", ".png")
-    result = client.exec_json(
-        niagara_script(
+    yaw = args.yaw if args.yaw is not None else preset["yaw"]
+    pitch = args.pitch if args.pitch is not None else preset["pitch"]
+    distance_scale = args.distance_scale if args.distance_scale is not None else preset["distance_scale"]
+    fov = args.fov if args.fov is not None else preset["fov"]
+    view_mode = args.view_mode or preset["view_mode"]
+    cleanup_after = args.cleanup_after if args.cleanup_after else preset["cleanup_after"]
+    preview_tag = f"CodexVFXPreview_{slugify(out_png.stem)}"
+
+    spawn_result = client.exec_json(
+        niagara_spawn_script(
             args.system_path,
-            str(out_png),
-            args.yaw if args.yaw is not None else preset["yaw"],
-            args.pitch if args.pitch is not None else preset["pitch"],
-            args.distance_scale if args.distance_scale is not None else preset["distance_scale"],
-            args.fov if args.fov is not None else preset["fov"],
-            args.view_mode or preset["view_mode"],
-            args.cleanup_after if args.cleanup_after else preset["cleanup_after"],
+            yaw,
+            pitch,
+            distance_scale,
+            fov,
+            view_mode,
+            args.sim_time,
+            preview_tag,
+            args.focus_x,
+            args.focus_y,
+            args.focus_z,
         )
     )
+    time.sleep(max(args.capture_delay, 0.0))
+    capture_result = client.exec_json(niagara_capture_script(str(out_png)))
+    cleanup_result = {"success": True, "removed": [], "preview_tag": preview_tag}
+    if cleanup_after:
+        cleanup_result = client.exec_json(niagara_cleanup_script(preview_tag))
+    result = {
+        **spawn_result,
+        **capture_result,
+        "cleanup": cleanup_result,
+        "capture_delay": args.capture_delay,
+        "view_mode": view_mode,
+    }
     save_json(out_png.with_suffix(".json"), result)
     print(out_png)
     return 0
@@ -305,6 +515,7 @@ def build_parser() -> argparse.ArgumentParser:
     material = subparsers.add_parser("material")
     material.add_argument("material_path")
     material.add_argument("--project")
+    material.add_argument("--endpoint")
     material.add_argument("--timeout", type=int, default=180)
     material.add_argument("--out")
     material.add_argument("--mesh", default="plane")
@@ -318,6 +529,7 @@ def build_parser() -> argparse.ArgumentParser:
     actor = subparsers.add_parser("actor")
     actor.add_argument("actor_name")
     actor.add_argument("--project")
+    actor.add_argument("--endpoint")
     actor.add_argument("--timeout", type=int, default=180)
     actor.add_argument("--out")
     actor.add_argument("--yaw", type=float, default=45.0)
@@ -330,6 +542,7 @@ def build_parser() -> argparse.ArgumentParser:
     niagara = subparsers.add_parser("niagara")
     niagara.add_argument("system_path")
     niagara.add_argument("--project")
+    niagara.add_argument("--endpoint")
     niagara.add_argument("--timeout", type=int, default=240)
     niagara.add_argument("--out")
     niagara.add_argument("--yaw", type=float, default=45.0)
@@ -339,6 +552,11 @@ def build_parser() -> argparse.ArgumentParser:
     niagara.add_argument("--view-mode", default="Lit")
     niagara.add_argument("--preset")
     niagara.add_argument("--cleanup-after", action="store_true")
+    niagara.add_argument("--sim-time", type=float, default=1.25)
+    niagara.add_argument("--capture-delay", type=float, default=0.85)
+    niagara.add_argument("--focus-x", type=float, default=0.0)
+    niagara.add_argument("--focus-y", type=float, default=0.0)
+    niagara.add_argument("--focus-z", type=float, default=180.0)
     niagara.set_defaults(func=niagara_command)
 
     preset = subparsers.add_parser("preset")
@@ -375,3 +593,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

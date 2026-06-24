@@ -4,6 +4,17 @@ Use this when a material is more complex than a single PBR stack: layered paint,
 
 This reference is about material authoring and review. Real VFX system wiring remains outside this skill.
 
+## Table Of Contents
+
+- [Choose The Layering System](#choose-the-layering-system)
+- [Material Attributes Discipline](#material-attributes-discipline)
+- [Material Layers Asset Rules](#material-layers-asset-rules)
+- [Substrate Rules](#substrate-rules)
+- [UE 5.7 Substrate Checks](#ue-57-substrate-checks)
+- [Cost Review](#cost-review)
+- [Tool Hooks](#tool-hooks)
+- [Delivery Contract](#delivery-contract)
+
 ## Choose The Layering System
 
 | Approach | Best For | Avoid When |
@@ -11,7 +22,7 @@ This reference is about material authoring and review. Real VFX system wiring re
 | Simple master material plus Material Instances | Most props, characters, tiling surfaces, straightforward masks | The graph becomes a switch graveyard or repeats large blend blocks |
 | Material Functions with `Material Attributes` | Reusable graph chunks, hand-authored layer blends, predictable shipped masters | Artists need to reorder layer stacks per instance without editing the base material |
 | Material Layer / Material Layer Blend assets | Artist-editable layer stacks in Material Instances | The project lacks naming/versioning discipline for layer assets |
-| Substrate | Physically expressive BSDF layering, thin film, complex matter, advanced clear coat / fuzz / transmission experiments | Simple PBR would do, mobile/low-end is a target, or the project cannot absorb beta-feature and shader-cost risk |
+| Substrate | Physically expressive BSDF layering, thin film, complex matter, advanced clear coat / fuzz / transmission experiments, UE 5.7+ new-project material stacks | Simple PBR would do, mobile/low-end is a target, or the project cannot absorb version, conversion, GBuffer, and shader-cost risk |
 | Runtime Virtual Texture | Landscape and large terrain compositing, decal-like terrain blending, caching expensive landscape shading | Small local material details or assets outside RVT volume assumptions |
 
 ## Material Attributes Discipline
@@ -43,7 +54,7 @@ Review them for:
 
 ## Substrate Rules
 
-Substrate replaces much of the fixed legacy shading-model workflow with a more expressive BSDF-style material framework. Treat it as an expert route, not a default route.
+Substrate replaces much of the fixed legacy shading-model workflow with a more expressive BSDF-style material framework. In UE 5.7, new projects have Substrate enabled by default; existing upgraded projects keep the non-Substrate path unless the project opts in. Treat it as version-sensitive: first identify the project's engine version, Substrate project setting, and GBuffer format.
 
 Use Substrate when:
 
@@ -51,6 +62,7 @@ Use Substrate when:
 - clear coat, fuzz, thin film, transmission, or complex surface response is central to the look
 - the target platform and engine version are known to support the feature safely
 - the team accepts the extra audit burden
+- the material will benefit from Substrate's slab/BSDF model rather than only from Material Layers parameter blending
 
 Be cautious when:
 
@@ -58,6 +70,20 @@ Be cautious when:
 - the material is for mobile, UI, cheap VFX, or large-screen terrain
 - the project has not enabled or standardized Substrate
 - the graph uses Substrate nodes but has no quality fallback or benchmark
+- the material was explicitly converted from a legacy root node; conversion is not a casual reversible preview step
+- the project could disable Substrate later; converted Substrate materials can render black when Substrate is disabled
+
+## UE 5.7 Substrate Checks
+
+Before authoring or approving a Substrate material:
+
+- Check whether the project is a new UE 5.7+ project with Substrate enabled by default or an upgraded project that opted in.
+- Record GBuffer format:
+  - `Blendable GBuffer`: speed and predictable memory first.
+  - `Adaptive GBuffer`: richer per-pixel complexity, higher cost, supported on current-generation/SM6-style targets, with simplification elsewhere.
+- Inspect the Substrate Stats panel for topology, features, simplification, closure count, and bytes-per-pixel pressure.
+- Prefer operator parameter blending when it preserves the visible look and reduces lighting/memory cost.
+- Record any automatic simplification risk as a platform fallback, not as a hidden success.
 
 ## Cost Review
 
@@ -72,6 +98,8 @@ Audit:
 - branchy HLSL inside layer functions
 - large full-screen coverage such as landscapes, decals, UI, or post process
 - `FeatureLevelSwitch`, `QualitySwitch`, or separate low-cost masters for weaker platforms
+- Substrate closure count and whether multiple BSDFs are actually needed for the approved look
+- whether Adaptive GBuffer complexity will simplify on unsupported platforms
 
 ## Tool Hooks
 
@@ -91,4 +119,3 @@ For a complex layered material, report:
 - expected shader cost and sampler count
 - fallback strategy for lower feature levels
 - preview evidence: neutral shaderball plus at least one target carrier if available
-

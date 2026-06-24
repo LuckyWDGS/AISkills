@@ -44,6 +44,7 @@
       "preview_route": "niagara",
       "template_system": "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem",
       "usage_flags_required": ["NiagaraSprites"],
+      "two_sided_expected": false,
       "subuv_grid": "4x4",
       "dynamic_parameters": ["ParticleColor", "DynamicParameter", "SubImageIndex"],
       "semantic_bindings": {
@@ -73,13 +74,14 @@
         "expected_renderer_bindings_any": ["sub_image_index_binding", "color_binding", "dynamic_material_binding"],
         "expected_renderer_binding_text_any": ["Particles.SubImageIndex", "Particles.Color", "Particles.DynamicMaterialParameter"]
       },
-      "notes": "Sprite preview preset for 4x4 SubUV atlas materials."
+      "notes": "Sprite preview preset for 4x4 SubUV atlas materials. Niagara sprites face the camera, so Two Sided should stay off unless a special non-camera-facing carrier is documented."
     },
     "niagara_sprite_subuv_8x8": {
       "carrier": "sprite",
       "preview_route": "niagara",
       "template_system": "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem",
       "usage_flags_required": ["NiagaraSprites"],
+      "two_sided_expected": false,
       "subuv_grid": "8x8",
       "dynamic_parameters": ["ParticleColor", "DynamicParameter", "SubImageIndex"],
       "semantic_bindings": {
@@ -109,7 +111,7 @@
         "expected_renderer_bindings_any": ["sub_image_index_binding", "color_binding", "dynamic_material_binding"],
         "expected_renderer_binding_text_any": ["Particles.SubImageIndex", "Particles.Color", "Particles.DynamicMaterialParameter"]
       },
-      "notes": "Sprite preview preset for 8x8 SubUV atlas materials."
+      "notes": "Sprite preview preset for 8x8 SubUV atlas materials. Niagara sprites face the camera, so Two Sided should stay off unless a special non-camera-facing carrier is documented."
     },
     "niagara_ribbon_trail": {
       "carrier": "ribbon",
@@ -154,7 +156,7 @@
     "decal_surface_basic": {
       "carrier": "decal",
       "preview_route": "world_harness",
-      "usage_flags_required": ["DeferredDecal"],
+      "usage_flags_required": [],
       "notes": "Temporary wall plus DecalActor preview for deferred decal materials."
     },
     "post_process_basic": {

@@ -4,6 +4,18 @@ Use this when learning from an online UE material example, matching a reference 
 
 The goal is not to copy a graph blindly. The goal is to extract the material contract, rebuild a minimal UE version, audit it, preview it on the right carrier, and turn any mismatch into a reusable rule.
 
+## Table Of Contents
+
+- [Case Study Workflow](#case-study-workflow)
+- [Mismatch Categories](#mismatch-categories)
+- [Live UE Case Studies](#live-ue-case-studies)
+- [Light Function Intensity Mask](#light-function-intensity-mask)
+- [Two-Sided Foliage](#two-sided-foliage)
+- [Clear Coat Car Paint](#clear-coat-car-paint)
+- [Difficulty Ladder: Fresnel, Clear Coat, Chrome Snow](#difficulty-ladder-fresnel-clear-coat-chrome-snow)
+- [Dissolve, Noise, Single Layer Water, Fire](#dissolve-noise-single-layer-water-fire)
+- [Rules To Carry Forward](#rules-to-carry-forward)
+
 ## Case Study Workflow
 
 1. Capture the source.

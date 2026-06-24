@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Design Map</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7f8;
+        --panel: #fff;
+        --ink: #142235;
+        --muted: #657389;
+        --line: #d9e1e8;
+        --active: #00847f;
+        --active-soft: #e4f3f1;
+        --bad: #c94046;
+        --bad-soft: #fff0f1;
+        --warn: #a66a00;
+        --warn-soft: #fff6df;
+        --shadow: 0 18px 48px rgba(21, 42, 65, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(680px, 1fr) 420px;
+      }
+
+      .workspace {
+        padding: 28px 32px 32px;
+        overflow: auto;
+      }
+
+      .titlebar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 22px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 7px;
+        font-size: 28px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .subtitle,
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .chip,
+      .coverage {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--active);
+      }
+
+      .dot.rejected {
+        background: var(--bad);
+      }
+
+      .dot.partial {
+        background: var(--warn);
+      }
+
+      .map {
+        position: relative;
+        min-width: 980px;
+        min-height: 660px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background:
+          linear-gradient(rgba(20, 34, 53, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 34, 53, 0.035) 1px, transparent 1px),
+          #fbfcfd;
+        background-size: 28px 28px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .edge {
+        stroke: #aab8c4;
+        stroke-width: 2;
+        fill: none;
+      }
+
+      .edge.superseded,
+      .edge.rejected {
+        stroke: #df9a9d;
+        stroke-dasharray: 7 7;
+      }
+
+      .edge.reference {
+        stroke: #d9b56f;
+        stroke-dasharray: 4 6;
+      }
+
+      .node {
+        position: absolute;
+        width: 220px;
+        min-height: 108px;
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 8px 22px rgba(21, 42, 65, 0.08);
+        cursor: pointer;
+        transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+      }
+
+      .node:hover,
+      .node.selected {
+        transform: translateY(-2px);
+        border-color: var(--active);
+        box-shadow: 0 14px 32px rgba(0, 132, 127, 0.16);
+      }
+
+      .node.rejected {
+        background: var(--bad-soft);
+        border-color: #efc4c6;
+      }
+
+      .node.partial,
+      .node.thread {
+        background: var(--warn-soft);
+        border-color: #ecd18c;
+      }
+
+      .kicker {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .node h2 {
+        margin: 8px 0 6px;
+        font-size: 18px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .node p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .badge {
+        min-height: 22px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: var(--active-soft);
+        color: var(--active);
+        font-size: 11px;
+        text-transform: none;
+      }
+
+      .rejected .badge {
+        background: #ffe3e5;
+        color: var(--bad);
+      }
+
+      .partial .badge,
+      .thread .badge {
+        background: #ffedc0;
+        color: var(--warn);
+      }
+
+      .side {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        gap: 16px;
+        padding: 24px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .preview {
+        min-height: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #f8fafb;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+
+      .preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+
+      .missing {
+        color: var(--muted);
+        font-size: 13px;
+        padding: 24px;
+        text-align: center;
+      }
+
+      .details,
+      .interaction-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 12px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .row span:first-child {
+        color: var(--muted);
+      }
+
+      .interactions {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+        overflow: auto;
+      }
+
+      .interactions h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+
+      .interaction {
+        width: 100%;
+        display: grid;
+        gap: 4px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfd;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+      }
+
+      .interaction[data-clickable="true"] {
+        cursor: pointer;
+      }
+
+      .interaction strong {
+        font-size: 13px;
+      }
+
+      .interaction small {
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .coverage {
+        justify-self: start;
+        min-height: 22px;
+        border: 0;
+        background: var(--active-soft);
+        color: var(--active);
+        font-size: 11px;
+      }
+
+      .coverage.no {
+        background: #ffe3e5;
+        color: var(--bad);
+      }
+
+      .coverage.partial {
+        background: #ffedc0;
+        color: var(--warn);
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 14px;
+        background: #fff;
+      }
+
+      .button.primary {
+        border-color: var(--active);
+        background: var(--active);
+        color: #fff;
+      }
+
+      .tip {
+        position: fixed;
+        z-index: 30;
+        display: none;
+        width: 280px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        pointer-events: none;
+      }
+
+      .tip img {
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        object-fit: contain;
+        border-radius: 6px;
+        background: #f8fafb;
+      }
+
+      .tip strong,
+      .tip small {
+        display: block;
+        margin-top: 6px;
+      }
+
+      @media (max-width: 1180px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .side {
+          height: auto;
+          position: relative;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="workspace">
+        <div class="titlebar">
+          <div>
+            <h1 id="mapTitle">Design Map</h1>
+            <p class="subtitle" id="mapSubtitle">Hover to preview. Click nodes and interaction rows to find missing design coverage.</p>
+          </div>
+          <div class="legend" aria-label="Legend">
+            <span class="chip"><span class="dot"></span>Active</span>
+            <span class="chip"><span class="dot rejected"></span>Rejected</span>
+            <span class="chip"><span class="dot partial"></span>Partial / thread-only</span>
+          </div>
+        </div>
+        <div class="map" id="map" aria-label="Design relationship graph">
+          <svg id="edges" viewBox="0 0 980 660" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+      </section>
+
+      <aside class="side" aria-label="Selected design details">
+        <section>
+          <h2 id="title">No design selected</h2>
+          <p class="muted" id="summary">Select a node to inspect its image, status, and interactions.</p>
+        </section>
+        <section class="preview" id="preview"></section>
+        <section class="details">
+          <div class="row"><span>Status</span><strong id="status"></strong></div>
+          <div class="row"><span>Version</span><span id="version"></span></div>
+          <div class="row"><span>Scope</span><span id="scope"></span></div>
+          <div class="row"><span>Supersedes</span><span id="supersedes"></span></div>
+          <div class="row"><span>Sync</span><span id="sync"></span></div>
+          <div class="row"><span>Image</span><span id="imagePath"></span></div>
+          <div class="row"><span>Use</span><span id="usage"></span></div>
+        </section>
+        <section class="interactions">
+          <h3>Interaction Coverage</h3>
+          <div class="interaction-list" id="interactionList"></div>
+        </section>
+        <nav class="actions" aria-label="Design actions">
+          <a class="button primary" id="openImage" href="#">Open image</a>
+          <a class="button" href="DESIGN_EXECUTION.md">Design execution</a>
+        </nav>
+      </aside>
+    </main>
+    <div class="tip" id="tip"></div>
+
+    <script>
+      const embeddedData = {
+        task: "",
+        root: "",
+        platform: "",
+        canvas: "",
+        activeVersion: "",
+        nodes: [
+          {
+            id: "home",
+            version: "home-v1",
+            title: "Primary Anchor",
+            status: "active-reference",
+            scope: "screen/default",
+            image: "assets/active/example-home.png",
+            implements: ["screen-shell"],
+            parent: null,
+            supersededBy: null,
+            replacementScope: null,
+            sync: {
+              contract: "done",
+              hotspotReview: "done",
+              approvedBaseline: "pending",
+            },
+            doNotImplement: false,
+          },
+          {
+            id: "failed-example",
+            version: "home-v0",
+            title: "Failed Candidate",
+            status: "superseded-failed-reference",
+            scope: "screen/default",
+            image: "assets/rejected/example-failed.png",
+            implements: [],
+            parent: null,
+            supersededBy: "home",
+            replacementScope: "screen/default",
+            sync: {
+              contract: "done",
+              hotspotReview: "done",
+              approvedBaseline: "done",
+            },
+            doNotImplement: true,
+          },
+        ],
+        edges: [{ from: "failed-example", to: "home", type: "superseded-by" }],
+        interactions: [
+          {
+            source: "home",
+            control: "Primary action",
+            behavior: "Opens the next covered UI state.",
+            target: null,
+            covered: "no",
+            missingReference: "next-state-reference",
+            requiresFocusContract: true,
+          },
+        ],
+      };
+
+      const map = document.querySelector("#map");
+      const edgesLayer = document.querySelector("#edges");
+      const tip = document.querySelector("#tip");
+      const interactionList = document.querySelector("#interactionList");
+      const fields = {
+        title: document.querySelector("#title"),
+        summary: document.querySelector("#summary"),
+        status: document.querySelector("#status"),
+        version: document.querySelector("#version"),
+        scope: document.querySelector("#scope"),
+        supersedes: document.querySelector("#supersedes"),
+        sync: document.querySelector("#sync"),
+        imagePath: document.querySelector("#imagePath"),
+        usage: document.querySelector("#usage"),
+        preview: document.querySelector("#preview"),
+        openImage: document.querySelector("#openImage"),
+      };
+
+      let data = embeddedData;
+      let nodesById = new Map();
+
+      async function loadData() {
+        try {
+          const response = await fetch("design-map.json", { cache: "no-store" });
+          if (response.ok) {
+            data = await response.json();
+          }
+        } catch {
+          data = embeddedData;
+        }
+      }
+
+      function nodeClass(node) {
+        if (node.doNotImplement || /failed|rejected|superseded/.test(node.status || "")) return "rejected";
+        if (/partial|thread/.test(node.status || "")) return "partial";
+        return "active";
+      }
+
+      function layoutNodes(nodes) {
+        const active = nodes.filter((node) => nodeClass(node) === "active");
+        const rejected = nodes.filter((node) => nodeClass(node) === "rejected");
+        const partial = nodes.filter((node) => nodeClass(node) === "partial");
+        const ordered = [...partial, ...active, ...rejected];
+        return ordered.map((node, index) => {
+          const column = index % 3;
+          const row = Math.floor(index / 3);
+          return { ...node, x: 40 + column * 320, y: 48 + row * 150 };
+        });
+      }
+
+      function drawEdges(nodes, edges) {
+        const pos = new Map(nodes.map((node) => [node.id, node]));
+        edgesLayer.innerHTML = "";
+        for (const edge of edges || []) {
+          const from = pos.get(edge.from);
+          const to = pos.get(edge.to);
+          if (!from || !to) continue;
+          const x1 = from.x + 220;
+          const y1 = from.y + 54;
+          const x2 = to.x;
+          const y2 = to.y + 54;
+          const dx = Math.max(60, Math.abs(x2 - x1) / 2);
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", `M${x1} ${y1} C${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2} ${y2}`);
+          path.setAttribute("class", `edge ${edge.type || ""}`);
+          edgesLayer.appendChild(path);
+        }
+      }
+
+      function renderNodes() {
+        const positioned = layoutNodes(data.nodes || []);
+        nodesById = new Map(positioned.map((node) => [node.id, node]));
+        drawEdges(positioned, data.edges || []);
+        for (const node of positioned) {
+          const el = document.createElement("article");
+          el.className = `node ${nodeClass(node)}`;
+          el.dataset.id = node.id;
+          el.style.left = `${node.x}px`;
+          el.style.top = `${node.y}px`;
+          el.innerHTML = `
+            <div class="kicker">${node.status || "reference"} <span class="badge">${node.doNotImplement ? "do not use" : "active"}</span></div>
+            <h2>${node.title || node.id}</h2>
+            <p>${node.scope || ""}</p>
+          `;
+          el.addEventListener("click", () => selectNode(node.id));
+          el.addEventListener("mouseenter", (event) => showTip(node.id, event));
+          el.addEventListener("mousemove", moveTip);
+          el.addEventListener("mouseleave", () => (tip.style.display = "none"));
+          map.appendChild(el);
+        }
+      }
+
+      function renderPreview(node) {
+        fields.preview.innerHTML = "";
+        if (node.image) {
+          const img = document.createElement("img");
+          img.src = node.image;
+          img.alt = node.title || node.id;
+          fields.preview.appendChild(img);
+          fields.openImage.href = node.image;
+          fields.openImage.textContent = "Open image";
+          fields.openImage.style.pointerEvents = "";
+        } else {
+          fields.preview.innerHTML = '<div class="missing">No durable local image. Check ASSETS.md for provenance.</div>';
+          fields.openImage.href = "ASSETS.md";
+          fields.openImage.textContent = "Open assets index";
+        }
+      }
+
+      function renderInteractions(sourceId) {
+        const rows = (data.interactions || []).filter((item) => item.source === sourceId);
+        interactionList.innerHTML = "";
+        if (!rows.length) {
+          interactionList.innerHTML = '<div class="missing">No interactions recorded for this reference.</div>';
+          return;
+        }
+        for (const item of rows) {
+          const target = item.target ? nodesById.get(item.target) : null;
+          const row = document.createElement("button");
+          row.type = "button";
+          row.className = "interaction";
+          row.dataset.clickable = target ? "true" : "false";
+          row.innerHTML = `
+            <strong>${item.control || "Unnamed control"}</strong>
+            <small>${item.behavior || ""}</small>
+            <span class="coverage ${item.covered === "yes" ? "" : item.covered || "no"}">${item.covered || "no"}</span>
+            <small>${target ? `Target: ${target.title}` : `Missing: ${item.missingReference || "unmapped target"}`}</small>
+          `;
+          if (target) row.addEventListener("click", () => selectNode(target.id));
+          interactionList.appendChild(row);
+        }
+      }
+
+      function selectNode(id) {
+        const node = nodesById.get(id);
+        if (!node) return;
+        document.querySelectorAll(".node").forEach((el) => el.classList.toggle("selected", el.dataset.id === id));
+        fields.title.textContent = node.title || node.id;
+        fields.summary.textContent = node.doNotImplement
+          ? "This reference is marked do-not-implement. Keep it for audit only."
+          : "Accepted or candidate implementation reference. Verify status before coding.";
+        fields.status.textContent = node.status || "";
+        fields.version.textContent = node.version || "none";
+        fields.scope.textContent = node.scope || "";
+        fields.supersedes.textContent = node.supersededBy ? `${node.supersededBy}${node.replacementScope ? ` (${node.replacementScope})` : ""}` : "none";
+        fields.sync.textContent = node.sync
+          ? Object.entries(node.sync)
+              .map(([key, value]) => `${key}:${value}`)
+              .join(", ")
+          : "not recorded";
+        fields.imagePath.textContent = node.image || "none";
+        fields.usage.textContent = node.doNotImplement ? "Do not implement from this image." : (node.implements || []).join(", ");
+        renderPreview(node);
+        renderInteractions(id);
+      }
+
+      function showTip(id, event) {
+        const node = nodesById.get(id);
+        if (!node) return;
+        tip.innerHTML = "";
+        if (node.image) {
+          const img = document.createElement("img");
+          img.src = node.image;
+          img.alt = node.title || node.id;
+          tip.appendChild(img);
+        }
+        const strong = document.createElement("strong");
+        strong.textContent = node.title || node.id;
+        const small = document.createElement("small");
+        small.textContent = `${node.status || ""} · ${node.scope || ""}`;
+        tip.append(strong, small);
+        tip.style.display = "block";
+        moveTip(event);
+      }
+
+      function moveTip(event) {
+        const pad = 16;
+        const width = 280;
+        const x = Math.min(event.clientX + pad, window.innerWidth - width - pad);
+        const y = Math.min(event.clientY + pad, window.innerHeight - 230);
+        tip.style.left = `${Math.max(pad, x)}px`;
+        tip.style.top = `${Math.max(pad, y)}px`;
+      }
+
+      loadData().then(() => {
+        const titleSuffix = [data.platform, data.canvas].filter(Boolean).join(" · ");
+        const versionSuffix = data.activeVersion ? ` · ${data.activeVersion}` : "";
+        document.querySelector("#mapTitle").textContent = data.task ? `${data.task} Design Map` : "Design Map";
+        document.querySelector("#mapSubtitle").textContent = titleSuffix
+          ? `${titleSuffix}${versionSuffix}. Hover to preview. Click nodes and interaction rows to find missing design coverage.`
+          : "Hover to preview. Click nodes and interaction rows to find missing design coverage.";
+        renderNodes();
+        if ((data.nodes || [])[0]) selectNode(data.nodes[0].id);
+      });
+    </script>
+  </body>
+</html>

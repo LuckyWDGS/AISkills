@@ -1,5 +1,6 @@
 # Local Codex session continuity memory
 .codex/session/
+skills/*/.codex/session/
 
 # Local generated/cached files
 **/__pycache__/

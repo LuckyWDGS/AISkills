@@ -45,3 +45,9 @@ Restart Codex after adding, removing, or renaming skills so the skill list is re
 - Keep generated experiments and local outputs out of Git.
 - Promote only durable references, scripts, templates, and docs into a skill directory.
 - `C:\Users\<you>\.codex\skills\<skill-name>` may be a real directory, junction, or symlink; Codex only needs to read the `SKILL.md` through that path.
+
+## 中文说明
+
+仓库里有一组面向中文阅读的技能说明：
+
+- [docs/zh/README.md](docs/zh/README.md)

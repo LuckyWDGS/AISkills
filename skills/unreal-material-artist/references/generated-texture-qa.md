@@ -6,6 +6,18 @@
 - You need to decide whether AI output is only a draft or can become a runtime texture.
 - A generated texture must be checked before UE import.
 
+## Table Of Contents
+
+- [Image Generation Strategy](#image-generation-strategy)
+- [Reference-Driven Generation Gate](#reference-driven-generation-gate)
+- [cm-imagegen Tactics](#cm-imagegen-tactics)
+- [What AI Should Not Be Trusted To Finalize](#what-ai-should-not-be-trusted-to-finalize)
+- [Generated Texture QA Checklist](#generated-texture-qa-checklist)
+- [UE Import Notes](#ue-import-notes)
+- [Acceptance Language](#acceptance-language)
+
+Related lifecycle step: after generation QA, use [material-asset-library.md](material-asset-library.md) for candidate registration, promotion, or rejection.
+
 ## Image Generation Strategy
 
 Start from the material contract and the target look, not from a pretty prompt or a cheap stock substitute.
@@ -110,6 +122,7 @@ Before importing to UE:
 - Foliage diffuse/alpha textures have real cutout alpha; a fully opaque alpha channel is not enough.
 - Leaf-card RGB edges are not polluted by black/white background fringes that will halo in mips.
 - RGB edge pixels will not create dark halos.
+- BaseColor/Albedo, Emissive color, and visible flipbook or sprite RGB should import with sRGB enabled.
 - Mask, packed, flow, and normal textures will import with sRGB disabled.
 - Compression matches role: Masks for data masks, Normalmap for normals, HDR only if truly needed.
 - Placeholder/default textures must obey the same rule as final textures. A mask/packed/ORM slot cannot safely default to an ordinary color sRGB white texture; use or create a role-correct default such as `TC_Masks` with `sRGB=false`.
@@ -125,9 +138,12 @@ Run:
 ```powershell
 python D:/Skills/skills/unreal-material-artist/tools/texture_asset_report.py path/to/textures --role atlas --grid 4x4 --markdown
 python D:/Skills/skills/unreal-material-artist/tools/texture_asset_report.py path/to/leaf-card.png --role foliage --markdown
+python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --scan D:/Textures/WingEcho --packed-convention ORM --emit-import-fix-spec --markdown
 python D:/Skills/skills/unreal-material-artist/tools/channel_packer.py --r D:/Masks/AO.png@L --g D:/Masks/Roughness.png@L --b D:/Masks/Metallic.png@L --a D:/Masks/Opacity.png@L --markdown
 python D:/Skills/skills/unreal-material-artist/tools/flipbook_normalizer.py D:/Flipbook/Frames --grid 8x8 --cell-size 256 --markdown
 ```
+
+Use `texture_set_pipeline.py` when generated or received files belong together as a material set. It catches mistakes that single-file checks miss, such as BaseColor/Normal/RMA resolution mismatch, wrong packed-channel convention, missing required slots, opacity separated when it could be packed into alpha, and UE import settings that disagree with the slot role.
 
 Use `channel_packer.py` when separate grayscale masks need to become one runtime RGBA data texture.
 
@@ -139,11 +155,15 @@ If a generated texture survives QA and is likely reusable across tasks, register
 
 First-pass rules:
 
-- Color/albedo/emissive art usually uses sRGB on.
-- Masks, packed data, flow maps, roughness, metallic, opacity masks, and scalar data usually use sRGB off.
+- `sRGB` is role-based, not default-off and not "leave it however it imported." Decide it from the texture's final sampled use in the material.
+- Must use sRGB on for visible color textures: `BaseColor` / `Albedo`, `Emissive` color, visible flipbook or sprite `RGB`, and other artist-color inputs the player is meant to see as color.
+- Must use sRGB off for data, mask, and vector textures: `Normal`, `Roughness` / `Specular` / `Metallic`, `Opacity` / `Alpha Mask`, packed `ORM` / `RMA` / `MRA`, `Noise`, `FlowMap`, scalar ramps, and channels sampled individually as masks.
+- Existing textures should be audited by actual sampler role before changing `sRGB`; do not preserve, enable, or disable it blindly across the project.
 - Mask/packed sampler slots need mask-compatible placeholder assets too. Do not wire `/Engine/EngineResources/WhiteSquareTexture` or another color/sRGB texture into a `SAMPLERTYPE_Masks` parameter just because it is "only a default"; create a small project-local white mask texture with `TC_Masks` and `sRGB=false`.
 - Normal maps use normal map compression and should not be treated as color art.
+- If one asset is trying to serve both visible color and independently sampled mask/data roles, treat that as a mixed-use risk and document or repack it instead of assuming one `sRGB` state is universally correct.
 - Flipbooks and atlases need correct grid metadata recorded for Niagara or material SubUV usage.
+- Niagara/VFX texture asset names should end with `_VFX` so they remain visually separated from surface/PBR texture sets, for example `T_FireFlipbook_VFX`.
 - Power-of-two sizes are the safest default for generated runtime textures because they play better with mip generation, streaming, and cross-platform assumptions.
 - Large translucent VFX textures need stricter size control than small opaque surface textures because overdraw multiplies the cost.
 - AI-generated water height/ripple textures imported as mask/data should use `TC_Masks` or another non-sRGB data compression route. Do not import them as color art just because they are PNGs.

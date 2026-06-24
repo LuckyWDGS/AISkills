@@ -11,12 +11,24 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .texture_import_audit import analyze_texture, build_ue_script, parse_grid
 
 
-ROLE_CHOICES = ["mask", "packed", "normal", "flow", "ui", "flipbook", "atlas", "sprite"]
+ROLE_CHOICES = ["albedo", "emissive", "mask", "packed", "normal", "flow", "ui", "flipbook", "atlas", "sprite"]
 FLAVOR_CHOICES = ["color", "mask", "data"]
 
 
 def role_profile(role: str, flavor: str) -> dict[str, Any]:
     base_profiles = {
+        "albedo": {
+            "srgb": True,
+            "compression_settings": "TC_DEFAULT",
+            "lod_group": "TEXTUREGROUP_WORLD",
+            "never_stream": False,
+        },
+        "emissive": {
+            "srgb": True,
+            "compression_settings": "TC_DEFAULT",
+            "lod_group": "TEXTUREGROUP_EFFECTS",
+            "never_stream": False,
+        },
         "mask": {
             "srgb": False,
             "compression_settings": "TC_MASKS",
@@ -95,6 +107,7 @@ def build_apply_script(texture_path: str, changes: dict[str, Any]) -> str:
         import json
         import unreal
 
+        TR = unreal.UnrealBridgeToolsetRegistryLibrary
         asset_path = {texture_path!r}
         changes = json.loads({payload!r})
         tex = unreal.EditorAssetLibrary.load_asset(asset_path)
@@ -119,8 +132,12 @@ def build_apply_script(texture_path: str, changes: dict[str, Any]) -> str:
             tex.set_editor_property("lod_group", enum_value(unreal.TextureGroup, changes["lod_group"]))
 
         tex.set_editor_property("defer_compression", False)
-        saved = unreal.EditorAssetLibrary.save_asset(asset_path, only_if_is_dirty=False)
-        print(json.dumps({{"success": bool(saved), "changes": changes}}, ensure_ascii=False))
+        save = TR.execute_qualified_tool(
+            'toolset_registry.toolsets.core.asset.AssetTools.save_assets',
+            json.dumps({{'asset_paths': [asset_path]}}, ensure_ascii=False),
+            True,
+        )
+        print(json.dumps({{"success": bool(save.success), "save_error": save.error, "changes": changes}}, ensure_ascii=False))
         """
     ).strip()
 

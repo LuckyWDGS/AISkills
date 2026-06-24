@@ -5,6 +5,7 @@ import textwrap
 
 from .bridge import BridgeClient
 from .core import resolve_root_context
+from .effect_state import acceptance_default, load_effect_record
 
 
 def split_target(target_path: str) -> tuple[str, str]:
@@ -127,7 +128,17 @@ def set_niagara_system_props_script(system_path: str, effect_type_path: str, fix
 
 def run_bridge(args: argparse.Namespace, script_text: str) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, timeout_seconds=args.timeout)
+    if getattr(args, "effect", ""):
+        anchor_lock = load_effect_record(ctx, "reference-acceptance", args.effect, acceptance_default(args.effect)).get("anchor_lock", {})
+        if not str(anchor_lock.get("entry_id", "") or "").strip():
+            raise SystemExit("Reference gate failed before UE write: no locked anchor.")
+        if not bool(anchor_lock.get("scope_confirmed", False)):
+            raise SystemExit("Reference gate failed before UE write: scope not confirmed.")
+        if not str(anchor_lock.get("implementation_scope", "") or "").strip():
+            raise SystemExit("Reference gate failed before UE write: implementation scope missing.")
+        if not str(anchor_lock.get("cached_path", "") or "").strip():
+            raise SystemExit("Reference gate failed before UE write: cached anchor path missing.")
+    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
     client.ping()
     print(client.exec_json(script_text))
     return 0
@@ -168,6 +179,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="First-pass write-side Unreal helpers for VFX asset creation and repair.")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
+    parser.add_argument("--effect", default="")
+    parser.add_argument("--endpoint")
     parser.add_argument("--timeout", type=int, default=180)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -215,3 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

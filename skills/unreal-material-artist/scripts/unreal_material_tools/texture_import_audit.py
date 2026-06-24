@@ -12,6 +12,7 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 
 ROLE_CHOICES = [
     "albedo",
+    "emissive",
     "sprite",
     "mask",
     "packed",
@@ -128,7 +129,7 @@ def analyze_texture(
         )
     if role in {"mask", "packed", "flow", "normal", "ramp"} and srgb:
         add("warning", "srgb_enabled", f"{role} textures should usually import with sRGB disabled.")
-    if role in {"albedo", "sprite", "ui"} and not srgb:
+    if role in {"albedo", "emissive", "sprite", "ui"} and not srgb:
         add("warning", "srgb_disabled", f"{role} textures usually expect sRGB enabled unless they are pure data.")
     if role == "normal" and compression != "TC_Normalmap":
         add("warning", "normal_compression", "Normal maps should usually use TC_Normalmap compression.")

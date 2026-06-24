@@ -4,6 +4,13 @@
 
 Read the live material, understand what actually affects the output, verify the visual result, then identify cost and cleanup risks without weakening the approved look.
 
+## Table Of Contents
+
+- [Audit Order](#audit-order)
+- [CLI](#cli)
+- [Review Findings](#review-findings)
+- [Acceptance Criteria](#acceptance-criteria)
+
 ## Audit Order
 
 1. Resolve the asset.

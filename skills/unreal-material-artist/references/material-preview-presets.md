@@ -21,11 +21,23 @@ The preview tool now scans part of this contract before capture:
 - whether the graph shows evidence of `DynamicParameter`
 - whether a ribbon preset at least declares a ribbon UV expectation
 
+Implementation note: `scripts/unreal_material_tools/niagara_contract_audit.py` is an internal helper used by preview/system scan paths. It is not a public `tools/` CLI in this skill; full live Niagara integration probes belong to `niagara-vfx-artist`.
+
 For Niagara-oriented preview presets it now also scans preview-harness facts:
 
 - actual renderer class used by the temporary preview harness
 - whether the preview harness really bound the requested material
 - whether a sprite preview with SubUV actually set the expected `SubImageSize`
+
+## Table Of Contents
+
+- [Preset File](#preset-file)
+- [Current Niagara-Oriented Presets](#current-niagara-oriented-presets)
+- [Default Behavior](#default-behavior)
+- [Current Meaning Of The Preview](#current-meaning-of-the-preview)
+- [Important Limitation](#important-limitation)
+- [Contract Scan Meaning](#contract-scan-meaning)
+- [Contract Meaning](#contract-meaning)
 
 ## Preset File
 
@@ -101,6 +113,8 @@ The preflight contract scan is intentionally conservative:
 This is meant to catch obvious preview-contract drift before trusting the screenshot.
 
 The renderer-side preview scan is stronger than the graph-only scan, because it checks what the temporary preview harness actually wired for review. It is still harness validation, not a guarantee that the project's production Niagara system uses the same bindings.
+
+`material_preview.py render --verify-system-path <NiagaraSystem>` can add a provided-system comparison to the preview report. Treat that as external material-side comparison evidence only; it is still not a live integration gate, parameter-write proof, or replacement for `niagara-vfx-artist`.
 
 This skill should stop at material-side preview confidence:
 

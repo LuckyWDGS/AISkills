@@ -35,7 +35,17 @@ def acceptance_default(effect: str) -> dict[str, Any]:
         "effect_name": effect,
         "created_at": utc_now_iso(),
         "updated_at": utc_now_iso(),
-        "anchor_lock": {"entry_id": "", "updated_at": "", "notes": ""},
+        "anchor_lock": {
+            "entry_id": "",
+            "updated_at": "",
+            "notes": "",
+            "implementation_scope": "",
+            "scope_confirmed": False,
+            "authority": "",
+            "clarity_score": 0,
+            "cached_path": "",
+            "revision": 0,
+        },
         "reviews": [],
     }
 
@@ -52,6 +62,16 @@ def evidence_default(effect: str) -> dict[str, Any]:
 
 
 def approvals_default(effect: str) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "effect_name": effect,
+        "created_at": utc_now_iso(),
+        "updated_at": utc_now_iso(),
+        "reviews": [],
+    }
+
+
+def effect_preview_approvals_default(effect: str) -> dict[str, Any]:
     return {
         "version": 1,
         "effect_name": effect,
@@ -103,4 +123,32 @@ def learning_default(effect: str) -> dict[str, Any]:
         "failure_rules": [],
         "reuse_rules": [],
         "manual_lessons": [],
+    }
+
+
+def control_schema_default(effect: str) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "tool": "effect_control_schema",
+        "effect_name": effect,
+        "created_at": utc_now_iso(),
+        "updated_at": utc_now_iso(),
+        "system_path": "",
+        "component_path": "",
+        "material_paths": [],
+        "controls": [],
+        "groups": [],
+        "notes": [],
+        "sources": {},
+    }
+
+
+def control_presets_default(effect: str) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "tool": "control_preset",
+        "effect_name": effect,
+        "created_at": utc_now_iso(),
+        "updated_at": utc_now_iso(),
+        "presets": [],
     }

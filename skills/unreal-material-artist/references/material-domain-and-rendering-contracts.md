@@ -23,7 +23,7 @@ This is material-side scope only. It can define what a material requires from th
 | `Opaque` | Solid surfaces, most PBR assets, Single Layer Water | `Opacity` does not create transparency. Prefer this whenever translucency is not required. |
 | `Masked` | Cutouts, foliage, hard alpha cards, holes | Must have a meaningful `OpacityMask`; watch masked overdraw and noisy animated masks. |
 | `Translucent` | Glass, soft particles, ghost surfaces, volumetric-looking overlays | Overdraw, sorting, refraction, depth fade, lighting mode, separate translucency, mobile cost. |
-| `Additive` | Glows, light sprites, energy overlays | Usually `Unlit`; watch invisible-on-bright-background behavior and overdraw. |
+| `Additive` | Glows, light sprites, energy overlays | Usually `Unlit`; watch invisible-on-bright-background behavior, overdraw, bloom clipping, and layer multiplication from two-sided shells, backfaces, or overlapping particles. |
 | `Modulate` | Rare multiplicative darkening/tinting | Validate art intent; it is easy to get non-physical or platform-fragile results. |
 | `AlphaComposite` | Premultiplied-alpha style translucent compositing | Confirm texture alpha is authored premultiplied or the visual result will be wrong. |
 | `AlphaHoldout` | Holdout/cutout compositing | Confirm the target renderer path supports it; usually wants a very explicit matte contract. |
@@ -36,6 +36,7 @@ Review output pins against the selected domain and shading model:
 - `Unlit` needs `EmissiveColor`; lit-only pins such as `Metallic`, `Specular`, `Roughness`, and `Normal` are ignored or wasted.
 - `Masked` needs `OpacityMask`; `Opacity` alone does not cut pixels.
 - `Translucent` / `Additive` should make alpha, depth, sorting, and overdraw costs explicit.
+- `Two Sided + Additive` on a closed mesh or light-volume shell is a brightness multiplier, not just a visibility toggle. Front and back faces can both contribute to the same screen pixel, so tune emissive and opacity against the carrier's actual layer count.
 - `DefaultLit` and other physical surface models should not omit `BaseColor`, `Roughness`, and `Normal` without a reason.
 - `WorldPositionOffset` and `PixelDepthOffset` are not just visual features; they are render-contract features with bounds, Nanite, shadow, sorting, and platform implications.
 - `Use Material Attributes` moves the contract into a material-attributes chain. Audit `MakeMaterialAttributes`, `BreakMaterialAttributes`, `BlendMaterialAttributes`, and `MaterialAttributeLayers` instead of only checking individual output pins.
@@ -60,4 +61,3 @@ A correct material contract should say:
 - expected output pins or Material Attributes route
 - platform budget and fallback path
 - preview route that proves the material itself, not a full gameplay integration
-

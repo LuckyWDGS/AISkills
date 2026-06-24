@@ -5,8 +5,9 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .core import resolve_root_context, slugify, write_text
+from .core import normalize_cli_global_args, resolve_root_context, slugify, write_text
 from .effect_state import asset_plan_default, load_effect_record, save_effect_record
+from .reference_gate import assert_anchor_ready
 from .visual_layer_map import load_map
 
 
@@ -63,6 +64,7 @@ def infer_layer_assets(effect: str, prefix: str, layer: dict[str, Any]) -> dict[
 
 def generate_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
+    assert_anchor_ready(ctx, args.effect)
     layer_map = load_map(ctx, args.effect)
     prefix = args.prefix or asset_token(args.effect)
     payload = load_effect_record(ctx, "asset-plans", args.effect, asset_plan_default(args.effect))
@@ -142,6 +144,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = normalize_cli_global_args(
+        argv,
+        known_subcommands={"generate", "export-md", "show"},
+    )
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

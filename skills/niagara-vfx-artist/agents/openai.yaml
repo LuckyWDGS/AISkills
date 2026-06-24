@@ -1,9 +1,9 @@
 interface:
   display_name: "Niagara VFX Artist"
-  short_description: "UE Niagara systems, emitters, renderers, integration, and QA"
+  short_description: "UE Niagara VFX lead: systems, renderers, integration, and QA"
   icon_small: "./assets/niagara-vfx-artist-small.png"
   icon_large: "./assets/niagara-vfx-artist.png"
-  default_prompt: "Use $niagara-vfx-artist to design, implement, validate, or optimize an Unreal Engine Niagara effect from a brief, reference image, or existing asset."
+  default_prompt: "Use $niagara-vfx-artist as the VFX Lead to design, implement, validate, or optimize an Unreal Engine Niagara effect from a brief, reference image, or existing asset."
 
 policy:
   allow_implicit_invocation: true

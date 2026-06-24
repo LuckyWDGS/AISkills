@@ -18,6 +18,15 @@ Do not compare “one texture” against “one math node.” Compare the whole 
 
 Do not compare only sampler count either. A material with one sampler can still be expensive because of the shading model, blend path, Custom HLSL, derivatives, refraction, translucency, Single Layer Water, or full-screen coverage.
 
+## Table Of Contents
+
+- [Textures Are Usually Better For](#textures-are-usually-better-for)
+- [Computation Is Usually Better For](#computation-is-usually-better-for)
+- [Warning Signs That A Texture Is Needed](#warning-signs-that-a-texture-is-needed)
+- [Warning Signs That Pure Texture Is Wrong](#warning-signs-that-pure-texture-is-wrong)
+- [Performance Review](#performance-review)
+- [Baked Versus Live](#baked-versus-live)
+
 ## Textures Are Usually Better For
 
 - Organic noise with recognizable shape detail.
@@ -82,6 +91,7 @@ Special-case budgets:
 
 - `SingleLayerWater` is not comparable to ordinary `DefaultLit` or simple unlit VFX materials. Even a minimal water setup can report far higher instruction counts because the shading model carries specialized lighting/transmission work. Judge it against a water-specific budget and target platform.
 - Additive/unlit fire using one mask can still exceed a simple VFX budget if it uses panners, ParticleColor, high emissive, two-sided planes, or large overdraw. Judge the full screen coverage, not just the graph.
+- Additive mesh volumes can look overexposed even after lowering emissive if the carrier is `Two Sided` or nested. Estimate the number of visible additive layers before assuming the color or intensity math is wrong.
 - Procedural Noise can look cheap because it uses zero samplers, but it can replace texture bandwidth with ALU. Prefer a baked mask when the noise is stable and reused.
 
 ## Baked Versus Live

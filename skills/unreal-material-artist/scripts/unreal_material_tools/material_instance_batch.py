@@ -23,6 +23,7 @@ def build_ue_script(spec: dict[str, Any]) -> str:
         import unreal
 
         MAT = unreal.UnrealBridgeMaterialLibrary
+        TR = unreal.UnrealBridgeToolsetRegistryLibrary
         payload = json.loads({payload!r})
 
         def serialize_create(result):
@@ -39,34 +40,198 @@ def build_ue_script(spec: dict[str, Any]) -> str:
             param.value = str(row["value"])
             return param
 
+        def run_tool(name, payload):
+            result = TR.execute_qualified_tool(name, json.dumps(payload, ensure_ascii=False), True)
+            output = None
+            if result.json_output:
+                try:
+                    output = json.loads(result.json_output)
+                except Exception:
+                    output = result.json_output
+            return {{
+                "success": bool(result.success),
+                "error": result.error,
+                "output": output,
+            }}
+
+        def run_tool_candidates(names, payload):
+            attempts = []
+            for candidate in names:
+                result = run_tool(candidate, payload)
+                attempts.append({{"name": candidate, "success": result["success"], "error": result["error"]}})
+                if result["success"]:
+                    result["attempts"] = attempts
+                    result["tool_name"] = candidate
+                    return result
+            last = attempts[-1] if attempts else {{"name": "", "error": "no_tool_candidates"}}
+            return {{
+                "success": False,
+                "error": last.get("error") or "No candidate tool succeeded.",
+                "output": None,
+                "attempts": attempts,
+                "tool_name": last.get("name", ""),
+            }}
+
+        def parse_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return bool(value)
+            text = str(value).strip().lower()
+            if text in ("true", "1", "yes", "on"):
+                return True
+            if text in ("false", "0", "no", "off"):
+                return False
+            raise RuntimeError(f"Unsupported static switch boolean value: {{value!r}}")
+
         report = {{"instances": []}}
         preview_defaults = payload.get("preview", {{}})
         reuse_existing = bool(payload.get("reuse_existing"))
+        use_official_toolsets = bool(payload.get("use_official_toolsets", True))
 
         for item in payload["instances"]:
             parent_path = item.get("parent_path") or payload["parent_path"]
             instance_path = item["path"]
+            instance_leaf = instance_path.rsplit("/", 1)[-1].split(".", 1)[0]
+            instance_folder = instance_path.rsplit("/", 1)[0]
             row = {{
                 "path": instance_path,
                 "parent_path": parent_path,
             }}
 
-            created = MAT.create_material_instance(parent_path, instance_path)
-            row["create"] = serialize_create(created)
-            usable = bool(created.success)
+            if use_official_toolsets:
+                created_error = ""
+                create_row = run_tool(
+                    "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.create",
+                    {{
+                        "folder_path": instance_folder,
+                        "asset_name": instance_leaf,
+                        "parent": {{"refPath": parent_path}},
+                    }},
+                )
+                row["create"] = {{
+                    "success": create_row["success"],
+                    "path": ((create_row.get("output") or {{}}).get("returnValue") or {{}}).get("refPath", instance_path),
+                    "error": create_row["error"],
+                    "route": "official-toolset",
+                }}
+                created_error = create_row["error"]
+                usable = bool(create_row["success"])
+            else:
+                created = MAT.create_material_instance(parent_path, instance_path)
+                row["create"] = serialize_create(created)
+                row["create"]["route"] = "local-bridge"
+                usable = bool(created.success)
+                created_error = created.error
 
-            if not usable and reuse_existing and "already occupied" in (created.error or "").lower():
+            official_create_error = row["create"].get("error") or ""
+            create_error_text = ((created_error if not use_official_toolsets else official_create_error) or "").lower()
+            if not usable and reuse_existing and ("already occupied" in create_error_text or "already exists" in create_error_text):
                 usable = True
+                row["create"]["success"] = True
                 row["create"]["reused_existing"] = True
 
             if usable and item.get("params"):
-                params = [make_param(param) for param in item["params"]]
-                set_result = MAT.set_mi_params(instance_path, params)
-                row["set_params"] = {{
-                    "success": bool(set_result.success),
-                    "applied": int(set_result.applied),
-                    "skipped": list(set_result.skipped),
-                }}
+                if use_official_toolsets:
+                    applied = 0
+                    skipped = []
+                    param_rows = []
+                    for param in item["params"]:
+                        ptype = str(param["type"]).strip().lower()
+                        pname = param["name"]
+                        pvalue = param["value"]
+                        if ptype == "scalar":
+                            result = run_tool(
+                                "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_scalar_parameter",
+                                {{
+                                    "instance": {{"refPath": instance_path}},
+                                    "name": pname,
+                                    "value": float(pvalue),
+                                }},
+                            )
+                        elif ptype == "vector":
+                            vector_value = pvalue if isinstance(pvalue, dict) else {{}}
+                            if not vector_value and isinstance(pvalue, str):
+                                try:
+                                    parsed = json.loads(pvalue)
+                                    if isinstance(parsed, dict):
+                                        vector_value = parsed
+                                except Exception:
+                                    vector_value = {{}}
+                            result = run_tool(
+                                "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_vector_parameter",
+                                {{
+                                    "instance": {{"refPath": instance_path}},
+                                    "name": pname,
+                                    "value": {{
+                                        "r": float(vector_value.get("r", 0.0)),
+                                        "g": float(vector_value.get("g", 0.0)),
+                                        "b": float(vector_value.get("b", 0.0)),
+                                        "a": float(vector_value.get("a", 1.0)),
+                                    }},
+                                }},
+                            )
+                        elif ptype == "texture":
+                            texture_path = pvalue["refPath"] if isinstance(pvalue, dict) and "refPath" in pvalue else str(pvalue)
+                            if texture_path.startswith("{") and texture_path.endswith("}"):
+                                try:
+                                    parsed = json.loads(texture_path)
+                                    if isinstance(parsed, dict) and "refPath" in parsed:
+                                        texture_path = str(parsed["refPath"])
+                                except Exception:
+                                    pass
+                            result = run_tool(
+                                "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_texture_parameter",
+                                {{
+                                    "instance": {{"refPath": instance_path}},
+                                    "name": pname,
+                                    "value": {{"refPath": texture_path}},
+                                }},
+                            )
+                        elif ptype == "static_switch":
+                            result = run_tool_candidates(
+                                [
+                                    "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_static_switch_parameter",
+                                    "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_static_switch_param",
+                                ],
+                                {{
+                                    "instance": {{"refPath": instance_path}},
+                                    "name": pname,
+                                    "value": parse_bool(pvalue),
+                                }},
+                            )
+                        else:
+                            result = {{
+                                "success": False,
+                                "error": f"Unsupported official toolset parameter type: {{param['type']}}",
+                                "output": None,
+                            }}
+                        param_rows.append({{"name": pname, "type": param["type"], "result": result}})
+                        if result["success"]:
+                            applied += 1
+                        else:
+                            skipped.append(pname)
+                    save_row = run_tool(
+                        "toolset_registry.toolsets.core.asset.AssetTools.save_assets",
+                        {{"asset_paths": [instance_path]}},
+                    )
+                    row["set_params"] = {{
+                        "success": len(skipped) == 0,
+                        "applied": applied,
+                        "skipped": skipped,
+                        "route": "official-toolset",
+                        "param_results": param_rows,
+                        "save": save_row,
+                    }}
+                else:
+                    params = [make_param(param) for param in item["params"]]
+                    set_result = MAT.set_mi_params(instance_path, params)
+                    row["set_params"] = {{
+                        "success": bool(set_result.success),
+                        "applied": int(set_result.applied),
+                        "skipped": list(set_result.skipped),
+                        "route": "local-bridge",
+                    }}
 
             preview = dict(preview_defaults)
             preview.update(item.get("preview", {{}}))
