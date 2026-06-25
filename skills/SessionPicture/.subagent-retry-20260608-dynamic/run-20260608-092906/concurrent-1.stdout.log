@@ -1,0 +1,33 @@
+[
+  {
+    "id": "asset_20260608_092917_136942_dc645ea7",
+    "asset_type": "source-media",
+    "status": "active",
+    "retention": "task-lifetime",
+    "local_path": ".codex/session/assets/active/session-picture/2026/06/20260608-concurrent-1-dc645ea7.png",
+    "original_source": {
+      "kind": "local-path",
+      "value": "D:\\AISkills\\SessionPicture\\.subagent-retry-20260608-dynamic\\run-20260608-092906\\sources\\concurrent-1.png"
+    },
+    "sha256": "dc645ea7445336b72fb420319c3f91a06cc0ebde3cf9303ffd93434e9bca7b55",
+    "mime": "image/png",
+    "bytes": 69,
+    "width": 1,
+    "height": 1,
+    "task_id": null,
+    "scope": null,
+    "tags": [
+      "concurrent-1"
+    ],
+    "caption": null,
+    "user_intent": null,
+    "created_at": "2026-06-08T09:29:17+08:00",
+    "last_seen_at": "2026-06-08T09:29:17+08:00",
+    "last_used_at": "2026-06-08T09:29:17+08:00",
+    "last_verified_at": "2026-06-08T09:29:17+08:00",
+    "supersedes": [],
+    "superseded_by": null,
+    "notes": null,
+    "resolved_path": "D:\\AISkills\\SessionPicture\\.subagent-retry-20260608-dynamic\\run-20260608-092906\\roots\\concurrent-add\\.codex\\session\\assets\\active\\session-picture\\2026\\06\\20260608-concurrent-1-dc645ea7.png"
+  }
+]

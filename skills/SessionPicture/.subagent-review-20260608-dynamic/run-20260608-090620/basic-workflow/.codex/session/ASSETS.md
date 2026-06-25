@@ -1,0 +1,14 @@
+# Assets
+
+<!-- session-picture:assets:start -->
+## Session Picture Asset Registry
+
+Generated: 2026-06-08T09:06:21+08:00
+
+| ID | Type | Status | Retention | Tags | Caption | Path | Last Used |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| asset_20260608_090621_053587_64abf93f | generated-image | active | task-lifetime | data-url |  | .codex/session/assets/active/session-picture/2026/06/20260608-data-url-64abf93f.png | 2026-06-08T09:06:21+08:00 |
+| asset_20260608_090621_125927_thread | unclassified | thread-only | task-lifetime | pathless | Visible only in thread | (no durable path) |  |
+| asset_20260608_090620_597094_b1ff9c8e | source-media | superseded | task-lifetime | alpha, reviewed | Updated red caption | .codex/session/assets/rejected/session-picture/2026/06/20260608-alpha-b1ff9c8e.png | 2026-06-08T09:06:20+08:00 |
+| asset_20260608_090620_906417_fce48193 | source-media | active | task-lifetime | successor |  | .codex/session/assets/active/session-picture/2026/06/20260608-successor-fce48193.png | 2026-06-08T09:06:20+08:00 |
+<!-- session-picture:assets:end -->

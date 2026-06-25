@@ -1,0 +1,21 @@
+{
+  "name": "tamper-cleanup-apply",
+  "cmd": [
+    "C:\\Users\\QY\\miniconda3\\python.exe",
+    "C:\\Users\\QY\\.codex\\skills\\session-picture\\scripts\\picture_store.py",
+    "cleanup",
+    "--root",
+    "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620\\tamper-hash",
+    "--min-age-days",
+    "0",
+    "--statuses",
+    "stale-delete-soon",
+    "--apply",
+    "--json"
+  ],
+  "cwd": "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620",
+  "returncode": 0,
+  "elapsed_seconds": 0.073,
+  "stdout": "{\n  \"apply\": true,\n  \"candidates\": []\n}\n",
+  "stderr": ""
+}

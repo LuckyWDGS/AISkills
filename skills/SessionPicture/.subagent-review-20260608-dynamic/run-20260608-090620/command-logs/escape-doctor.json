@@ -1,0 +1,16 @@
+{
+  "name": "escape-doctor",
+  "cmd": [
+    "C:\\Users\\QY\\miniconda3\\python.exe",
+    "C:\\Users\\QY\\.codex\\skills\\session-picture\\scripts\\picture_store.py",
+    "doctor",
+    "--root",
+    "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620\\path-escape",
+    "--json"
+  ],
+  "cwd": "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620",
+  "returncode": 1,
+  "elapsed_seconds": 0.07,
+  "stdout": "{\n  \"ok\": false,\n  \"issues\": [\n    \"asset_20260608_090622_223960_864dba48: local_path must be project-relative\"\n  ]\n}\n",
+  "stderr": ""
+}

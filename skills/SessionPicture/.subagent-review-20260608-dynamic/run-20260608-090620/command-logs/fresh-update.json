@@ -1,0 +1,18 @@
+{
+  "name": "fresh-update",
+  "cmd": [
+    "C:\\Users\\QY\\miniconda3\\python.exe",
+    "C:\\Users\\QY\\.codex\\skills\\session-picture\\scripts\\picture_store.py",
+    "update",
+    "asset_missing",
+    "--root",
+    "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620\\fresh-root-readonly",
+    "--tag",
+    "x"
+  ],
+  "cwd": "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620",
+  "returncode": 2,
+  "elapsed_seconds": 0.076,
+  "stdout": "",
+  "stderr": "error: Store is not initialized at D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620\\fresh-root-readonly. Run `picture_store.py init --root D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090620\\fresh-root-readonly` first.\n"
+}

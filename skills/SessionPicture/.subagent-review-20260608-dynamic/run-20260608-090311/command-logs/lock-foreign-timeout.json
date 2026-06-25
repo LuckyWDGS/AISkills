@@ -1,0 +1,18 @@
+{
+  "name": "lock-foreign-timeout",
+  "cmd": [
+    "C:\\Users\\QY\\miniconda3\\python.exe",
+    "C:\\Users\\QY\\.codex\\skills\\session-picture\\scripts\\picture_store.py",
+    "--lock-timeout-seconds",
+    "1",
+    "doctor",
+    "--root",
+    "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090311\\locks",
+    "--json"
+  ],
+  "cwd": "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090311",
+  "returncode": 2,
+  "elapsed_seconds": 1.083,
+  "stdout": "",
+  "stderr": "error: Timed out waiting for store lock: D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090311\\locks\\.codex\\session\\assets\\session-picture.lock\n"
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "session-picture-index-v1",
+  "updated_at": "2026-06-08T09:03:14+08:00",
+  "items": [
+    {
+      "id": "asset_20260608_090313_946560_47847ea5",
+      "asset_type": "source-media",
+      "status": "stale-delete-soon",
+      "retention": "task-lifetime",
+      "local_path": ".codex/session/assets/rejected/session-picture/2026/06/20260608-keep-47847ea5.png",
+      "original_source": {
+        "kind": "local-path",
+        "value": "D:\\AISkills\\SessionPicture\\.subagent-review-20260608-dynamic\\run-20260608-090311\\handoff-protection\\_inputs\\keep.png"
+      },
+      "sha256": "47847ea520540f9c78f1816cd22a7f6e80824a7fd0479eeab7fad78b45dbfadf",
+      "mime": "image/png",
+      "bytes": 69,
+      "width": 1,
+      "height": 1,
+      "task_id": null,
+      "scope": null,
+      "tags": [],
+      "caption": null,
+      "user_intent": null,
+      "created_at": "2026-06-08T09:03:13+08:00",
+      "last_seen_at": "2026-06-08T09:03:14+08:00",
+      "last_used_at": "2026-06-08T09:03:13+08:00",
+      "last_verified_at": "2026-06-08T09:03:14+08:00",
+      "supersedes": [],
+      "superseded_by": null,
+      "notes": null
+    }
+  ]
+}

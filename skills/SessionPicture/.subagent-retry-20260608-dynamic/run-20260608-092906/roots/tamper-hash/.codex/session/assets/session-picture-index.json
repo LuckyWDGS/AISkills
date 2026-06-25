@@ -1,0 +1,36 @@
+{
+  "schema": "session-picture-index-v1",
+  "updated_at": "2026-06-08T09:29:06+08:00",
+  "items": [
+    {
+      "id": "asset_20260608_092906_546372_33a149c8",
+      "asset_type": "source-media",
+      "status": "integrity-failed",
+      "retention": "task-lifetime",
+      "local_path": ".codex/session/assets/active/session-picture/2026/06/20260608-tamper-hash-33a149c8.png",
+      "original_source": {
+        "kind": "local-path",
+        "value": "D:\\AISkills\\SessionPicture\\.subagent-retry-20260608-dynamic\\run-20260608-092906\\sources\\tamper-original.png"
+      },
+      "sha256": "33a149c87a8abb017e3887e7f89c80716a91f8427bf1c4b257de17bd2650e48d",
+      "mime": "image/png",
+      "bytes": 69,
+      "width": 1,
+      "height": 1,
+      "task_id": null,
+      "scope": null,
+      "tags": [
+        "tamper-hash"
+      ],
+      "caption": null,
+      "user_intent": null,
+      "created_at": "2026-06-08T09:29:06+08:00",
+      "last_seen_at": "2026-06-08T09:29:06+08:00",
+      "last_used_at": "2026-06-08T09:29:06+08:00",
+      "last_verified_at": "2026-06-08T09:29:06+08:00",
+      "supersedes": [],
+      "superseded_by": null,
+      "notes": null
+    }
+  ]
+}
