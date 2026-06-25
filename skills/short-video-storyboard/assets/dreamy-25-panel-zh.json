@@ -1,0 +1,56 @@
+{
+  "profile_id": "dreamy-25",
+  "language": "zh",
+  "title": "梦幻短片分镜板",
+  "subtitle": "25格梦境电影感节奏板",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#f1edf3"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fbf8ff",
+    "panel_border": "#2a2433",
+    "placeholder_fill": "#e8deef",
+    "placeholder_text": "#554c61",
+    "chip_fill": "#221b2a",
+    "chip_text": "#fff8ff",
+    "label_text": "#221b2a",
+    "body_text": "#514860",
+    "title_text": "#17121d",
+    "subtitle_text": "#6a6178"
+  },
+  "panels": [
+    { "index": 1, "label": "梦境空间建立", "caption": "先让观众进入这个世界。", "prompt": "梦境空间建立镜头，环境氛围优先", "image": "" },
+    { "index": 2, "label": "缓慢入场", "caption": "人物慢慢进入画面。", "prompt": "主角缓慢入场，氛围柔和", "image": "" },
+    { "index": 3, "label": "雾中揭示", "caption": "通过雾、纱或光做半遮半露。", "prompt": "雾气或薄纱中揭示主角", "image": "" },
+    { "index": 4, "label": "漂浮近景", "caption": "镜头像漂起来一样靠近。", "prompt": "漂浮感近景，人脸与光晕都柔和", "image": "" },
+    { "index": 5, "label": "手触光粒", "caption": "让手和粒子发生关系。", "prompt": "手触碰光粒或漂浮微尘", "image": "" },
+    { "index": 6, "label": "布料飘动", "caption": "用布料加强轻盈感。", "prompt": "布料飘动，动作缓慢优雅", "image": "" },
+    { "index": 7, "label": "反射镜头", "caption": "通过镜面、水面或玻璃做层次。", "prompt": "反射镜头，空间层次丰富", "image": "" },
+    { "index": 8, "label": "侧脸肖像", "caption": "给人物一个静的情绪点。", "prompt": "侧脸肖像镜头，神情安静", "image": "" },
+    { "index": 9, "label": "低机位光晕", "caption": "让人物更像梦里主角。", "prompt": "低机位光晕镜头，人物带神性", "image": "" },
+    { "index": 10, "label": "镜像双身", "caption": "制造轻微超现实感。", "prompt": "镜像或双影效果，超现实但优雅", "image": "" },
+    { "index": 11, "label": "穿过纱幕", "caption": "让镜头和空间都变柔。", "prompt": "人物缓慢穿过纱幕，空间层层递进", "image": "" },
+    { "index": 12, "label": "呼吸停顿", "caption": "用停顿创造情绪张力。", "prompt": "人物轻轻停住，像在呼吸", "image": "" },
+    { "index": 13, "label": "眼神近景", "caption": "用眼神承接情绪。", "prompt": "眼神近景，情绪集中而细腻", "image": "" },
+    { "index": 14, "label": "微观细节", "caption": "用水珠、玻璃或饰物做点题。", "prompt": "微观细节特写，梦境质感明显", "image": "" },
+    { "index": 15, "label": "广角情绪释放", "caption": "给情绪一个空间上的展开。", "prompt": "广角情绪释放镜头，空间被拉开", "image": "" },
+    { "index": 16, "label": "转身离开", "caption": "轻轻把人物从正面移开。", "prompt": "人物缓慢转身离开，背影有故事感", "image": "" },
+    { "index": 17, "label": "回望", "caption": "一个回头让故事成立。", "prompt": "回望镜头，眼神留恋", "image": "" },
+    { "index": 18, "label": "前景遮挡", "caption": "前景让层次更像电影。", "prompt": "前景柔焦遮挡，人物从中出现", "image": "" },
+    { "index": 19, "label": "光环肖像", "caption": "让光像角色的一部分。", "prompt": "光环式肖像镜头，边缘光漂亮", "image": "" },
+    { "index": 20, "label": "漂移中景", "caption": "镜头像滑过去一样。", "prompt": "漂移感中景，动作很轻", "image": "" },
+    { "index": 21, "label": "伸手动作", "caption": "像在触碰另一个世界。", "prompt": "伸手动作，气氛诗意", "image": "" },
+    { "index": 22, "label": "环境响应", "caption": "让环境对人物动作有反应。", "prompt": "粒子、光或水面对动作做回应", "image": "" },
+    { "index": 23, "label": "超现实英雄镜头", "caption": "整套片子最强的一格。", "prompt": "超现实英雄镜头，人物与空间都最完整", "image": "" },
+    { "index": 24, "label": "静止淡出", "caption": "在静止里开始离场。", "prompt": "静止镜头，情绪慢慢淡出", "image": "" },
+    { "index": 25, "label": "梦境出口", "caption": "像从梦里醒来一样结束。", "prompt": "梦境出口式结尾镜头，带溶解感", "image": "" }
+  ]
+}

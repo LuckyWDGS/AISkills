@@ -1,0 +1,6 @@
+interface:
+  display_name: "Image Generation Director"
+  short_description: "Direct faithful prompts, AI videos, trends, accounts"
+  icon_small: "./assets/image-generation-director-small.png"
+  icon_large: "./assets/image-generation-director.png"
+  default_prompt: "Use $image-generation-director to preserve my desired visual effect and key prompt terms, diagnose prompt pollution or over-conservative safety rewrites, check trend/topic opportunities, diagnose Douyin low-flow/new-account issues, plan original AI videos and posting recovery, suggest what to post, build high-quality adult non-explicit prompts with tasteful figure emphasis when requested, storyboard 9/25-grid concepts, generate or revise images after I confirm, and deliver inline saveable image previews with one-click copyable prompt blocks."

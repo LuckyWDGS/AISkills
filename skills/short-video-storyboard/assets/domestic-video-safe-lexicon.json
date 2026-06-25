@@ -1,0 +1,52 @@
+{
+  "name": "domestic-video-safe-lexicon",
+  "description": "Heuristic scan terms for domestic Chinese video-generation prompt bodies. This is not an official platform policy list.",
+  "categories": [
+    {
+      "name": "scene_terms_to_rewrite",
+      "terms": ["古井", "井口", "井壁", "井底", "废井", "废村"],
+      "positive_replacements": {
+        "古井": "地下入口 / 深坑入口",
+        "井口": "入口边缘",
+        "井壁": "垂直通道石壁",
+        "井底": "通道底部",
+        "废井": "荒原旧址边缘的地下入口",
+        "废村": "荒原旧址 / 风化院落"
+      }
+    },
+    {
+      "name": "horror_or_gore_terms_to_remove",
+      "terms": ["尸体", "血", "血腥", "怪物"],
+      "positive_replacements": {
+        "尸体": "旧物痕迹 / 遗落布料 / 风化轮廓",
+        "血": "暗红矿痕 / 暗红锈迹 / 朱砂纹",
+        "血腥": "紧张压迫的光影氛围",
+        "怪物": "未知石纹光影 / 机关投影"
+      }
+    },
+    {
+      "name": "mythic_or_dark_terms_to_soften",
+      "terms": ["骨灯", "黑水", "龙形", "龙影"],
+      "positive_replacements": {
+        "骨灯": "古灯 / 风化灯架",
+        "黑水": "暗色水面",
+        "龙形": "原创兽纹 / 抽象石纹",
+        "龙影": "大幅光影 / 兽纹光影"
+      }
+    },
+    {
+      "name": "negative_prompt_markers",
+      "terms": ["禁忌", "不要", "避免", "负面提示词", "Negative constraints", "Negative Block", "Avoid ", "No "],
+      "positive_replacements": {
+        "禁忌": "正向画面约束",
+        "不要": "保持 / 使用 / 聚焦",
+        "避免": "优先保持",
+        "负面提示词": "正向画面约束",
+        "Negative constraints": "Positive visual constraints",
+        "Negative Block": "Positive Visual Block",
+        "Avoid ": "Prefer ",
+        "No ": "Clean frame with "
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fantasy Character Design Sheet Spec",
+  "type": "object",
+  "required": ["profile_id", "language", "title", "character", "sections"],
+  "properties": {
+    "profile_id": { "type": "string" },
+    "language": { "enum": ["zh", "en"] },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "canvas": { "type": "object" },
+    "theme": { "type": "object" },
+    "character": {
+      "type": "object",
+      "required": ["name", "archetype", "visual_theme", "identity_lock", "costume_lock", "materials", "props", "palette", "avoid"],
+      "properties": {
+        "name": { "type": "string" },
+        "archetype": { "type": "string" },
+        "visual_theme": { "type": "string" },
+        "identity_lock": { "type": "string" },
+        "costume_lock": { "type": "string" },
+        "materials": { "type": "array", "items": { "type": "string" } },
+        "props": { "type": "array", "items": { "type": "string" } },
+        "palette": { "type": "array", "items": { "type": "string" } },
+        "world": { "type": "string" },
+        "avoid": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "reference_inputs": {
+      "type": "object",
+      "description": "Layered reference anchors with conflict-control metadata.",
+      "properties": {
+        "face_anchors": { "type": "array", "items": { "$ref": "#/$defs/reference_entry" } },
+        "costume_anchors": { "type": "array", "items": { "$ref": "#/$defs/reference_entry" } },
+        "prop_anchors": { "type": "array", "items": { "$ref": "#/$defs/reference_entry" } },
+        "style_anchors": { "type": "array", "items": { "$ref": "#/$defs/reference_entry" } },
+        "generic_references": { "type": "array", "items": { "$ref": "#/$defs/reference_entry" } }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "role", "caption", "prompt"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "role": { "type": "string" },
+          "caption": { "type": "string" },
+          "prompt": { "type": "string" },
+          "image": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference_entry": {
+      "type": "object",
+      "required": ["path", "role", "weight", "priority", "crop", "focus", "lock"],
+      "properties": {
+        "path": { "type": "string" },
+        "role": { "type": "string" },
+        "name": { "type": "string" },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "priority": { "type": "integer" },
+        "crop": { "type": "string" },
+        "focus": { "type": "string" },
+        "lock": { "type": "string" }
+      }
+    }
+  }
+}

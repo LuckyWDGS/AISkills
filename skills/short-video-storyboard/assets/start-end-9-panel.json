@@ -1,0 +1,38 @@
+{
+  "title": "Start-End Motion Bridge",
+  "subtitle": "9-panel bridge board for completing one action between the first and last frame",
+  "canvas": {
+    "width": 2400,
+    "height": 2400,
+    "background": "#f3efe8"
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 3,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fffaf3",
+    "panel_border": "#30271d",
+    "placeholder_fill": "#e9dece",
+    "placeholder_text": "#5d5144",
+    "chip_fill": "#241d16",
+    "chip_text": "#fff9f0",
+    "label_text": "#241d16",
+    "body_text": "#51463b",
+    "title_text": "#18130f",
+    "subtitle_text": "#6c6054"
+  },
+  "panels": [
+    { "index": 1, "label": "Start frame", "caption": "Use the exact beginning pose or shot.", "prompt": "locked start frame, same protagonist, same room", "image": "" },
+    { "index": 2, "label": "Anticipation", "caption": "Show the body preparing for movement.", "prompt": "anticipation beat, small weight shift, same outfit and room", "image": "" },
+    { "index": 3, "label": "Action start", "caption": "Begin the move clearly.", "prompt": "action starts, hand lifting or step beginning, same camera family", "image": "" },
+    { "index": 4, "label": "Midpoint A", "caption": "First bridge frame between the endpoints.", "prompt": "midpoint A, body rotated partially, same identity", "image": "" },
+    { "index": 5, "label": "Midpoint B", "caption": "Use the geometric center of the move.", "prompt": "midpoint B, strongest motion path, same room, same outfit", "image": "" },
+    { "index": 6, "label": "Climax", "caption": "Show the peak of the move or gesture.", "prompt": "climax of action, fully committed pose, same protagonist", "image": "" },
+    { "index": 7, "label": "Deceleration", "caption": "Start calming the movement before the end.", "prompt": "deceleration beat, movement easing, same camera family", "image": "" },
+    { "index": 8, "label": "Settle", "caption": "Approach the end position with control.", "prompt": "settling pose, almost at end frame, same identity", "image": "" },
+    { "index": 9, "label": "End frame", "caption": "Use the exact ending pose or shot.", "prompt": "locked end frame, same protagonist, same room", "image": "" }
+  ]
+}

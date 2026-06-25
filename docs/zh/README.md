@@ -4,12 +4,25 @@
 
 ## 目录
 
+- [chatgpt-apps](./chatgpt-apps.md)
 - [cm-imagegen](./cm-imagegen.md)
 - [codex-session-continuity](./codex-session-continuity.md)
+- [fantasy-character-design](./fantasy-character-design.md)
 - [feature-experience](./feature-experience.md)
+- [image-generation-director](./image-generation-director.md)
 - [mentalout-image-browser](./mentalout-image-browser.md)
 - [niagara-vfx-artist](./niagara-vfx-artist.md)
+- [pakskill](./pakskill.md)
+- [playwright](./playwright.md)
+- [playwright-interactive](./playwright-interactive.md)
+- [screenshot](./screenshot.md)
+- [session-picture](./session-picture.md)
+- [short-video-storyboard](./short-video-storyboard.md)
+- [speech](./speech.md)
 - [ui-from-design](./ui-from-design.md)
+- [unreal-bridge](./unreal-bridge.md)
+- [unreal-material-artist](./unreal-material-artist.md)
+- [vfx-flipbook-generator](./vfx-flipbook-generator.md)
 
 ## 说明
 

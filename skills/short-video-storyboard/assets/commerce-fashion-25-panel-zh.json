@@ -1,0 +1,56 @@
+{
+  "profile_id": "commerce-fashion-25",
+  "language": "zh",
+  "title": "抖音服装带货分镜板",
+  "subtitle": "25格服装带货节奏板",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#f5f0e7"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fffaf3",
+    "panel_border": "#2f261d",
+    "placeholder_fill": "#ece0ce",
+    "placeholder_text": "#5d4d3f",
+    "chip_fill": "#221b14",
+    "chip_text": "#fff9f0",
+    "label_text": "#221b14",
+    "body_text": "#51463a",
+    "title_text": "#18130f",
+    "subtitle_text": "#6f6255"
+  },
+  "panels": [
+    { "index": 1, "label": "开场钩子", "caption": "先用一帧把人和衣服都抓住。", "prompt": "开场强钩子，主播直视镜头，服装一眼可见", "image": "" },
+    { "index": 2, "label": "正面主视图", "caption": "完整证明衣服正面廓形。", "prompt": "正面全身主视图，服装轮廓清楚", "image": "" },
+    { "index": 3, "label": "三分之四角度", "caption": "稍微转身，展示立体感。", "prompt": "三分之四角度站姿，显瘦线条明确", "image": "" },
+    { "index": 4, "label": "侧面轮廓", "caption": "证明侧面垂感和腰线。", "prompt": "侧面站姿，展示侧面轮廓与垂感", "image": "" },
+    { "index": 5, "label": "背面效果", "caption": "把背后版型交代清楚。", "prompt": "背面展示，后背细节真实可见", "image": "" },
+    { "index": 6, "label": "向前走近", "caption": "让衣服随着人动起来。", "prompt": "主播向镜头走近，衣摆随动作摆动", "image": "" },
+    { "index": 7, "label": "面料动态", "caption": "突出轻盈、柔软或垂感。", "prompt": "服装动态摆动，突出面料重量感与垂感", "image": "" },
+    { "index": 8, "label": "领口细节", "caption": "特写领口或肩颈设计。", "prompt": "领口细节特写，工艺真实清晰", "image": "" },
+    { "index": 9, "label": "袖口细节", "caption": "展示袖型和收口完成度。", "prompt": "袖口与袖型细节特写，面料纹理可见", "image": "" },
+    { "index": 10, "label": "腰线表现", "caption": "解释上身为什么显瘦。", "prompt": "腰线位置与收腰效果展示", "image": "" },
+    { "index": 11, "label": "下摆摆动", "caption": "把裙摆或衣摆的动态说服力做出来。", "prompt": "下摆摆动镜头，证明版型与垂坠", "image": "" },
+    { "index": 12, "label": "功能细节", "caption": "把口袋、拉链或扣子说清楚。", "prompt": "功能细节特写，如口袋拉链纽扣", "image": "" },
+    { "index": 13, "label": "生活化坐姿", "caption": "证明不是只能站着好看。", "prompt": "轻松坐姿生活化镜头，服装依然好看", "image": "" },
+    { "index": 14, "label": "短视频活力", "caption": "加入一点抖音感，但不损失卖点。", "prompt": "轻快动作或小舞步，服装仍然清楚", "image": "" },
+    { "index": 15, "label": "转身中段", "caption": "在动态里看版型。", "prompt": "转身中段瞬间，动态漂亮，版型真实", "image": "" },
+    { "index": 16, "label": "近景信任感", "caption": "用笑容和眼神拉近距离。", "prompt": "近景微笑，主播亲和可信", "image": "" },
+    { "index": 17, "label": "镜前自拍感", "caption": "更像用户会刷到的真实内容。", "prompt": "镜前自拍角度，保留社交平台真实感", "image": "" },
+    { "index": 18, "label": "面料英雄特写", "caption": "让人想摸到衣服。", "prompt": "面料质感近景特写，纹理细腻", "image": "" },
+    { "index": 19, "label": "穿搭方案A", "caption": "展示一种搭配思路。", "prompt": "同款服装搭配方案A，风格明确", "image": "" },
+    { "index": 20, "label": "穿搭方案B", "caption": "给出第二种搭配可能。", "prompt": "同款服装搭配方案B，增强可穿性", "image": "" },
+    { "index": 21, "label": "叠穿证明", "caption": "说明它能和别的单品兼容。", "prompt": "叠穿展示，核心商品仍然清楚", "image": "" },
+    { "index": 22, "label": "直播间氛围", "caption": "让人感觉这是能成交的内容。", "prompt": "高互动感主播姿态，直播氛围强", "image": "" },
+    { "index": 23, "label": "近景英雄镜头", "caption": "把人和衣服一起推到高潮。", "prompt": "近景英雄镜头，主播与服装同时抢眼", "image": "" },
+    { "index": 24, "label": "干净收束", "caption": "回到清楚好卖的正面状态。", "prompt": "回到正面整洁主视图，准备收尾", "image": "" },
+    { "index": 25, "label": "CTA结尾", "caption": "给口播或字幕留出转化空间。", "prompt": "结尾CTA姿态，主播笑容稳定，服装卖点清楚", "image": "" }
+  ]
+}

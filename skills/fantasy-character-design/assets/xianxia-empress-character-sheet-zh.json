@@ -1,0 +1,33 @@
+{
+  "profile_id": "xianxia-empress",
+  "language": "zh",
+  "title": "璇玑女帝角色设定板",
+  "subtitle": "主立绘 / 三视图 / 冰晶眼瞳 / 帝冠法器 / 银紫纱裙",
+  "canvas": { "width": 1440, "height": 2560, "background": "#0d101b" },
+  "theme": { "panel_fill": "#15192a", "panel_border": "#5d637d", "accent": "#c8c5ff", "text": "#f4f2ff", "muted": "#aaa7c7", "chip_fill": "#20243a", "placeholder_fill": "#1a2033" },
+  "character": {
+    "name": "璇玑女帝",
+    "archetype": "玄幻女帝",
+    "visual_theme": "唯美玄幻、冰晶帝王、银紫暗色高级角色设定板",
+    "identity_lock": "银紫长发，冷艳女帝气场，淡紫瞳孔，精致冷白面容，修长高挑比例",
+    "costume_lock": "银紫渐变长裙，高开衩，星纹胸甲，透明披帛，冰晶冠饰，珠链垂坠",
+    "materials": ["银紫薄纱", "冰晶", "深色缎面", "星纹金属", "冷光珠链"],
+    "props": ["璇玑星轮", "冰晶权杖", "紫色法阵", "帝冠"],
+    "palette": ["深靛蓝", "冷紫", "银白", "冰晶蓝", "暗金"],
+    "world": "星宫帝座与冰晶祭坛",
+    "avoid": ["甜美少女化", "现代晚礼服", "随机换冠饰", "多角色混乱", "图片内乱码小字", "漫画分镜"]
+  },
+  "reference_inputs": { "face_anchors": [], "costume_anchors": [], "prop_anchors": [], "style_anchors": [], "generic_references": [] },
+  "sections": [
+    { "id": "hero_full_body", "label": "主立绘", "role": "hero", "caption": "女帝气场与完整服装轮廓。", "prompt": "全身主立绘，璇玑女帝站在暗色星宫水面，银紫长发，冰晶帝冠，银紫高开衩长裙，璇玑星轮法器，唯美玄幻游戏角色设定稿", "image": "" },
+    { "id": "turnaround_front", "label": "正面视图", "role": "turnaround", "caption": "锁定正面胸甲、裙型和冠饰。", "prompt": "正面三视图，同一璇玑女帝，银紫长裙、星纹胸甲、冰晶帝冠结构清楚", "image": "" },
+    { "id": "turnaround_side", "label": "侧面视图", "role": "turnaround", "caption": "展示披帛、珠链和腿部开衩。", "prompt": "侧面三视图，同一女帝，透明披帛、珠链垂坠、高开衩和鞋履可见", "image": "" },
+    { "id": "turnaround_back", "label": "背面视图", "role": "turnaround", "caption": "展示长发、拖尾和背部结构。", "prompt": "背面三视图，银紫长发垂落，星纹拖尾裙摆，背部冰晶装饰", "image": "" },
+    { "id": "face_closeup", "label": "脸部特写", "role": "detail", "caption": "锁定冷艳脸型和帝王气质。", "prompt": "脸部特写，冷艳女帝表情，淡紫瞳孔，银紫发丝，冰晶冠饰，精致冷白妆容", "image": "" },
+    { "id": "eye_detail", "label": "紫瞳细节", "role": "detail", "caption": "瞳孔星纹和冷光。", "prompt": "眼睛超近景，淡紫瞳孔，星纹和冰晶高光，冷艳神性", "image": "" },
+    { "id": "costume_detail", "label": "银紫材质", "role": "material", "caption": "薄纱、冰晶和金属。", "prompt": "服装材质特写，银紫薄纱、星纹金属胸甲、冰晶边饰、深色缎面", "image": "" },
+    { "id": "prop_detail", "label": "璇玑星轮", "role": "prop", "caption": "核心法器与法阵语言。", "prompt": "璇玑星轮法器设定，紫色环形法阵，冰晶碎片，精密星轨纹样", "image": "" },
+    { "id": "footwear_detail", "label": "脚部鞋履", "role": "detail", "caption": "鞋、脚踝和裙摆边缘。", "prompt": "脚部鞋履细节，银紫高跟鞋，透明披帛和裙摆边缘，水面倒影", "image": "" },
+    { "id": "palette", "label": "色卡材质", "role": "palette", "caption": "深靛、冷紫、银白、冰蓝、暗金。", "prompt": "女帝角色色卡和材质样本，深靛蓝、冷紫、银白、冰晶蓝、暗金，暗色高级设定板", "image": "" }
+  ]
+}

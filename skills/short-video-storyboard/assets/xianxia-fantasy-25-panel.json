@@ -1,0 +1,54 @@
+{
+  "title": "Xianxia Fantasy Storyboard",
+  "subtitle": "25-panel epic Chinese-fantasy keyframe and storyboard plan",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#e7ede8"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fbfbf2",
+    "panel_border": "#22332d",
+    "placeholder_fill": "#dce8e1",
+    "placeholder_text": "#43564e",
+    "chip_fill": "#17261f",
+    "chip_text": "#f9f2d2",
+    "label_text": "#17261f",
+    "body_text": "#43564e",
+    "title_text": "#101a15",
+    "subtitle_text": "#5b6a62"
+  },
+  "panels": [
+    { "index": 1, "label": "Immortal realm", "caption": "Establish the scale and mythic world.", "prompt": "wide establishing shot of a Chinese fantasy immortal realm, cloud sea, mountains, palace silhouettes, epic scale", "image": "" },
+    { "index": 2, "label": "Mountain gate", "caption": "Let the camera enter the realm.", "prompt": "camera glides past a colossal mountain gate, rolling mist, glowing palace in the distance", "image": "" },
+    { "index": 3, "label": "Hero silhouette", "caption": "Use a small figure against the huge world.", "prompt": "same xianxia protagonist from behind on stone steps, robe moving in wind, vast temple space", "image": "" },
+    { "index": 4, "label": "Palace low angle", "caption": "Turn architecture into spectacle.", "prompt": "low-angle view of ornate Chinese fantasy palace eaves, carved beams, golden god rays through mist", "image": "" },
+    { "index": 5, "label": "Sacred tree light", "caption": "Introduce the main wonder symbol.", "prompt": "towering sacred tree canopy, blossoms and spirit fish floating, volumetric light shafts", "image": "" },
+    { "index": 6, "label": "Spirit creatures", "caption": "Make the world feel alive.", "prompt": "spirit fish, birds, or small mythical beasts crossing the foreground, same protagonist costume", "image": "" },
+    { "index": 7, "label": "Ascending steps", "caption": "Give the protagonist a clear direction.", "prompt": "protagonist climbs broad stone stairs, robe and hair ribbon in wind, slow push-in", "image": "" },
+    { "index": 8, "label": "Incense sigils", "caption": "Use detail to prove the fantasy texture.", "prompt": "bronze incense burner, carved talisman marks, gold dust macro detail, ancient mystery", "image": "" },
+    { "index": 9, "label": "Sleeve and wind", "caption": "Let costume and wind carry motion.", "prompt": "medium close shot, protagonist raises one hand, sleeve crossing a light beam, elegant fabric motion", "image": "" },
+    { "index": 10, "label": "Lit profile", "caption": "Give the character emotion and identity.", "prompt": "side portrait, protagonist looking toward the temple, face lit by a break in the clouds", "image": "" },
+    { "index": 11, "label": "Suspended bridge", "caption": "Expand the travel space.", "prompt": "wide shot, suspended stone bridge connects mountain cliffs and palace halls, tiny protagonist silhouette", "image": "" },
+    { "index": 12, "label": "Formation wakes", "caption": "Turn spectacle into an event.", "prompt": "glowing spell formation activates on the floor, runes spreading along stone steps, protagonist at center", "image": "" },
+    { "index": 13, "label": "Water mirror", "caption": "Add depth with reflection.", "prompt": "water-mirror reflection of palace and protagonist, doubled image, soft moving mist", "image": "" },
+    { "index": 14, "label": "Magic prop glows", "caption": "Clarify power or mission.", "prompt": "sword, jade tablet, or magic prop lights up in the protagonist's hand, teal-gold energy", "image": "" },
+    { "index": 15, "label": "Gathered disciples", "caption": "Make the world feel socially large.", "prompt": "courtyard crowd facing the temple, disciples and robed figures arranged in foreground, midground, background", "image": "" },
+    { "index": 16, "label": "Temple doors", "caption": "Create the threshold before the climax.", "prompt": "colossal temple doors opening slowly, white-gold light spilling out, protagonist before the entrance", "image": "" },
+    { "index": 17, "label": "Clouds part", "caption": "Let the sky answer the story beat.", "prompt": "clouds split open above the palace, vertical god rays, mountains and halls revealed at larger scale", "image": "" },
+    { "index": 18, "label": "Realm overhead", "caption": "Reward the audience with a god view.", "prompt": "aerial view of immortal city, mountains, waterfalls, and cloud sea, protagonist route remains readable", "image": "" },
+    { "index": 19, "label": "Emotional close", "caption": "Keep the human story inside the spectacle.", "prompt": "close portrait, protagonist determined or awed, same immortal realm blurred behind", "image": "" },
+    { "index": 20, "label": "Sword ascent", "caption": "Begin the motion climax.", "prompt": "protagonist rises on sword or light path, robe spreads, camera tilts upward following motion", "image": "" },
+    { "index": 21, "label": "Sky river", "caption": "Give one flowing large-scale wonder.", "prompt": "celestial waterfall falling from clouds, mist and light particles around the protagonist's path", "image": "" },
+    { "index": 22, "label": "Scale pressure", "caption": "Make fate feel larger than the hero.", "prompt": "extreme wide angle, sacred tree, palace, and mountains in one frame, protagonist tiny but clear", "image": "" },
+    { "index": 23, "label": "Hero wide", "caption": "The strongest hero frame of the board.", "prompt": "xianxia hero wide shot, protagonist standing in divine light, full palace realm revealed", "image": "" },
+    { "index": 24, "label": "Still look back", "caption": "Resolve the climax into emotion.", "prompt": "protagonist looks back toward camera, blossoms and glowing particles falling slowly, motion settling", "image": "" },
+    { "index": 25, "label": "End-frame hold", "caption": "A stable end frame or next-shot opener.", "prompt": "stable end-frame composition, distant palace and protagonist silhouette, suitable image-to-video final frame", "image": "" }
+  ]
+}

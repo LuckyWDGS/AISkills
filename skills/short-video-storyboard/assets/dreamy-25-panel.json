@@ -1,0 +1,54 @@
+{
+  "title": "Dreamy Cinematic Storyboard",
+  "subtitle": "25-panel fantasy mood board for a vertical short-video sequence",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#f1edf3"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fbf8ff",
+    "panel_border": "#2a2433",
+    "placeholder_fill": "#e8deef",
+    "placeholder_text": "#554c61",
+    "chip_fill": "#221b2a",
+    "chip_text": "#fff8ff",
+    "label_text": "#221b2a",
+    "body_text": "#514860",
+    "title_text": "#17121d",
+    "subtitle_text": "#6a6178"
+  },
+  "panels": [
+    { "index": 1, "label": "Dream space", "caption": "Establish the world with instant atmosphere.", "prompt": "wide establishing shot, moonlit reflective hall, haze, same protagonist", "image": "" },
+    { "index": 2, "label": "Slow entry", "caption": "Let the protagonist enter softly into frame.", "prompt": "subject entering through haze, flowing dress, ethereal pace", "image": "" },
+    { "index": 3, "label": "Reveal through veil", "caption": "Use fabric or haze to partially conceal and reveal.", "prompt": "veil reveal, dreamy lighting, same face identity", "image": "" },
+    { "index": 4, "label": "Floating close-up", "caption": "Move closer while keeping the atmosphere soft.", "prompt": "close portrait, floating camera feeling, halo rim light", "image": "" },
+    { "index": 5, "label": "Hand and particles", "caption": "Show tactile interaction with light or particles.", "prompt": "hand moving through glowing particles, gentle motion", "image": "" },
+    { "index": 6, "label": "Fabric drift", "caption": "Let fabric carry the motion of the shot.", "prompt": "translucent fabric drifting, same protagonist, same hall", "image": "" },
+    { "index": 7, "label": "Reflective surface", "caption": "Use a mirror, glass, or water reflection.", "prompt": "reflection shot, mirrored highlights, elegant composition", "image": "" },
+    { "index": 8, "label": "Side portrait", "caption": "Profile view with soft emotional depth.", "prompt": "side portrait, dreamy expression, same identity, haze", "image": "" },
+    { "index": 9, "label": "Glow low-angle", "caption": "Make the character feel lifted and iconic.", "prompt": "low-angle glow shot, shimmering dress, halo light", "image": "" },
+    { "index": 10, "label": "Mirror double", "caption": "Create a subtle double image or mirrored echo.", "prompt": "mirror double, surreal but elegant, same protagonist", "image": "" },
+    { "index": 11, "label": "Walk through veil", "caption": "Move slowly through a soft foreground element.", "prompt": "walking through translucent veil, layered depth", "image": "" },
+    { "index": 12, "label": "Breathing pause", "caption": "A calm moment before the emotional rise.", "prompt": "medium shot, stillness, inhale moment, same atmosphere", "image": "" },
+    { "index": 13, "label": "Eye close-up", "caption": "Make the gaze a story beat.", "prompt": "close-up on eyes, reflective light, intimate emotion", "image": "" },
+    { "index": 14, "label": "Macro detail", "caption": "Use water, dew, glass, or jewelry detail as punctuation.", "prompt": "macro dream detail, dew or glass sparkle, poetic insert", "image": "" },
+    { "index": 15, "label": "Wide release", "caption": "Expand the space for the emotional peak.", "prompt": "wide emotional release, full-body, floating energy", "image": "" },
+    { "index": 16, "label": "Turning away", "caption": "Let the figure turn away to create longing.", "prompt": "turning away, soft hair motion, reflective floor", "image": "" },
+    { "index": 17, "label": "Over shoulder", "caption": "Look back without breaking the dreamy tone.", "prompt": "over-shoulder look back, same protagonist, same dress", "image": "" },
+    { "index": 18, "label": "Foreground veil", "caption": "Use something soft in the foreground for depth.", "prompt": "foreground obstruction, soft bloom, layered composition", "image": "" },
+    { "index": 19, "label": "Halo portrait", "caption": "Make the light itself feel like a character.", "prompt": "halo portrait, radiant backlight, dreamy glamour", "image": "" },
+    { "index": 20, "label": "Drifting medium", "caption": "Let the camera feel like it is gliding.", "prompt": "drifting medium shot, elegant movement, same hall", "image": "" },
+    { "index": 21, "label": "Reach gesture", "caption": "Reach into the space as if crossing worlds.", "prompt": "reaching gesture, lyrical pose, soft particles", "image": "" },
+    { "index": 22, "label": "Environment reaction", "caption": "Let light or particles answer the motion.", "prompt": "environment reacts to motion, sparkles or ripple glow", "image": "" },
+    { "index": 23, "label": "Surreal hero", "caption": "One full-body hero frame with strongest fantasy tone.", "prompt": "surreal full-body hero, moonlit reflective hall, same protagonist", "image": "" },
+    { "index": 24, "label": "Fade stillness", "caption": "Hold one calm beat before exiting.", "prompt": "still medium-wide frame, quiet emotion, haze and glow", "image": "" },
+    { "index": 25, "label": "Exit dissolve", "caption": "End on a frame that feels like a dissolve or dream exit.", "prompt": "exit frame, gentle dissolve feeling, same protagonist, same hall", "image": "" }
+  ]
+}

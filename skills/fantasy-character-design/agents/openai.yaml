@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fantasy Character Design"
+  short_description: "Build character sheets with weighted anchors"
+  icon_small: "./assets/fantasy-character-design-small.png"
+  icon_large: "./assets/fantasy-character-design.png"
+  default_prompt: "Create a production-ready fantasy character design sheet prompt pack from my brief or references, with weighted/cropped face, costume, prop, and style anchors."

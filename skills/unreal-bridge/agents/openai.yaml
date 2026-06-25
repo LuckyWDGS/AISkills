@@ -1,0 +1,9 @@
+interface:
+  display_name: "Unreal Bridge"
+  short_description: "Run Python inside a live Unreal editor"
+  icon_small: "./assets/unreal-bridge-small.png"
+  icon_large: "./assets/unreal-bridge.png"
+  default_prompt: "Use $unreal-bridge to run Python in a live Unreal Engine editor through the TCP bridge."
+
+policy:
+  allow_implicit_invocation: true

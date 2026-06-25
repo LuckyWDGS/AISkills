@@ -1,0 +1,56 @@
+{
+  "profile_id": "xianxia-fantasy-25",
+  "language": "zh",
+  "title": "玄幻仙侠短片分镜板",
+  "subtitle": "25格国风神话巨景与首尾帧预生产节奏板",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#e7ede8"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fbfbf2",
+    "panel_border": "#22332d",
+    "placeholder_fill": "#dce8e1",
+    "placeholder_text": "#43564e",
+    "chip_fill": "#17261f",
+    "chip_text": "#f9f2d2",
+    "label_text": "#17261f",
+    "body_text": "#43564e",
+    "title_text": "#101a15",
+    "subtitle_text": "#5b6a62"
+  },
+  "panels": [
+    { "index": 1, "label": "仙域建立", "caption": "先交代世界规模和神话感。", "prompt": "国风玄幻仙域建立镜头，云海、群山、仙宫轮廓、史诗尺度", "image": "" },
+    { "index": 2, "label": "山门入境", "caption": "观众随镜头进入仙门。", "prompt": "镜头掠过巨大山门，雾气翻涌，远处殿宇发光", "image": "" },
+    { "index": 3, "label": "主角背影", "caption": "用小人物反衬巨景。", "prompt": "同一位仙侠主角背影站在石阶前，衣袍被风吹动，巨大空间压迫感", "image": "" },
+    { "index": 4, "label": "宫阙仰拍", "caption": "把建筑做成视觉奇观。", "prompt": "低机位仰拍仙宫屋檐与雕梁，金色神光穿过云雾", "image": "" },
+    { "index": 5, "label": "巨树天光", "caption": "建立最核心的奇观符号。", "prompt": "通天神树或灵树冠盖遮天，花瓣与灵鱼漂浮，丁达尔光束洒下", "image": "" },
+    { "index": 6, "label": "灵物掠过", "caption": "让世界显得活着。", "prompt": "飞鱼、灵鸟或小型灵兽掠过镜头前景，主角保持同一服装", "image": "" },
+    { "index": 7, "label": "登阶推进", "caption": "给主角一个清晰行动方向。", "prompt": "主角登上宽阔石阶，长袍和发带随风，镜头缓慢推近", "image": "" },
+    { "index": 8, "label": "香炉符纹", "caption": "用细节证明东方幻想质感。", "prompt": "青铜香炉、符纹石刻、金色微尘特写，古风神秘质感", "image": "" },
+    { "index": 9, "label": "袍袖掠风", "caption": "让服装和风参与动作。", "prompt": "中近景，主角抬手，袍袖掠过光束，布料运动优雅清楚", "image": "" },
+    { "index": 10, "label": "侧脸迎光", "caption": "给人物情绪和身份。", "prompt": "侧脸肖像，主角望向神殿，面部被云缝神光照亮", "image": "" },
+    { "index": 11, "label": "悬桥远景", "caption": "扩大行进空间。", "prompt": "远景，悬空石桥连接山体和仙宫，主角成为小小剪影", "image": "" },
+    { "index": 12, "label": "阵法初启", "caption": "把奇观转成事件。", "prompt": "地面阵法发光，符文沿石阶蔓延，主角站在阵法中心", "image": "" },
+    { "index": 13, "label": "水镜倒影", "caption": "用水面或镜面增加层次。", "prompt": "水镜倒影中出现仙宫与主角双层影像，云雾柔和流动", "image": "" },
+    { "index": 14, "label": "法器亮起", "caption": "明确主角能力或使命。", "prompt": "手中长剑、玉简或法器亮起，金青色灵光包围手指", "image": "" },
+    { "index": 15, "label": "众人朝向", "caption": "让世界关系更宏大。", "prompt": "广场群像朝向神殿，仙门弟子与长袍人物分布在远中近景", "image": "" },
+    { "index": 16, "label": "殿门开启", "caption": "制造进入高潮前的门槛。", "prompt": "巨大神殿门缓慢开启，内部白金光溢出，主角站在门前", "image": "" },
+    { "index": 17, "label": "云雾裂开", "caption": "让天象回应剧情。", "prompt": "云雾从中心裂开，天光垂落，山体和宫阙露出更大尺度", "image": "" },
+    { "index": 18, "label": "俯瞰仙城", "caption": "用上帝视角给观众奖励。", "prompt": "高空俯瞰仙城、群山、瀑布和云海，主角路径清楚可读", "image": "" },
+    { "index": 19, "label": "情绪近景", "caption": "在巨景里留住人。", "prompt": "主角近景，眼神坚定或惊叹，背景神光虚化但仍是同一仙域", "image": "" },
+    { "index": 20, "label": "御剑升空", "caption": "动作高潮开始。", "prompt": "主角御剑或踏光升空，衣摆展开，镜头向上跟随", "image": "" },
+    { "index": 21, "label": "天河瀑布", "caption": "给一格流动的宏大奇观。", "prompt": "天河瀑布从云层落下，水雾和光粒围绕主角轨迹", "image": "" },
+    { "index": 22, "label": "巨景压迫", "caption": "让主角面对更大的命运感。", "prompt": "极广角，神树、仙宫和群山同时入画，主角很小但位置清楚", "image": "" },
+    { "index": 23, "label": "英雄全景", "caption": "整套片子最强的一格。", "prompt": "玄幻仙侠英雄全景，主角立于光中，仙宫巨景完整展开", "image": "" },
+    { "index": 24, "label": "静止回望", "caption": "把高潮收成情绪。", "prompt": "主角回望镜头，花瓣和光粒缓慢下落，动作趋于静止", "image": "" },
+    { "index": 25, "label": "尾帧留白", "caption": "结尾可作为尾帧或下一段开头。", "prompt": "尾帧构图，仙宫远景与主角剪影稳定停留，适合图生视频结束帧", "image": "" }
+  ]
+}

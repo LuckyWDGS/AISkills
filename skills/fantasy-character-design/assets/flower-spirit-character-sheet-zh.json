@@ -1,0 +1,33 @@
+{
+  "profile_id": "flower-spirit",
+  "language": "zh",
+  "title": "牡丹仙子角色设定板",
+  "subtitle": "主立绘 / 三视图 / 花饰妆容 / 红金纱裙 / 花神法器",
+  "canvas": { "width": 1440, "height": 2560, "background": "#25100e" },
+  "theme": { "panel_fill": "#351814", "panel_border": "#8b5b42", "accent": "#e9b06b", "text": "#fff0dc", "muted": "#c9a086", "chip_fill": "#4a211b", "placeholder_fill": "#402018" },
+  "character": {
+    "name": "牡丹仙子",
+    "archetype": "花神仙子",
+    "visual_theme": "国风仙侠、花神、红金华服、温柔华丽角色设定板",
+    "identity_lock": "乌黑长发，高发髻，牡丹花钿，温柔坚定眼神，古典鹅蛋脸，修长比例",
+    "costume_lock": "红金长袍纱裙，高开衩，牡丹刺绣，金色腰链，飘带和宽大袖摆",
+    "materials": ["红色丝绸", "金线刺绣", "透明薄纱", "牡丹花瓣", "暖金首饰"],
+    "props": ["牡丹花枝", "花瓣灵光", "金色香囊", "花神印记"],
+    "palette": ["牡丹红", "暖金", "深棕黑", "胭脂粉", "烛光橙"],
+    "world": "牡丹花境、古风庭院、暖色灯笼",
+    "avoid": ["现代礼服", "西式婚纱", "随机换花种", "多角色混乱", "图片内乱码小字", "视频分镜"]
+  },
+  "reference_inputs": { "face_anchors": [], "costume_anchors": [], "prop_anchors": [], "style_anchors": [], "generic_references": [] },
+  "sections": [
+    { "id": "hero_full_body", "label": "主立绘", "role": "hero", "caption": "展示牡丹仙子的花神气质。", "prompt": "全身主立绘，牡丹仙子站在暖色牡丹花境中，红金高开衩长袍纱裙，金色首饰和牡丹发饰，国风仙侠游戏角色设定稿", "image": "" },
+    { "id": "turnaround_front", "label": "正面视图", "role": "turnaround", "caption": "锁定正面裙型与花饰。", "prompt": "正面三视图，同一牡丹仙子，红金华服结构清晰，牡丹刺绣和腰链可读", "image": "" },
+    { "id": "turnaround_side", "label": "侧面视图", "role": "turnaround", "caption": "展示袖摆、飘带和裙摆厚度。", "prompt": "侧面三视图，同一角色，宽大袖摆、飘带、纱裙层次和高开衩结构清楚", "image": "" },
+    { "id": "turnaround_back", "label": "背面视图", "role": "turnaround", "caption": "展示背部发髻和拖尾。", "prompt": "背面三视图，乌黑长发和高发髻，红金拖尾裙摆，背部牡丹刺绣", "image": "" },
+    { "id": "face_closeup", "label": "脸部特写", "role": "detail", "caption": "锁定妆容、花钿和神情。", "prompt": "脸部特写，古典鹅蛋脸，牡丹花钿，温柔坚定眼神，红金眼妆，国风美人", "image": "" },
+    { "id": "eye_detail", "label": "眼妆细节", "role": "detail", "caption": "眼尾、花钿和暖光。", "prompt": "眼睛和妆容超近景，胭脂红眼尾，牡丹花钿，暖金高光", "image": "" },
+    { "id": "costume_detail", "label": "红金布料", "role": "material", "caption": "展示丝绸、金线和牡丹纹。", "prompt": "红色丝绸和金线牡丹刺绣特写，透明薄纱叠层，暖光质感", "image": "" },
+    { "id": "prop_detail", "label": "花神法器", "role": "prop", "caption": "花枝或花神印记。", "prompt": "牡丹花神法器设定，花枝、金色灵光、花瓣粒子、古风符纹", "image": "" },
+    { "id": "footwear_detail", "label": "鞋履与裙摆", "role": "detail", "caption": "锁定脚踝、鞋和裙摆落点。", "prompt": "脚部鞋履细节，红金绣鞋，透明红纱裙摆，牡丹花瓣落在地面", "image": "" },
+    { "id": "palette", "label": "色卡材质", "role": "palette", "caption": "牡丹红、暖金、胭脂和烛光。", "prompt": "角色色卡和材质样本，牡丹红、暖金、深棕黑、胭脂粉、烛光橙，国风设定板排版", "image": "" }
+  ]
+}

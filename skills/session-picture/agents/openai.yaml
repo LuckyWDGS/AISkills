@@ -1,0 +1,6 @@
+interface:
+  display_name: "Session Picture"
+  short_description: "Save, tag, find, and prune session images"
+  icon_small: "./assets/session-picture-small.png"
+  icon_large: "./assets/session-picture.png"
+  default_prompt: "Use $session-picture to save and retrieve the images I upload in this project."

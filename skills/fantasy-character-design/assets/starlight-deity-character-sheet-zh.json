@@ -1,0 +1,51 @@
+{
+  "profile_id": "starlight-deity",
+  "language": "zh",
+  "title": "星尘神女角色设定板",
+  "subtitle": "主立绘 / 三视图 / 脸部眼睛 / 星云薄纱 / 星盘法器",
+  "canvas": {
+    "width": 1440,
+    "height": 2560,
+    "background": "#090d18"
+  },
+  "theme": {
+    "panel_fill": "#11182b",
+    "panel_border": "#485375",
+    "accent": "#aebdff",
+    "text": "#eef2ff",
+    "muted": "#9aa4c4",
+    "chip_fill": "#1d2542",
+    "placeholder_fill": "#151f36"
+  },
+  "character": {
+    "name": "星尘神女",
+    "archetype": "星灵神女",
+    "visual_theme": "唯美玄幻、星空神话、暗色高级游戏角色设定板",
+    "identity_lock": "银白长发，冷白肌肤，清冷神性眼神，修长优雅比例，面部精致但不幼态",
+    "costume_lock": "蓝紫星云薄纱长裙，高开衩，水晶肩饰，透明流光裙摆，星点刺绣，银色高跟鞋",
+    "materials": ["星云薄纱", "透明水晶", "银色金属", "蓝紫流光粒子", "珠光皮革"],
+    "props": ["星盘法器", "环形星阵", "悬浮星尘", "水晶耳坠"],
+    "palette": ["深夜蓝", "星云紫", "银白", "冷月光", "水晶透明"],
+    "world": "星海神殿与深空祭坛",
+    "avoid": ["现代服装", "科幻机甲", "多角色混乱", "随机换发色", "图片内乱码小字", "漫画分镜"]
+  },
+  "reference_inputs": {
+    "face_anchors": [],
+    "costume_anchors": [],
+    "prop_anchors": [],
+    "style_anchors": [],
+    "generic_references": []
+  },
+  "sections": [
+    { "id": "hero_full_body", "label": "主立绘", "role": "hero", "caption": "完整展示角色气质、比例和服装轮廓。", "prompt": "全身主立绘，星尘神女站在暗色星海地面，银白长发漂浮，蓝紫星云薄纱长裙，星盘法器发光，唯美玄幻游戏角色设定稿", "image": "" },
+    { "id": "turnaround_front", "label": "正面视图", "role": "turnaround", "caption": "锁定正面比例、裙型和胸肩结构。", "prompt": "正面三视图，保持同一星尘神女，无遮挡站姿，展示蓝紫星云薄纱长裙结构", "image": "" },
+    { "id": "turnaround_side", "label": "侧面视图", "role": "turnaround", "caption": "展示发丝厚度、裙摆层次和鞋跟。", "prompt": "侧面三视图，同一角色同一服装，银白长发垂落，透明裙摆层次清楚，高跟鞋可见", "image": "" },
+    { "id": "turnaround_back", "label": "背面视图", "role": "turnaround", "caption": "展示背部开口、发饰和拖尾。", "prompt": "背面三视图，同一角色，长发背影，星云拖尾裙摆和背部水晶装饰清晰", "image": "" },
+    { "id": "face_closeup", "label": "脸部特写", "role": "detail", "caption": "锁定脸型、妆容和神性表情。", "prompt": "脸部特写，冷白肤色，银白发丝，清冷神性眼神，精致眼妆，角色一致性锚点", "image": "" },
+    { "id": "eye_detail", "label": "眼睛设定", "role": "detail", "caption": "锁定瞳色、星纹和光效。", "prompt": "眼睛超近景，蓝紫星云瞳孔，细小星纹，水晶高光，神女气质", "image": "" },
+    { "id": "costume_detail", "label": "服装材质", "role": "material", "caption": "展示薄纱、刺绣和水晶边缘。", "prompt": "服装材质特写，蓝紫星云薄纱，银线刺绣，透明水晶边缘，流光粒子", "image": "" },
+    { "id": "prop_detail", "label": "星盘法器", "role": "prop", "caption": "法器可作为后续关键帧锚点。", "prompt": "星盘法器设定，环形魔法阵，银蓝光芒，精密星轨纹样，玄幻道具概念图", "image": "" },
+    { "id": "footwear_detail", "label": "鞋履脚部", "role": "detail", "caption": "锁定脚部、鞋跟和裙摆落点。", "prompt": "脚部和鞋履细节，银色水晶高跟鞋，星尘薄纱裙摆落在地面，优雅比例", "image": "" },
+    { "id": "palette", "label": "色卡材质", "role": "palette", "caption": "主色、辅助色、光效色和材质样本。", "prompt": "角色色卡与材质样本，深夜蓝、星云紫、银白、冷月光、水晶透明，暗色高级排版", "image": "" }
+  ]
+}

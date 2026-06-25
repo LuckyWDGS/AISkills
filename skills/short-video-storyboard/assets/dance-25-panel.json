@@ -1,0 +1,54 @@
+{
+  "title": "Dance Storyboard",
+  "subtitle": "25-panel motion board for a vertical short-video dance sequence",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#f4efe7"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fffaf2",
+    "panel_border": "#2b241d",
+    "placeholder_fill": "#eadfcf",
+    "placeholder_text": "#5b4d40",
+    "chip_fill": "#1f1a15",
+    "chip_text": "#fff9f1",
+    "label_text": "#1f1a15",
+    "body_text": "#4f453b",
+    "title_text": "#16120f",
+    "subtitle_text": "#706358"
+  },
+  "panels": [
+    { "index": 1, "label": "Hook silhouette", "caption": "Open with a strong full-body silhouette and instant attitude.", "prompt": "front wide shot, hook pose, strong silhouette, dance studio, same protagonist", "image": "" },
+    { "index": 2, "label": "Front hero", "caption": "Show the protagonist clearly in a stable full-body hero pose.", "prompt": "full-body front hero pose, same outfit, same studio, confident expression", "image": "" },
+    { "index": 3, "label": "Weight shift", "caption": "First body shift to start the rhythm.", "prompt": "subtle weight transfer, knees bent, kinetic posture, same character", "image": "" },
+    { "index": 4, "label": "Arm extension", "caption": "Extend one arm outward to define the beat.", "prompt": "medium-wide shot, one arm extended, clean line, same studio", "image": "" },
+    { "index": 5, "label": "Torso twist", "caption": "Rotate the torso for direction change.", "prompt": "torso twist, diagonal stance, athletic tension, same outfit", "image": "" },
+    { "index": 6, "label": "Side rhythm", "caption": "Switch to a side profile for variety.", "prompt": "side-profile dance pose, rhythmic motion, same environment", "image": "" },
+    { "index": 7, "label": "Footwork insert", "caption": "Tight insert on the feet to show stepping detail.", "prompt": "close shot of footwork, sliding sneakers, floor reflection", "image": "" },
+    { "index": 8, "label": "Head turn", "caption": "Use a head snap or turn for emphasis.", "prompt": "close-medium shot, sharp head turn, expressive face", "image": "" },
+    { "index": 9, "label": "Hair motion", "caption": "Capture hair or fabric motion in mid-beat.", "prompt": "hair swing, dynamic motion, crisp freeze frame", "image": "" },
+    { "index": 10, "label": "Low-angle power", "caption": "Make the dancer feel larger and more confident.", "prompt": "low-angle full-body power pose, dramatic perspective", "image": "" },
+    { "index": 11, "label": "Travel step", "caption": "Let the dancer move across space.", "prompt": "traveling step toward camera, full body, same studio", "image": "" },
+    { "index": 12, "label": "Front medium", "caption": "Pause closer for face and chest energy.", "prompt": "front medium shot, smile and dance posture, same protagonist", "image": "" },
+    { "index": 13, "label": "Hand detail", "caption": "Focus on expressive hands or gesture language.", "prompt": "hand choreography detail, expressive fingers, same lighting", "image": "" },
+    { "index": 14, "label": "Half spin", "caption": "Show the spin building before the peak.", "prompt": "half-turn spin, skirt or fabric lifting, same dancer", "image": "" },
+    { "index": 15, "label": "Spin midpoint", "caption": "Freeze the most dynamic spin instant.", "prompt": "spin midpoint, motion-rich frame, dynamic hair and limbs", "image": "" },
+    { "index": 16, "label": "Spin exit", "caption": "Catch the dancer exiting the rotation.", "prompt": "spin exit, grounded stance returning, same studio", "image": "" },
+    { "index": 17, "label": "Landing stance", "caption": "A stable landing before the next burst.", "prompt": "landing stance, balanced feet, controlled posture", "image": "" },
+    { "index": 18, "label": "Charisma close-up", "caption": "Bring in performer charisma through the face.", "prompt": "close portrait, confident smile, sweat glow, same dancer", "image": "" },
+    { "index": 19, "label": "Diagonal pose", "caption": "Use a diagonal shape to avoid flat repetition.", "prompt": "diagonal full-body pose, one hand high, one hand low", "image": "" },
+    { "index": 20, "label": "Backward step", "caption": "Create a small retreat or pullback beat.", "prompt": "backward step, playful energy, same outfit", "image": "" },
+    { "index": 21, "label": "Climax hero", "caption": "Peak performance moment with full-body clarity.", "prompt": "climax pose, wide frame, full-body energy, same studio", "image": "" },
+    { "index": 22, "label": "Wide reset", "caption": "Give the viewer one breath before the ending.", "prompt": "wide reset, relaxed shoulders, preparing for ending pose", "image": "" },
+    { "index": 23, "label": "Final accent", "caption": "Add one last sharp accent or beat hit.", "prompt": "sharp final beat, kinetic arm line, same protagonist", "image": "" },
+    { "index": 24, "label": "Hold pose", "caption": "Hold the end shape for readability.", "prompt": "held end pose, stable body line, direct eye contact", "image": "" },
+    { "index": 25, "label": "Loop reset", "caption": "Finish with a frame that can restart the loop cleanly.", "prompt": "loop-ready ending pose, graceful reset, same studio, same dancer", "image": "" }
+  ]
+}

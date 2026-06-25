@@ -1,0 +1,54 @@
+{
+  "title": "Douyin Fashion Commerce Storyboard",
+  "subtitle": "25-panel apparel-selling board for a vertical short-video host",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#f5f0e7"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fffaf3",
+    "panel_border": "#2f261d",
+    "placeholder_fill": "#ece0ce",
+    "placeholder_text": "#5d4d3f",
+    "chip_fill": "#221b14",
+    "chip_text": "#fff9f0",
+    "label_text": "#221b14",
+    "body_text": "#51463a",
+    "title_text": "#18130f",
+    "subtitle_text": "#6f6255"
+  },
+  "panels": [
+    { "index": 1, "label": "Hook frame", "caption": "Start with instant product attention and host energy.", "prompt": "host points to camera, strong outfit reveal, first 3 seconds, same protagonist", "image": "" },
+    { "index": 2, "label": "Front hero", "caption": "Clean full-body front view to prove silhouette.", "prompt": "full-body front hero, truthful garment shape, clean studio lighting", "image": "" },
+    { "index": 3, "label": "3/4 pose", "caption": "Turn slightly to show dimension without hiding the fit.", "prompt": "3/4 body pose, elegant host smile, same dress, same boots", "image": "" },
+    { "index": 4, "label": "Side silhouette", "caption": "Show the side profile and drape behavior.", "prompt": "side view silhouette, fashion-selling clarity, truthful waist and hemline", "image": "" },
+    { "index": 5, "label": "Back silhouette", "caption": "Prove the product from the back.", "prompt": "back view, garment back detail, same colorway, same host", "image": "" },
+    { "index": 6, "label": "Walking approach", "caption": "Move toward the camera to make the cloth feel alive.", "prompt": "walking toward camera, dynamic hem movement, same host", "image": "" },
+    { "index": 7, "label": "Fabric movement", "caption": "Focus on swing, weight, and comfort.", "prompt": "fabric swing in motion, premium texture, same product truth", "image": "" },
+    { "index": 8, "label": "Neckline detail", "caption": "Tight detail on collar or neckline construction.", "prompt": "close-up neckline detail, premium knit texture, realistic stitches", "image": "" },
+    { "index": 9, "label": "Sleeve detail", "caption": "Show sleeve texture and finish.", "prompt": "cuff and sleeve close-up, hand lifting sleeve slightly, truthful textile", "image": "" },
+    { "index": 10, "label": "Waist fit", "caption": "Show how the garment shapes the body.", "prompt": "waist fit detail, flattering body line, same product", "image": "" },
+    { "index": 11, "label": "Hem movement", "caption": "Demonstrate movement and fall of the hem.", "prompt": "hem swing close-medium shot, movement proof, same dress", "image": "" },
+    { "index": 12, "label": "Pocket or zipper", "caption": "Feature one functional detail or closure.", "prompt": "zipper or pocket detail, hands interacting naturally, product truth", "image": "" },
+    { "index": 13, "label": "Lifestyle seat", "caption": "Show the product in a relaxed lifestyle beat.", "prompt": "host seated casually, elegant smile, same garment and room", "image": "" },
+    { "index": 14, "label": "Dance energy", "caption": "Inject social-video energy without losing product clarity.", "prompt": "small dance-like motion, playful host, same outfit, product still readable", "image": "" },
+    { "index": 15, "label": "Turn-around", "caption": "Catch the garment mid-turn for dynamic proof.", "prompt": "turn-around midpoint, motion-rich frame, same host, same dress", "image": "" },
+    { "index": 16, "label": "Smile hero", "caption": "Closer emotional shot for trust and charisma.", "prompt": "medium close-up, smile to camera, premium seller energy", "image": "" },
+    { "index": 17, "label": "Mirror angle", "caption": "A mirror or selfie angle for social-native credibility.", "prompt": "mirror selfie style angle, same garment, still premium and clean", "image": "" },
+    { "index": 18, "label": "Texture hero", "caption": "Bring the fabric very close for tactile appeal.", "prompt": "macro textile hero, knit texture visible, luxury lighting", "image": "" },
+    { "index": 19, "label": "Styling A", "caption": "Show one alternate styling combination.", "prompt": "same base dress with styling variation A, same protagonist, same product truth", "image": "" },
+    { "index": 20, "label": "Styling B", "caption": "Show a second styling option for versatility.", "prompt": "same base dress with styling variation B, handbag or outer layer", "image": "" },
+    { "index": 21, "label": "Layering proof", "caption": "Demonstrate layering compatibility.", "prompt": "layered outerwear or accessory, same dress visible, commerce clarity", "image": "" },
+    { "index": 22, "label": "Live-room energy", "caption": "Let the frame feel like a winning short-video seller moment.", "prompt": "high-energy seller pose, inviting gesture, same product, same host", "image": "" },
+    { "index": 23, "label": "Close hero", "caption": "Bring the garment and host close together in a premium hero shot.", "prompt": "close hero with dress details near camera, warm seller expression", "image": "" },
+    { "index": 24, "label": "Clean reset", "caption": "Return to a clean front view before the close.", "prompt": "front hero reset, polished silhouette, clear garment shape", "image": "" },
+    { "index": 25, "label": "CTA finish", "caption": "End with a frame that supports call-to-action copy.", "prompt": "final CTA-ready host pose, premium smile, same dress, strong product visibility", "image": "" }
+  ]
+}

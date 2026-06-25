@@ -1,0 +1,40 @@
+{
+  "profile_id": "start-end-9",
+  "language": "zh",
+  "title": "首尾帧桥接板",
+  "subtitle": "9格动作补全节奏板",
+  "canvas": {
+    "width": 2400,
+    "height": 2400,
+    "background": "#f3efe8"
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 3,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fffaf3",
+    "panel_border": "#30271d",
+    "placeholder_fill": "#e9dece",
+    "placeholder_text": "#5d5144",
+    "chip_fill": "#241d16",
+    "chip_text": "#fff9f0",
+    "label_text": "#241d16",
+    "body_text": "#51463b",
+    "title_text": "#18130f",
+    "subtitle_text": "#6c6054"
+  },
+  "panels": [
+    { "index": 1, "label": "起始帧", "caption": "完全沿用开头姿态或机位。", "prompt": "起始帧，保持原始开头姿态", "image": "" },
+    { "index": 2, "label": "预备动作", "caption": "身体先做一个要动的信号。", "prompt": "预备动作，轻微重心变化", "image": "" },
+    { "index": 3, "label": "动作起点", "caption": "明确告诉观众动作已经开始。", "prompt": "动作正式开始，姿态清楚", "image": "" },
+    { "index": 4, "label": "过渡点A", "caption": "从起点往终点走出的第一步。", "prompt": "第一段过渡动作，方向明确", "image": "" },
+    { "index": 5, "label": "几何中点", "caption": "动作的中点要最清楚。", "prompt": "动作几何中点，路径最可读", "image": "" },
+    { "index": 6, "label": "动作高潮", "caption": "整段动作最有张力的一格。", "prompt": "动作高潮，姿态最完整", "image": "" },
+    { "index": 7, "label": "减速回收", "caption": "开始从高潮往终点收。", "prompt": "动作减速回收，节奏变缓", "image": "" },
+    { "index": 8, "label": "接近终点", "caption": "已经快要回到目标姿态。", "prompt": "接近终点姿态，控制感明确", "image": "" },
+    { "index": 9, "label": "结束帧", "caption": "完全沿用最后一帧。", "prompt": "结束帧，保持原始结尾姿态", "image": "" }
+  ]
+}

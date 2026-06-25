@@ -1,0 +1,6 @@
+interface:
+  display_name: "Short Video Storyboard"
+  short_description: "Build visual storyboards and safe prompts"
+  icon_small: "./assets/short-video-storyboard-small.png"
+  icon_large: "./assets/short-video-storyboard.png"
+  default_prompt: "Create a consistent short-video storyboard, actual visual frame package, visual+text shot card, nested macro-shot story plan, xianxia keyframe plan, continuous 5-10s video prompt, or domestic Chinese video-model safe prompt variant from my brief or script. Include protagonist style locking or selection when needed, generated start-frame guidance, visual panels, readable rendered shot text, source-text mapping, subtitle/voiceover, sound cues, shot plan, prompts, weighted/cropped references, domestic positive-only constraints when requested, contact-sheet workflow, inline saveable image previews, exact local paths, and one-click copyable prompt blocks."

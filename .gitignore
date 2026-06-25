@@ -14,3 +14,8 @@ skills/*/generated-images/
 
 # Legacy local path kept only if a running Codex process is holding it open.
 /niagara-vfx-artist/
+
+# Nested external repos/worktrees and local development containers.
+/skills/Storyboard/
+/skills/UnrealBridge/repo/
+/skills/UnrealBridge/worktrees/

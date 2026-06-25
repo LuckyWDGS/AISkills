@@ -1,0 +1,56 @@
+{
+  "profile_id": "dance-25",
+  "language": "zh",
+  "title": "跳舞分镜板",
+  "subtitle": "25格舞蹈动作节奏板",
+  "canvas": {
+    "width": 2400,
+    "height": 3200,
+    "background": "#f4efe7"
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 5,
+    "margin": 72,
+    "gap": 28
+  },
+  "theme": {
+    "panel_fill": "#fffaf2",
+    "panel_border": "#2b241d",
+    "placeholder_fill": "#eadfcf",
+    "placeholder_text": "#5b4d40",
+    "chip_fill": "#1f1a15",
+    "chip_text": "#fff9f1",
+    "label_text": "#1f1a15",
+    "body_text": "#4f453b",
+    "title_text": "#16120f",
+    "subtitle_text": "#706358"
+  },
+  "panels": [
+    { "index": 1, "label": "开场定格", "caption": "先用一个强姿态把气质立住。", "prompt": "开场全身定格姿态，气场明确", "image": "" },
+    { "index": 2, "label": "正面英雄位", "caption": "先把舞者全貌交代清楚。", "prompt": "正面全身英雄位，舞者清晰完整", "image": "" },
+    { "index": 3, "label": "重心切换", "caption": "动作开始进入节奏。", "prompt": "身体重心切换，准备进入动作", "image": "" },
+    { "index": 4, "label": "手臂展开", "caption": "做出第一条大线条。", "prompt": "手臂展开动作，线条利落", "image": "" },
+    { "index": 5, "label": "躯干扭转", "caption": "用躯干带出方向变化。", "prompt": "躯干扭转，动作方向变化明显", "image": "" },
+    { "index": 6, "label": "侧面节奏", "caption": "切到侧面增加层次。", "prompt": "侧面动作镜头，节奏感强", "image": "" },
+    { "index": 7, "label": "脚步特写", "caption": "把脚下步点说明白。", "prompt": "脚步动作特写，步点与地面关系清楚", "image": "" },
+    { "index": 8, "label": "甩头转向", "caption": "用头部动作打节奏。", "prompt": "头部快速转向，表情有劲", "image": "" },
+    { "index": 9, "label": "头发/布料动态", "caption": "借外部动态强化动作。", "prompt": "头发或衣摆甩动，动态明显", "image": "" },
+    { "index": 10, "label": "低机位力量点", "caption": "做出更强的冲击力。", "prompt": "低机位全身动作，力量感增强", "image": "" },
+    { "index": 11, "label": "位移步", "caption": "让舞者在空间里移动。", "prompt": "向前或斜向位移动作，全身可读", "image": "" },
+    { "index": 12, "label": "中景情绪", "caption": "让脸和胸腔动作更可感。", "prompt": "中景动作镜头，情绪与节奏并重", "image": "" },
+    { "index": 13, "label": "手势细节", "caption": "单独强调手部编排。", "prompt": "手势动作细节特写，节拍明确", "image": "" },
+    { "index": 14, "label": "半转身", "caption": "为旋转做准备。", "prompt": "半转身动作，身体线条过渡自然", "image": "" },
+    { "index": 15, "label": "旋转中点", "caption": "冻结最有张力的一瞬。", "prompt": "旋转中点，动势最强", "image": "" },
+    { "index": 16, "label": "旋转出点", "caption": "把旋转收回来。", "prompt": "旋转结束回收动作，重心稳住", "image": "" },
+    { "index": 17, "label": "落地姿态", "caption": "强调动作完成后的控制力。", "prompt": "动作落地姿态，稳定有控制", "image": "" },
+    { "index": 18, "label": "魅力近景", "caption": "给舞者个人魅力一个呼吸。", "prompt": "近景表情镜头，自信有感染力", "image": "" },
+    { "index": 19, "label": "斜线造型", "caption": "避免所有动作都太平。", "prompt": "斜线型全身姿态，画面更有层次", "image": "" },
+    { "index": 20, "label": "回撤一步", "caption": "为终点前做一个回收。", "prompt": "向后回撤一步，动作节奏变化", "image": "" },
+    { "index": 21, "label": "高潮动作", "caption": "整段动作最炸的一格。", "prompt": "高潮动作，全身张力最大", "image": "" },
+    { "index": 22, "label": "拉宽重置", "caption": "给观众一个喘息。", "prompt": "拉宽镜头，动作短暂停顿", "image": "" },
+    { "index": 23, "label": "最后重拍", "caption": "再给一个强重拍。", "prompt": "最后一次强重拍动作，干净有力", "image": "" },
+    { "index": 24, "label": "结束停住", "caption": "让最后姿态足够好看。", "prompt": "结束停住姿态，眼神稳定", "image": "" },
+    { "index": 25, "label": "可循环结尾", "caption": "结尾最好还能接回开头。", "prompt": "循环友好的结尾姿态，能接回第一格", "image": "" }
+  ]
+}
