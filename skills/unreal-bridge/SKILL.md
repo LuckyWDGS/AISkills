@@ -1,14 +1,137 @@
 ---
 name: unreal-bridge
-description: Execute Python scripts inside a running Unreal Engine 5.3+ editor via TCP bridge. Use when the user asks to interact with UE, manipulate assets, query scenes, automate workflows, or run Python in Unreal.
-allowed-tools: Bash Read Write Edit Glob Grep Monitor
+description: Operate a running Unreal Engine editor through Epic's built-in UE 5.8+ MCP as the authoritative primary interface, using the custom UnrealBridge TCP/Python plugin only for live-proven capability gaps or emergency startup fallback. Use when Codex needs to inspect or modify UE assets, levels, Blueprints, Niagara, Sequencer, Control Rig, UMG, PCG, gameplay systems, editor UI/state, tests, logs, performance, or execute Python inside Unreal.
 ---
 
 # UnrealBridge
 
-Execute Python directly inside a running UE 5.3+ editor. Auto-discovers via UDP multicast (`239.255.42.99:9876`); the TCP data port is OS-assigned per editor.
+Use Epic's standard MCP server as the primary interface on UE 5.8+. Treat the custom UnrealBridge Python bridge as an optional fallback, not a co-equal transport.
 
-## Preconditions
+## Transport priority
+
+Always prefer Epic's built-in MCP whenever its live schema covers the requested operation. Do not choose the plugin because its wrapper is shorter, its documentation is more familiar, or an older inventory omitted a recently added official tool. Epic updates become available automatically through runtime discovery.
+
+Apply these hard routing rules:
+
+- Treat live `list_toolsets` and `describe_toolset` results as authoritative. Static inventories are orientation only.
+- When official MCP and UnrealBridge overlap, use official MCP.
+- Declare a capability gap only after searching the current official toolsets and inspecting the candidate schema.
+- Keep any plugin fallback isolated to the missing operation; return to official MCP for later covered operations.
+- Before arbitrary bridge Python, check the official `ProgrammaticToolset` for supported batching/orchestration.
+
+Use the bundled client from the skill directory:
+
+```powershell
+python scripts/builtin_mcp.py status
+python scripts/builtin_mcp.py ensure
+python scripts/builtin_mcp.py list-toolsets
+python scripts/builtin_mcp.py describe-toolset EditorToolset.EditorAppToolset
+python scripts/builtin_mcp.py call IsPIERunning --toolset EditorToolset.EditorAppToolset --args '{}'
+```
+
+Follow this decision sequence:
+
+1. Run `builtin_mcp.py status` against `http://127.0.0.1:8000/mcp`.
+2. Keep official `bAutoStartServer=true` so normal sessions require no plugin bootstrap. If an already-running editor has MCP unavailable, run `builtin_mcp.py ensure`; it uses the custom bridge only as a last-resort bootstrap to execute Epic's `ModelContextProtocol.StartServer 8000`, then returns immediately to official MCP.
+3. Run `list-toolsets`, then `describe-toolset <full-toolset-name>` before the first call in a domain. Never guess tool names, arguments, or enum values.
+4. Call the underlying tool with the full toolset name and the short tool name from its schema.
+5. Fall back to `bridge.py` only when live official discovery proves no suitable operation, official MCP cannot be started, or the task requires Python capability outside the official ProgrammaticToolset sandbox.
+
+Use this three-tier fallback order for every individual operation:
+
+1. **Built-in MCP tool** discovered live from UE.
+2. **Narrow bridge wrapper around an Epic editor API** when the built-in server does not expose that operation. For Niagara, prefer the plugin's `get/set_official_*_data` and `add_official_module` wrappers because they call Epic's external-edit utilities.
+3. **Plugin-specific helper** only for the remaining proven gap. Do not keep the rest of the workflow on the plugin after one fallback.
+
+For common asset work, live UE 5.8 already covers the normal path:
+
+- Texture import: `TextureTools.import_file`, then `ObjectTools.set_properties` and `AssetTools.save_assets`.
+- Material graph authoring: `MaterialTools.create_material/add_expression/connect_*/recompile`; use `MaterialInstanceTools` for instance parameters.
+- Niagara: create from a system template, add Epic's `/Niagara/DefaultAssets/Templates/Emitters/LocationBasedRibbon.LocationBasedRibbon`, then use `GetRendererSchema`, `SetRendererData`, `SetStackInputData`, compile-state, and stack-issue tools. Find templates by the `RibbonRenderer=1` asset tag rather than name alone.
+
+If those live tools are absent, keep the plugin fallback minimal:
+
+- Texture: `Asset.import_texture2d_from_file`.
+- Material: `Material.create_material` + `Material.apply_material_graph_ops`; validate with `get_material_graph` and `get_material_compile_errors`.
+- Niagara Ribbon: `add_ribbon_renderer_to_emitter`; for renderer edits prefer `get_official_renderer_data_summary` + `set_official_renderer_data`; for stack gaps use `add_official_module` + official stack input data setters.
+
+Do not use arbitrary persistent Python merely to batch operations that the built-in MCP already exposes. Check the built-in `ProgrammaticToolset` first; if no official batch surface exists, a narrow plugin batch is preferable to reimplementing editor semantics with raw `unreal.*`.
+
+Do not use the Project Settings **MCP Toolset Servers** entry as the Codex-to-UE endpoint. That list makes UE act as an MCP client. The UE server uses `/mcp` with Streamable HTTP, not the root URL or legacy GET `/sse`.
+
+Read [builtin-mcp.md](references/builtin-mcp.md) for the validated protocol, observed 54-toolset/833-tool inventory, selection guidance, and limitations. Runtime schema always wins over the snapshot.
+
+## Field-tested UE 5.8 MCP notes
+
+These notes were verified during a World Partition arena workflow and are
+useful when the editor exposes the same UE 5.8 MCP implementation:
+
+- `tools/list` is the reliable live inventory. Some UE 5.8 builds return HTTP
+  400 for the older top-level `list_toolsets` / `describe_toolset` calls even
+  though the full tool names are present in `tools/list`; prefer the exact
+  full names from that inventory when this happens.
+- UE 5.8 can return `application/json` for `tools/call` despite advertising
+  `text/event-stream`. The bundled `scripts/builtin_mcp.py` accepts both modes;
+  if a copied older helper reports an SSE timeout, update it before falling
+  back to UnrealBridge or hand-written transport code.
+- In the current Object/Scene tool schemas, fields described as optional may
+  still be marked required. Pass explicit empty values (`name: ""`,
+  `tag: ""`, `collision_channels: []`, and `null` for object filters) rather
+  than omitting them.
+- For per-instance skeletal team colors, edit the actor's skeletal mesh
+  component with `ObjectTools.set_properties` and a JSON `overrideMaterials`
+  array. Do not change the shared `USkeletalMesh` asset; cover every material
+  slot and read the property back before playtesting.
+- World Partition actors live in external packages. `AssetTools.save_assets`
+  may report success while the map package remains dirty; verify the external
+  package content (or reopen/re-read through the editor) and use the editor's
+  normal **File → Save All** before closing if the level tab still shows `*`.
+- For an explicit actor-removal request, audit by label and generated class,
+  remove only the resolved actor with `SceneTools.remove_from_scene`, re-scan
+  the level, then run a short Simulate-PIE to confirm no spawner recreates it.
+- Keep project-specific actor counts, asset paths, and verification results in
+  the project's `.codex/session/HANDOFF.md`; this skill should retain only the
+  reusable UE/MCP procedure.
+
+## UE 5.8 NPC/AI editing workflow
+
+The DemoAIMCP work established a reusable pattern for multi-team NPC maps and
+large crowds. Apply it when an MCP task changes AI, behavior trees, or a World
+Partition arena:
+
+- Keep reusable targeting, line-of-sight/navigation caches, behavior-tree
+  tasks, and crowd state machines in a runtime plugin. Keep health, weapons,
+  damage rules, team presentation, sounds, and corpse handling in the game
+  module behind a neutral adapter component. Preserve authored Blueprint paths
+  with thin compatibility subclasses/facades instead of duplicating the AI
+  implementation.
+- Replace per-controller `TActorIterator`/full-world scans with a registry and
+  cached target/LOS/navigation results. For high-count simple agents, use a
+  lightweight state machine or shared horde controller; enable controller
+  ticking only while an agent is moving, reacting, or attacking.
+- Budget the visual work independently of decision work: use Animation Budget,
+  LOD, `OnlyTickPoseWhenRendered`, lower update rates for distant agents, and
+  freeze ragdolls after the short death simulation before disabling collision.
+- Make team filtering explicit in the adapter/registry (same-team immunity,
+  all other teams valid) and keep a locked target while visible. On temporary
+  loss of sight, move to the cached last-known location or a reachable patrol
+  point instead of standing still; add progress-based stuck detection with
+  bounded retries and a failure backoff.
+- For map edits, duplicate the regression level before authoring a larger
+  arena, organize new geometry under named folders, keep shared meshes
+  immutable, and use component/instance material overrides for team colors.
+  After World Partition edits, verify external actor packages and use the
+  editor's normal **Save All** if the level tab remains dirty.
+- Acceptance loop: build the editor target, statically scan that legacy
+  compatibility layers contain no second registry/horde brain, run at least
+  20 seconds of Simulate-PIE, and inspect logs for target refresh, movement,
+  reload/death cadence, and navigation failures. Record project-specific paths,
+  counts, screenshots, and known limitations in `.codex/session/HANDOFF.md`,
+  not in this reusable skill.
+
+The custom bridge executes Python directly in a live editor. It auto-discovers via UDP multicast (`239.255.42.99:9876`); the TCP data port is OS-assigned per editor.
+
+## Custom bridge preconditions
 
 If `bridge.py` returns `discovery: no UnrealBridge editors found`, walk these in order — don't troubleshoot Python or firewalls first:
 
@@ -88,9 +211,9 @@ python "${CLAUDE_SKILL_DIR}/scripts/bridge.py" [options] <command> [args]
 
 Optional flags: `--project=<name|path>` (disambiguate when >1 editors run; or env `UNREAL_BRIDGE_PROJECT`), `--endpoint=host:port`, `--token=<secret>`, `--timeout=<s>`, `--json`, `--no-preflight`.
 
-## Workflow
+## Custom bridge workflow
 
-1. **Always ping first.**
+1. **Use the built-in MCP decision sequence above first, then ping the custom bridge before fallback.**
 2. **Default to `exec --stdin` heredoc, NOT `exec-file`.** A heredoc is the right mode for ~95% of one-shot work — no temp file to name, no cleanup, prompt stays self-contained, no risk of dangling scripts in `$TEMP` / `.tmp` / project root. **Only reach for `exec-file` when you genuinely intend to re-run the same script multiple times** (iterating on a fix, comparing runs). One-shots like "find X, list Y, build a report" → heredoc. If you find yourself writing `with open("/tmp/foo.py", "w")` followed by `bridge.py exec-file /tmp/foo.py`, stop and rewrite as a heredoc.
 3. `--json` for parseable output.
 4. Exit codes: `0` success · `1` runtime/transport · `2` bad CLI args · `3` AST preflight rejected.
@@ -116,7 +239,9 @@ from unreal_bridge import Asset, Level, Blueprint, Editor, Anim, Material, PoseS
 paths, _ = Asset.search_assets_in_all_content(query="Hero", max_results=20)
 ```
 
-The wrapper has 21 classes (one per `UnrealBridge*Library`) with **kwargs-only signatures** — positional args raise `TypeError` immediately, no UE round-trip. This is the structural fix for positional-arg-order hallucinations. Regenerate after C++ header changes via `python tools/gen_manifest.py`.
+The wrapper has 23 classes (one per `UnrealBridge*Library`) with **kwargs-only signatures** — positional args raise `TypeError` immediately, no UE round-trip. This is the structural fix for positional-arg-order hallucinations. Regenerate after C++ header changes via `python tools/gen_manifest.py`.
+
+The live UE 5.8 plugin audit found 1066 function-library `BlueprintCallable` methods but 1064 generated wrapper methods. `SetVariableMetadata` and `SetNodeComment` are missing from the current wrapper, so prefer the built-in Blueprint Toolset for those operations and regenerate the bridge manifest/wrapper before relying on them through Python.
 
 Fallback: raw `unreal.UnrealBridge*Library.foo(...)` works (preflight catches errors), but prefer the wrapper.
 
@@ -178,6 +303,7 @@ Signatures are now mechanically enforced (preflight). References carry semantic 
 
 | Topic | File | When to read |
 |-------|------|------|
+| UE 5.8 built-in MCP | `references/builtin-mcp.md` | Transport selection, endpoint/session rules, startup, live ToolsetRegistry inventory, built-in-vs-bridge routing |
 | Blueprint queries + authoring | `references/bridge-blueprint-api.md` | Class hierarchy, variables/functions/components, node search, write ops, auto-layout flow, lint loop |
 | Asset queries | `references/bridge-asset-api.md` | Asset lookup, search, references/dependencies, **`SoftObjectPath` stringification** (top-of-file block) |
 | UMG / Widget | `references/bridge-umg-api.md` | Widget Blueprint hierarchy/tree |
@@ -201,7 +327,7 @@ Signatures are now mechanically enforced (preflight). References carry semantic 
 
 > **Asset lookup by name defaults to `search_assets_in_all_content(name, max_results)`.** When the user names an asset without a path, do **not** call `unreal.AssetRegistryHelpers.get_assets_by_path('/Game', recursive=True)` and filter — that walks 100k–2M+ entries and times out. The full `search_assets` form needs `BridgeAssetSearchScope.ALL_ASSETS` (not `PROJECT`) when the asset might live in a plugin mount (`/PluginName/...`). `PROJECT` covers `/Game` only; using it for a plugin asset returns `[]` silently. Valid scope members: `ALL_ASSETS`, `PROJECT`, `CUSTOM_PACKAGE_PATH` — there is no `GAME_FOLDER`.
 
-## Blueprint authoring policy (MUST read before BP write ops)
+## Blueprint authoring policy (MUST read before BP write ops on either transport)
 
 **非必要不写蓝图 Node 和 Graph.** Agent-authored BPs are visibly weaker than C++ on readability/maintainability/perf. Default response to "用蓝图实现 X":
 
