@@ -2,6 +2,36 @@
 
 Personal Codex skills managed as a single repository.
 
+## Quick skill picker
+
+This repository contains 19 focused Codex skills. You can simply describe the
+task in natural language; Codex selects a matching skill when available. For
+an explicit request, write `$<skill-name>` in the prompt, for example
+`$unreal-bridge inspect the open UE 5.8 editor and report PIE state`.
+
+Choose by intent:
+
+- Plan a product feature or UI flow: `feature-experience` first; use
+  `ui-from-design` when an accepted design image already exists.
+- Generate or edit images: `cm-imagegen`; use `image-generation-director` for
+  prompt direction, trend/content strategy, or image-to-video planning; use
+  `mentalout-image-browser` only when Mentalout/Snow AI is explicitly named.
+- Build characters, storyboards, voice, or VFX assets: combine
+  `fantasy-character-design`, `short-video-storyboard`, `speech`,
+  `niagara-vfx-artist`, and `vfx-flipbook-generator` as appropriate.
+- Work in Unreal Engine: start with `unreal-bridge`; use
+  `unreal-material-artist` for materials/shaders, `niagara-vfx-artist` for
+  Niagara systems, and `pakskill` for pak/DLC packaging.
+- Automate or inspect a browser: use `playwright` for one-off CLI flows and
+  `playwright-interactive` for a persistent debugging/QA session.
+- Capture or preserve images: use `screenshot` for desktop capture and
+  `session-picture` for durable project image indexing.
+- Keep a long project resumable: use `codex-session-continuity` to maintain
+  handoff, project facts, decisions, and verification records.
+
+See the [中文技能目录](docs/zh/README.md) for a per-skill purpose, use case,
+recommended combination, and copyable example prompt.
+
 ## Layout
 
 ```text
