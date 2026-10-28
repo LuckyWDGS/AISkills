@@ -454,9 +454,28 @@ def refresh_prompts(spec: dict[str, Any]) -> None:
     for section in spec.get("sections", []):
         target = extract_section_target(str(section.get("shot_target") or section.get("prompt", "")))
         section["shot_target"] = target
-        parts = [global_lock, reference_strategy, f"分区目标：{target}", "画面内不要生成小字，中文标签由后期排版添加。"]
+        view_constraints = {
+            "turnaround_front": "仅同一角色单人全身正面，中性站姿，头顶与鞋底完整，比例与其它全身视图一致。",
+            "turnaround_side": "仅同一角色单人全身严格90度侧面，中性站姿，头顶与鞋底完整，比例与其它全身视图一致。",
+            "turnaround_back": "仅同一角色单人全身背面，中性站姿不扭头，头顶与鞋底完整，比例与其它全身视图一致。",
+            "face_closeup": "仅同一角色中性正面或微侧面头肩近景，五官双眼清晰无遮挡，无手遮脸或夸张表情；发型、肤色、妆容、领口与全身视图一致，保留项目原画风。",
+        }
+        constraint = view_constraints.get(str(section.get("id", "")), "") if three_view_contract(spec) else ""
+        parts = [global_lock, reference_strategy, f"分区目标：{target}", constraint, "画面内不要生成小字，中文标签由后期排版添加。"]
         section["prompt"] = " ".join(part for part in parts if part)
     spec["global_prompt"] = build_full_board_prompt(spec)
+
+
+def three_view_contract(spec: dict[str, Any]) -> str:
+    if not any(str(section.get("id", "")).startswith("turnaround_") for section in spec.get("sections", [])):
+        return ""
+    return (
+        "人物三视图同图规则：同一张人审图内保留中性全身正面、严格90度侧面、背面，"
+        "三张全身头顶到鞋底完整、等比例；同图另设独立大幅中性正面或微侧面头肩近景，"
+        "五官双眼清晰、自然无遮挡，不用夸张表情；发际线、发型、肤色、妆容与服装领口一致。"
+        "面部区足够大以检查细节，不是全身小脸裁切放大；空间不足时移出可选英雄立绘或色卡。"
+        "四个展示属于同一角色，保持项目原画风，2D或风格化角色不改成真人摄影。"
+    )
 
 
 def build_full_board_prompt(spec: dict[str, Any]) -> str:
@@ -474,7 +493,8 @@ def build_full_board_prompt(spec: dict[str, Any]) -> str:
         f"色彩：{'、'.join(character.get('palette', []))}。"
         f"世界观：{character.get('world', '')}。"
         f"版式包含：{sections}。"
-        f"风格：{character.get('visual_theme', '')}，游戏美术设定稿，暗色高级长图，细节丰富，角色一致。"
+        f"{three_view_contract(spec)}"
+        f"风格：{character.get('visual_theme', '')}，保持该项目既定画风与角色一致。"
         f"{reference_strategy}"
         f"避免：{avoid}。"
     )

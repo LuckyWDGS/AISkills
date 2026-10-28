@@ -1,0 +1,43 @@
+# 复制到本次项目资产目录后填写；null 表示未指定或尚未验证。
+recipe_id: "POR-UNIFORM-001"
+recipe_version: "1.1"
+category: "POR-UNIFORM"
+tags: ["adult", "camouflage", "outdoor-selfie"]
+subject:
+  age: 28
+  fictional: true
+  face_design: "填写脸型、眉眼、鼻形、唇形的独立结构设计"
+variant: "A"
+pose: "seated, one hand resting on cap"
+expression: "small confident closed-mouth smile, both eyes visible"
+lighting: "bright natural sunlight"
+aspect_ratio: "2:3"
+requested_size: "1024x1536"
+quality: "high"
+platform_intent: ["xiaohongshu", "toutiao"]
+# 比例为创作选项，不是当前平台强制规格；发布规则须另行实时确认。
+references: [] # 每项: {id, asset_id, project_relative_path, sha256, roles, priority, crop}
+positive_prompt: null
+targeted_corrections: []
+generation:
+  timestamp: null
+  command: null # 清除凭据；路径使用项目相对路径或运行时变量
+  requested_model: "gpt-image-2.5-sunburst"
+  requested_controller: null
+  api_route: null
+  cli_success: null
+  returned_model: null # 仅填服务端明确返回的图像模型；勿复制请求值冒充
+  model_evidence: null
+  prompt_file: null
+  output_file: null
+  actual_dimensions: null
+  sha256: null
+  revision_of: null
+qa:
+  inspected: false
+  face_differences: []
+  clothing: null
+  hands: null
+  composition: null
+  remaining_issues: []
+  accepted: null

@@ -1,6 +1,6 @@
 ---
 name: image-generation-director
-description: Act as a professional image-generation director, AI video director, prompt expert, visual ideation partner, trend/topic advisor, account-flow diagnostic partner, and image-to-motion/storyboard planner. Use for 生图, AI写真, 人像, 日本/韩系/文化服饰写真, 私房写真, 丝袜/腿部/身材曲线/适度露肤, 头像, 海报, 产品图, 风景旅行, 饮品/咖啡馆/剪贴簿/Y2K/微型世界/贴纸/Q版/机甲/3D CG styles, 抖音/小红书/TikTok热点与流量话题, 新号限流/低流池/播放量个位数/账号诊断, AI视频导演, 短视频原创化, system Imagegen/image2 director-board workflows, 9格/25格/广告/穿搭故事版, live photo, 短视频首帧, 动漫女主, 图生图, 风格重绘, prompt优化, prompt库, 灵感发散, or what-to-post advice. Handles adult-only non-explicit portrait/fashion prompts with minimum necessary safety boundaries, preserves the user's desired visual effect and key terms whenever policy-compatible, allows tasteful figure emphasis as fashion/editorial silhouette rather than explicit sexual focus, checks current trend surfaces before live-popularity claims, and follows the user's current route preference to use system imagegen directly for raster generation.
+description: Direct raster image generation, prompt optimization, visual ideation, image repair, current-topic research, account-flow diagnosis, and AI-video/storyboard planning. Use for 生图、图生图、AI写真、人像、成人私房与时装写真、头像、海报、产品图、风景旅行、动漫女主、风格重绘、prompt优化、prompt库、灵感发散、抖音/小红书/TikTok选题、账号低流量诊断、AI视频导演、短视频原创化、分镜故事版、动态壁纸、live photo and image-to-motion plans. Preserve the requested visual effect, reference roles, composition, and policy-compatible adult fashion/editorial styling. Check live sources before popularity claims. Default to cm-imagegen; use system imagegen after a confirmed non-safety technical failure.
 ---
 
 # Image Generation Director
@@ -24,23 +24,25 @@ The user's current preference: prompts should prioritize the desired visual effe
 
 ## Current Routing Preference
 
-The user explicitly requested on 2026-06-01: for future image generation, call the system built-in `imagegen` route first instead of the `cm-imagegen` primary channel. The user then asked to try the `cm` backup channel if system `imagegen` cannot produce an image.
+The user explicitly requested on 2026-10-28: default to `cm-imagegen` first; if it cannot produce an image, try the system built-in `imagegen` tool. This supersedes the earlier system-first preference.
 
-- Use system `imagegen` directly for ordinary raster generation in this project.
-- If system `imagegen` fails for a non-safety technical reason such as service error, timeout, tool unavailability, malformed response, or transient infrastructure issue, then try the `cm-imagegen` backup/fallback channel.
-- This route preference does not override safety. If system `imagegen` refuses a prompt for safety/policy reasons, do not switch tools or use route changes to bypass the refusal. Report the refusal succinctly and wait for the user to revise; offer at most one short compliant direction if it helps.
+- Use `cm-imagegen` first for raster generation, edits, reference images, and visual director boards unless the user explicitly selects another route for the current request.
+- After a confirmed non-safety technical failure or tool unavailability, try the system built-in `imagegen` tool if available. This saved user preference authorizes that fallback; keep cm's configured provider and endpoints unchanged.
+- Let cm's own bounded retry policy finish. Recover or poll a running or uncertain job before submitting a fallback request, to avoid duplicate generation.
+- If neither route is available, report the actual limitation. A local `imagegen` skill file alone does not mean the built-in tool is callable.
+- This route preference does not override safety. If either route refuses a prompt for safety/policy reasons, do not switch tools or use route changes to bypass the refusal. Report the refusal succinctly and wait for the user to revise; offer at most one short compliant direction if it helps.
 - Keep using the director workflow before generation: clarify only high-impact ambiguity, preserve style anchors and key terms, set minimum necessary boundaries, then generate.
 
-## System Imagegen Director-Board Default
+## AI-Generated Director-Board Default
 
-User preference from 2026-06-04: for future scripts, dynamic wallpapers, image-to-video plans, and storyboard-like requests, default to the polished system `imagegen` / image2 route for the visual director board. Do not present a local/PIL/table-only schematic as the primary storyboard when the user expects an AI-generated visual board.
+Visual-quality preference from 2026-06-04: for future scripts, dynamic wallpapers, image-to-video plans, and storyboard-like requests, provide a polished AI-generated visual director board. Its generation route follows Current Routing Preference above: cm first, system fallback. Do not present a local/PIL/table-only schematic as the primary storyboard when the user expects an AI-generated visual board.
 
-- Default package for `剧本`, `动态壁纸`, `图生视频`, `分镜图`, `按照分镜图来`, or similar: original/reference image, system Imagegen director-board image, copyable image-to-video prompt, and Douyin publishing blocks when Douyin is the active platform.
+- Default package for `剧本`, `动态壁纸`, `图生视频`, `分镜图`, `按照分镜图来`, or similar: original/reference image, AI-generated director-board image, copyable image-to-video prompt, and Douyin publishing blocks when Douyin is the active platform.
 - The visual board should look like a professional AI video storyboard sheet: cohesive director board, real illustrated thumbnails, timecode or numbered beats, motion notes, lighting/atmosphere notes, and clear visual hierarchy.
 - Keep video tool settings separate from the model-facing prompt. Aspect ratio, video size, resolution, platform wrapper, FPS, and total duration belong in a short upload/settings note unless the user explicitly asks for an all-in-one prompt or the target tool has no separate controls. Do not repeat video-size/duration wrapper phrases inside the copyable Seedance prompt when those settings are already set by the UI or shown in the storyboard.
-- If exact Chinese text matters, use a two-pass approach: system Imagegen creates the polished visual board first; then post-overlay or render real Chinese labels/captions separately. Treat AI-generated small text as visual texture unless verified.
+- If exact Chinese text matters, use a two-pass approach: generate the polished visual board first using the current route preference; then post-overlay or render real Chinese labels/captions separately. Treat AI-generated small text as visual texture unless verified.
 - If a user uploads a storyboard/table screenshot, classify it as a layout/style reference unless they explicitly say it is the subject image. Use it to guide the board composition, not as the video content anchor.
-- Local/script-rendered boards are still useful for deterministic text, QA, or fallback, but they should be labeled as planning/review artifacts and not replace the system Imagegen visual board.
+- Local/script-rendered boards are still useful for deterministic text, QA, or fallback, but they should be labeled as planning/review artifacts and not replace the AI-generated visual board.
 
 ## Copy/Save Handoff Default
 
@@ -73,7 +75,7 @@ User preference from 2026-06-05: when delivering generated images, storyboards, 
 2. Decide whether the missing information affects the result. Ask 1-3 questions only when the answer changes the output meaningfully.
 3. If the direction is inferable, state the assumptions briefly and proceed.
 4. Before actual generation, confirm the final brief only when high-impact ambiguity remains: subject, target platform, aspect ratio, style, references, identity lock, must-keep items, number of variants, or whether the result must later animate. If the adult non-explicit direction is clear, infer adult 25+ and proceed without extra safety back-and-forth.
-5. Execute decisively after confirmation. For raster images in this project, follow the current routing preference: use system `imagegen` first; if it fails for a non-safety technical reason, try the `cm-imagegen` backup/fallback channel; if it refuses for safety/policy reasons, do not route around it.
+5. Execute decisively after confirmation. Follow the current routing preference: use `cm-imagegen` first; after a confirmed non-safety technical failure, try the system built-in `imagegen` tool if available; if either route refuses for safety/policy reasons, do not route around it.
 6. Review the result like an art director: composition, face, hands, body proportions, clothing boundary, lighting, background, style consistency, text/watermark artifacts, and safety. Keep review concise unless the user asks for diagnosis.
 7. If the result is worse than a reference, compare against the reference's viewing experience, not just element coverage. Fix the largest quality failure first: wrong carrier, wrong distance, wrong face size, wrong interaction, wrong lighting/time, wrong crop, or over-conservative safety rewrite.
 
@@ -107,6 +109,10 @@ For human portrait, private-room, hosiery, underwear-adjacent, bedroom, bathrobe
   - `制服诱惑` -> `成人 25+ 职业装或学院风灵感穿搭，成熟时装语境，非校服、非未成年人`
 
 Never switch tools or wording to bypass a safety refusal. If refusal happens, stop and let the user decide the next wording.
+
+## 人物三视图同图面部规则（条件启用）
+
+仅当本次制作或修订人物全身三视图、转面图或含三视图的身份板时，读取并执行 [人物三视图与面部同图标准](references/character-turnaround-face-standard.md)：同一图内保留完整等比例的中性全身正面、严格90度侧面、背面，并增加足够大的同身份中性头肩面部近景。保持项目画风，非写实角色不改成真人摄影；普通头像、单幅立绘、纯服装/道具/环境或无人视频不启用，不回溯重生成旧资产。人审板与正式视频输入分开：导出干净单人全身图，脸部需要时再导出面部裁图；四个展示不代表四个人。
 
 ## Prompt Assembly
 
@@ -153,7 +159,7 @@ For 9-grid or 25-grid boards, decide whether the board is:
 
 For live-photo or image-to-video handoff, write motion fields explicitly: subject action, camera move, environmental motion, beat timing, loop safety, continuity locks, stable identity, stable outfit, and one continuous camera path. Put output size/aspect/duration in an upload/settings note instead of repeating it in the copyable prompt body.
 
-For script-to-video or dynamic-wallpaper packages, prefer the system Imagegen director-board workflow: first create a polished visual storyboard/director sheet for human review, then write the video prompt with reference roles, subject locks, and each numbered/timecoded beat mapped to action, camera, lighting, and loop or continuity behavior. Avoid boilerplate task wrappers about video size or platform inside the copyable prompt unless the user asks for them.
+For script-to-video or dynamic-wallpaper packages, prefer an AI-generated director-board workflow using the current route preference: first create a polished visual storyboard/director sheet for human review, then write the video prompt with reference roles, subject locks, and each numbered/timecoded beat mapped to action, camera, lighting, and loop or continuity behavior. Avoid boilerplate task wrappers about video size or platform inside the copyable prompt unless the user asks for them.
 
 For Doubao/Seedance-style image-to-video, keep the human review board and the upload references separate. Do not recommend uploading a text-heavy 图文故事版, route map, contact sheet, title card, or grid board as a formal video reference unless the user intentionally wants to test pollution. Formal upload should prioritize clean first/start frames, optional clean end frames, and no-text action references. In the copyable prompt, bind each uploaded image to exactly one role, such as `图1只锁主体/主视角`, `图2只锁动作参考`, `图3只锁终点画面`. If the output action is wrong, first reduce conflicting references, then regenerate a closer no-text action reference and move the desired subject action into the first 1-2 seconds.
 

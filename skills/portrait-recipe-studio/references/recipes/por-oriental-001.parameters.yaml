@@ -1,0 +1,48 @@
+recipe_id: "POR-ORIENTAL-001"
+recipe_version: "1.0"
+look_id: null
+batch_id: null
+subject:
+  adult: true
+  age: null
+  fictional: true
+  facial_aesthetic: "natural delicate adult portrait"
+mood: null
+coordination_rationale: null
+wardrobe:
+  inner_layer: null
+  outer_layer: null
+  silhouette_and_neckline: null
+  colors_materials: []
+styling:
+  hair: null
+  accessories: []
+scene:
+  architecture: null
+  foreground_layers: []
+  props: []
+  lighting_scheme: null
+  light_face_relationship: null
+pose: null
+expression: null
+framing: null
+reference_ids: []
+inherit: []
+change: []
+requested_size: "1024x1536"
+quality: "high"
+prompt_file: null
+generation:
+  requested_model: "gpt-image-2.5-sunburst"
+  controller: null
+  route: null
+  success: null
+  returned_image_model: null
+  output_file: null
+  dimensions: null
+  sha256: null
+qa:
+  inspected: false
+  selected: null
+  user_accepted: null
+  observations: []

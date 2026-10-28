@@ -31,7 +31,8 @@ Map character-design outputs into storyboard anchors:
 | --- | --- |
 | hero full-body image | face + outfit anchor |
 | face close-up | face anchor |
-| turnaround front/side/back | outfit anchor |
+| clean single-person front, strict-side or back export | outfit/body anchor; select only the relevant view |
+| combined three-view + large face review sheet | human review only; do not upload as a formal video reference or infer four people |
 | prop or magic device | product/prop anchor |
 | palette/material panels | style or costume constraint |
 | full character bible prompt | global lock |

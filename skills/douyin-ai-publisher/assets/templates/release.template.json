@@ -1,0 +1,110 @@
+{
+  "_template": {
+    "is_template": true,
+    "status": "incomplete",
+    "registerable": false,
+    "instructions": "模板不可直接登记。复制到独立发布目录，按真实素材与当前页面填齐，完成核验后移除_template；仍有发布阻断项时不得标为prepared。",
+    "snapshot_rule": "登记后的release.json保持不可变；实际状态和作品身份写到账本及publish.md。",
+    "topic_entry_fields": [
+      "name",
+      "classification",
+      "source_url_or_page",
+      "observed_at",
+      "timezone",
+      "scope",
+      "exact_metric_label",
+      "value",
+      "unit",
+      "window",
+      "content_connection",
+      "missing_reason"
+    ],
+    "topic_rule": "逐项区分实时热点与常青词；没有合适热点可为空。未知热度用null并注明原因，不能填0冒充实测。"
+  },
+  "schema_version": 1,
+  "account_id": null,
+  "observed_at": null,
+  "timezone": null,
+  "kind": null,
+  "ordered_media": [],
+  "content_facts": {
+    "visible_summary": null,
+    "duration_seconds": null,
+    "image_count": null,
+    "opening": null,
+    "visible_result": null,
+    "ending": null,
+    "visual_review": {
+      "status": "unverified",
+      "method": null,
+      "findings": null
+    },
+    "audio_review": {
+      "status": "unverified",
+      "method": null,
+      "findings": null,
+      "human_listening_completed": null
+    }
+  },
+  "column": null,
+  "audience_value": {
+    "promise": null,
+    "media_evidence": null
+  },
+  "follow_reason": null,
+  "experiment": {
+    "main_variable": null,
+    "hypothesis": null,
+    "primary_metric": null,
+    "baseline_work_ids": [],
+    "baseline_age_hours": null,
+    "observation_windows": ["24h", "72h", "7d"],
+    "monitoring_authorization": null
+  },
+  "title": null,
+  "caption": null,
+  "topics": [],
+  "cover": {
+    "source": null,
+    "export_path": null,
+    "text": null,
+    "review_status": "unverified"
+  },
+  "disclosures": {
+    "ai": {
+      "required": null,
+      "platform_label": null,
+      "verified_enabled": null
+    },
+    "fiction": {
+      "required": null,
+      "text": null
+    },
+    "advertising": {
+      "required": null,
+      "platform_label_or_text": null
+    }
+  },
+  "rights": {
+    "status": "unverified",
+    "visuals": null,
+    "music": null,
+    "voice": null,
+    "likeness": null,
+    "other_materials": null,
+    "evidence": []
+  },
+  "publication": {
+    "mode": null,
+    "scheduled_at": null,
+    "platform_timezone": null,
+    "user_timezone": null,
+    "visibility": null
+  },
+  "authorization": null,
+  "pending_items": [
+    "模板未填：核验本次目标账号、实际媒体、内容与权利。",
+    "按真实作品填写文案、话题证据、封面、声明及发布方式。",
+    "实际发布需本次具体用户授权；该模板不包含授权。"
+  ]
+}

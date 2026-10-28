@@ -1,6 +1,6 @@
 # Skills 中文说明与快速选择
 
-这里是仓库内 19 个 Skill 的用户入口。每个 Skill 都说明三件事：它解决
+这里是仓库内 23 个 Skill 包的用户入口，其中 MiniMax 视频自动化保持暂停。每个 Skill 都说明三件事：它解决
 什么问题、什么时候值得用、以及可以直接复制的开始方式。文档只做解释，
 真正的触发规则和安全边界仍以对应 `skills/<name>/SKILL.md` 为准。
 
@@ -32,6 +32,9 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 - 浏览器一次性操作：`playwright`；需要持续调试、刷新和视觉 QA：
   `playwright-interactive`。
 - 桌面截图：`screenshot`；把上传图片保存到项目并可跨会话找回：`session-picture`。
+- 抖音 AI 内容包装、发布和复盘：`douyin-ai-publisher`；人像服装配方库需点名 `portrait-recipe-studio`。
+- 自有 VPS 代理节点、订阅与分流排障：`vps-proxy-deploy`。
+- `minimax-h3-video-generation` 只迁移源码，保持暂停，安装不会重新启用。
 
 ## 技能总览
 
@@ -42,6 +45,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 | [feature-experience](./feature-experience.md) | 把功能点整理成完整模块、流程、状态、数据和验证方案 | 有功能想法，但入口、空态、错误态或真实数据关系还不清楚 | `$feature-experience 设计一个带缓存、重试和空态的收藏功能` |
 | [chatgpt-apps](./chatgpt-apps.md) | 搭建和排查 ChatGPT Apps SDK、MCP server、Widget、工具注册和 CSP | 要做 ChatGPT App，或把现有 MCP/网页能力接进 ChatGPT | `$chatgpt-apps 搭一个带 Widget 的 MCP App，先查最新官方文档` |
 | [codex-session-continuity](./codex-session-continuity.md) | 维护 `HANDOFF.md`、项目事实、决策、资产和验证记录 | 任务跨很多轮、需要换窗口，或准备暂停/交接项目 | `$codex-session-continuity 整理当前项目交接和下一步` |
+| [vps-proxy-deploy](./vps-proxy-deploy.md) | 部署、维护自有 VPS 代理节点及 Clash/Mihomo 订阅 | 自用节点、HTTPS 订阅、DNS、分流或性能需要排查 | `$vps-proxy-deploy 只读检查我现有节点和订阅，定位连接失败原因` |
 
 ### 图片、角色、视频与声音
 
@@ -49,6 +53,9 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 |---|---|---|---|
 | [cm-imagegen](./cm-imagegen.md) | 常规生图、图生图、改图、UI mockup、海报、产品图和批量素材 | 需要直接生成或编辑图片，且没有指定其他图片平台 | `$cm-imagegen 生成一张俯视角科幻竞技场地图概念图` |
 | [image-generation-director](./image-generation-director.md) | 做创意方向、Prompt 修复、风格锁定、趋势选题和图片转视频规划 | 画面方向不稳定，或要把一个视觉想法扩展成内容/视频方案 | `$image-generation-director 保留这张图的服装和构图，重写成可用 prompt` |
+| [douyin-ai-publisher](./douyin-ai-publisher.md) | 分析素材、准备文案/封面/话题、执行授权发布并复盘 | 要发布或准备抖音 AI 视频、图文和口播内容 | `$douyin-ai-publisher 分析这个视频并准备标题、封面和相关话题，暂不发布` |
+| [portrait-recipe-studio](./portrait-recipe-studio.md) | 人像与服装配方、参考审查和面容设计 | 明确需要使用这套提示词库；仅点名调用 | `$portrait-recipe-studio 根据参考选择合适的人像服装配方，先整理提示词` |
+| [minimax-h3-video-generation](./minimax-h3-video-generation.md) | 保留 MiniMax H3 视频生成脚本与接口资料 | 当前已暂停，只有明确要求重新启用后才可自动化 | 暂停保留，暂不调用 |
 | [fantasy-character-design](./fantasy-character-design.md) | 生成角色设定板、三视图、服装/法器细节和参考权重包 | 需要先锁定玄幻、仙侠、神女、女帝或其他主角形象 | `$fantasy-character-design 做一张仙侠女帝角色设定板和三视图` |
 | [short-video-storyboard](./short-video-storyboard.md) | 把剧本拆成分镜、首尾帧、关键帧、图文镜头卡和视频 Prompt | 需要做 9 格/25 格分镜、连续短视频或国内模型提示词 | `$short-video-storyboard 把这段文案拆成 10 个连续镜头和首尾帧提示词` |
 | [speech](./speech.md) | 通过 OpenAI Audio API 生成旁白、TTS、提示音和批量音频 | 有文字需要变成语音；需要本机 `OPENAI_API_KEY` | `$speech 把这段教程文案生成普通话旁白并保存为 wav` |

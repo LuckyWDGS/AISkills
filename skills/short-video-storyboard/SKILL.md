@@ -96,6 +96,10 @@ Prefer this skill for requests such as:
    - If the user asked for visuals, generate or attach real image files before calling the deliverable complete. Placeholder text cards count only as planning artifacts.
    - If the user asked for `图文`, verify the final PNG visibly contains both image panels and readable real text rendered by the layout/postprocess step. Do not rely on image generation to create small Chinese text.
 
+## 人物三视图同图面部规则（条件启用）
+
+仅当本次制作或修订人物全身三视图、转面图或含三视图的身份板时，读取并执行 [人物三视图与面部同图标准](references/character-turnaround-face-standard.md)：同一图内保留完整等比例的中性全身正面、严格90度侧面、背面，并增加足够大的同身份中性头肩面部近景。保持项目画风，非写实角色不改成真人摄影；普通头像、单幅立绘、纯服装/道具/环境或无人视频不启用，不回溯重生成旧资产。人审板与正式视频输入分开：导出干净单人全身图，脸部需要时再导出面部裁图；四个展示不代表四个人。
+
 ## Character And Product Lock
 
 Treat protagonist consistency as a hard requirement, not a styling suggestion.

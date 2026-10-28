@@ -11,6 +11,10 @@ Create character source assets before video planning: a stable protagonist, cost
 
 This skill is independent from `short-video-storyboard`. Use this skill to define the character. Use `short-video-storyboard` only after the character is locked and the user wants start/end frames, bridge motion, shot breakdowns, or 25-panel storyboards.
 
+## 人物三视图同图面部规则（条件启用）
+
+仅当本次制作或修订人物全身三视图、转面图或含三视图的身份板时，读取并执行 [人物三视图与面部同图标准](references/character-turnaround-face-standard.md)：同一图内保留完整等比例的中性全身正面、严格90度侧面、背面，并增加足够大的同身份中性头肩面部近景。保持项目画风，非写实角色不改成真人摄影；普通头像、单幅立绘、纯服装/道具/环境或无人视频不启用，不回溯重生成旧资产。人审板与正式视频输入分开：导出干净单人全身图，脸部需要时再导出面部裁图；四个展示不代表四个人。
+
 ## Decision Tree
 
 1. Choose the output type.
@@ -53,7 +57,7 @@ Capture these fields before production-quality image generation:
 5. Use `inspect-brief` before editing if the user gives a short Chinese brief and you want to audit inferred fields.
 6. Use `apply-brief` to inject the brief into the spec and refresh all section prompts.
 7. Use `attach-references` when face, costume, prop, style, or general reference images are available. Use `--reference-weight`, `--reference-priority`, `--reference-crop`, `--reference-focus`, and `--reference-lock` when one crop or anchor must win conflicts.
-8. Use `render-layout` to create a placeholder design-board PNG for structure review.
+8. Use `render-layout` only as a coverage placeholder. Its legacy fixed boxes do not verify face size or final three-view readability; for a turnaround deliverable, compose the final image using `references/sheet-layouts.md` and the conditional same-image face standard.
 9. Use `validate-sheet` to check required design-sheet coverage.
 10. Use `export-prompts` to create the full board prompt, per-section prompts, prompt JSONL/CSV, and storyboard handoff package.
 11. If actual images are requested, use `$cm-imagegen` with the exported full-board prompt or section prompts. Prefer generating no-text art panels, then add readable labels with layout tools.

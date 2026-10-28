@@ -1,0 +1,7 @@
+interface:
+  display_name: "MiniMax H3 视频生成（已暂停）"
+  short_description: "自动化暂停；仅保留源码，等待明确重新启用"
+  default_prompt: "Do not invoke $minimax-h3-video-generation unless I explicitly ask to re-enable its automation."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,59 @@
+recipe_id: "POR-COSPLAY-001"
+recipe_version: "2.0"
+category: "POR-COSPLAY"
+tags: ["adult", "styled-photographic-portrait"]
+look_id: null # New outfit: next LOOK-xxx; original A=LOOK-001, B=LOOK-002
+batch_id: null # New poses or parameters within the same look
+subject:
+  age: null # Fill an explicit adult age for the current subject
+  adult: true
+  fictional: true
+  design: "Soft delicate adult facial aesthetic, newly designed individual"
+variant: null # A/B are historical examples only; no default clothing set
+mood: null
+visual_focus: null
+coordination_rationale: null # Why clothing, styling, pose and light belong together
+wardrobe:
+  pieces_and_construction: []
+  silhouette: null
+  materials: []
+  fit_and_exposure: null
+palette:
+  clothing: []
+  hair_makeup_accents: []
+  background: []
+  relationship: null
+styling:
+  hair: null
+  makeup: null
+  accessories: []
+pose_id: null
+pose: null
+expression: null
+clothing_feature_to_show: null
+lighting: null
+scene: null
+framing: null
+aspect_ratio: "2:3"
+requested_size: "1024x1536"
+quality: "high"
+reference_ids: [] # Select current look references, do not inherit historical A/B by default
+inherit: []
+change: []
+reference_map: "reference-map.json"
+positive_prompt_file: null
+generation:
+  requested_model: "gpt-image-2.5-sunburst"
+  controller: null
+  route: null
+  success: null
+  returned_image_model: null
+  output_file: null
+  actual_dimensions: null
+  sha256: null
+qa:
+  inspected: false
+  coordination: null
+  selected: null
+  user_accepted: null
+  observations: []

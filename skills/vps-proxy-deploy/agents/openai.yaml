@@ -1,0 +1,7 @@
+interface:
+  display_name: "VPS 自用节点搭建与排障"
+  short_description: "维护自用 VPS 节点与订阅，验证 BBR、DNS 故障及国内软件网站直连"
+  default_prompt: "使用 $vps-proxy-deploy 按当前环境维护自用 VPS，完成所需的 BBR、DNS 或国内服务分流设置与验证。"
+
+policy:
+  allow_implicit_invocation: true

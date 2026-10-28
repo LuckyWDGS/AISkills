@@ -1,5 +1,9 @@
 # Prompt Recipes
 
+## Three-View Module
+
+For a sheet that includes character turnarounds, read [the same-image face standard](character-turnaround-face-standard.md) and include its prompt module in the full-sheet prompt and the ready examples below. Their old left-hero/right-turnaround arrangement is optional: the final single image must retain three complete equally scaled bodies and a large clear neutral head-and-shoulders face region; optional art must not shrink these. Keep all four depictions in the project art style. Apply this to the full review board, never to a clean single-view export.
+
 ## 1. Full Character Sheet Prompt Formula
 
 ```text
@@ -43,13 +47,13 @@ Full-body hero illustration of [name], [archetype], [identity lock], wearing [co
 ### Turnaround
 
 ```text
-Character turnaround view, [front/side/back], same [name], same face, same hair, same costume silhouette, neutral standing pose, clear costume construction, no text, no background clutter.
+Single full-body character turnaround view, [front / strict 90-degree side / back], same [name], same face, same hair, same costume silhouette and body proportions, neutral standing pose, head and feet fully visible, clear costume construction, original project art style, no text, no background clutter. This export shows one view of one character.
 ```
 
 ### Face Close-Up
 
 ```text
-Face close-up of [name], preserve face shape and hairstyle, [eye/makeup details], expression [temperament], high-detail fantasy portrait crop, no text.
+Single neutral front or slight-angle head-and-shoulders face close-up of [name], clear unobstructed eyes and facial features, preserve face shape, age impression, hairstyle, hairline, skin tone, [eye/makeup details], accessories and costume neckline from the full-body views, original project art style, no text. This clean export contains only the face view.
 ```
 
 ### Eye Detail

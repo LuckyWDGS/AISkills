@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "updated_date": null,
+  "user_timezone": null,
+  "platform": "douyin",
+  "goal": {
+    "current": "稳定经营账号，积累愿意持续观看的粉丝",
+    "basis": "Skill初始默认，尚未记录本工作区用户确认",
+    "commercial_goal": null,
+    "commercial_actions_requested": false
+  },
+  "account": {
+    "nickname": null,
+    "account_id": null,
+    "public_url": null,
+    "observed_at": null,
+    "verify_in_current_ui": true
+  },
+  "working_direction": {
+    "status": "not_selected",
+    "audience_promise": null,
+    "columns": [],
+    "user_decision": null
+  },
+  "audience": {
+    "status": "unknown",
+    "observed_at": null,
+    "evidence": [],
+    "needs": []
+  },
+  "profile_drafts": {
+    "status": "not_started",
+    "document": null,
+    "platform_changes_made": false
+  },
+  "cover": {
+    "status": "unverified",
+    "export_path": null,
+    "reviewed_at": null
+  },
+  "rights_records": [],
+  "publication_authorization": null,
+  "monitoring_created": false,
+  "video_generation": {
+    "performed_by_this_skill": false,
+    "production_workflow": null
+  },
+  "records": {
+    "content_queue": "content_queue.csv",
+    "metrics_snapshots": "metrics_snapshots.csv",
+    "experiments": "experiments.csv",
+    "audience_requests": "audience_requests.csv"
+  },
+  "recent_publication": null,
+  "notes": [
+    "这是空白运营档案，不代表账号身份、受众或素材已经核验。",
+    "初始化不授予发布、修改主页、商业操作或持续监控权限。",
+    "方向和栏目需结合本次素材、真实反馈与用户选择确定。"
+  ]
+}

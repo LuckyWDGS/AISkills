@@ -1,5 +1,9 @@
 # Sheet Layouts
 
+## Character Three-View Priority
+
+When the deliverable includes character turnarounds, first read [the same-image face standard](character-turnaround-face-standard.md). Use one image with three complete, equally scaled neutral full-body front/strict-90-degree-side/back views and a separate large neutral head-and-shoulders face region. Reserve real space for all four depictions of one identity; move optional hero art, eye macros, palette or props elsewhere if needed. Preserve the project rendering style. The older tall-board arrangement below is only usable if it still passes this coverage and readability gate; three tiny bodies plus a tiny face do not pass.
+
 ## Default Tall Board
 
 Use a tall portrait board for references like the user's examples.
@@ -19,7 +23,7 @@ Use script-rendered text when readability matters.
 When generating a one-shot board, describe the layout but ask for no tiny readable text:
 
 ```text
-tall vertical premium character reference sheet, large full-body hero illustration on left, three smaller turnaround views on right, close-up detail panels below, palette chips and annotation boxes as clean graphic elements, no readable small text
+one character identity review image, three complete equally scaled neutral full-body front / strict 90-degree side / back views with head and feet intact, one separate large neutral front or slight-angle head-and-shoulders portrait with clear eyes and facial features, consistent identity, hair, skin, makeup and neckline in the project art style; prioritize these four readable depictions over optional hero art and detail panels, no readable small text
 ```
 
 ## Script Placeholder Layout
