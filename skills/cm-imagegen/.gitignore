@@ -1,2 +1,27 @@
-# Local Codex session continuity memory
-.codex/session/
+# Local configuration and credentials
+.codex/
+.env
+.env.*
+auth.json
+config.toml
+controller.json
+*.pem
+*.key
+
+# Python and editors
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Runtime output
+generated-images/
+transport-probes/
+*.log

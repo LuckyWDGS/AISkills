@@ -1,0 +1,4 @@
+# JPEG/WebP dimension checks and complete offline tests
+Pillow>=10
+# Optional transport-probe --client requests
+requests>=2.31

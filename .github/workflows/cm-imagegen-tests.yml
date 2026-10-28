@@ -1,0 +1,50 @@
+name: cm-imagegen offline tests
+
+on:
+  push:
+    paths:
+      - 'skills/cm-imagegen/**'
+      - '.github/workflows/cm-imagegen-tests.yml'
+  pull_request:
+    paths:
+      - 'skills/cm-imagegen/**'
+      - '.github/workflows/cm-imagegen-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.12']
+    defaults:
+      run:
+        working-directory: skills/cm-imagegen
+    env:
+      CODEX_HOME: ${{ runner.temp }}/cm-imagegen-empty
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -r requirements-optional.txt
+      - name: Run tests with networking blocked
+        run: |
+          python - <<'PY'
+          import socket
+          import unittest
+
+          def no_network(*args, **kwargs):
+              raise AssertionError('Network forbidden during offline tests')
+
+          socket.socket.connect = no_network
+          socket.create_connection = no_network
+          suite = unittest.defaultTestLoader.discover('scripts', pattern='test_*.py')
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          raise SystemExit(not result.wasSuccessful())
+          PY

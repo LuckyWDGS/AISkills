@@ -1,6 +1,6 @@
 # Prompting best practices
 
-These prompting principles are shared across CodexManager image generation and edit/reference-image workflows in this skill.
+These prompting principles are shared across configured-provider image generation and edit/reference-image workflows in this skill.
 
 This file is about prompt structure, specificity, and iteration. Execution controls such as `quality`, masks, output format, and output paths live in the CLI/API docs.
 
@@ -13,7 +13,7 @@ This file is about prompt structure, specificity, and iteration. Execution contr
 - [Text in images](#text-in-images)
 - [Input images and references](#input-images-and-references)
 - [Iterate deliberately](#iterate-deliberately)
-- [Fallback-only execution controls](#fallback-only-execution-controls)
+- [Execution controls](#execution-controls)
 - [Use-case tips](#use-case-tips)
 - [Where to find copy/paste recipes](#where-to-find-copypaste-recipes)
 
@@ -57,7 +57,7 @@ Do not add:
 ## Input images and references
 - Do not assume that every provided image is an edit target.
 - Label each image by index and role (`Image 1: edit target`, `Image 2: style reference`).
-- If the user provides images for style, composition, or mood guidance and does not ask to modify them, treat the visual intent as generation with references, but execute it with the `edit` command because image inputs go through `/images/edits`.
+- If the user provides images for style, composition, or mood guidance and does not ask to modify them, treat the visual intent as generation with references, but execute it with the `edit` command because that command accepts image inputs on the selected route.
 - If the user asks to preserve an existing image while changing specific parts, treat the request as an edit.
 - For compositing, describe how the images interact (`place the subject from Image 2 into Image 1`).
 

@@ -1,9 +1,9 @@
 interface:
   display_name: "CM Image Gen"
-  short_description: "Default image generation through CM routes"
+  short_description: "Generate images through configured Sub2API"
   icon_small: "./assets/cm-imagegen-small.png"
   icon_large: "./assets/cm-imagegen.png"
-  default_prompt: "Use $cm-imagegen to generate or edit images through the configured compatibility image provider."
+  default_prompt: "Use $cm-imagegen to generate or edit images through the configured Sub2API provider."
 
 policy:
   allow_implicit_invocation: true

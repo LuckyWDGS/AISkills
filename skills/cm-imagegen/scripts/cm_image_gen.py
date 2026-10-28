@@ -2,6 +2,8 @@ import argparse
 import base64
 from dataclasses import dataclass
 import importlib
+import io
+import hashlib
 import json
 import mimetypes
 import os
@@ -12,21 +14,30 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-DEFAULT_MODEL = "gpt-image-2"
+DEFAULT_MODEL = "gpt-image-2.5-sunburst"
+LEGACY_MODEL = "gpt-image-2"
+
+# Official GPT Image 2.5 is published as two model families. Keep the short
+# aliases explicit so `image2.5` never expands to the invalid generic ID
+# `gpt-image-2.5`; callers can still pass an exact model or snapshot unchanged.
+IMAGE_MODEL_ALIASES = {
+    "image2.5": "gpt-image-2.5-sunburst",
+    "gpt2.5": "gpt-image-2.5-sunburst",
+    "image2.5-sunburst": "gpt-image-2.5-sunburst",
+    "gpt2.5-sunburst": "gpt-image-2.5-sunburst",
+    "image2.5-flare": "gpt-image-2.5-flare",
+    "gpt2.5-flare": "gpt-image-2.5-flare",
+}
 DEFAULT_RESPONSES_MODEL = "gpt-5.4"
 DEFAULT_SIZE = "1024x1024"
 DEFAULT_RESPONSE_FORMAT = "b64_json"
-PRIMARY_EXTRA_RETRY_ATTEMPTS = 0
-FALLBACK_EXTRA_RETRY_ATTEMPTS = 0
+PRIMARY_EXTRA_RETRY_ATTEMPTS = 2
+PRIMARY_RETRY_DELAYS_SECONDS = (5, 15)
 ERROR_BODY_PREVIEW_CHARS = 500
 RESPONSE_READ_CHUNK_BYTES = 64 * 1024
 MIN_ASYNC_POLL_WINDOW_SECONDS = 180
 DEFAULT_ASYNC_POLL_INTERVAL_SECONDS = 2.0
 TRANSPORT_PROBE_OUTPUT_DIR_NAME = "transport-probes"
-DEFAULT_FALLBACK_DISABLED_REASON = (
-    "Dedicated fallback compatibility provider is temporarily unavailable for the default CLI route. "
-    "After a single non-policy primary failure, the skill should use the system built-in imagegen route."
-)
 SAFE_RESPONSE_HEADER_NAMES = {
     "content-type",
     "content-length",
@@ -46,10 +57,15 @@ IMAGE_ENDPOINTS = {
 }
 PRIMARY_BASE_URL_FIELD = "CODEXMANAGER_IMAGE_BASE_URL"
 PRIMARY_API_KEY_FIELD = "CODEXMANAGER_IMAGE_API_KEY"
-FALLBACK_BASE_URL_FIELD = "CODEXMANAGER_IMAGE_FALLBACK_BASE_URL"
-FALLBACK_API_KEY_FIELD = "CODEXMANAGER_IMAGE_FALLBACK_API_KEY"
 LOCAL_CONFIG_DIR_NAME = "cm-imagegen"
-LOCAL_FALLBACK_CONFIG_NAME = "fallback.json"
+
+# A requested 4K canvas must be verified against the bytes returned by the
+# provider.  The provider may silently cap or reinterpret ``size``; this
+# threshold makes such a response a failed generation instead of a false
+# success.  Smaller/legacy requests stay warning-only unless callers opt in
+# with ``--require-exact-size``.
+FOUR_K_WIDTH = 3840
+FOUR_K_HEIGHT = 2160
 
 
 @dataclass(frozen=True)
@@ -95,6 +111,7 @@ class ImageApiError(Exception):
         self.raw = raw
         self.provider = provider
         self.diagnostics = diagnostics or {}
+        self.attempt_failures: list[dict] = []
 
 
 def home() -> Path:
@@ -168,59 +185,6 @@ def load_auth_json() -> dict:
     return {}
 
 
-def fallback_config_path() -> Path:
-    return codex_home() / LOCAL_CONFIG_DIR_NAME / LOCAL_FALLBACK_CONFIG_NAME
-
-
-def load_local_fallback_config() -> dict:
-    path = fallback_config_path()
-    if not path.exists():
-        return {}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise SystemExit(f"Failed to read cm-imagegen fallback config: {exc}")
-    if not isinstance(data, dict):
-        raise SystemExit(f"cm-imagegen fallback config must contain a JSON object: {path}")
-    return data
-
-
-def local_fallback_value(field: str) -> str | None:
-    aliases = fallback_field_aliases(field)
-    data = load_local_fallback_config()
-    for alias in aliases:
-        value = data.get(alias)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
-
-
-def fallback_field_aliases(field: str) -> tuple[str, ...]:
-    return {
-        FALLBACK_BASE_URL_FIELD: ("base_url", "fallback_base_url", FALLBACK_BASE_URL_FIELD),
-        FALLBACK_API_KEY_FIELD: ("api_key", "fallback_api_key", FALLBACK_API_KEY_FIELD),
-    }.get(field, (field,))
-
-
-def auth_fallback_value(field: str) -> str | None:
-    data = load_auth_json()
-    for alias in fallback_field_aliases(field):
-        value = data.get(alias)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
-
-
-def env_or_fallback_config_or_auth_value(field: str) -> str | None:
-    value = os.environ.get(field)
-    if value and value.strip():
-        return value.strip()
-    value = local_fallback_value(field)
-    if value:
-        return value
-    return auth_fallback_value(field)
-
-
 def auth_value(*fields: str) -> str | None:
     data = load_auth_json()
     for field in fields:
@@ -277,33 +241,6 @@ def configured_responses_model(args: argparse.Namespace | None = None) -> str:
         return env_model.strip()
     cfg_model = str(load_codex_config().get("model") or "").strip()
     return cfg_model or DEFAULT_RESPONSES_MODEL
-
-
-def load_fallback_provider() -> ImageApiProvider:
-    fallback_base_url = env_or_fallback_config_or_auth_value(FALLBACK_BASE_URL_FIELD)
-    fallback_api_key = env_or_fallback_config_or_auth_value(FALLBACK_API_KEY_FIELD)
-    config_path = fallback_config_path()
-    if fallback_base_url and fallback_api_key:
-        return ImageApiProvider(
-            "fallback",
-            normalize_image_base_url(fallback_base_url),
-            fallback_api_key,
-        )
-    if fallback_base_url and not fallback_api_key:
-        raise SystemExit(
-            f"{FALLBACK_BASE_URL_FIELD} is configured but {FALLBACK_API_KEY_FIELD} is missing. "
-            f"Check env, {config_path}, or auth.json fallback fields."
-        )
-    if fallback_api_key and not fallback_base_url:
-        raise SystemExit(
-            f"{FALLBACK_API_KEY_FIELD} is configured but {FALLBACK_BASE_URL_FIELD} is missing. "
-            f"Check env, {config_path}, or auth.json fallback fields."
-        )
-    raise SystemExit(
-        "Fallback image API is not configured. "
-        f"Set both {FALLBACK_BASE_URL_FIELD} and {FALLBACK_API_KEY_FIELD}, "
-        f"or place base_url/api_key in {config_path}."
-    )
 
 
 def load_requests_module():
@@ -458,6 +395,12 @@ def diagnostic_summary(diagnostics: dict) -> str:
     event_types = diagnostics.get("sse_event_types")
     if event_types:
         parts.append(f"sse_event_types={json.dumps(event_types, ensure_ascii=False)}")
+    terminal = diagnostics.get("sse_terminal_evidence")
+    if terminal:
+        parts.append(f"sse_terminal_evidence={json.dumps(terminal, ensure_ascii=False, separators=(',', ':'))}")
+    partial_read = diagnostics.get("partial_read_evidence")
+    if partial_read:
+        parts.append(f"partial_read_evidence={json.dumps(partial_read, ensure_ascii=False, separators=(',', ':'))}")
     preview = diagnostics.get("body_preview")
     if preview:
         parts.append(f"body_preview={preview}")
@@ -609,6 +552,7 @@ def image_tool_config(args: argparse.Namespace, image_model: str) -> list[dict]:
         "type": "image_generation",
         "model": image_model,
         "size": args.size,
+        "action": "generate",
     }
     if args.quality:
         tool["quality"] = args.quality
@@ -643,6 +587,10 @@ def responses_payload(
         "tools": image_tool_config(args, image_model),
         "stream": True,
     }
+    if not getattr(args, "tools", None):
+        payload["tool_choice"] = {"type": "image_generation"}
+    if getattr(args, "responses_reasoning", None):
+        payload["reasoning"] = {"effort": args.responses_reasoning}
     if args.instructions:
         payload["instructions"] = args.instructions
     if args.responses_extra:
@@ -650,6 +598,23 @@ def responses_payload(
         payload.update(extra)
         payload["stream"] = True
     return payload, responses_model
+
+
+def controller_defaults() -> dict:
+    """Explicit user-selected image controller profile; never changes chat config."""
+    path = codex_home() / LOCAL_CONFIG_DIR_NAME / "controller.json"
+    if not path.exists():
+        return {}
+    try:
+        profile = json.loads(path.read_text(encoding="utf-8"))
+        if (not isinstance(profile, dict) or profile.get("api") != "responses"
+                or not isinstance(profile.get("responses_model"), str)
+                or not profile["responses_model"].strip()
+                or profile.get("responses_reasoning") not in {"low", "medium", "high", "xhigh", "max", "ultra"}):
+            raise ValueError("invalid controller profile")
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"Invalid image controller profile: {path} ({type(exc).__name__})") from exc
+    return {key: profile[key] for key in ("api", "responses_model", "responses_reasoning")}
 
 
 def parse_sse_events(text: str) -> list[dict]:
@@ -685,6 +650,114 @@ def parse_sse_events(text: str) -> list[dict]:
     return events
 
 
+def sse_terminal_evidence(payloads: list[dict], event_counts: dict) -> dict:
+    """Keep terminal facts only: no assistant text, prompts, errors or image bytes."""
+    statuses = {"completed", "failed", "incomplete", "cancelled", "in_progress", "queued", "generating"}
+    known_codes = {"content_policy_violation", "moderation_blocked", "safety_violation",
+                   "image_generation_failed", "server_error", "rate_limit_exceeded", "invalid_request_error"}
+    terminal_status = None
+    tool_states = {}
+    final_texts, done_texts, deltas = [], [], []
+    explicit_refusal = any(name.startswith("response.refusal.") for name in event_counts)
+    codes, unknown_code = set(), False
+
+    def error_code(node):
+        nonlocal unknown_code
+        error = node.get("error")
+        code = (error.get("code") or error.get("type")) if isinstance(error, dict) else None
+        if code is None and node.get("type") == "error":
+            code = node.get("code")
+        if isinstance(code, str) and code:
+            if code in known_codes:
+                codes.add(code)
+            else:
+                unknown_code = True
+
+    def message_text(node):
+        nonlocal explicit_refusal
+        texts = []
+        if not isinstance(node, dict):
+            return texts
+        if node.get("type") == "refusal":
+            explicit_refusal = True
+        if node.get("type") == "message" and node.get("role") == "assistant":
+            for part in node.get("content", []):
+                if not isinstance(part, dict):
+                    continue
+                if part.get("type") == "refusal":
+                    explicit_refusal = True
+                value = part.get("text") if part.get("type") == "output_text" else part.get("refusal")
+                if isinstance(value, str) and value:
+                    texts.append(value)
+        return texts
+
+    for index, payload in enumerate(payloads):
+        kind = payload.get("type", "")
+        error_code(payload)
+        if isinstance(kind, str) and kind.startswith("response.refusal."):
+            explicit_refusal = True
+        part = payload.get("part")
+        if isinstance(part, dict) and part.get("type") == "refusal":
+            explicit_refusal = True
+        response = payload.get("response")
+        if isinstance(response, dict):
+            error_code(response)
+            if isinstance(kind, str) and kind in {"response.completed", "response.failed", "response.incomplete", "response.cancelled"}:
+                status = response.get("status")
+                terminal_status = status if isinstance(status, str) and status in statuses else "other_or_missing"
+                final_texts = [text for node in response.get("output", []) for text in message_text(node)]
+            nodes = response.get("output", [])
+        else:
+            nodes = []
+        item = payload.get("item")
+        if isinstance(item, dict):
+            nodes = [*nodes, item]
+            if kind == "response.output_item.done":
+                done_texts.extend(message_text(item))
+        for node in nodes:
+            if not isinstance(node, dict) or node.get("type") != "image_generation_call":
+                continue
+            error_code(node)
+            status = node.get("status")
+            tool_states[node.get("id") or f"item-{index}"] = {
+                "status": status if isinstance(status, str) and status in statuses else "other_or_missing",
+                "result_present": bool(node.get("result"))}
+        if isinstance(kind, str) and kind.startswith("response.image_generation_call."):
+            status = kind.rsplit(".", 1)[-1]
+            tool_states[payload.get("item_id") or f"event-{index}"] = {
+                "status": status if isinstance(status, str) and status in statuses else "other_or_missing",
+                "result_present": bool(payload.get("result"))}
+        if kind == "response.output_text.done" and isinstance(payload.get("text"), str):
+            done_texts.append(payload["text"])
+        if kind == "response.output_text.delta" and isinstance(payload.get("delta"), str):
+            deltas.append(payload["delta"])
+    source = "terminal_response" if final_texts else "completed_text" if done_texts else "delta_only" if deltas else "none"
+    texts = final_texts or done_texts or (["".join(deltas)] if deltas else [])
+    texts = list(dict.fromkeys(texts))
+    assistant = "\n".join(texts)
+    lower = assistant.lower().replace("\u2019", "'")
+    phrases = {"cannot_help": "cannot help", "cant_help": "can't help", "cannot_generate": "cannot generate",
+               "unable_generate": "unable to generate", "cant_generate": "can't generate",
+               "zh_cannot_generate": "无法生成", "zh_cannot_provide": "不能提供", "zh_cannot_assist": "无法帮助"}
+    phrase_labels = sorted(label for label, phrase in phrases.items() if phrase in lower)
+    counts = {}
+    for node in tool_states.values():
+        label = node["status"]
+        counts[label] = counts.get(label, 0) + 1
+    return {"response_status": terminal_status,
+            "terminal_event_counts": {name: event_counts[name] for name in
+                ("response.completed", "response.failed", "response.incomplete", "response.cancelled") if event_counts.get(name)},
+            "image_tool_status_counts": counts,
+            "image_tool_result_present_count": sum(node["result_present"] for node in tool_states.values()),
+            "safe_error_codes": sorted(codes), "unknown_error_code_present": unknown_code,
+            "assistant_text_present": bool(assistant), "assistant_text_characters": len(assistant),
+            "assistant_text_sha256": hashlib.sha256(assistant.encode("utf-8")).hexdigest() if assistant else None,
+            "assistant_capture_source": source, "assistant_unique_complete_texts": len(texts),
+            "explicit_rejection_observed": explicit_refusal, "possible_rejection_phrase_labels": phrase_labels,
+            "rejection_state": "explicit_refusal" if explicit_refusal else "possible_text_rejection" if phrase_labels else "unknown",
+            "raw_assistant_error_prompt_or_image_payload_saved": False}
+
+
 def parse_sse_json_payloads(text: str) -> tuple[list[dict], dict]:
     events = parse_sse_events(text)
     payloads = []
@@ -706,6 +779,8 @@ def parse_sse_json_payloads(text: str) -> tuple[list[dict], dict]:
             invalid_json_count += 1
             continue
         if isinstance(value, dict):
+            if not value.get("type") and event_name in {"error", "response.completed", "response.failed", "response.incomplete", "response.cancelled"}:
+                value = {**value, "type": event_name}
             payloads.append(value)
         else:
             payloads.append({"value": value})
@@ -716,6 +791,10 @@ def parse_sse_json_payloads(text: str) -> tuple[list[dict], dict]:
         "sse_invalid_json_count": invalid_json_count,
         "sse_done_count": done_count,
     }
+    try:
+        diagnostics["sse_terminal_evidence"] = sse_terminal_evidence(payloads, event_counts)
+    except Exception:
+        diagnostics["sse_terminal_evidence"] = {"extraction_failed": True}
     if payloads:
         diagnostics["sse_first_payload_shape"] = json_shape_diagnostics(payloads[0])
         diagnostics["sse_last_payload_shape"] = json_shape_diagnostics(payloads[-1])
@@ -725,8 +804,14 @@ def parse_sse_json_payloads(text: str) -> tuple[list[dict], dict]:
 def parsed_sse_image_response(text: str) -> tuple[dict | None, dict]:
     payloads, diagnostics = parse_sse_json_payloads(text)
     items = []
+    seen = set()
     for payload in payloads:
-        items.extend(response_image_items(payload))
+        for item in response_image_items(payload):
+            kind = "b64_json" if item.get("b64_json") else "url"
+            identity = (kind, hashlib.sha256(item[kind].strip().encode("utf-8")).hexdigest())
+            if identity not in seen:
+                seen.add(identity)
+                items.append(item)
     diagnostics["sse_image_item_count"] = len(items)
     if not items:
         return None, diagnostics
@@ -810,9 +895,31 @@ def decode_json_or_sse_response(
             diagnostics.update(sse_diagnostics)
             if parsed:
                 diagnostics["error_kind"] = "sse_stream_parsed"
+                # Successful streams may echo prompts, instructions and image bytes.
+                # Export structural diagnostics only, never raw payload previews.
+                diagnostics.pop("body_preview", None)
+                for key in ("sse_first_payload_shape", "sse_last_payload_shape"):
+                    if isinstance(diagnostics.get(key), dict):
+                        diagnostics[key].pop("json_preview", None)
                 parsed["_cm_sse_diagnostics"] = diagnostics
                 return attach_partial_response_metadata(parsed, partial_diagnostics)
             diagnostics["error_kind"] = "sse_stream_without_image_items"
+            if partial_diagnostics:
+                exception_class = partial_diagnostics.get("read_exception_type")
+                safe_exception_classes = {
+                    "OSError", "TimeoutError", "ConnectionResetError", "ConnectionAbortedError",
+                    "ConnectionRefusedError", "BrokenPipeError", "IncompleteRead", "RemoteDisconnected",
+                    "ReadTimeout", "ReadTimeoutError", "ConnectTimeout", "ConnectionError",
+                    "ChunkedEncodingError", "SSLError", "ProtocolError", "ContentDecodingError",
+                }
+                diagnostics["partial_read_evidence"] = {
+                    "exception_class": exception_class if isinstance(exception_class, str)
+                        and exception_class in safe_exception_classes else "other_or_missing",
+                    "partial_bytes": len(raw_bytes),
+                }
+            # This failure path exports lifecycle facts, not response-body previews.
+            for key in ("body_preview", "sse_first_payload_shape", "sse_last_payload_shape"):
+                diagnostics.pop(key, None)
             raise ImageApiError(
                 f"{provider.name} Images API returned SSE but no image items: {exc}",
                 status=status,
@@ -1228,7 +1335,25 @@ def maybe_poll_async_result(
 
 
 def is_policy_or_safety_error(exc: ImageApiError) -> bool:
-    if exc.status and exc.status >= 500:
+    terminal = exc.diagnostics.get("sse_terminal_evidence", {})
+    policy_codes = {"content_policy_violation", "moderation_blocked", "safety_violation"}
+    if terminal.get("explicit_rejection_observed") or policy_codes.intersection(terminal.get("safe_error_codes", [])):
+        return True
+    try:
+        body = json.loads(exc.raw or "")
+    except (ValueError, TypeError):
+        body = None
+    if isinstance(body, dict):
+        for node in (body, body.get("response", {})):
+            if not isinstance(node, dict):
+                continue
+            error = node.get("error", {})
+            if isinstance(error, dict) and (error.get("code") in policy_codes or error.get("type") in policy_codes):
+                return True
+            if node.get("type") == "error" and node.get("code") in policy_codes:
+                return True
+    # Structured rejection evidence wins even when the gateway returns 5xx.
+    if exc.diagnostics.get("error_kind") in {"sse_stream_without_image_items", "json_response_without_image_items"}:
         return False
     raw_text = f"{exc.raw or ''} {exc.message or ''}"
     if "<html" in raw_text[:2000].lower():
@@ -1252,9 +1377,30 @@ def is_policy_or_safety_error(exc: ImageApiError) -> bool:
     return any(marker in raw for marker in policy_markers)
 
 
-def should_retry_fallback_transport(exc: ImageApiError) -> bool:
+def should_retry_primary_transport(exc: ImageApiError) -> bool:
     raw = f"{exc.raw or ''} {exc.message or ''}".lower()
     if is_policy_or_safety_error(exc):
+        return False
+    if exc.status in {400, 401, 403, 404, 409, 422}:
+        return False
+    terminal = exc.diagnostics.get("sse_terminal_evidence", {})
+    if terminal.get("possible_rejection_phrase_labels") or "invalid_request_error" in terminal.get("safe_error_codes", []):
+        return False
+    if exc.diagnostics.get("pending_image_result"):
+        return False
+    if exc.diagnostics.get("error_kind") in {"sse_stream_without_image_items", "json_response_without_image_items"}:
+        states = terminal.get("image_tool_status_counts", {})
+        ended = terminal.get("response_status") in {"completed", "failed", "cancelled"}
+        active = any(states.get(state) for state in ("in_progress", "queued", "generating"))
+        zero_results = terminal.get("image_tool_result_present_count", 0) == 0
+        if ended and zero_results and not active:
+            if states.get("failed") or {"server_error", "rate_limit_exceeded"}.intersection(terminal.get("safe_error_codes", [])):
+                return True
+        # A complete empty compatibility result is a failed result, not an active job.
+        return bool(exc.diagnostics.get("empty_compat_result"))
+    if "partial_read" in exc.diagnostics.get("error_kind", "") or exc.diagnostics.get("partial_read_evidence"):
+        return False
+    if exc.diagnostics.get("error_kind") in {"images_read_error", "responses_read_error", "poll_url_error", "poll_os_error"}:
         return False
     transient_markers = (
         "timed out",
@@ -1264,21 +1410,42 @@ def should_retry_fallback_transport(exc: ImageApiError) -> bool:
         "remote end closed connection without response",
         "temporarily unavailable",
     )
-    if exc.status in {408, 409, 429, 500, 502, 503, 504}:
+    if exc.status in {408, 429, 500, 502, 503, 504}:
         return True
     return any(marker in raw for marker in transient_markers)
 
 
-def should_retry_primary_transport(exc: ImageApiError) -> bool:
-    return should_retry_fallback_transport(exc)
+def require_image_result(result: ProviderRequestResult, provider: ImageApiProvider) -> None:
+    """Classify complete JSON without an image inside the retry loop."""
+    if response_image_items(result.data):
+        return
+    data = result.data
+    status = data.get("status")
+    event = f"response.{status}" if status in {"completed", "failed", "incomplete", "cancelled"} else "response.in_progress"
+    terminal = sse_terminal_evidence([{"type": event, "response": data}], {event: 1})
+    states = [value.lower() for _key, value in collect_string_fields(data, {"status", "state"})]
+    diagnostics = {
+        "error_kind": "json_response_without_image_items",
+        "request_url": result.request_url,
+        "sse_terminal_evidence": terminal,
+        "pending_image_result": any(value in {"in_progress", "queued", "generating", "pending", "processing", "running"} for value in states),
+        "empty_compat_result": data.get("data") == [] and not states and not data.get("error"),
+    }
+    raise ImageApiError("Image API returned a JSON response without image items.", provider=provider.name, diagnostics=diagnostics)
 
 
-def should_try_fallback(exc: ImageApiError) -> bool:
-    if is_policy_or_safety_error(exc):
-        return False
-    if exc.status in {400, 401, 403, 404, 422}:
-        return False
-    return True
+def retry_delay(attempt: int) -> None:
+    time.sleep(PRIMARY_RETRY_DELAYS_SECONDS[min(attempt - 1, len(PRIMARY_RETRY_DELAYS_SECONDS) - 1)])
+
+
+def retry_attempt_count(value: str) -> int:
+    try:
+        count = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--max-attempts must be an integer from 1 to 5") from exc
+    if not 1 <= count <= 5:
+        raise argparse.ArgumentTypeError("--max-attempts must be an integer from 1 to 5")
+    return count
 
 
 def format_provider_failures(failures: list[dict]) -> str:
@@ -1312,9 +1479,6 @@ def cli_provider_label(provider: ImageApiProvider | str) -> str:
 
 
 def cli_channel_label(provider: ImageApiProvider | str) -> str:
-    name = provider_name_value(provider)
-    if name == "fallback":
-        return "compatibility_fallback_api"
     return "configured_provider"
 
 
@@ -1823,13 +1987,14 @@ def request_compat_with_provider(
     multipart: dict | None = None,
     *,
     phase: str = "request",
-    retry_attempts: int = FALLBACK_EXTRA_RETRY_ATTEMPTS,
+    retry_attempts: int = 0,
 ) -> tuple[dict, ImageApiProvider, str, str, str, list[dict]]:
     endpoint = image_endpoint_path(command)
     failures = []
     for attempt in range(1, retry_attempts + 2):
         try:
             result = request_provider(provider, command, endpoint, payload, timeout, multipart)
+            require_image_result(result, provider)
             return result.data, provider, result.endpoint, result.transport, result.request_url, failures
         except ImageApiError as exc:
             failures.append(
@@ -1845,47 +2010,12 @@ def request_compat_with_provider(
                     diagnostics=exc.diagnostics,
                 )
             )
-            if attempt <= retry_attempts and should_retry_fallback_transport(exc):
+            if attempt <= retry_attempts and should_retry_primary_transport(exc):
+                retry_delay(attempt)
                 continue
+            exc.attempt_failures = failures
             raise
     raise ImageApiError("Compatibility image request failed without an error record.")
-
-
-def request_fallback_compat(
-    command: str,
-    payload: dict,
-    timeout: int,
-    multipart: dict | None = None,
-) -> tuple[dict, ImageApiProvider, str, str, str, list[dict]]:
-    try:
-        provider = load_fallback_provider()
-    except SystemExit as exc:
-        raise ImageApiError(str(exc))
-    try:
-        return request_compat_with_provider(
-            provider,
-            command,
-            payload,
-            timeout,
-            multipart,
-            phase="fallback_call",
-            retry_attempts=FALLBACK_EXTRA_RETRY_ATTEMPTS,
-        )
-    except ImageApiError as exc:
-        failures = [
-            failure_record(
-                provider.name,
-                provider.base_url,
-                "fallback_call",
-                None,
-                exc.message,
-                exc.status,
-                endpoint=image_endpoint_path(command),
-                transport="images_multipart" if command == "edit" else "images_json",
-                diagnostics=exc.diagnostics,
-            )
-        ]
-        raise SystemExit(format_provider_failures(failures))
 
 
 def request_with_retry(
@@ -1893,6 +2023,8 @@ def request_with_retry(
     compat_payload: dict,
     timeout: int,
     multipart: dict | None = None,
+    *,
+    max_attempts: int = PRIMARY_EXTRA_RETRY_ATTEMPTS + 1,
 ) -> tuple[dict, ImageApiProvider, str, str, str, list[dict]]:
     primary, _provider_name = configured_provider()
     failures = []
@@ -1904,9 +2036,11 @@ def request_with_retry(
             timeout,
             multipart,
             phase="primary_compat_call",
-            retry_attempts=PRIMARY_EXTRA_RETRY_ATTEMPTS,
+            retry_attempts=max_attempts - 1,
         )
     except ImageApiError as exc:
+        if exc.attempt_failures:
+            raise SystemExit(format_provider_failures(exc.attempt_failures))
         failures.append(
             failure_record(
                 primary.name,
@@ -1927,13 +2061,16 @@ def request_with_retry(
 def request_responses_with_retry(
     payload: dict,
     timeout: int,
+    *,
+    max_attempts: int = PRIMARY_EXTRA_RETRY_ATTEMPTS + 1,
 ) -> tuple[dict, ImageApiProvider, str, str, str, list[dict]]:
     provider, _provider_name = configured_provider()
     failures = []
     endpoint = "/responses"
-    for attempt in range(1, PRIMARY_EXTRA_RETRY_ATTEMPTS + 2):
+    for attempt in range(1, max_attempts + 1):
         try:
             result = request_responses_provider(provider, payload, timeout)
+            require_image_result(result, provider)
             return result.data, provider, result.endpoint, result.transport, result.request_url, failures
         except ImageApiError as exc:
             failures.append(
@@ -1950,7 +2087,8 @@ def request_responses_with_retry(
                     api_channel="configured_provider_responses",
                 )
             )
-            if attempt <= PRIMARY_EXTRA_RETRY_ATTEMPTS and should_retry_primary_transport(exc):
+            if attempt < max_attempts and should_retry_primary_transport(exc):
+                retry_delay(attempt)
                 continue
             raise SystemExit(format_provider_failures(failures))
     raise SystemExit(format_provider_failures(failures))
@@ -2039,6 +2177,91 @@ def decode_base64_image(value: str) -> bytes:
     return base64.b64decode(b64)
 
 
+def parse_requested_size(value: str | None) -> tuple[int, int] | None:
+    """Parse an API size such as ``3840x2160`` without changing its value."""
+    if not isinstance(value, str):
+        return None
+    match = re.fullmatch(r"\s*(\d+)\s*[xX]\s*(\d+)\s*", value)
+    if not match:
+        return None
+    width, height = (int(part) for part in match.groups())
+    if width <= 0 or height <= 0:
+        return None
+    return width, height
+
+
+def parse_image_dimensions(raw: bytes) -> tuple[int, int] | None:
+    """Read actual file dimensions; never transform or resample image bytes."""
+    if not isinstance(raw, (bytes, bytearray, memoryview)):
+        return None
+    data = bytes(raw)
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        # PNG IHDR is always first, has 13 data bytes and a 4-byte CRC.
+        if len(data) < 33 or data[8:12] != b"\x00\x00\x00\x0d" or data[12:16] != b"IHDR":
+            return None
+        width = int.from_bytes(data[16:20], "big")
+        height = int.from_bytes(data[20:24], "big")
+        return (width, height) if width > 0 and height > 0 else None
+    try:
+        from PIL import Image
+        with Image.open(io.BytesIO(data)) as image:
+            width, height = image.size
+        return (int(width), int(height)) if width > 0 and height > 0 else None
+    except Exception:
+        # Strict mode fails closed when a format cannot be inspected.
+        return None
+
+
+def image_dimensions(path: Path) -> tuple[int, int] | None:
+    """Read dimensions from a saved output path; unreadable files return None."""
+    try:
+        return parse_image_dimensions(path.read_bytes())
+    except OSError:
+        return None
+
+
+def exact_size_is_required(requested_size: str | None, explicit: bool = False) -> bool:
+    """Strictly verify explicit opt-in and native 4K-or-larger requests."""
+    requested = parse_requested_size(requested_size)
+    if explicit or requested is None:
+        return bool(explicit)
+    width, height = requested
+    return max(width, height) >= FOUR_K_WIDTH or width * height >= FOUR_K_WIDTH * FOUR_K_HEIGHT
+
+
+def validate_output_sizes(
+    paths: list[Path], requested_size: str | None, *, require_exact: bool = False
+) -> dict:
+    """Inspect files and return serializable size metadata and diagnostics."""
+    expected = parse_requested_size(requested_size)
+    dimensions: list[str | None] = []
+    warnings: list[dict] = []
+    for path in paths:
+        actual = image_dimensions(path)
+        dimensions.append(f"{actual[0]}x{actual[1]}" if actual else None)
+        if actual is None:
+            warnings.append({"path": str(path.resolve()), "warning": "image_dimensions_unreadable"})
+        elif expected and actual != expected:
+            warnings.append({
+                "path": str(path.resolve()),
+                "warning": "image_size_mismatch",
+                "expected": f"{expected[0]}x{expected[1]}",
+                "actual": f"{actual[0]}x{actual[1]}",
+            })
+    if require_exact and expected is None:
+        warnings.append({"warning": "exact_size_requires_explicit_dimensions"})
+    mismatch = bool(warnings)
+    strict_failure = bool(require_exact and (not paths or mismatch))
+    return {
+        "requested_size": requested_size,
+        "output_dimensions": dimensions,
+        "size_verified": (bool(paths) and not mismatch) if expected else None,
+        "size_validation_warnings": warnings,
+        "size_validation_strict": bool(require_exact),
+        "size_validation_failed": strict_failure,
+    }
+
+
 def save_image_from_item(
     item: dict,
     out_dir: Path,
@@ -2076,8 +2299,80 @@ def save_image_from_item(
     return path
 
 
+def image_model_selection(args: argparse.Namespace) -> dict:
+    """Keep the image tool model independent from the Responses controller."""
+    requested = (getattr(args, "model", None) or "").strip()
+    env_model = os.environ.get("CODEXMANAGER_IMAGE_MODEL", "").strip()
+    raw = requested or env_model or DEFAULT_MODEL
+    # Version shorthand is only a candidate ID, not proof of provider support.
+    normalized = re.sub(r"[ _]+", "-", raw.strip().lower())
+    model = IMAGE_MODEL_ALIASES.get(normalized)
+    if model is None:
+        alias = re.fullmatch(r"(?:image|gpt)[ -]?(\d+(?:\.\d+)*)", raw, re.IGNORECASE)
+        model = f"gpt-image-{alias.group(1)}" if alias else raw
+    return {
+        "requested_model": requested or None,
+        "image_model": model,
+        "image_model_source": "cli" if requested else "environment" if env_model else "default",
+        "model_alias_applied": model != raw,
+    }
+
+
+def model_catalog_check(provider: ImageApiProvider, model: str) -> dict:
+    """Read-only preflight: never generate or silently substitute another model."""
+    url = f"{provider.base_url}/models"
+    req = urllib.request.Request(url, headers={
+        "Authorization": f"Bearer {provider.api_key}", "Accept": "application/json",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            data = json.load(response)
+        entries = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(entries, list):
+            raise ValueError("missing data list")
+        ids = sorted({item["id"] for item in entries
+                      if isinstance(item, dict) and isinstance(item.get("id"), str)})
+    except (OSError, ValueError) as exc:
+        # Do not expose response bodies, authorization headers or credentials.
+        return {"ok": False, "model": model, "status": "catalog_unavailable",
+                "error": f"Model catalog check failed ({type(exc).__name__}); no image request sent."}
+    found = model in ids
+    result = {"ok": found, "model": model, "status": "listed" if found else "not_listed",
+              "listed_models": ids}
+    if not found:
+        result["error"] = f"Image model {model!r} is not listed by this provider; no image request sent."
+    return result
+
+
+def is_loopback_provider(provider: ImageApiProvider) -> bool:
+    """Return True for a local gateway that owns its model/route catalog."""
+    try:
+        host = urllib.parse.urlparse(provider.base_url).hostname
+    except ValueError:
+        return False
+    return host in {"127.0.0.1", "localhost", "::1"}
+
+
 def image_payload(args: argparse.Namespace) -> tuple[dict, str]:
-    model = args.model or os.environ.get("CODEXMANAGER_IMAGE_MODEL") or DEFAULT_MODEL
+    selection = image_model_selection(args)
+    model = selection["image_model"]
+    # The Images API exposes the image model as its top-level `model`, so its
+    # catalog can be checked before submission. Responses is different: the
+    # top-level model is the mainline controller and the image model lives in
+    # tools[].model. Some OpenAI-compatible gateways intentionally list only
+    # mainline models at /models, so requiring the tool model to be listed
+    # would reject a valid Responses request before it reaches the gateway.
+    api = getattr(args, "api", "images")
+    if api != "responses" and (getattr(args, "check_model", False) or model != LEGACY_MODEL):
+        provider, _ = configured_provider()
+        # A local CodexManager gateway validates its own V2 model routes. Its
+        # /models response intentionally contains the mainline text catalog,
+        # not every image-only route, so do not reject a configured local
+        # image route solely because the tool model is absent from that list.
+        if getattr(args, "check_model", False) or not is_loopback_provider(provider):
+            check = model_catalog_check(provider, model)
+            if not check["ok"]:
+                raise SystemExit(check["error"])
     payload = {
         "model": model,
         "prompt": args.prompt,
@@ -2123,9 +2418,11 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
             "operation": operation,
             "api": "responses",
             "content_type": "application/json",
-            "top_level_fields": ["model", "input", "tools", "stream"],
-            "outer_model_source": "resolved_from_--responses-model_or_CODEXMANAGER_RESPONSES_MODEL_or_config",
+            "top_level_fields": ["model", "input", "tools", "tool_choice", "stream"] + (["reasoning"] if getattr(args, "responses_reasoning", None) else []),
+            "tool_choice": {"type": "image_generation"},
+            "outer_model_source": "resolved_from_cli_or_controller_profile_or_environment_or_config",
             "outer_model": configured_responses_model(args),
+            "reasoning_effort": getattr(args, "responses_reasoning", None),
             "stream": True,
             "prompt_text_included": prompt_present,
             "prompt_text_redacted": prompt_present,
@@ -2135,6 +2432,7 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
                 "type": "image_generation",
                 "model": model,
                 "size": getattr(args, "size", DEFAULT_SIZE),
+                "action": "generate",
             },
         }
         for field in ("quality", "background", "output_format"):
@@ -2188,48 +2486,10 @@ def provider_doctor_status(
     }
 
 
-def fallback_doctor_status(api: str, operations: list[str]) -> dict:
-    if api == "images":
-        usage_field = "used_for_default_route"
-        reason = DEFAULT_FALLBACK_DISABLED_REASON
-        route_api = "images"
-        route_operations = operations
-    else:
-        usage_field = "used_for_api"
-        reason = (
-            "Dedicated fallback compatibility provider is temporarily unavailable, "
-            "and explicit Responses route checks do not use it."
-        )
-        route_api = "images"
-        route_operations = []
-
-    try:
-        provider = load_fallback_provider()
-    except SystemExit as exc:
-        return {
-            "ok": False,
-            "configured": False,
-            usage_field: False,
-            "temporarily_unavailable": True,
-            "reason": reason,
-            "error": str(exc),
-        }
-
-    status = provider_doctor_status(
-        provider,
-        api_channel=cli_channel_label(provider),
-        api=route_api,
-        operations=route_operations,
-    )
-    status[usage_field] = False
-    status["temporarily_unavailable"] = True
-    status["reason"] = reason
-    return status
-
-
 def doctor(args: argparse.Namespace) -> int:
     operations = operation_names(args.operation)
-    model = args.model or os.environ.get("CODEXMANAGER_IMAGE_MODEL") or DEFAULT_MODEL
+    selection = image_model_selection(args)
+    model = selection["image_model"]
     show_payload_shape = bool(getattr(args, "show_payload_shape", False))
     result = {
         "ok": True,
@@ -2238,12 +2498,13 @@ def doctor(args: argparse.Namespace) -> int:
         "skill_primary_channel": "cm_image_gen_cli",
         "network_call_performed": False,
         "api": args.api,
-        "default_api": "images",
+        "default_api": controller_defaults().get("api", "responses"),
         "commands": operations,
         "image_model": model,
+        **selection,
+        "model_semantics": "Image model requested by the CLI; gateway Responses controller and actual upstream execution are separate.",
         "payload_shape_included": show_payload_shape,
         "codex_home": str(codex_home()),
-        "fallback_config_path": str(fallback_config_path()),
     }
     if show_payload_shape:
         result["payload_shapes"] = [
@@ -2251,12 +2512,7 @@ def doctor(args: argparse.Namespace) -> int:
         ]
     if args.api == "responses":
         result["responses_model"] = configured_responses_model(args)
-        result["fallback_note"] = (
-            "Dedicated fallback compatibility provider is temporarily unavailable for the default route. "
-            "Explicit Responses checks also do not use it."
-        )
-    else:
-        result["fallback_note"] = DEFAULT_FALLBACK_DISABLED_REASON
+        result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
 
     try:
         primary, _provider_name = configured_provider()
@@ -2267,6 +2523,19 @@ def doctor(args: argparse.Namespace) -> int:
             api=args.api,
             operations=operations,
         )
+        if getattr(args, "check_model", False):
+            result["network_call_performed"] = True
+            # For Responses, validate the top-level controller model. The
+            # image tool model is intentionally not required to appear in the
+            # gateway's mainline /models catalog.
+            catalog_model = (
+                configured_responses_model(args)
+                if args.api == "responses"
+                else model
+            )
+            result["model_catalog_check"] = model_catalog_check(primary, catalog_model)
+            result["model_catalog_check"]["image_tool_model"] = model
+            result["ok"] = result["model_catalog_check"]["ok"]
     except SystemExit as exc:
         result["ok"] = False
         result["configured_provider"] = {
@@ -2275,7 +2544,6 @@ def doctor(args: argparse.Namespace) -> int:
             "error": str(exc),
         }
 
-    result["fallback_provider"] = fallback_doctor_status(args.api, operations)
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["ok"] else 1
@@ -2290,8 +2558,6 @@ def transport_probe_client_names(value: str) -> list[str]:
 
 
 def transport_probe_provider(args: argparse.Namespace) -> ImageApiProvider:
-    if args.provider == "fallback":
-        return load_fallback_provider()
     provider, _provider_name = configured_provider()
     return provider
 
@@ -2452,7 +2718,7 @@ def transport_probe(args: argparse.Namespace) -> int:
         "skill_primary_channel": "cm_image_gen_cli",
         "execution_channel": "cm_image_gen_cli",
         "api": "images",
-        "probe_provider": args.provider,
+        "probe_provider": "configured",
         "endpoint": endpoint,
         "command": command,
         "model": model,
@@ -2474,6 +2740,7 @@ def generate(args: argparse.Namespace) -> int:
         data, provider, endpoint, transport, request_url, previous_errors = request_responses_with_retry(
             responses_payload_data,
             args.timeout,
+            max_attempts=getattr(args, "max_attempts", PRIMARY_EXTRA_RETRY_ATTEMPTS + 1),
         )
         api_channel = "configured_provider_responses"
     else:
@@ -2481,6 +2748,7 @@ def generate(args: argparse.Namespace) -> int:
             "generate",
             payload,
             args.timeout,
+            max_attempts=getattr(args, "max_attempts", PRIMARY_EXTRA_RETRY_ATTEMPTS + 1),
         )
         api_channel = cli_channel_label(provider)
     items = response_image_items(data)
@@ -2496,17 +2764,22 @@ def generate(args: argparse.Namespace) -> int:
         )
     out_dir = Path(args.out_dir) if args.out_dir else output_dir()
     paths = [save_image_from_item(item, out_dir, args.filename, index, provider) for index, item in enumerate(items)]
+    size_check = validate_output_sizes(
+        paths,
+        args.size,
+        require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)),
+    )
     result = {
-        "ok": True,
+        "ok": not size_check["size_validation_failed"],
         "operation": "generate",
+        "attempt_count": len(previous_errors) + 1,
+        **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
         "execution_channel": "cm_image_gen_cli",
         "api_channel": api_channel,
         "api_provider": cli_provider_label(provider),
-        "api_fallback_used": provider.name == "fallback",
         "request_url": request_url,
         "provider": provider.name,
-        "fallback_used": provider.name == "fallback",
         "base_url": provider.base_url,
         "endpoint": endpoint,
         "transport": transport,
@@ -2514,9 +2787,13 @@ def generate(args: argparse.Namespace) -> int:
         "paths": [str(path.resolve()) for path in paths],
         "usage": data.get("usage"),
         "created": data.get("created"),
+        **size_check,
     }
+    if size_check["size_validation_failed"]:
+        result["error_kind"] = "image_size_mismatch"
     if responses_model:
         result["responses_model"] = responses_model
+        result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
         result["image_tool_model"] = model
     if data.get("_cm_sse_parsed"):
         result["parsed_sse_stream"] = True
@@ -2530,7 +2807,7 @@ def generate(args: argparse.Namespace) -> int:
     if previous_errors:
         result["previous_errors"] = previous_errors
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
+    return 0 if result["ok"] else 1
 
 
 def edit(args: argparse.Namespace) -> int:
@@ -2559,6 +2836,7 @@ def edit(args: argparse.Namespace) -> int:
         data, provider, endpoint, transport, request_url, previous_errors = request_responses_with_retry(
             responses_payload_data,
             args.timeout,
+            max_attempts=getattr(args, "max_attempts", PRIMARY_EXTRA_RETRY_ATTEMPTS + 1),
         )
         api_channel = "configured_provider_responses"
     else:
@@ -2567,6 +2845,7 @@ def edit(args: argparse.Namespace) -> int:
             payload,
             args.timeout,
             {"fields": multipart_fields, "files": multipart_files},
+            max_attempts=getattr(args, "max_attempts", PRIMARY_EXTRA_RETRY_ATTEMPTS + 1),
         )
         api_channel = cli_channel_label(provider)
     items = response_image_items(data)
@@ -2582,17 +2861,22 @@ def edit(args: argparse.Namespace) -> int:
         )
     out_dir = Path(args.out_dir) if args.out_dir else output_dir()
     paths = [save_image_from_item(item, out_dir, args.filename, index, provider) for index, item in enumerate(items)]
+    size_check = validate_output_sizes(
+        paths,
+        args.size,
+        require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)),
+    )
     result = {
-        "ok": True,
+        "ok": not size_check["size_validation_failed"],
         "operation": "edit",
+        "attempt_count": len(previous_errors) + 1,
+        **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
         "execution_channel": "cm_image_gen_cli",
         "api_channel": api_channel,
         "api_provider": cli_provider_label(provider),
-        "api_fallback_used": provider.name == "fallback",
         "request_url": request_url,
         "provider": provider.name,
-        "fallback_used": provider.name == "fallback",
         "base_url": provider.base_url,
         "endpoint": endpoint,
         "transport": transport,
@@ -2601,9 +2885,13 @@ def edit(args: argparse.Namespace) -> int:
         "paths": [str(path.resolve()) for path in paths],
         "usage": data.get("usage"),
         "created": data.get("created"),
+        **size_check,
     }
+    if size_check["size_validation_failed"]:
+        result["error_kind"] = "image_size_mismatch"
     if responses_model:
         result["responses_model"] = responses_model
+        result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
         result["image_tool_model"] = model
     if data.get("_cm_sse_parsed"):
         result["parsed_sse_stream"] = True
@@ -2617,19 +2905,19 @@ def edit(args: argparse.Namespace) -> int:
     if previous_errors:
         result["previous_errors"] = previous_errors
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
+    return 0 if result["ok"] else 1
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate images through CodexManager Images/Responses APIs.")
+    parser = argparse.ArgumentParser(description="Generate and edit images through the configured Sub2API/OpenAI-compatible provider.")
     sub = parser.add_subparsers(dest="command", required=True)
     gen = sub.add_parser("generate")
     gen.add_argument("--prompt", required=True)
     gen.add_argument(
         "--api",
         choices=["images", "responses"],
-        default="images",
-        help="HTTP API route to use. Default: images compatibility endpoint (/images/generations).",
+        default="responses",
+        help="HTTP API route to use. Default: Responses API with the image_generation tool.",
     )
     gen.add_argument("--model")
     gen.add_argument("--responses-model")
@@ -2644,7 +2932,13 @@ def main() -> int:
     gen.add_argument("--quality")
     gen.add_argument("--background")
     gen.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    gen.add_argument(
+        "--require-exact-size", action="store_true",
+        help="Fail when decoded output dimensions do not equal --size (4K requests are strict automatically).",
+    )
     gen.add_argument("--timeout", type=int, default=600)
+    gen.add_argument("--max-attempts", type=retry_attempt_count, default=PRIMARY_EXTRA_RETRY_ATTEMPTS + 1,
+                     help="Maximum image submissions, including the first (1-5; default 3).")
     gen.set_defaults(func=generate)
     edit_parser = sub.add_parser("edit")
     edit_parser.add_argument("--prompt", required=True)
@@ -2653,8 +2947,8 @@ def main() -> int:
     edit_parser.add_argument(
         "--api",
         choices=["images", "responses"],
-        default="images",
-        help="HTTP API route to use. Default: images compatibility endpoint (/images/edits).",
+        default="responses",
+        help="HTTP API route to use. Default: Responses API with image inputs and the image_generation tool.",
     )
     edit_parser.add_argument("--model")
     edit_parser.add_argument("--responses-model")
@@ -2669,10 +2963,16 @@ def main() -> int:
     edit_parser.add_argument("--quality")
     edit_parser.add_argument("--background")
     edit_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    edit_parser.add_argument(
+        "--require-exact-size", action="store_true",
+        help="Fail when decoded output dimensions do not equal --size (4K requests are strict automatically).",
+    )
     edit_parser.add_argument("--timeout", type=int, default=600)
+    edit_parser.add_argument("--max-attempts", type=retry_attempt_count, default=PRIMARY_EXTRA_RETRY_ATTEMPTS + 1,
+                             help="Maximum image submissions, including the first (1-5; default 3).")
     edit_parser.set_defaults(func=edit)
     doctor_parser = sub.add_parser("doctor")
-    doctor_parser.add_argument("--api", choices=["images", "responses"], default="images")
+    doctor_parser.add_argument("--api", choices=["images", "responses"], default="responses")
     doctor_parser.add_argument("--operation", choices=["generate", "edit", "all"], default="all")
     doctor_parser.add_argument("--model")
     doctor_parser.add_argument("--responses-model")
@@ -2685,7 +2985,7 @@ def main() -> int:
     doctor_parser.add_argument("--show-payload-shape", action="store_true")
     doctor_parser.set_defaults(func=doctor)
     check_parser = sub.add_parser("check-config")
-    check_parser.add_argument("--api", choices=["images", "responses"], default="images")
+    check_parser.add_argument("--api", choices=["images", "responses"], default="responses")
     check_parser.add_argument("--operation", choices=["generate", "edit", "all"], default="all")
     check_parser.add_argument("--model")
     check_parser.add_argument("--responses-model")
@@ -2699,7 +2999,6 @@ def main() -> int:
     check_parser.set_defaults(func=doctor)
     probe_parser = sub.add_parser("transport-probe")
     probe_parser.add_argument("--operation", choices=["generate", "edit"], required=True)
-    probe_parser.add_argument("--provider", choices=["configured", "fallback"], default="fallback")
     probe_parser.add_argument("--client", choices=["urllib", "requests", "both"], default="both")
     probe_parser.add_argument("--prompt", required=True)
     probe_parser.add_argument("--image", action="append")
@@ -2716,6 +3015,14 @@ def main() -> int:
     probe_parser.add_argument("--timeout", type=int, default=600)
     probe_parser.add_argument("--save-images", action="store_true")
     probe_parser.set_defaults(func=transport_probe)
+    for command_parser in (gen, edit_parser, doctor_parser, check_parser, probe_parser):
+        command_parser.add_argument(
+            "--check-model", action="store_true",
+            help="Read GET /models and require the image model to be listed before sending an image request.",
+        )
+    for command_parser in (gen, edit_parser, doctor_parser, check_parser):
+        command_parser.add_argument("--responses-reasoning", choices=["low", "medium", "high", "xhigh", "max", "ultra"])
+        command_parser.set_defaults(**controller_defaults())
     args = parser.parse_args()
     return args.func(args)
 

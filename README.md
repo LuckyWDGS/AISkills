@@ -13,7 +13,7 @@ Choose by intent:
 
 - Plan a product feature or UI flow: `feature-experience` first; use
   `ui-from-design` when an accepted design image already exists.
-- Generate or edit images: `cm-imagegen`; use `image-generation-director` for
+- Generate or edit images: [cm-imagegen](skills/cm-imagegen/README.md) (standalone, single-provider Sub2API support); use `image-generation-director` for
   prompt direction, trend/content strategy, or image-to-video planning; use
   `mentalout-image-browser` only when Mentalout/Snow AI is explicitly named.
 - Build characters, storyboards, voice, or VFX assets: combine

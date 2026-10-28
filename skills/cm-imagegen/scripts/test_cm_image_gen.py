@@ -2,6 +2,7 @@ import argparse
 import contextlib
 import io
 import json
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,7 +12,6 @@ import cm_image_gen as cm
 
 
 PRIMARY = cm.ImageApiProvider("primary", "https://primary.example/v1", "primary-key")
-FALLBACK = cm.ImageApiProvider("fallback", "https://fallback.example/v1", "fallback-key")
 
 
 class FakeResponse:
@@ -68,6 +68,111 @@ class FakeRequestsResponse:
 
 
 class CmImageGenOfflineTests(unittest.TestCase):
+    def setUp(self):
+        self.stack = contextlib.ExitStack()
+        self.addCleanup(self.stack.close)
+        root = Path(self.stack.enter_context(tempfile.TemporaryDirectory()))
+        (root / "config.toml").write_text('model_provider="offline"\n[model_providers.offline]\nbase_url="http://127.0.0.1:1/v1"\n', encoding="utf-8")
+        self.stack.enter_context(mock.patch.object(cm, "codex_home", return_value=root))
+        self.stack.enter_context(mock.patch.dict(cm.os.environ, {"CODEXMANAGER_IMAGE_API_KEY": "offline-test-only"}, clear=True))
+        self.stack.enter_context(mock.patch.object(cm.urllib.request, "urlopen", side_effect=AssertionError("Unexpected network request in offline test")))
+
+    def test_sol_ultra_controller_keeps_sunburst_tool(self):
+        args = argparse.Namespace(responses_model="gpt-6.1-sol", responses_reasoning="ultra",
+                                  prompt="draw a circle", size="1024x1024", quality="high",
+                                  background=None, output_format=None, tools=None,
+                                  instructions=None, responses_extra=None)
+        payload, controller = cm.responses_payload(args, "gpt-image-2.5-sunburst")
+        self.assertEqual(controller, "gpt-6.1-sol")
+        self.assertEqual(payload["reasoning"]["effort"], "ultra")
+        self.assertEqual(payload["tools"][0]["model"], "gpt-image-2.5-sunburst")
+        self.assertEqual(payload["tools"][0]["action"], "generate")
+
+    def test_ultra_profile_defaults_and_explicit_cli_override(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            profile = Path(tmp) / cm.LOCAL_CONFIG_DIR_NAME / "controller.json"
+            profile.parent.mkdir(parents=True)
+            profile.write_text(json.dumps({"api": "responses", "responses_model": "gpt-6.1-sol",
+                                           "responses_reasoning": "ultra"}), encoding="utf-8")
+            with mock.patch.object(cm, "codex_home", return_value=Path(tmp)):
+                for command, extra in (("generate", ["--prompt", "circle"]),
+                                       ("edit", ["--prompt", "circle", "--image", "reference.png"]),
+                                       ("doctor", []), ("check-config", [])):
+                    function = "doctor" if command == "check-config" else command
+                    with self.subTest(command=command), mock.patch.object(cm, function, return_value=0) as execute:
+                        with mock.patch.object(sys, "argv", ["cm_image_gen.py", command, *extra]):
+                            self.assertEqual(cm.main(), 0)
+                        args = execute.call_args.args[0]
+                        self.assertEqual((args.api, args.responses_model, args.responses_reasoning),
+                                         ("responses", "gpt-6.1-sol", "ultra"))
+                        with mock.patch.object(sys, "argv", ["cm_image_gen.py", command, *extra,
+                                               "--responses-model", "gpt-5.6-luna", "--responses-reasoning", "max"]):
+                            self.assertEqual(cm.main(), 0)
+                        args = execute.call_args.args[0]
+                        self.assertEqual((args.responses_model, args.responses_reasoning), ("gpt-5.6-luna", "max"))
+
+    def test_luna_max_controller_keeps_image2_tool(self):
+        args = argparse.Namespace(responses_model="gpt-5.6-luna", responses_reasoning="max",
+                                  prompt="draw a circle", size="1024x1024", quality="low",
+                                  background=None, output_format=None, tools=None,
+                                  instructions=None, responses_extra=None)
+        payload, controller = cm.responses_payload(args, "gpt-image-2")
+        self.assertEqual(controller, "gpt-5.6-luna")
+        self.assertEqual(payload["reasoning"]["effort"], "max")
+        self.assertEqual(payload["tools"][0]["model"], "gpt-image-2")
+        self.assertEqual(payload["tool_choice"], {"type": "image_generation"})
+        self.assertEqual(payload["tools"][0]["action"], "generate")
+
+    def test_image_model_is_independent_of_conversation_model(self):
+        with mock.patch.dict(cm.os.environ, {}, clear=True):
+            with mock.patch.object(cm, "load_codex_config", return_value={"model": "gpt-5.4-mini"}):
+                self.assertEqual(cm.image_model_selection(argparse.Namespace(model=None))["image_model"], "gpt-image-2.5-sunburst")
+
+    def test_explicit_image_model_and_shorthand_precedence(self):
+        with mock.patch.dict(cm.os.environ, {"CODEXMANAGER_IMAGE_MODEL": "gpt-image-1"}):
+            for name in ("Image2", "image-2", "gpt2", "gpt-image-2"):
+                selected = cm.image_model_selection(argparse.Namespace(model=name))
+                self.assertEqual(selected["image_model"], "gpt-image-2")
+                self.assertEqual(selected["image_model_source"], "cli")
+            selected = cm.image_model_selection(argparse.Namespace(model="image2.5"))
+            self.assertEqual(selected["image_model"], "gpt-image-2.5-sunburst")
+            self.assertTrue(selected["model_alias_applied"])
+            flare = cm.image_model_selection(argparse.Namespace(model="image2.5-flare"))
+            self.assertEqual(flare["image_model"], "gpt-image-2.5-flare")
+            snapshot = cm.image_model_selection(argparse.Namespace(model="gpt-image-2.5-sunburst-2026-09-08"))
+            self.assertEqual(snapshot["image_model"], "gpt-image-2.5-sunburst-2026-09-08")
+            self.assertFalse(snapshot["model_alias_applied"])
+            self.assertEqual(cm.image_model_selection(argparse.Namespace(model="vendor-custom-image"))["image_model"], "vendor-custom-image")
+
+    def test_model_catalog_does_not_claim_unlisted_model_is_supported(self):
+        response = FakeResponse([json.dumps({"data": [{"id": "gpt-image-2"}]}).encode()])
+        with mock.patch.object(cm.urllib.request, "urlopen", return_value=response) as request:
+            result = cm.model_catalog_check(PRIMARY, "gpt-image-2.5-sunburst")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["status"], "not_listed")
+        self.assertEqual(request.call_args.args[0].get_method(), "GET")
+        self.assertEqual(request.call_args.args[0].full_url, "https://primary.example/v1/models")
+
+    def test_unknown_version_alias_stops_before_image_submission(self):
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), \
+             mock.patch.object(cm, "model_catalog_check", return_value={"ok": False, "error": "not listed"}), \
+             mock.patch.object(cm, "request_with_retry") as send:
+            with self.assertRaisesRegex(SystemExit, "not listed"):
+                cm.generate(argparse.Namespace(model="gpt2.5"))
+            send.assert_not_called()
+
+    def test_explicit_model_roundtrips_json_multipart_and_responses_tool(self):
+        args = argparse.Namespace(model="gpt-image-2.5-sunburst", prompt="test", size="1024x1024",
+                                  response_format="b64_json", n=None, quality=None,
+                                  background=None, output_format=None, tools=None)
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), \
+             mock.patch.object(cm, "model_catalog_check", return_value={"ok": True}):
+            payload, model = cm.image_payload(args)
+        self.assertEqual(payload["model"], "gpt-image-2.5-sunburst")
+        body, _ = cm.multipart_body(payload, [])
+        self.assertIn(b'name="model"\r\n\r\ngpt-image-2.5-sunburst\r\n', body)
+        self.assertEqual(cm.image_tool_config(args, model)[0]["model"], "gpt-image-2.5-sunburst")
+
     def test_default_images_routes_for_generate_and_edit(self) -> None:
         calls = []
 
@@ -76,7 +181,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
             transport = "images_multipart" if multipart else "images_json"
             return cm.ProviderRequestResult({"data": [{"b64_json": "ZmFrZQ=="}]}, endpoint, transport, f"{provider.base_url}{endpoint}")
 
-        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), mock.patch.object(cm, "model_catalog_check", return_value={"ok": True}):
             with mock.patch.object(cm, "request_provider", side_effect=fake_request_provider):
                 _data, provider, endpoint, transport, request_url, errors = cm.request_with_retry(
                     "generate", {"model": cm.DEFAULT_MODEL}, 1
@@ -99,7 +204,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
         self.assertEqual(calls[0], ("primary", "generate", "/images/generations", False))
         self.assertEqual(calls[1], ("primary", "edit", "/images/edits", True))
 
-    def test_retryable_primary_failure_stops_after_single_attempt_without_default_fallback(self) -> None:
+    def test_retryable_primary_failure_stops_after_three_attempts_without_switching_provider(self) -> None:
         calls = []
 
         def fake_request_provider(provider, command, endpoint, payload, timeout, multipart=None):
@@ -107,12 +212,13 @@ class CmImageGenOfflineTests(unittest.TestCase):
             raise cm.ImageApiError("temporary gateway failure", status=502, provider=provider.name)
 
         with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
-            with mock.patch.object(cm, "request_provider", side_effect=fake_request_provider):
+            with mock.patch.object(cm, "request_provider", side_effect=fake_request_provider), mock.patch.object(cm.time, "sleep") as sleep:
                 with self.assertRaises(SystemExit) as ctx:
                     cm.request_with_retry("generate", {"model": cm.DEFAULT_MODEL}, 1)
 
         self.assertIn("temporary gateway failure", str(ctx.exception))
-        self.assertEqual(calls, [("primary", "/images/generations")])
+        self.assertEqual(calls, [("primary", "/images/generations")] * 3)
+        self.assertEqual(sleep.call_args_list, [mock.call(5), mock.call(15)])
 
     def test_sse_stream_with_image_result_is_recovered(self) -> None:
         sse = (
@@ -221,7 +327,6 @@ class CmImageGenOfflineTests(unittest.TestCase):
     def test_transport_probe_reports_mixed_client_results(self) -> None:
         args = argparse.Namespace(
             operation="generate",
-            provider="fallback",
             client="both",
             prompt="test prompt",
             image=None,
@@ -250,7 +355,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
                 f"{provider.base_url}{endpoint}",
             )
 
-        with mock.patch.object(cm, "load_fallback_provider", return_value=FALLBACK):
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), mock.patch.object(cm, "model_catalog_check", return_value={"ok": True}):
             with mock.patch.object(cm, "request_provider", side_effect=fake_request_provider):
                 with mock.patch.object(cm, "request_provider_requests_stream", side_effect=fake_request_provider_requests_stream):
                     buffer = io.StringIO()
@@ -291,7 +396,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
             show_payload_shape=False,
         )
         with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
-            with mock.patch.object(cm, "load_fallback_provider", return_value=FALLBACK):
+            with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
                 buffer = io.StringIO()
                 with contextlib.redirect_stdout(buffer):
                     rc = cm.doctor(args)
@@ -300,38 +405,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
         self.assertFalse(data["network_call_performed"])
         self.assertEqual(data["configured_provider"]["routes"][0]["endpoint"], "/images/generations")
         self.assertEqual(data["configured_provider"]["routes"][1]["endpoint"], "/images/edits")
-        self.assertTrue(data["fallback_provider"]["configured"])
-        self.assertEqual(data["fallback_provider"]["base_url"], "https://fallback.example/v1")
-        self.assertEqual(data["fallback_provider"]["routes"][0]["endpoint"], "/images/generations")
-        self.assertEqual(data["fallback_provider"]["routes"][1]["endpoint"], "/images/edits")
-        self.assertTrue(data["fallback_provider"]["temporarily_unavailable"])
-        self.assertFalse(data["fallback_provider"]["used_for_default_route"])
 
-    def test_doctor_reports_unconfigured_fallback_without_failing(self) -> None:
-        args = argparse.Namespace(
-            api="images",
-            operation="edit",
-            model=None,
-            responses_model=None,
-            size=cm.DEFAULT_SIZE,
-            response_format=cm.DEFAULT_RESPONSE_FORMAT,
-            n=None,
-            quality=None,
-            background=None,
-            output_format=None,
-            show_payload_shape=False,
-        )
-        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
-            with mock.patch.object(cm, "load_fallback_provider", side_effect=SystemExit("Fallback missing")):
-                buffer = io.StringIO()
-                with contextlib.redirect_stdout(buffer):
-                    rc = cm.doctor(args)
-        self.assertEqual(rc, 0)
-        data = json.loads(buffer.getvalue())
-        self.assertFalse(data["fallback_provider"]["configured"])
-        self.assertFalse(data["fallback_provider"]["used_for_default_route"])
-        self.assertTrue(data["fallback_provider"]["temporarily_unavailable"])
-        self.assertIn("Fallback missing", data["fallback_provider"]["error"])
 
     def test_doctor_payload_shape_reports_safe_multipart_model_field(self) -> None:
         args = argparse.Namespace(
@@ -348,7 +422,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
             show_payload_shape=True,
         )
         with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
-            with mock.patch.object(cm, "load_fallback_provider", return_value=FALLBACK):
+            with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")):
                 buffer = io.StringIO()
                 with contextlib.redirect_stdout(buffer):
                     rc = cm.doctor(args)
@@ -362,7 +436,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
     def test_edit_sends_default_model_in_multipart_fields(self) -> None:
         captured = {}
 
-        def fake_request_with_retry(command, compat_payload, timeout, multipart=None):
+        def fake_request_with_retry(command, compat_payload, timeout, multipart=None, *, max_attempts=3):
             captured["command"] = command
             captured["payload"] = compat_payload
             captured["multipart"] = multipart
@@ -410,6 +484,70 @@ class CmImageGenOfflineTests(unittest.TestCase):
         self.assertEqual(captured["multipart"]["fields"]["size"], cm.DEFAULT_SIZE)
         self.assertEqual(captured["multipart"]["fields"]["response_format"], cm.DEFAULT_RESPONSE_FORMAT)
         self.assertEqual(captured["multipart"]["files"][0]["field"], "image")
+
+
+class OutputSizeValidationTests(unittest.TestCase):
+    def make_png(self, path, dimensions):
+        from PIL import Image
+        Image.new("RGB", dimensions, "white").save(path)
+        return path
+
+    def test_4k_default_is_strict_and_lower_resolution_is_opt_in(self):
+        self.assertTrue(cm.exact_size_is_required("3840x2160"))
+        self.assertTrue(cm.exact_size_is_required("2160x3840"))
+        self.assertFalse(cm.exact_size_is_required("1024x1536"))
+        self.assertTrue(cm.exact_size_is_required("1024x1536", True))
+
+    def test_actual_png_mismatch_keeps_file_and_reports_dimensions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=self.make_png(Path(tmp)/"returned.png", (1672,941))
+            before=path.read_bytes()
+            result=cm.validate_output_sizes([path], "3840x2160", require_exact=True)
+            self.assertTrue(result["size_validation_failed"])
+            self.assertEqual(result["output_dimensions"], ["1672x941"])
+            self.assertFalse(result["size_verified"])
+            self.assertEqual(path.read_bytes(), before)
+
+    def test_exact_png_passes_and_auto_does_not_claim_size_verified(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=self.make_png(Path(tmp)/"exact.png", (3840,2160))
+            self.assertTrue(cm.validate_output_sizes([path], "3840x2160", require_exact=True)["size_verified"])
+            self.assertIsNone(cm.validate_output_sizes([path], "auto")["size_verified"])
+            self.assertTrue(cm.validate_output_sizes([path], "auto", require_exact=True)["size_validation_failed"])
+
+    def test_unreadable_image_fails_only_when_strict(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"bad.png";path.write_bytes(b"not an image")
+            self.assertTrue(cm.validate_output_sizes([path], "3840x2160", require_exact=True)["size_validation_failed"])
+            self.assertFalse(cm.validate_output_sizes([path], "1024x1024")["size_validation_failed"])
+            self.assertIsNone(cm.parse_image_dimensions(b"\x89PNG\r\n\x1a\n"))
+
+    def test_jpeg_and_webp_real_dimensions(self):
+        from PIL import Image
+        for fmt in ("JPEG", "WEBP"):
+            stream=io.BytesIO();Image.new("RGB",(320,240)).save(stream,format=fmt)
+            self.assertEqual(cm.parse_image_dimensions(stream.getvalue()), (320,240))
+
+    def test_generate_and_edit_return_failure_for_mismatched_4k(self):
+        import base64
+        from PIL import Image
+        stream=io.BytesIO();Image.new("RGB",(1672,941)).save(stream,format="PNG")
+        response={"data":[{"b64_json":base64.b64encode(stream.getvalue()).decode()}]}
+        provider=cm.ImageApiProvider("primary", "https://primary.example/v1", "dummy")
+        for operation in ("generate", "edit"):
+            with tempfile.TemporaryDirectory() as tmp:
+                source=self.make_png(Path(tmp)/"source.png", (64,64))
+                args=argparse.Namespace(api="responses", model=cm.DEFAULT_MODEL, prompt="test",size="3840x2160",quality="high",background=None,output_format=None,response_format="b64_json",n=1,timeout=1,tools=None,instructions=None,responses_extra=None,responses_reasoning="max",responses_model="gpt-5.6-luna",out_dir=tmp,filename="result.png",image=[str(source)],mask=None,require_exact_size=False)
+                fake=(response, provider, "/responses", "responses_stream", "https://primary.example/v1/responses", [])
+                stdout=io.StringIO()
+                with mock.patch.object(cm,"request_responses_with_retry",return_value=fake), contextlib.redirect_stdout(stdout):
+                    code=getattr(cm,operation)(args)
+                result=json.loads(stdout.getvalue())
+                self.assertEqual(code,1)
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["error_kind"],"image_size_mismatch")
+                self.assertEqual(result["output_dimensions"],["1672x941"])
+                self.assertTrue(Path(result["paths"][0]).exists())
 
 
 if __name__ == "__main__":
