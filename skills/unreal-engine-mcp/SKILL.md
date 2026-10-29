@@ -68,6 +68,8 @@ python scripts/builtin_mcp.py run-script <session>/reads.py   # ProgrammaticTool
 python scripts/builtin_mcp.py batch <session>/steps.jsonl --dry-run   # validate, then run without --dry-run
 python scripts/python_remote.py --project <ProjectName> exec --file <session>/probe.py
 python scripts/builtin_mcp.py --out <session>/niagara-schema.json describe-tool NiagaraToolset_System GetEmitterData
+python scripts/capture.py viewport --pose x,y,z,pitch,yaw,roll --frames 3 --out-dir <session>/captures   # never moves the user's camera
+python scripts/capture.py asset /Game/M/M_X --out-dir <session>/captures   # editor thumbnail
 python scripts/live_smoke.py --project <ProjectName>   # read-only end-to-end check of every tool (~30 s)
 python scripts/record_fixtures.py --project <ProjectName> --check   # after an engine upgrade: contract fixtures still match?
 ```
@@ -117,7 +119,7 @@ Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection guid
 
 ## Shared material / Niagara routing
 
-The `unreal-material-artist`, `niagara-vfx-artist`, and `vfx-flipbook-generator` skills use this same routing. Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Read `ProgrammaticToolset.get_execution_environment` before its first script.
+The `unreal-material-artist`, `niagara-vfx-artist`, and `vfx-flipbook-generator` skills use this same routing. Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Image capture uses `scripts/capture.py` (`EditorAppToolset.CaptureViewport` / `CaptureAssetImage`, `mcp_capture/1` reports). Read `ProgrammaticToolset.get_execution_environment` before its first script.
 
 Local image processing, reference locks, visual comparison, manifests, and report packaging stay local: they are workflow code. Legacy scripts in those skills that call `UnrealBridge*Library` are disabled and fail fast; perform the operation with MCP tools and feed the result into the local report code instead.
 

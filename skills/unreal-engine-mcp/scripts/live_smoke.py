@@ -34,7 +34,9 @@ TOOLS = {
     "builtin_mcp": _HERE / "builtin_mcp.py",
     "python_remote": _HERE / "python_remote.py",
     "inspect_blueprint": _HERE / "inspect_blueprint.py",
+    "capture": _HERE / "capture.py",
     "material_audit": SKILLS / "unreal-material-artist" / "tools" / "material_audit.py",
+    "material_domain_audit": SKILLS / "unreal-material-artist" / "tools" / "material_domain_audit.py",
     "material_instance_batch": SKILLS / "unreal-material-artist" / "tools" / "material_instance_batch.py",
     "niagara_audit": SKILLS / "niagara-vfx-artist" / "tools" / "niagara_audit.py",
 }
@@ -157,6 +159,30 @@ class Smoke:
         return (f"{info['num_expressions']} nodes, {len(report['graph_summary']['dead_nodes'])} dead, "
                 f"stats {'ok' if stats.get('ready') else stats.get('error', 'n/a')[:60]}")
 
+    def domain(self) -> str:
+        out_file = self.work / "domain.json"
+        extra = ["--project", self.args.project] if self.args.project else []
+        code, out = run_tool("material_domain_audit", self.args.material, "--graph-source", "remote",
+                             "--out", str(out_file), *extra)
+        expect(code == 0, out[-400:])
+        report = load(out_file)
+        contract = report["domain_contract"]
+        expect(contract["domain"] and contract["blend_mode"] and contract["shading_models"], f"empty contract {contract}")
+        return f"{contract['domain']} / {contract['blend_mode']} / {','.join(contract['shading_models'])}"
+
+    def capture(self) -> str:
+        camera = lambda: unwrap_result(self.client.call_resolved_tool("EditorAppToolset", "GetCameraTransform", {}))
+        before = camera()
+        code, out = run_tool("capture", "asset", self.args.material, "--out-dir", str(self.work / "capture"))
+        expect(code == 0, out[-400:])
+        location = before["location"]
+        pose = f"{location['x']},{location['y']},{location['z'] + 100},-15,0,0"
+        code, out = run_tool("capture", "viewport", f"--pose={pose}", "--out-dir", str(self.work / "capture"))
+        expect(code == 0, out[-400:])
+        frame = load(Path(out.strip().splitlines()[-1]))["frames"][0]
+        expect(camera() == before, "posed viewport capture moved the user's viewport camera")
+        return f"thumbnail + {frame['width']}x{frame['height']} frame, camera unchanged"
+
     def instance_plan(self) -> str:
         probe = self.args.instance.rsplit("/", 1)[0] + "/MI_LiveSmoke_PlanOnly"
         expect(not self.exists(probe), f"{probe} exists; remove it or pass a different --instance folder")
@@ -194,6 +220,8 @@ class Smoke:
         self.check("material_audit (remote graph)", [a.material], lambda: self.material("remote"))
         if a.full:
             self.check("material_audit (MCP graph)", [a.material], lambda: self.material("mcp"))
+        self.check("material_domain_audit", [a.material], self.domain)
+        self.check("capture (thumbnail + posed viewport)", [a.material], self.capture)
         self.check("material_instance_batch (plan only)", [a.material, a.instance], self.instance_plan)
         self.check("inspect_blueprint", [a.blueprint], self.blueprint)
         self.client.close()

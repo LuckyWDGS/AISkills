@@ -20,7 +20,7 @@ gap. The historical 5.8.4 case involved opening an asset; it does not authorize
 opening/focusing editor UI for this user. If background loading cannot establish
 readiness, report that specific boundary rather than repeatedly sending writes.
 
-The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired. `niagara_audit` and `niagara_material_integration_probe` read through MCP. The editor-connected modes of `niagara_asset_assistant` apply, `niagara_param_sweep`, `runtime_control_probe`, `live_asset_verify`, `controlled_preview`, `effect_control_schema` live reads, `asset_cleanup` execute, `ue_write_helpers`, and `flipbook_ue_pipeline` call retired `UnrealBridge*Library` APIs and fail fast until ported to MCP; their offline plan/report modes still work. Do the live step with MCP tools and feed the resulting JSON into the local reports. `ue_smoke`, `delivery_finalize --promote-assets` and `control_provenance_check` use only stock `unreal.*` and run over Epic Python Remote Execution. See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
+The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired. `niagara_audit` and `niagara_material_integration_probe` read through MCP. The editor-connected modes of `niagara_asset_assistant` apply, `niagara_param_sweep`, `runtime_control_probe`, `live_asset_verify`, `controlled_preview`, `effect_control_schema` live reads, `asset_cleanup` execute, `ue_write_helpers`, and `flipbook_ue_pipeline` call retired `UnrealBridge*Library` APIs and fail fast until ported to MCP; their offline plan/report modes still work. Do the live step with MCP tools and feed the resulting JSON into the local reports; for previews that is `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). `ue_smoke`, `delivery_finalize --promote-assets` and `control_provenance_check` use only stock `unreal.*` and run over Epic Python Remote Execution. See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
 
 *(not ported)*: the tool only works against the editor and still needs an MCP port. *(live step not ported)*: its offline modes work, but the editor step needs a port. Running a live step prints the MCP route to use instead (from `scripts/retired_tools.json`).
 
@@ -73,7 +73,11 @@ Default team model:
    Do not collapse an emitter's responsibilities into one exclusive label. A ribbon receiver can also be an Attribute Reader receiver. Treat `role` as the human-facing primary role, and record composite `roles` plus `capabilities` from official structural evidence. The legacy audit's report schema can guide local interpretation without requiring its bridge executor.
 
 8. Capture and self-review.
-   Use controlled previews and captures after structural validation. Compare the effect against the approved design for silhouette, timing, density, width, color, brightness, spacing, and gameplay readability.
+   After structural validation, capture through Epic MCP with the shared `../unreal-engine-mcp/scripts/capture.py`:
+   - `capture.py viewport --pose x,y,z,pitch,yaw,roll --frames 3 --interval 0.5 --out-dir .codex/session/vfx-delivery/captures/<effect>` for a system already placed in the level (find it with `SceneTools.find_actors`). A posed capture renders from that pose without moving the user's viewport camera; omit `--pose` to use the current camera.
+   - `capture.py asset <system path>` only for a thumbnail; it is not a simulation preview.
+   Feed the PNGs to `visual_diff_qa.py`, `preview_approval.py` or `effect_preview_approval.py` through `--preview-path`. Distinct frame hashes do not prove motion (temporal AA alone changes them); judge silhouette, timing and evolution visually. Whether the simulation advances between frames depends on the editor viewport being realtime; if the frames show one simulation state, report that boundary rather than toggling viewport UI.
+   Compare the effect against the approved design for silhouette, timing, density, width, color, brightness, spacing, and gameplay readability.
 
 9. Treat generated textures as provisional until live.
    A generated texture is not part of the active implementation just because the file exists. It only becomes a valid implementation asset after:
@@ -90,7 +94,7 @@ Default team model:
 
 ## Closed-Loop Tools
 
-The local planning/report/image tooling in `tools/` and `scripts/` is part of the workflow. Editor-connected audit, integration-probe, controlled-preview, cleanup and flipbook-pipeline executors below are disabled (retired UnrealBridge APIs) pending an MCP port; use official MCP for their live steps.
+The local planning/report/image tooling in `tools/` and `scripts/` is part of the workflow. `niagara_audit.py` and `niagara_material_integration_probe.py` read through MCP. The tools marked *(not ported)* or *(live step not ported)* below are disabled in the editor (retired UnrealBridge APIs) pending an MCP port; use official MCP for those live steps.
 
 Use these when relevant:
 
@@ -103,7 +107,7 @@ Use these when relevant:
 - `tools/niagara_audit.py` for system/emitter/renderer readback.
 - `tools/niagara_material_integration_probe.py` for checking a real Niagara System against material-side contract/delivery/preview evidence.
 - `tools/niagara_asset_assistant.py` *(live step not ported)* for template-based Niagara creation or repair plans.
-- `tools/controlled_preview.py` *(live step not ported)* for deterministic preview captures.
+- `../unreal-engine-mcp/scripts/capture.py` for MCP viewport frames and thumbnails (step 8). `tools/controlled_preview.py` *(live step not ported)* remains only for its offline modes.
 - `tools/effect_preview_approval.py` for final effect preview approval records that can gate promotion after visual review.
 - `tools/visual_diff_qa.py` and `tools/design_compare_checklist.py` for visual comparison.
 - `tools/gap_diagnosis.py` and `tools/parameter_tuning_log.py` for intentional tuning.
@@ -125,11 +129,11 @@ python ../unreal-material-artist/tools/official_toolsets_bridge.py material:get_
 - Keep runtime previews, audits, tuning logs and gap diagnoses under `.codex/session/vfx-delivery/`; do not commit them, generated previews, caches or one-off experiments unless explicitly promoted.
 - Inspect emitter handles, renderer types, material bindings, event handlers, sim target, bounds, and source/receiver responsibilities before tuning.
 - Own the real Niagara parameter truth: if a material expects `ParticleColor`, `DynamicParameter`, `SubImageIndex`, `RibbonWidth`, or custom attributes, Niagara must verify who writes them, where they are bound, and whether the live system is feeding the expected values.
-- When a material contract exists, prove the real System/Emitter/Renderer binding, SubUV/SubImage, ParticleColor, DynamicParameter, RibbonWidth, sorting and bounds route through official structural queries. `niagara_material_integration_probe.py` is a legacy fallback for an uncovered part of that proof. Material-side preview evidence is not real-system integration proof; preserve equivalent report fields where supported and do not fabricate a legacy gate pass.
+- When a material contract exists, prove the real System/Emitter/Renderer binding, SubUV/SubImage, ParticleColor, DynamicParameter, RibbonWidth, sorting and bounds route through official structural queries: run `niagara_material_integration_probe.py`, which reads the live system through `niagara_audit` (MCP). Data-interface bindings the audit cannot read are listed in its `coverage_gaps`; prove those separately instead of counting them as passed. Material-side preview evidence is not real-system integration proof.
 - Final `delivery_package.py --require-ready` should include a passing material integration probe whenever both `--final-system` and `--final-material` are supplied.
 - Attribute Reader source/receiver checks must preserve composite evidence. For example, a `Followers` emitter with a Ribbon renderer, bound ribbon material, `NiagaraDataInterfaceParticleRead`, and `SpawnParticlesFromOtherEmitter` / `SampleParticlesFromOtherEmitter` is both `trail-receiver` and `attribute-reader-receiver`; do not mark it failed just because the primary display role is `trail-receiver`.
 - If a renderer material appears missing, first determine whether the renderer slot exists. Empty `RendererProperties` is a missing renderer/emitter construction problem, not merely a material-binding problem.
-- In UE 5.7, avoid `NiagaraPythonEmitter.get_modules()` on arbitrary/template emitters as a discovery shortcut. It has caused NiagaraEditor `SharedPointer IsValid()` crashes. Prefer UPROPERTY export audits and known-safe renderer object readback.
+- Read emitter modules and renderers through the official Niagara MCP topology/stack/renderer tools (`niagara_audit.py`). Do not call `NiagaraPythonEmitter.get_modules()` on arbitrary/template emitters over Remote Execution as a discovery shortcut; it crashed NiagaraEditor (`SharedPointer IsValid()`) on UE 5.7, and no newer build has shown it safe.
 - Do not treat "I duplicated a base system" as equivalent to "I safely authored a multi-emitter effect." If the current official tools cannot yet add or duplicate emitters inside one system safely, stop and record that capability gap rather than forcing half-written Niagara graph assets into existence.
 - Also avoid assuming raw `EmitterHandles` export-text overwrite is a fallback. A live 2026-05-13 test against a `CodexTemp` Niagara system showed the engine rejected the write and round-tripped the property back unchanged. Treat that route as non-viable until a more authoritative engine-side construction path is found.
 - If the silhouette or timing is wrong, diagnose Niagara carrier/renderer/animation before pushing material brightness.

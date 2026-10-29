@@ -16,7 +16,7 @@ On UE 5.8+, use Epic's MCP directly through the sibling `unreal-engine-mcp/scrip
 
 `tools/official_toolsets_bridge.py` calls MCP over HTTP and resolves aliases such as `material:get_expressions` from live discovery. UnrealBridge (custom plugin + TCP) is retired; there is no plugin transport.
 
-Material graph creation, node reference readback, wiring, MI parameters, texture import, and exposed UObject properties use official MCP tools. Local file QA, manifests, image packing, and reports remain local. `tools/material_audit.py` reads through MCP (plus Remote Execution for shader statistics). The editor-connected modes of the older domain-audit, recipe-builder, MI-batch, import-fix, and preview scripts call retired `UnrealBridge*Library` APIs and fail fast until ported; their offline modes still work. Do the live step with MCP and feed its JSON into the local report code. See [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md) for the list.
+Material graph creation, node reference readback, wiring, MI parameters, texture import, and exposed UObject properties use official MCP tools. Local file QA, manifests, image packing, and reports remain local. `tools/material_audit.py` and `tools/material_domain_audit.py` read through MCP (plus Remote Execution for shader statistics), and `tools/material_preview.py capture` takes previews through MCP. The editor-connected modes of the older recipe-builder, MI-batch, import-fix, and preview scripts call retired `UnrealBridge*Library` APIs and fail fast until ported; their offline modes still work. Do the live step with MCP and feed its JSON into the local report code. See [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md) for the list.
 
 ## Overview
 
@@ -81,13 +81,13 @@ Default team model:
    For foliage or vegetation cards, missing leaf diffuse/alpha or a believable leaf-card carrier is an asset gap to resolve, not just a visual caveat: search the `foliage` library category first; if no approved asset fits, use `cm-imagegen` from the user's reference image when available, QA with `--role foliage`, import/audit/fix settings, then preview on a masked two-sided card.
 
 9. Audit and self-review.
-   Use official structural checks first, then controlled previews or in-level captures through official scene/editor tools where exposed. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the evidence model. Treat performance findings as evidence and triage, not automatic permission to lower the look. `tools/material_preview.py` *(live step not ported)* remains a legacy bridge executor for specific uncovered preview needs; do not make it a prerequisite for normal material work. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
+   Use official structural checks first, then controlled previews or in-level captures through official scene/editor tools where exposed. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the evidence model. Treat performance findings as evidence and triage, not automatic permission to lower the look. Capture previews with `tools/material_preview.py capture <material>` (the editor's material thumbnail) or `--route viewport --pose x,y,z,pitch,yaw,roll --carrier <carrier>` for a carrier already placed in the level; the posed capture does not move the user's viewport camera. Its `render`/`sweep` modes still need a port. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
    For master-material or MI-family cleanup, also use Unreal's Material Analyzer when the editor is available, and use `tools/shader_permutation_report.py` *(not ported)* or `tools/permutation_budget_guard.py` when static switches/static masks are the risk.
    When one preview is too narrow, use [references/preview-matrix.md](references/preview-matrix.md) and `tools/preview_matrix.py` to plan or execute a matrix across background intent, exposure intent, distance, angle, time, parameter tier, quality, lighting, and carrier.
    For Additive/Translucent/Ribbon/Decal routes, use [references/translucency-sorting-probe.md](references/translucency-sorting-probe.md) and `tools/translucency_sorting_probe.py` to check material-side DepthFade/SoftParticle evidence plus optional Niagara sorting/bounds proof. Keep real Niagara System/Emitter/Renderer proof in `niagara-vfx-artist`.
 
 10. Check domain, blend, shading model, and render contract for non-standard materials.
-   For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Read supported domain properties through official ObjectTools; reserve the legacy `tools/material_domain_audit.py` *(not ported)* executor for a demonstrated audit gap.
+   For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Run `tools/material_domain_audit.py <material>` (MCP), or `--from-audit` on an existing `material_audit.py --include-raw-graph` report to skip another editor read. Compile errors are not exposed by MCP; check them through LogsToolset after a recompile.
    For custom or complex water, also read [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md) before authoring. A water material needs a concrete route, node plan, texture roles, carrier preview, and water-specific audit; do not stop at naming the shading model.
    For fire, flame, burning, ember, smoke, heat-haze, lava, magma, plasma, or energy-flame materials, read [references/fire-energy-material-playbook.md](references/fire-energy-material-playbook.md) before authoring. A fire-family material needs a concrete route, carrier, texture plan, node graph, motion plan, preview, and audit; do not stop at `Additive + Unlit + Emissive`.
 
@@ -109,11 +109,11 @@ Default team model:
    When a preview technically succeeds but might still be visually empty or unreadable, use [references/preview-readability-score.md](references/preview-readability-score.md) and `tools/preview_readability_score.py` to quantify visibility, alpha coverage, center energy, background contrast, and edge readability. Treat screenshot success alone as insufficient proof for VFX materials.
 
 16. Lock accepted previews and guard against drift.
-   After a preview is visually accepted, use [references/material-regression.md](references/material-regression.md) and `tools/material_regression.py` to lock the accepted `material_preview.py` *(live step not ported)* result as a baseline. After optimization, texture swaps, parameter tuning, graph refactors, or rebuilds, compare the new preview against that baseline before calling the change safe.
+   After a preview is visually accepted, use [references/material-regression.md](references/material-regression.md) and `tools/material_regression.py` to lock the accepted `material_preview.py capture` result as a baseline. After optimization, texture swaps, parameter tuning, graph refactors, or rebuilds, compare the new preview against that baseline before calling the change safe.
    When one baseline is no longer enough because tiers, carriers, or preview environments have multiplied, use [references/regression-baseline-set.md](references/regression-baseline-set.md) and `tools/regression_baseline_set.py` to manage and resolve the right accepted baseline for each context.
 
 17. Explain failed regressions before refactoring.
-   When a regression comparison fails, use [references/graph-diff-refactor.md](references/graph-diff-refactor.md) and `tools/graph_diff_refactor.py` with before/after `material_audit.py` reports, optional `material_domain_audit.py` *(not ported)* reports, and the regression report. Diagnose route, output-chain, parameter, node, finding, and budget changes before patching or accepting a new baseline.
+   When a regression comparison fails, use [references/graph-diff-refactor.md](references/graph-diff-refactor.md) and `tools/graph_diff_refactor.py` with before/after `material_audit.py` reports, optional `material_domain_audit.py` reports, and the regression report. Diagnose route, output-chain, parameter, node, finding, and budget changes before patching or accepting a new baseline.
 
 18. Turn parameter schemas into executable MI tiers.
    When the parameter contract exists and the next step is wider preview or gameplay-safe tuning, use [references/material-variant-runner.md](references/material-variant-runner.md) and `tools/material_variant_runner.py` to generate `default`, `low`, `high`, `extreme`, and `gameplay-safe` material-instance tiers, plus `material_instance_batch.py` specs and preview-matrix command scaffolds.
@@ -224,10 +224,10 @@ Detailed command examples live in the reference files. Use this as the compact e
 | Need | Tool |
 |---|---|
 | Parameter schema / MI handoff | `tools/material_parameter_schema.py`, `tools/material_instance_batch.py` |
-| Graph and render-contract audit | `tools/material_audit.py`, `tools/material_domain_audit.py` *(not ported)* |
+| Graph and render-contract audit | `tools/material_audit.py`, `tools/material_domain_audit.py` |
 | Translucency/additive/ribbon sorting evidence | `tools/translucency_sorting_probe.py` |
 | Texture file, set, import, and provenance checks | `tools/texture_asset_report.py`, `tools/texture_set_pipeline.py`, `tools/texture_import_audit.py` *(not ported)*, `tools/texture_import_fix.py` *(not ported)*, `tools/material_source_provenance.py` |
-| Carrier previews and matrices | `tools/material_preview.py` *(live step not ported)*, `tools/preview_matrix.py`, `tools/preview_readability_score.py` |
+| Carrier previews and matrices | `tools/material_preview.py capture` (`render`/`sweep` not ported), `tools/preview_matrix.py`, `tools/preview_readability_score.py` |
 | Runtime parameter source tracing | `tools/runtime_param_trace.py` *(not ported)* |
 | Channel packing and flipbook cleanup | `tools/channel_packer.py`, `tools/flipbook_normalizer.py` |
 | Reusable asset search, registration, and promotion | `tools/material_asset_library.py` *(live step not ported)* |
@@ -242,14 +242,11 @@ Reports write under:
 
 The tools cover reference-to-material planning, delivery packaging, hard material acceptance reports, parameter schemas, preview matrices, translucency sorting probes, texture source provenance, material preview regression, delivery smoke orchestration, regression-cause graph diffing, project-level material health heatlists, recipe builder specs, guarded graph refactor plans, full texture-set QA and RMA packing, graph output chains, dead branches, stale MI overrides, compile findings, instruction count, sampler count, material contracts, material-side parameter traces, reusable asset-library search and promotion, generated texture dimensions, atlas grids, alpha availability, role-specific texture warnings, Unreal import settings, mesh and carrier preview renders, batch MI authoring, channel packing, and flipbook cleanup.
 
-Current preview carrier note:
+Current preview route note:
 
-- `sprite` and `ribbon` previews now default to temporary Niagara-system harnesses, so they are closer to true Niagara sprite/ribbon renderer output than plain cards.
-- `sprite_card` and `ribbon_card` keep the older cheap card-based approximation path for quick checks.
-- `decal` preview uses a temporary wall plus `DecalActor`.
-- `post_process` preview uses a temporary preview volume plus neutral scene geometry.
-- Even the Niagara-based preview modes are still lightweight harnesses, not a full gameplay Niagara integration test.
-- These previews exist only to review material behavior on likely carriers. Real Niagara system bindings, live parameter sources, and runtime writebacks remain Niagara-owned; hand `material_contract`, `delivery_packager`, and preview evidence to `niagara-vfx-artist`. Its `niagara_material_integration_probe.py` validates the real System/Emitter/Renderer route.
+- `material_preview.py capture` writes a standard `material_preview` report (`mode: capture`) that the acceptance gate, regression baselines, readability score and delivery packager read. MCP exposes no shader-complexity view, so `complexity_ok` stays unset rather than failing.
+- `--route thumbnail` is the editor's material sphere; `--route viewport` captures whatever carrier is already in the level, so place the mesh/card/decal/Niagara carrier first with official SceneTools.
+- The retired `render` harnesses (temporary Niagara sprite/ribbon systems, decal wall, post-process volume) are not ported. These previews review material behavior only; real Niagara bindings, live parameter sources and runtime writebacks stay with `niagara-vfx-artist` and its `niagara_material_integration_probe.py`.
 
 Editor/toolset note:
 

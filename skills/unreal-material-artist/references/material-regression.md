@@ -104,15 +104,15 @@ Use tighter thresholds for locked final art. Use looser thresholds for noisy smo
 
 `gate.passed=true` means the new preview did not exceed configured drift thresholds. It does not mean the material is artistically approved. It only means the preview stayed close enough to the locked baseline for the measured dimensions.
 
-If a baseline has a complexity image and the current preview lacks one, the comparison records an error. That catches accidental loss of complexity evidence during optimization passes.
+If a baseline has a complexity image and the current preview lacks one, the comparison records an error. That catches accidental loss of complexity evidence during optimization passes. MCP captures carry no complexity image, so a capture baseline compares cleanly against later captures.
 
 ## Recommended Flow
 
-1. Render `material_preview.py` on the intended carrier.
+1. Capture `material_preview.py capture` on the intended carrier (`--route thumbnail`, or `--route viewport --pose ...` for a placed carrier). Keep the same route and pose for every later comparison; a thumbnail and a viewport frame are not comparable.
 2. Visually accept the preview against the reference.
 3. Build or refresh `delivery_packager.py` with that preview report.
 4. Lock a regression baseline from the package.
-5. After any material edit, render a new preview.
+5. After any material edit, capture a new preview with the same route and pose.
 6. Run `material_regression.py compare --strict`.
 7. If the comparison fails, inspect the composite and heat images.
 8. Run `graph_diff_refactor.py diff` against before/after audits to identify likely material-side causes.

@@ -37,7 +37,7 @@ def preview_report_summary(report_path: Path, payload: dict[str, Any]) -> dict[s
         raise SystemExit(f"Expected material_preview report, got `{tool}` from {report_path}")
     mode = str(payload.get("mode") or "")
     outputs = payload.get("outputs") or {}
-    if mode == "render":
+    if mode in ("render", "capture"):  # capture: Epic MCP route (material_preview.py capture)
         image_paths = {
             "shaded": str(outputs.get("shaded_png") or ""),
             "complexity": str(outputs.get("complexity_png") or ""),

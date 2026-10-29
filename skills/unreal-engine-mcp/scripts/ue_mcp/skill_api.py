@@ -9,6 +9,7 @@ from types import ModuleType
 from typing import Any
 
 from . import remote as _remote
+from .capture import capture_report, parse_pose  # noqa: F401  (re-exported for sibling skills)
 from .client import UnrealMcpClient
 from .paths import default_cache_dir, default_session_dir
 from .protocol import DEFAULT_PROTOCOL, DEFAULT_URL, _decode_text_value

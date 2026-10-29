@@ -10,5 +10,5 @@ if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
 from ue_mcp.skill_api import (  # noqa: E402,F401
-    DEFAULT_MCP_URL, builtin_mcp, call_tool, connect, python_remote, run_tool_script,
+    DEFAULT_MCP_URL, builtin_mcp, call_tool, capture_report, connect, parse_pose, python_remote, run_tool_script,
 )

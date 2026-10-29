@@ -1,161 +1,61 @@
+"""Audit a material's domain, blend mode, shading model, output pins and rendering contract.
+
+The data comes from ``material_audit`` (Epic MCP, plus Remote Execution for shader
+statistics): run it live, or pass ``--from-audit`` with a ``material_audit.py
+--include-raw-graph`` report to audit offline without another editor round trip.
+"""
+
 from __future__ import annotations
 
 import argparse
-import textwrap
+import json
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
 
 
-def build_ue_script(material_path: str) -> str:
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
+# Version 1 was the UnrealBridge-era report (bridge_* fields, raw_editor_info).
+SCHEMA_VERSION = "material_domain_audit/2"
 
-        MAT = unreal.UnrealBridgeMaterialLibrary
 
-        def guid_text(value):
-            try:
-                return value.to_string()
-            except Exception:
-                return str(value)
+def _strip_enum(value: Any, prefix: str) -> str:
+    """'MD_Surface' -> 'Surface', 'BLEND_AlphaComposite' -> 'AlphaComposite'."""
+    text = str(value or "").strip()
+    return text[len(prefix):] if text.startswith(prefix) else text
 
-        def serialize_param_default(param):
-            return {{
-                "name": param.name,
-                "param_type": param.param_type,
-                "value": param.value,
-                "guid": guid_text(param.guid),
-            }}
 
-        def serialize_node(node):
-            return {{
-                "guid": guid_text(node.guid),
-                "class_name": node.class_name,
-                "caption": node.caption,
-                "desc": node.desc,
-                "x": node.x,
-                "y": node.y,
-                "input_names": list(node.input_names),
-                "output_names": list(node.output_names),
-                "key_properties": node.key_properties,
-            }}
+def shading_model_names(info: dict[str, Any]) -> list[str]:
+    """MCP ``usedShadingModels`` holds display names ('Default Lit, Two Sided Foliage'); return token names."""
+    names = [str(item).replace(" ", "") for item in info.get("shading_models") or [] if str(item).strip()]
+    declared = _strip_enum(info.get("shading_model"), "MSM_")
+    if declared in {"FromMaterialExpression", "Strata", "Substrate"} and declared not in names:
+        names.append(declared)
+    return names
 
-        def serialize_connection(connection):
-            return {{
-                "src_guid": guid_text(connection.src_guid),
-                "src_output_name": connection.src_output_name,
-                "src_output_index": connection.src_output_index,
-                "dst_guid": guid_text(connection.dst_guid),
-                "dst_input_name": connection.dst_input_name,
-                "dst_input_index": connection.dst_input_index,
-                "dst_property_name": connection.dst_property_name,
-            }}
 
-        def enum_token(value):
-            text = str(value)
-            if "." in text and ":" in text:
-                return text.split(".")[-1].split(":")[0]
-            return text
-
-        def map_domain(value):
-            return {{
-                "MD_SURFACE": "Surface",
-                "MD_DEFERRED_DECAL": "DeferredDecal",
-                "MD_LIGHT_FUNCTION": "LightFunction",
-                "MD_VOLUME": "Volume",
-                "MD_POST_PROCESS": "PostProcess",
-                "MD_UI": "UI",
-                "MD_RUNTIME_VIRTUAL_TEXTURE": "RuntimeVirtualTexture",
-            }}.get(enum_token(value), enum_token(value))
-
-        def map_blend(value):
-            return {{
-                "BLEND_OPAQUE": "Opaque",
-                "BLEND_MASKED": "Masked",
-                "BLEND_TRANSLUCENT": "Translucent",
-                "BLEND_ADDITIVE": "Additive",
-                "BLEND_MODULATE": "Modulate",
-                "BLEND_ALPHA_COMPOSITE": "AlphaComposite",
-                "BLEND_ALPHA_HOLDOUT": "AlphaHoldout",
-            }}.get(enum_token(value), enum_token(value))
-
-        def read_raw_editor_info(path, bridge_info):
-            raw = {{}}
-            try:
-                asset_path = path.split(".")[0]
-                asset = unreal.EditorAssetLibrary.load_asset(asset_path)
-                base = asset
-                try:
-                    if bridge_info.is_material_instance and bridge_info.base_path:
-                        base = unreal.EditorAssetLibrary.load_asset(bridge_info.base_path.split(".")[0])
-                    elif hasattr(asset, "get_base_material"):
-                        base = asset.get_base_material() or asset
-                except Exception:
-                    base = asset
-                if base:
-                    raw["material_domain"] = map_domain(base.get_editor_property("material_domain"))
-                    raw["blend_mode"] = map_blend(base.get_editor_property("blend_mode"))
-                    raw["two_sided"] = bool(base.get_editor_property("two_sided"))
-                    raw["use_material_attributes"] = bool(base.get_editor_property("use_material_attributes"))
-            except Exception as exc:
-                raw["error"] = str(exc)
-            return raw
-
-        info = MAT.get_material_info({material_path!r})
-        graph = MAT.get_material_graph({material_path!r})
-        analysis = MAT.analyze_material({material_path!r}, 0, 0)
-        raw_editor_info = read_raw_editor_info({material_path!r}, info)
-
-        payload = {{
-            "material_info": {{
-                "found": info.found,
-                "name": info.name,
-                "path": info.path,
-                "is_material_instance": info.is_material_instance,
-                "parent_path": info.parent_path,
-                "base_path": info.base_path,
-                "material_domain": info.material_domain,
-                "blend_mode": info.blend_mode,
-                "shading_models": list(info.shading_models),
-                "two_sided": info.two_sided,
-                "use_material_attributes": info.use_material_attributes,
-                "usage_flags": list(info.usage_flags),
-                "scalar_parameters": [serialize_param_default(item) for item in info.scalar_parameters],
-                "vector_parameters": [serialize_param_default(item) for item in info.vector_parameters],
-                "texture_parameters": [serialize_param_default(item) for item in info.texture_parameters],
-                "static_switch_parameters": [serialize_param_default(item) for item in info.static_switch_parameters],
-                "num_expressions": info.num_expressions,
-                "num_function_calls": info.num_function_calls,
-            }},
-            "graph": {{
-                "found": graph.found,
-                "path": graph.path,
-                "is_material_function": graph.is_material_function,
-                "nodes": [serialize_node(node) for node in graph.nodes],
-                "connections": [serialize_connection(item) for item in graph.connections],
-                "output_connections": [serialize_connection(item) for item in graph.output_connections],
-            }},
-            "analysis": {{
-                "found": analysis.found,
-                "path": analysis.path,
-                "material_domain": analysis.material_domain,
-                "shading_models": list(analysis.shading_models),
-                "max_instructions": analysis.max_instructions,
-                "sampler_count": analysis.sampler_count,
-                "expression_count": analysis.expression_count,
-                "compile_errors": list(analysis.compile_errors),
-                "shader_stats_ready": analysis.shader_stats_ready,
-            }},
-            "raw_editor_info": raw_editor_info,
-        }}
-        print(json.dumps(payload, ensure_ascii=False))
-        """
-    ).strip()
+def raw_from_audit(report: dict[str, Any]) -> dict[str, Any]:
+    """The domain-audit input from a ``material_audit`` report that kept its raw graph."""
+    if report.get("tool") != "material_audit":
+        raise SystemExit(f"Expected a material_audit report, got `{report.get('tool')}`.")
+    if "raw_graph" not in report:
+        raise SystemExit("The material_audit report has no raw_graph; re-run material_audit.py with --include-raw-graph.")
+    info = dict(report["material_info"])
+    info.update(
+        material_domain=_strip_enum(info.get("material_domain"), "MD_"),
+        blend_mode=_strip_enum(info.get("blend_mode"), "BLEND_"),
+        shading_models=shading_model_names(info),
+        usage_flags=[_strip_enum(flag, "UsedWith") for flag in info.get("usage_flags") or []],
+    )
+    return {
+        "material_path": report.get("material_path") or info.get("path") or "",
+        "material_info": info,
+        "graph": report["raw_graph"],
+        "analysis": report["analysis"],
+        "coverage_gaps": report.get("coverage_gaps") or [],
+        "transport": report.get("transport") or {},
+    }
 
 
 def _norm(value: Any) -> str:
@@ -167,7 +67,10 @@ def _lower_blob(*values: Any) -> str:
 
 
 def _node_text(node: dict[str, Any]) -> str:
-    return _lower_blob(node.get("class_name"), node.get("caption"), node.get("desc"), node.get("key_properties"))
+    class_name = _norm(node.get("class_name"))
+    if class_name and not class_name.startswith("MaterialExpression"):
+        class_name = f"MaterialExpression{class_name}"  # MCP short names; rule tokens use the full class name.
+    return _lower_blob(class_name, node.get("caption"), node.get("desc"), node.get("key_properties"))
 
 
 def _add(
@@ -267,7 +170,6 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
     info = raw["material_info"]
     graph = raw["graph"]
     analysis = raw["analysis"]
-    raw_editor_info = raw.get("raw_editor_info") or {}
     nodes = graph.get("nodes") or []
     props = _output_properties(graph)
     counters = _node_counters(nodes)
@@ -275,40 +177,11 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
 
     domain = _norm(info.get("material_domain"))
     blend = _norm(info.get("blend_mode"))
-    bridge_domain = domain
-    bridge_blend = blend
-    raw_domain = _norm(raw_editor_info.get("material_domain"))
-    raw_blend = _norm(raw_editor_info.get("blend_mode"))
-    if raw_domain and raw_domain != domain:
-        domain = raw_domain
-        _add(
-            findings,
-            "warning",
-            "bridge_domain_mismatch",
-            "Bridge material info domain differs from raw editor property.",
-            evidence=f"bridge={bridge_domain} raw={raw_domain}",
-            recommendation="Treat raw editor property as ground truth and verify UnrealBridge get_material_info.",
-        )
-    if raw_blend and raw_blend != blend:
-        blend = raw_blend
-        _add(
-            findings,
-            "warning",
-            "bridge_blend_mismatch",
-            "Bridge material info blend mode differs from raw editor property.",
-            evidence=f"bridge={bridge_blend} raw={raw_blend}",
-            recommendation="Treat raw editor property as ground truth and verify UnrealBridge get_material_info.",
-        )
     shading_models = [_norm(item) for item in info.get("shading_models") or [] if _norm(item)]
     use_attrs = bool(info.get("use_material_attributes"))
-    if isinstance(raw_editor_info.get("use_material_attributes"), bool):
-        use_attrs = bool(raw_editor_info["use_material_attributes"])
     usage_flags = set(info.get("usage_flags") or [])
     props_lower = {_prop_key(prop) for prop in props}
     node_blob = counters["text_blob"]
-
-    if not info.get("found"):
-        _add(findings, "error", "asset_not_found", "Material asset was not found.")
 
     if analysis.get("compile_errors"):
         _add(
@@ -614,7 +487,7 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
         )
 
     if domain == "Surface":
-        if "UsedWithNiagaraSprites" in usage_flags or "UsedWithNiagaraRibbons" in usage_flags:
+        if "NiagaraSprites" in usage_flags or "NiagaraRibbons" in usage_flags:
             _add(
                 findings,
                 "info",
@@ -630,17 +503,17 @@ def audit_payload(raw: dict[str, Any]) -> dict[str, Any]:
     risk_counts = Counter(item["severity"] for item in findings)
     return {
         "tool": "material_domain_audit",
-        "material_path": raw.get("material_info", {}).get("path") or "",
+        "schema_version": SCHEMA_VERSION,
+        "material_path": raw.get("material_path") or info.get("path") or "",
+        "transport": raw.get("transport") or {},
         "material_info": info,
-        "raw_editor_info": raw_editor_info,
         "analysis": analysis,
+        "coverage_gaps": raw.get("coverage_gaps") or [],
         "domain_contract": {
             "domain": domain,
             "blend_mode": blend,
-            "bridge_domain": bridge_domain,
-            "bridge_blend_mode": bridge_blend,
             "shading_models": shading_models,
-            "two_sided": bool(raw_editor_info.get("two_sided", info.get("two_sided"))),
+            "two_sided": bool(info.get("two_sided")),
             "use_material_attributes": use_attrs,
             "usage_flags": sorted(usage_flags),
             "wired_outputs": sorted(props),
@@ -714,25 +587,32 @@ def render_markdown(material_path: str, report: dict[str, Any]) -> str:
             f"- Boundary: {summary['contract_note']}",
         ]
     )
+    if report.get("coverage_gaps"):
+        lines.extend(["", "## Coverage gaps", "", *[f"- {gap}" for gap in report["coverage_gaps"]]])
     return "\n".join(lines).rstrip() + "\n"
 
 
 def command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    raw = client.exec_json(build_ue_script(args.material_path))
-    report = audit_payload(raw)
+    if args.from_audit:
+        audit_report = json.loads(Path(args.from_audit).read_text(encoding="utf-8"))
+    else:
+        from .material_audit import audit
+
+        audit_report = audit(ctx.skill_root, args.material_path, timeout=args.timeout, project=args.project,
+                             shader_stats=not args.no_shader_stats, graph_source=args.graph_source)
+    report = audit_payload(raw_from_audit(audit_report))
+    material_path = args.material_path or report["material_path"]
     out = Path(args.out) if args.out else default_report_path(
         ctx,
         "audits/domain",
-        slugify(args.material_path),
+        slugify(material_path),
         "material-domain-audit",
         ".json",
     )
     save_json(out, report)
     if args.markdown:
-        write_text(out.with_suffix(".md"), render_markdown(args.material_path, report))
+        write_text(out.with_suffix(".md"), render_markdown(material_path, report))
     print(out)
     return 0
 
@@ -741,11 +621,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Audit an Unreal material's domain, blend mode, shading model, output pins, and rendering contract."
     )
-    parser.add_argument("material_path")
+    parser.add_argument("material_path", nargs="?", default="",
+                        help="Material to read live through Epic MCP; optional with --from-audit")
+    parser.add_argument("--from-audit", help="Audit offline from a material_audit.py --include-raw-graph report")
     parser.add_argument("--root", default="auto")
-    parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    parser.add_argument("--project", help="Editor for shader statistics over Python Remote Execution")
     parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--no-shader-stats", action="store_true")
+    parser.add_argument("--graph-source", choices=("mcp", "remote"), default="mcp",
+                        help="remote: opt-in read-only graph read over Python Remote Execution (see material_audit.py)")
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")
     parser.set_defaults(func=command)
@@ -755,6 +639,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if not (args.material_path or args.from_audit):
+        parser.error("give a material path or --from-audit")
     return args.func(args)
 
 

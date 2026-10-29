@@ -2080,9 +2080,99 @@ def command_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+CAPTURE_SCHEMA_VERSION = "material_preview/2"
+
+
+def build_capture_report(material_path: str, route: str, carrier: str, capture: dict[str, Any],
+                         contract_scan: dict[str, Any] | None = None) -> dict[str, Any]:
+    """A material_preview report from an Epic MCP capture, in the shape the gate, regression and packager read."""
+    frames = capture.get("frames") or []
+    return {
+        "tool": "material_preview",
+        "schema_version": CAPTURE_SCHEMA_VERSION,
+        "mode": "capture",
+        "material_path": material_path,
+        "transport": capture.get("transport", ""),
+        "options": {
+            "carrier": carrier if route == "viewport" else "thumbnail",
+            "preview_route": f"epic-mcp {route}",
+            "pose": capture.get("pose"),
+        },
+        "outputs": {
+            "shaded_png": frames[0]["path"] if frames else "",
+            "shaded_ok": bool(capture.get("ok")),
+            "frame_pngs": [frame["path"] for frame in frames],
+            "complexity_png": "",
+            "complexity_ok": None,  # Shader complexity view is not exposed by MCP; not a failure.
+        },
+        "capture": capture,
+        "contract_scan": contract_scan or {},
+    }
+
+
+def command_capture(args: argparse.Namespace) -> int:
+    from .mcp import capture_report, connect, parse_pose
+
+    ctx = resolve_root_context(args.root)
+    contract_scan: dict[str, Any] = {}
+    if args.audit_report:
+        audit_report = load_json(Path(args.audit_report), {})
+        if "raw_graph" not in audit_report:
+            raise SystemExit(f"{args.audit_report} has no raw_graph; re-run material_audit.py with --include-raw-graph.")
+        _, preset = resolve_preview_preset(args.carrier, args.preset)
+        snapshot = {"material_info": audit_report["material_info"], "graph": audit_report["raw_graph"],
+                    "analysis": audit_report["analysis"]}
+        contract_scan = build_preview_contract_scan(snapshot, preset)
+    effect = slugify(args.effect or args.material_path)
+    stem = f"{slugify(args.material_path)}-preview"
+    out_dir = default_report_path(ctx, "previews", effect, stem, "").parent
+    client = connect(ctx.skill_root, timeout=args.timeout, project=args.project)
+    try:
+        capture = capture_report(client, "asset" if args.route == "thumbnail" else "viewport", out_dir,
+                                 f"{stem}-{args.route}", asset_path=args.material_path,
+                                 pose=parse_pose(args.pose) if args.pose else None,
+                                 frames=args.frames, interval=args.interval)
+    finally:
+        client.close()
+    report = build_capture_report(args.material_path, args.route, args.carrier, capture, contract_scan)
+    report_path = Path(args.out) if args.out else out_dir / f"{stem}.json"
+    save_json(report_path, report)
+    if args.markdown:
+        lines = [f"# Material Preview: {args.material_path}", "",
+                 f"- Route: `{report['options']['preview_route']}` carrier `{report['options']['carrier']}`",
+                 f"- Shaded ok: `{report['outputs']['shaded_ok']}`" + (f" ({capture['error']})" if capture.get("error") else ""),
+                 *[f"- Frame: `{path}`" for path in report["outputs"]["frame_pngs"]]]
+        write_text(report_path.with_suffix(".md"), "\n".join(lines) + "\n")
+    print(report_path)
+    return 0 if capture.get("ok") else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Render controlled previews for Unreal materials and material instances.")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    capture = sub.add_parser(
+        "capture",
+        help="Capture a preview through Epic MCP (thumbnail, or a posed viewport frame of a placed carrier).",
+    )
+    capture.add_argument("material_path")
+    capture.add_argument("--route", choices=["thumbnail", "viewport"], default="thumbnail",
+                         help="thumbnail: the editor's material sphere; viewport: frames of a carrier already in the level")
+    capture.add_argument("--carrier", default="mesh",
+                         choices=["mesh", "sprite", "ribbon", "sprite_card", "ribbon_card", "decal", "post_process"],
+                         help="Carrier shown in the viewport capture (recorded; the tool does not spawn it)")
+    capture.add_argument("--pose", help="Viewport camera pose x,y,z,pitch,yaw,roll; default: the current viewport camera")
+    capture.add_argument("--frames", type=int, default=1, help="Viewport only: time-separated frames for motion review")
+    capture.add_argument("--interval", type=float, default=0.5)
+    capture.add_argument("--audit-report", help="material_audit.py --include-raw-graph report for the carrier contract scan")
+    capture.add_argument("--preset")
+    capture.add_argument("--effect")
+    capture.add_argument("--root", default="auto")
+    capture.add_argument("--project")
+    capture.add_argument("--timeout", type=int, default=60)
+    capture.add_argument("--out")
+    capture.add_argument("--markdown", action="store_true")
+    capture.set_defaults(func=command_capture)
 
     render = sub.add_parser("render", help="Render a preview of a material or MI.")
     render.add_argument("material_path")
