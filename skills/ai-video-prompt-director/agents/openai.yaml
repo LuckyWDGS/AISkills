@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI视频提示词导演"
+  short_description: "为真人短剧生成逐镜、对白清晰、连续稳定的15秒、MiniMax H3与豆包Seedance提示词"
+  default_prompt: "Use $ai-video-prompt-director to turn this screenplay beat into a clear, copy-ready 15-second AI video prompt with locked roles, actions, dialogue, and continuity."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "小红书发布助手"
+  short_description: "通过 MCP 上传小红书图文与视频，默认原创并核验发布结果"
+  default_prompt: "使用 $xiaohongshu-content-publisher 整理我的素材并通过 MCP 上传小红书，默认开启原创；我要求发布时完成本次提交并核验结果。"

@@ -33,7 +33,7 @@
 
 ## 文件管理与验收
 
-私人项目按 `recipes/por-oriental-001/looks/LOOK-xxx/batches/<batch-id>/` 保存 prompts、runs、finals、review；造型输入副本位于对应 look 的 inputs，原始 WebP 由 session-picture 保存。类型根的 reference-map.json 记录逻辑 ID、项目相对路径和 SHA256。不预建空造型目录；不移动其他类型文件。
+私人项目按 `recipes/por-oriental-001/looks/LOOK-xxx/batches/<batch-id>/` 保存 prompts、runs、finals、review；造型输入副本位于对应 look 的 inputs，原始 WebP 保存在私人项目内。类型根的 reference-map.json 记录逻辑 ID、项目相对路径和 SHA256。不预建空造型目录；不移动其他类型文件。
 
 可移植技能包只包含文字规则、参数模板和文字示例。输入原图、生成文件和私人映射留在项目，来源/再分发权未知的参考不打包。
 

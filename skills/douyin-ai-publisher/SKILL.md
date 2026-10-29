@@ -40,7 +40,7 @@ description: Prepare and publish Douyin AI videos, image posts and AI voice pres
 
 **AI口播**：核脚本事实、表达者身份、声音/肖像授权和画音对应；优先讲本人真实作品的问题→修改→结果。数字人不冒充专家或真实亲测。AI标识不能替代事实或授权。
 
-本Skill不生成视频。在MyJuBen用户手动生成视频，暂停的`minimax-h3-video-generation`不调用。上传选定成片到抖音属于发布流程，不代表恢复生成自动化。需要写模型提示词时另读项目导演Skill及当前平台适配器。
+本Skill不生成视频。在MyJuBen由用户手动生成视频。上传选定成片到抖音属于发布流程；需要写模型提示词时另读项目导演Skill及当前平台适配器。
 
 ## 一个确定的发布包
 
