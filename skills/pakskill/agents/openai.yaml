@@ -1,6 +1,0 @@
-interface:
-  display_name: "PakSkill"
-  short_description: "Build, install, and clean Unreal paks"
-  icon_small: "./assets/pakskill-small.png"
-  icon_large: "./assets/pakskill.png"
-  default_prompt: "Use $pakskill to package or install Unreal paks with UnrealPakTool."

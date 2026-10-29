@@ -4,41 +4,34 @@ Personal Codex skills managed as a single repository.
 
 ## Quick skill picker
 
-This repository contains 23 Codex skill packages, including one paused video
-automation package. You can simply describe the
+This repository contains 16 Codex skill packages. You can simply describe the
 task in natural language; Codex selects a matching skill when available. For
 an explicit request, write `$<skill-name>` in the prompt, for example
-`$unreal-bridge inspect the open UE 5.8 editor and report PIE state`.
+`$unreal-engine-mcp inspect the open UE 5.8 editor and report PIE state`.
 
 Choose by intent:
 
 - Plan a product feature or UI flow: `feature-experience` first; use
   `ui-from-design` when an accepted design image already exists.
 - Generate or edit images: [cm-imagegen](skills/cm-imagegen/README.md) (standalone, single-provider Sub2API support); use `image-generation-director` for
-  prompt direction, trend/content strategy, or image-to-video planning; use
-  `mentalout-image-browser` only when Mentalout/Snow AI is explicitly named.
+  prompt direction, trend/content strategy, or image-to-video planning.
 - Use [portrait-recipe-studio](skills/portrait-recipe-studio/SKILL.md) when explicitly
   requesting its portrait and clothing prompt recipes.
 - Prepare or publish Douyin content with
   [douyin-ai-publisher](skills/douyin-ai-publisher/README.md); actual publication
   requires a specific user instruction and a logged-in creator account.
-- Build characters, storyboards, voice, or VFX assets: combine
-  `fantasy-character-design`, `short-video-storyboard`, `speech`,
+- Build characters, storyboards, or VFX assets: combine
+  `fantasy-character-design`, `short-video-storyboard`,
   `niagara-vfx-artist`, and `vfx-flipbook-generator` as appropriate.
-- Work in Unreal Engine: start with `unreal-bridge`; use
+- Work in Unreal Engine: start with `unreal-engine-mcp`; use
   `unreal-material-artist` for materials/shaders, `niagara-vfx-artist` for
-  Niagara systems, and `pakskill` for pak/DLC packaging.
-- Automate or inspect a browser: use `playwright` for one-off CLI flows and
-  `playwright-interactive` for a persistent debugging/QA session.
-- Capture or preserve images: use `screenshot` for desktop capture and
-  `session-picture` for durable project image indexing.
-- Keep a long project resumable: use `codex-session-continuity` to maintain
-  handoff, project facts, decisions, and verification records.
+  Niagara systems.
 - Deploy or troubleshoot an owned VPS proxy and subscription with
   [vps-proxy-deploy](skills/vps-proxy-deploy/SKILL.md).
-- [minimax-h3-video-generation](skills/minimax-h3-video-generation/SKILL.md) is
-  retained in a **paused** state. Installing it does not enable automation;
-  keep it paused until the user explicitly requests re-enabling it.
+- Compile screenplay director packages into video prompts with
+  [ai-video-prompt-director](skills/ai-video-prompt-director/SKILL.md).
+- Prepare and publish a specifically authorized Xiaohongshu note with
+  [xiaohongshu-content-publisher](skills/xiaohongshu-content-publisher/SKILL.md).
 
 See the [中文技能目录](docs/zh/README.md) for a per-skill purpose, use case,
 recommended combination, and copyable example prompt.
