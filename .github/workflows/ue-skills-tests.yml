@@ -1,0 +1,48 @@
+name: UE skills offline tests
+
+on:
+  push:
+    paths:
+      - 'skills/unreal-engine-mcp/**'
+      - 'skills/unreal-material-artist/**'
+      - 'skills/niagara-vfx-artist/**'
+      - 'skills/vfx-flipbook-generator/**'
+      - '.github/workflows/ue-skills-tests.yml'
+  pull_request:
+    paths:
+      - 'skills/unreal-engine-mcp/**'
+      - 'skills/unreal-material-artist/**'
+      - 'skills/niagara-vfx-artist/**'
+      - 'skills/vfx-flipbook-generator/**'
+      - '.github/workflows/ue-skills-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.12']
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install skill requirements
+        shell: bash
+        run: |
+          for skill in unreal-material-artist niagara-vfx-artist vfx-flipbook-generator; do
+            python -m pip install -r "skills/$skill/requirements.txt"
+          done
+      # Live-editor checks (live_smoke.py) need a running UE editor and stay local.
+      - name: Run offline suites (loopback only)
+        shell: bash
+        run: python skills/unreal-engine-mcp/scripts/run_offline_tests.py

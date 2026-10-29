@@ -6,9 +6,14 @@ domain-specific details.
 
 ## Requirements
 
-- Python 3.10 or newer, standard library only. Flipbook extraction also needs
-  FFmpeg (installed, or the `imageio-ffmpeg` package). Entry modules stop with
-  a clear message on older interpreters.
+- Python 3.10 or newer. `unreal-engine-mcp` uses only the standard library; the
+  material, Niagara and flipbook skills also need Pillow
+  (`pip install -r <skill>/requirements.txt`). Flipbook extraction needs FFmpeg
+  (installed, or the `imageio-ffmpeg` package). Entry modules stop with a clear
+  message on older interpreters.
+- `python skills/unreal-engine-mcp/scripts/run_offline_tests.py` runs all four
+  offline suites with non-loopback networking blocked; CI runs it on Ubuntu and
+  Windows with Python 3.10 and 3.12.
 - A UE 5.8+ editor with Epic's `ModelContextProtocol` plugin; Python Remote
   Execution enabled in the target project for MCP-gap operations.
 
