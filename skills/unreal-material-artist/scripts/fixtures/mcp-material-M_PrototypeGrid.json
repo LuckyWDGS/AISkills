@@ -1,0 +1,1348 @@
+{
+ "source": {
+  "engine": "5.8.4",
+  "project": "MCPSI",
+  "captured": "2026-10-29"
+ },
+ "asset_path": "/Game/LevelPrototyping/Materials/M_PrototypeGrid",
+ "raw": {
+  "target": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid",
+  "target_class": "Material",
+  "base": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid",
+  "base_class": "Material",
+  "instance_chain": [],
+  "info": {
+   "materialDomain": "MD_Surface",
+   "blendMode": "BLEND_Opaque",
+   "shadingModel": "MSM_DefaultLit",
+   "usedShadingModels": "Default Lit",
+   "twoSided": false,
+   "bUseMaterialAttributes": false
+  },
+  "usage_flags": [
+   "Nanite",
+   "StaticLighting",
+   "StaticMesh"
+  ],
+  "parameters": {
+   "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid": [
+    {
+     "type": "Scalar",
+     "name": "Roughness"
+    },
+    {
+     "type": "Scalar",
+     "name": "Grid Size"
+    },
+    {
+     "type": "Scalar",
+     "name": "Sub Grid Number"
+    },
+    {
+     "type": "Scalar",
+     "name": "CircleSize"
+    },
+    {
+     "type": "Vector",
+     "name": "SurfaceColor"
+    },
+    {
+     "type": "Vector",
+     "name": "TopGridColor"
+    },
+    {
+     "type": "Vector",
+     "name": "GridColor"
+    },
+    {
+     "type": "Vector",
+     "name": "TopSurfaceColor"
+    },
+    {
+     "type": "Vector",
+     "name": "TopSubGridGridColor"
+    },
+    {
+     "type": "Vector",
+     "name": "SubGridColor"
+    },
+    {
+     "type": "Vector",
+     "name": "Line Dimensions"
+    },
+    {
+     "type": "StaticSwitch",
+     "name": "TopSurfaceColor"
+    },
+    {
+     "type": "StaticSwitch",
+     "name": "ObjectAligned"
+    },
+    {
+     "type": "StaticSwitch",
+     "name": "Grid"
+    }
+   ]
+  },
+  "nodes": [
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLinearInterpolate_5",
+    "class_name": "LinearInterpolate",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLinearInterpolate_3"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_5"
+     },
+     {
+      "input_name": "Alpha",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_4"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_3",
+    "class_name": "ScalarParameter",
+    "inputs": [],
+    "parameterName": "Roughness",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_0",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "SurfaceColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_2",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "TopGridColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_3",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "GridColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_4",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "TopSurfaceColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_3",
+    "class_name": "ComponentMask",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_0",
+    "class_name": "VertexNormalWS",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_0",
+    "class_name": "StaticSwitchParameter",
+    "inputs": [
+     {
+      "input_name": "True",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionIf_1"
+     },
+     {
+      "input_name": "False",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_0"
+     }
+    ],
+    "parameterName": "TopSurfaceColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionIf_1",
+    "class_name": "If",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_0"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_3"
+     },
+     {
+      "input_name": "A > B",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_0"
+     },
+     {
+      "input_name": "A == B",
+      "output_name": "",
+      "source": ""
+     },
+     {
+      "input_name": "A < B",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_4"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_0",
+    "class_name": "Constant",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteDeclaration_0",
+    "class_name": "NamedRerouteDeclaration",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_0",
+    "class_name": "ComponentMask",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_1",
+    "class_name": "VertexNormalWS",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_1",
+    "class_name": "StaticSwitchParameter",
+    "inputs": [
+     {
+      "input_name": "True",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionIf_0"
+     },
+     {
+      "input_name": "False",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_7"
+     }
+    ],
+    "parameterName": "TopSurfaceColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionIf_0",
+    "class_name": "If",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_1"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_0"
+     },
+     {
+      "input_name": "A > B",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_3"
+     },
+     {
+      "input_name": "A == B",
+      "output_name": "",
+      "source": ""
+     },
+     {
+      "input_name": "A < B",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_1",
+    "class_name": "Constant",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteDeclaration_1",
+    "class_name": "NamedRerouteDeclaration",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteDeclaration_3",
+    "class_name": "NamedRerouteDeclaration",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_4",
+    "class_name": "NamedRerouteUsage",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_5",
+    "class_name": "NamedRerouteUsage",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_6",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_7",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_6"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_6",
+    "class_name": "NamedRerouteUsage",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_2",
+    "class_name": "MaterialFunctionCall",
+    "inputs": [
+     {
+      "input_name": "TriPlanar",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticBool_0"
+     },
+     {
+      "input_name": "TileSize",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_2"
+     }
+    ],
+    "function": "/Game/LevelPrototyping/Materials/MF_ProcGrid.MF_ProcGrid"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_2",
+    "class_name": "ScalarParameter",
+    "inputs": [],
+    "parameterName": "Grid Size",
+    "group": "Grid Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDivide_0",
+    "class_name": "Divide",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_2"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_4"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_5",
+    "class_name": "MaterialFunctionCall",
+    "inputs": [
+     {
+      "input_name": "TriPlanar",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticBool_0"
+     },
+     {
+      "input_name": "TileSize",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDivide_0"
+     }
+    ],
+    "function": "/Game/LevelPrototyping/Materials/MF_ProcGrid.MF_ProcGrid"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_4",
+    "class_name": "ScalarParameter",
+    "inputs": [],
+    "parameterName": "Sub Grid Number",
+    "group": "None"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticBool_0",
+    "class_name": "StaticBool",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_1",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "TopSubGridGridColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_5",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "SubGridColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_1",
+    "class_name": "ComponentMask",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_2",
+    "class_name": "VertexNormalWS",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_2",
+    "class_name": "StaticSwitchParameter",
+    "inputs": [
+     {
+      "input_name": "True",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionIf_2"
+     },
+     {
+      "input_name": "False",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_1"
+     }
+    ],
+    "parameterName": "TopSurfaceColor",
+    "group": "Surface Properties"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionIf_2",
+    "class_name": "If",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_2"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_1"
+     },
+     {
+      "input_name": "A > B",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_5"
+     },
+     {
+      "input_name": "A == B",
+      "output_name": "",
+      "source": ""
+     },
+     {
+      "input_name": "A < B",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_2",
+    "class_name": "Constant",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteDeclaration_4",
+    "class_name": "NamedRerouteDeclaration",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_0",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "RGB",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_5"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_1",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteDeclaration_5",
+    "class_name": "NamedRerouteDeclaration",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_1",
+    "class_name": "Saturate",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "Wire",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_5"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_2",
+    "class_name": "Saturate",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_0",
+    "class_name": "NamedRerouteUsage",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_2",
+    "class_name": "NamedRerouteUsage",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLinearInterpolate_3",
+    "class_name": "LinearInterpolate",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_6"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_0"
+     },
+     {
+      "input_name": "Alpha",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNamedRerouteUsage_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDistance_0",
+    "class_name": "Distance",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_2"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant_3",
+    "class_name": "Constant",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDivide_1",
+    "class_name": "Divide",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDistance_0"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_5"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionFrac_0",
+    "class_name": "Frac",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstantBiasScale_0",
+    "class_name": "ConstantBiasScale",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionFrac_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAbs_0",
+    "class_name": "Abs",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstantBiasScale_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_0",
+    "class_name": "MaterialFunctionCall",
+    "inputs": [
+     {
+      "input_name": "Input",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAbs_0"
+     },
+     {
+      "input_name": "Input Low",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_1"
+     },
+     {
+      "input_name": "Input High",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_0"
+     },
+     {
+      "input_name": "Target Low",
+      "output_name": "",
+      "source": ""
+     },
+     {
+      "input_name": "Target High",
+      "output_name": "",
+      "source": ""
+     }
+    ],
+    "function": "/Engine/Functions/Engine_MaterialFunctions03/Math/RemapValueRange.RemapValueRange"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_0",
+    "class_name": "Saturate",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "Result",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionOneMinus_0",
+    "class_name": "OneMinus",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLocalPosition_0",
+    "class_name": "LocalPosition",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionStaticSwitchParameter_3",
+    "class_name": "StaticSwitchParameter",
+    "inputs": [
+     {
+      "input_name": "True",
+      "output_name": "Wire",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_2"
+     },
+     {
+      "input_name": "False",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLinearInterpolate_0"
+     }
+    ],
+    "parameterName": "Grid",
+    "group": "None"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_5",
+    "class_name": "ScalarParameter",
+    "inputs": [],
+    "parameterName": "CircleSize",
+    "group": "None"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_6",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "Line Dimensions",
+    "group": "None"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_0",
+    "class_name": "Add",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "Position",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_6"
+     },
+     {
+      "input_name": "B",
+      "output_name": "Position",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_6"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMultiply_0",
+    "class_name": "Multiply",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "Thickness",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_6"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_1",
+    "class_name": "Add",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "Position",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_6"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMultiply_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_2",
+    "class_name": "Add",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDivide_1"
+     },
+     {
+      "input_name": "B",
+      "output_name": "B",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_6"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionActorPositionWS_1",
+    "class_name": "ActorPositionWS",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionWorldPosition_2",
+    "class_name": "WorldPosition",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSubtract_1",
+    "class_name": "Subtract",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "XYZ",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionWorldPosition_2"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionActorPositionWS_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_2",
+    "class_name": "Constant3Vector",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_1",
+    "class_name": "Transform",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_0",
+    "class_name": "Normalize",
+    "inputs": [
+     {
+      "input_name": "VectorInput",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_0",
+    "class_name": "DotProduct",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_9"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_1",
+    "class_name": "MaterialFunctionCall",
+    "inputs": [
+     {
+      "input_name": "X",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_0"
+     },
+     {
+      "input_name": "Y",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_1"
+     },
+     {
+      "input_name": "Z",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_2"
+     }
+    ],
+    "function": "/Engine/Functions/Engine_MaterialFunctions02/Utility/MakeFloat3.MakeFloat3"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_2",
+    "class_name": "Transform",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_1",
+    "class_name": "Normalize",
+    "inputs": [
+     {
+      "input_name": "VectorInput",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_1",
+    "class_name": "DotProduct",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSubtract_1"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_3",
+    "class_name": "Constant3Vector",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_3",
+    "class_name": "Transform",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_4"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_2",
+    "class_name": "Normalize",
+    "inputs": [
+     {
+      "input_name": "VectorInput",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_2",
+    "class_name": "DotProduct",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_11"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_2"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_4",
+    "class_name": "Constant3Vector",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_8",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSubtract_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_9",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_8"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_10",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSubtract_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_11",
+    "class_name": "Reroute",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionReroute_10"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionComponentMask_2",
+    "class_name": "ComponentMask",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "Result",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDivide_2",
+    "class_name": "Divide",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_2"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_0"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionFrac_1",
+    "class_name": "Frac",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_5"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstantBiasScale_1",
+    "class_name": "ConstantBiasScale",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionFrac_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAbs_1",
+    "class_name": "Abs",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstantBiasScale_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_3",
+    "class_name": "MaterialFunctionCall",
+    "inputs": [
+     {
+      "input_name": "Input",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAbs_1"
+     },
+     {
+      "input_name": "Input Low",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_4"
+     },
+     {
+      "input_name": "Input High",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_3"
+     },
+     {
+      "input_name": "Target Low",
+      "output_name": "",
+      "source": ""
+     },
+     {
+      "input_name": "Target High",
+      "output_name": "",
+      "source": ""
+     }
+    ],
+    "function": "/Engine/Functions/Engine_MaterialFunctions03/Math/RemapValueRange.RemapValueRange"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_3",
+    "class_name": "Saturate",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "Result",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMaterialFunctionCall_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionOneMinus_1",
+    "class_name": "OneMinus",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionSaturate_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_0",
+    "class_name": "ScalarParameter",
+    "inputs": [],
+    "parameterName": "CircleSize",
+    "group": "None"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_7",
+    "class_name": "VectorParameter",
+    "inputs": [],
+    "parameterName": "Line Dimensions",
+    "group": "None"
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_3",
+    "class_name": "Add",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "Position",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_7"
+     },
+     {
+      "input_name": "B",
+      "output_name": "Position",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_7"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMultiply_1",
+    "class_name": "Multiply",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "Thickness",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_7"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_4",
+    "class_name": "Add",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "Position",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_7"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionMultiply_1"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAdd_5",
+    "class_name": "Add",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDivide_2"
+     },
+     {
+      "input_name": "B",
+      "output_name": "B",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVectorParameter_7"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLinearInterpolate_0",
+    "class_name": "LinearInterpolate",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionOneMinus_1"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionOneMinus_0"
+     },
+     {
+      "input_name": "Alpha",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAbs_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_6",
+    "class_name": "Constant3Vector",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_4",
+    "class_name": "Normalize",
+    "inputs": [
+     {
+      "input_name": "VectorInput",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_5"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionAbs_3",
+    "class_name": "Abs",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_3"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionDotProduct_3",
+    "class_name": "DotProduct",
+    "inputs": [
+     {
+      "input_name": "A",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionConstant3Vector_6"
+     },
+     {
+      "input_name": "B",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionNormalize_4"
+     }
+    ]
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_4",
+    "class_name": "VertexNormalWS",
+    "inputs": []
+   },
+   {
+    "id": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionTransform_5",
+    "class_name": "Transform",
+    "inputs": [
+     {
+      "input_name": "None",
+      "output_name": "",
+      "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionVertexNormalWS_4"
+     }
+    ]
+   }
+  ]
+ },
+ "outputs": [
+  {
+   "property": "MP_BaseColor",
+   "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionLinearInterpolate_5",
+   "output_name": ""
+  },
+  {
+   "property": "MP_Roughness",
+   "source": "/Game/LevelPrototyping/Materials/M_PrototypeGrid.M_PrototypeGrid:MaterialExpressionScalarParameter_3",
+   "output_name": ""
+  }
+ ],
+ "stats": {
+  "ready": true,
+  "transport": "python-remote-execution",
+  "num_vertex_shader_instructions": 148,
+  "num_pixel_shader_instructions": 232,
+  "num_samplers": 2,
+  "num_vertex_texture_samples": 0,
+  "num_pixel_texture_samples": 9,
+  "num_virtual_texture_samples": 0,
+  "num_uv_scalars": 0,
+  "num_interpolator_scalars": 0
+ }
+}

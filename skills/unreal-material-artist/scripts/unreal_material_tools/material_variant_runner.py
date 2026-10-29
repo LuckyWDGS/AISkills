@@ -278,7 +278,7 @@ def next_actions(skipped: list[dict[str, Any]], args: argparse.Namespace) -> lis
     actions: list[str] = []
     if skipped:
         actions.append("Review skipped parameters; static switches should now flow through static_switch_variant_expander.py before MI batch execution.")
-    actions.append("Run material_instance_batch.py with the emitted spec when UnrealBridge is available, then feed the created MIs into preview_matrix.py and material_regression.py.")
+    actions.append("Run material_instance_batch.py with the emitted spec (review the plan, then --execute), then feed the created MIs into preview_matrix.py and material_regression.py.")
     if not args.include_non_regression:
         actions.append("Only regression-participating parameters were varied; rerun with --include-non-regression if art-review tiers need every exposed control.")
     return actions

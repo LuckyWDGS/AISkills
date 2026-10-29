@@ -124,6 +124,9 @@ def normalize_usage_flag(value: Any) -> str:
     return aliases.get(text, text)
 
 
+RESTATED_SECTIONS = {"graph_summary", "stale_overrides"}
+
+
 def severity_counts(findings: list[dict[str, Any]]) -> dict[str, int]:
     counts = {"errors": 0, "warnings": 0, "info": 0}
     for finding in findings:
@@ -441,7 +444,9 @@ def _material_audit_counts(row: dict[str, Any], material_path: str) -> tuple[int
     if compile_errors:
         errors += len(compile_errors)
         findings.append({"severity": "error", "rule": "compile_errors", "message": "; ".join(str(item) for item in compile_errors[:5]), "path": row["path"]})
-    counts = severity_counts(analysis.get("findings") or [])
+    # Findings that restate dead_nodes / stale_overrides are counted from those sections below.
+    counts = severity_counts([item for item in analysis.get("findings") or []
+                              if item.get("source") not in RESTATED_SECTIONS])
     errors += counts["errors"]
     warnings += counts["warnings"]
     dead_nodes = ((payload.get("graph_summary") or {}).get("dead_nodes")) if isinstance(payload.get("graph_summary"), dict) else []

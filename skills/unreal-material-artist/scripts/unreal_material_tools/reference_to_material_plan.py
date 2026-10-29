@@ -488,17 +488,17 @@ def preview_plan_for(effect: str, layer: str, carrier: str, profile: str, parame
     material_placeholder = f"/Game/Materials/M_{slugify(effect).replace('-', '_')}_{slugify(layer).replace('-', '_')}"
     carrier_arg = carrier if carrier in {"sprite", "ribbon", "decal", "post_process"} else "shaderball"
     render_command = (
-        f"python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render {material_placeholder} "
+        f"python tools/material_preview.py render {material_placeholder} "
         f"--project <UE_PROJECT> --markdown"
     )
     if carrier_arg != "shaderball":
         render_command = (
-            f"python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render {material_placeholder} "
+            f"python tools/material_preview.py render {material_placeholder} "
             f"--carrier {carrier_arg} --project <UE_PROJECT> --markdown"
         )
     sweep_names = [item["name"] for item in parameters if item.get("type") == "Scalar"][:3]
     sweep_commands = [
-        f"python D:/Skills/skills/unreal-material-artist/tools/material_preview.py sweep {material_placeholder} --param-name {name} --value 0.25 --value 0.5 --value 1.0 --project <UE_PROJECT> --markdown"
+        f"python tools/material_preview.py sweep {material_placeholder} --param-name {name} --value 0.25 --value 0.5 --value 1.0 --project <UE_PROJECT> --markdown"
         for name in sweep_names
     ]
     notes = [
@@ -523,7 +523,7 @@ def audit_plan_for(effect: str, layer: str, profile: str, textures: list[dict[st
         role = texture.get("role") or "sprite"
         grid = f" --grid {texture['grid']}" if texture.get("grid") else ""
         texture_commands.append(
-            f"python D:/Skills/skills/unreal-material-artist/tools/texture_asset_report.py <path-to-{texture['name']}> --role {role}{grid} --effect {effect} --markdown"
+            f"python tools/texture_asset_report.py <path-to-{texture['name']}> --role {role}{grid} --effect {effect} --markdown"
         )
     references = ["references/material-audit-workflow.md", "references/texture-vs-compute.md"]
     if profile in {"fire", "energy", "smoke", "heat_haze"}:
@@ -535,8 +535,8 @@ def audit_plan_for(effect: str, layer: str, profile: str, textures: list[dict[st
     return {
         "references_to_read": list(dict.fromkeys(references)),
         "commands": [
-            f"python D:/Skills/skills/unreal-material-artist/tools/material_audit.py {material_placeholder} --project <UE_PROJECT> --markdown",
-            f"python D:/Skills/skills/unreal-material-artist/tools/material_domain_audit.py {material_placeholder} --project <UE_PROJECT> --markdown",
+            f"python tools/material_audit.py {material_placeholder} --project <UE_PROJECT> --markdown",
+            f"python tools/material_domain_audit.py {material_placeholder} --project <UE_PROJECT> --markdown",
         ],
         "texture_commands": texture_commands,
         "acceptance_checks": [

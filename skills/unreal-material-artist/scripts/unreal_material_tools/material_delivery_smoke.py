@@ -236,11 +236,10 @@ def build_instance_batch_command(args: argparse.Namespace, spec_path: Path, effe
         effect,
         "--out",
         str(report_path),
+        "--execute",
     ]
     if args.project:
         command.extend(["--project", args.project])
-    if args.endpoint:
-        command.extend(["--endpoint", args.endpoint])
     if args.timeout:
         command.extend(["--timeout", str(args.timeout)])
     if args.reuse_existing:

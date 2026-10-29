@@ -1,351 +1,329 @@
+"""Create and parameterize Material Instances through Epic's built-in MCP.
+
+Plan, validate, then run: live reads (instance existence, current parents, the
+parent's parameters) turn the JSON spec into a reviewable JSONL step plan for
+``builtin_mcp.py batch``. Every write carries a readback with an ``expect``, and
+each instance ends with a save of that package only. Without ``--execute``
+nothing is written; ``--from-plan`` runs a previously reviewed plan.
+"""
+
 from __future__ import annotations
 
 import argparse
+import base64
 import json
-import textwrap
+import re
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
+from .material_audit import object_path
+from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
+
+
+# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+SCHEMA_VERSION = "material_instance_batch/2"
+
+MI = "MaterialInstanceTools"
+# spec type -> (setter, getter, list_parameters type)
+PARAM_TOOLS = {
+    "scalar": ("set_scalar_parameter", "get_scalar_parameter", "Scalar"),
+    "vector": ("set_vector_parameter", "get_vector_parameter", "Vector"),
+    "texture": ("set_texture_parameter", "get_texture_parameter", "Texture"),
+    "static_switch": ("set_static_switch_parameter", "get_static_switch_parameter", "StaticSwitch"),
+}
+COVERAGE_GAPS = [
+    "Previews use EditorAppToolset.CaptureAssetImage (the editor's thumbnail renderer); "
+    "mesh, lighting, camera and resolution options of the retired plugin preview are not available.",
+]
 
 
 def load_spec(path: str) -> dict[str, Any]:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
-def build_ue_script(spec: dict[str, Any]) -> str:
-    payload = json.dumps(spec, ensure_ascii=False)
-    return textwrap.dedent(
-        f"""
-        import json
-        import os
-        import unreal
+def asset_path(path: str) -> str:
+    """'/Game/M/MI_X.MI_X' -> '/Game/M/MI_X' (AssetTools takes package paths)."""
+    head, _, leaf = path.rpartition("/")
+    return f"{head}/{leaf.split('.', 1)[0]}"
 
-        MAT = unreal.UnrealBridgeMaterialLibrary
-        TR = unreal.UnrealBridgeToolsetRegistryLibrary
-        payload = json.loads({payload!r})
 
-        def serialize_create(result):
-            return {{
-                "success": bool(result.success),
-                "path": result.path,
-                "error": result.error,
-            }}
+def parse_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    text = str(value).strip().lower()
+    if text in ("true", "1", "yes", "on"):
+        return True
+    if text in ("false", "0", "no", "off"):
+        return False
+    raise ValueError(f"unsupported boolean value {value!r}")
 
-        def make_param(row):
-            param = unreal.BridgeMIParamSet()
-            param.name = row["name"]
-            param.type = row["type"]
-            param.value = str(row["value"])
-            return param
 
-        def run_tool(name, payload):
-            result = TR.execute_qualified_tool(name, json.dumps(payload, ensure_ascii=False), True)
-            output = None
-            if result.json_output:
-                try:
-                    output = json.loads(result.json_output)
-                except Exception:
-                    output = result.json_output
-            return {{
-                "success": bool(result.success),
-                "error": result.error,
-                "output": output,
-            }}
+def normalize_value(ptype: str, value: Any) -> Any:
+    """The tool argument for a spec value; it is also the readback expectation."""
+    if ptype == "scalar":
+        return float(value)
+    if ptype == "vector":
+        if isinstance(value, str) and value.strip().startswith("("):
+            # UE text form, e.g. "(R=1,G=0.6,B=0.2,A=1)".
+            value = {key.lower(): float(number) for key, number in
+                     re.findall(r"([RGBA])\s*=\s*([-+0-9.eE]+)", value, re.IGNORECASE)}
+        elif isinstance(value, str):
+            value = json.loads(value)
+        if not isinstance(value, dict):
+            raise ValueError(f"vector value must be an object with r/g/b/a, got {value!r}")
+        return {channel: float(value.get(channel, 1.0 if channel == "a" else 0.0)) for channel in "rgba"}
+    if ptype == "texture":
+        if isinstance(value, str) and value.strip().startswith("{"):
+            value = json.loads(value)
+        path = value.get("refPath") if isinstance(value, dict) else str(value)
+        if not path:
+            raise ValueError("texture value needs a refPath")
+        return {"refPath": object_path(path)}
+    if ptype == "static_switch":
+        return parse_bool(value)
+    raise ValueError(f"unsupported parameter type {ptype!r}")
 
-        def run_tool_candidates(names, payload):
-            attempts = []
-            for candidate in names:
-                result = run_tool(candidate, payload)
-                attempts.append({{"name": candidate, "success": result["success"], "error": result["error"]}})
-                if result["success"]:
-                    result["attempts"] = attempts
-                    result["tool_name"] = candidate
-                    return result
-            last = attempts[-1] if attempts else {{"name": "", "error": "no_tool_candidates"}}
-            return {{
-                "success": False,
-                "error": last.get("error") or "No candidate tool succeeded.",
-                "output": None,
-                "attempts": attempts,
-                "tool_name": last.get("name", ""),
-            }}
 
-        def parse_bool(value):
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, (int, float)):
-                return bool(value)
-            text = str(value).strip().lower()
-            if text in ("true", "1", "yes", "on"):
-                return True
-            if text in ("false", "0", "no", "off"):
-                return False
-            raise RuntimeError(f"Unsupported static switch boolean value: {{value!r}}")
+def collect_facts(client: Any, module: Any, spec: dict[str, Any]) -> dict[str, Any]:
+    """Read-only live facts the plan depends on."""
+    def call(toolset: str, tool: str, args: dict[str, Any]) -> Any:
+        return module.unwrap_result(client.call_resolved_tool(toolset, tool, args))
 
-        report = {{"instances": []}}
-        preview_defaults = payload.get("preview", {{}})
-        reuse_existing = bool(payload.get("reuse_existing"))
-        use_official_toolsets = bool(payload.get("use_official_toolsets", True))
+    facts: dict[str, Any] = {"instances": {}, "parents": {}}
+    parents = {item.get("parent_path") or spec.get("parent_path") for item in spec.get("instances", [])}
+    for parent in sorted(path for path in parents if path):
+        exists = bool(call("AssetTools", "exists", {"path": asset_path(parent)}))
+        params = call(MI, "list_parameters", {"material": {"refPath": object_path(parent)}}) if exists else []
+        facts["parents"][parent] = {"exists": exists, "parameters": params}
+    for item in spec.get("instances", []):
+        path = item["path"]
+        exists = bool(call("AssetTools", "exists", {"path": asset_path(path)}))
+        current_parent = ""
+        if exists:
+            props = call("ObjectTools", "get_properties", {"instance": {"refPath": object_path(path)}, "properties": ["parent"]})
+            parent = props.get("parent") if isinstance(props, dict) else ""
+            current_parent = parent.get("refPath", "") if isinstance(parent, dict) else str(parent or "")
+        facts["instances"][path] = {"exists": exists, "parent": current_parent}
+    return facts
 
-        for item in payload["instances"]:
-            parent_path = item.get("parent_path") or payload["parent_path"]
-            instance_path = item["path"]
-            instance_leaf = instance_path.rsplit("/", 1)[-1].split(".", 1)[0]
-            instance_folder = instance_path.rsplit("/", 1)[0]
-            row = {{
-                "path": instance_path,
-                "parent_path": parent_path,
-            }}
 
-            if use_official_toolsets:
-                created_error = ""
-                create_row = run_tool(
-                    "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.create",
-                    {{
-                        "folder_path": instance_folder,
-                        "asset_name": instance_leaf,
-                        "parent": {{"refPath": parent_path}},
-                    }},
-                )
-                row["create"] = {{
-                    "success": create_row["success"],
-                    "path": ((create_row.get("output") or {{}}).get("returnValue") or {{}}).get("refPath", instance_path),
-                    "error": create_row["error"],
-                    "route": "official-toolset",
-                }}
-                created_error = create_row["error"]
-                usable = bool(create_row["success"])
+def build_plan(spec: dict[str, Any], facts: dict[str, Any], *, reuse_existing: bool) -> tuple[list[dict[str, Any]], list[str]]:
+    """Turn the spec into batch steps; returns (steps, problems). Pure: no editor access."""
+    steps: list[dict[str, Any]] = []
+    problems: list[str] = []
+    for item in spec.get("instances", []):
+        path = item["path"]
+        parent = item.get("parent_path") or spec.get("parent_path") or ""
+        leaf = asset_path(path).rsplit("/", 1)[-1]
+        ref = {"refPath": object_path(path)}
+        parent_facts = facts["parents"].get(parent) or {"exists": False, "parameters": []}
+        instance_facts = facts["instances"].get(path) or {"exists": False, "parent": ""}
+        if not parent:
+            problems.append(f"{path}: no parent_path")
+            continue
+        if not parent_facts["exists"]:
+            problems.append(f"{path}: parent {parent} does not exist")
+            continue
+        if instance_facts["exists"]:
+            if not reuse_existing:
+                problems.append(f"{path}: already exists; pass --reuse-existing to update it")
+                continue
+            if object_path(instance_facts["parent"]) != object_path(parent):
+                problems.append(f"{path}: exists with parent {instance_facts['parent']}, not {parent}; refusing to reparent")
+                continue
+        else:
+            steps.append({
+                "label": f"{leaf}: create", "instance": path, "kind": "create",
+                "toolset": MI, "tool": "create",
+                "args": {"folder_path": asset_path(path).rsplit("/", 1)[0], "asset_name": leaf,
+                         "parent": {"refPath": object_path(parent)}},
+                "readback": {"toolset": "ObjectTools", "tool": "get_properties",
+                             "args": {"instance": ref, "properties": ["parent"]}},
+                "expect": {"parent": {"refPath": object_path(parent)}},
+            })
+        available = {(row.get("name"), row.get("type")) for row in parent_facts["parameters"]}
+        for param in item.get("params") or []:
+            name, ptype = param.get("name", ""), str(param.get("type", "")).strip().lower()
+            if ptype not in PARAM_TOOLS:
+                problems.append(f"{path}: parameter {name!r} has unsupported type {param.get('type')!r}")
+                continue
+            setter, getter, listed_type = PARAM_TOOLS[ptype]
+            if (name, listed_type) not in available:
+                problems.append(f"{path}: parent {parent} has no {listed_type} parameter {name!r}")
+                continue
+            try:
+                value = normalize_value(ptype, param.get("value"))
+            except (ValueError, TypeError, json.JSONDecodeError) as exc:
+                problems.append(f"{path}: parameter {name!r}: {exc}")
+                continue
+            steps.append({
+                "label": f"{leaf}: {name}", "instance": path, "kind": "param", "param": name, "param_type": ptype,
+                "toolset": MI, "tool": setter, "args": {"instance": ref, "name": name, "value": value},
+                "readback": {"toolset": MI, "tool": getter, "args": {"instance": ref, "name": name}},
+                "expect": value,
+            })
+        steps.append({
+            "label": f"{leaf}: save", "instance": path, "kind": "save",
+            "toolset": "AssetTools", "tool": "save_assets", "args": {"asset_paths": [asset_path(path)]},
+            "readback": {"toolset": "AssetTools", "tool": "is_dirty", "args": {"asset_path": asset_path(path)}},
+            "expect": False,
+        })
+    return steps, problems
+
+
+def write_plan(path: Path, steps: list[dict[str, Any]]) -> None:
+    lines = ["# material_instance_batch plan: one builtin_mcp batch step per line; review before --execute"]
+    lines += [json.dumps(step, ensure_ascii=False) for step in steps]
+    write_text(path, "\n".join(lines) + "\n")
+
+
+def instance_rows(entries: list[dict[str, Any]], batch: dict[str, Any] | None,
+                  spec: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Per-instance rows in the legacy report shape (create / set_params / save)."""
+    results = {row["line"]: row for row in (batch or {}).get("results", [])}
+    rows: dict[str, dict[str, Any]] = {}
+    planned_creates = {entry.get("instance") for entry in entries if entry.get("kind") == "create"}
+    parents = {item["path"]: item.get("parent_path") or (spec or {}).get("parent_path", "") for item in (spec or {}).get("instances", [])}
+    for entry in entries:
+        path = entry.get("instance", "")
+        row = rows.setdefault(path, {
+            "path": path, "parent_path": parents.get(path, ""),
+            # No create step means the plan reuses an existing instance.
+            "create": {"success": False, "path": object_path(path) if path else "", "error": "", "route": "epic-mcp",
+                       "reused_existing": path not in planned_creates},
+            "set_params": {"success": True, "applied": 0, "skipped": [], "route": "epic-mcp", "param_results": []},
+        })
+        result = results.get(entry["_line"], {"status": "not-run"})
+        ok = result.get("status") == "ok"
+        if entry.get("kind") == "create":
+            row["create"].update(success=ok, error=result.get("error", ""))
+        elif entry.get("kind") == "param":
+            row["set_params"]["param_results"].append({"name": entry["param"], "type": entry["param_type"],
+                                                       "status": result.get("status"), "error": result.get("error", "")})
+            if ok:
+                row["set_params"]["applied"] += 1
             else:
-                created = MAT.create_material_instance(parent_path, instance_path)
-                row["create"] = serialize_create(created)
-                row["create"]["route"] = "local-bridge"
-                usable = bool(created.success)
-                created_error = created.error
+                row["set_params"]["success"] = False
+                row["set_params"]["skipped"].append(entry["param"])
+        elif entry.get("kind") == "save":
+            row["save"] = {"success": ok, "status": result.get("status"), "error": result.get("error", "")}
+    for row in rows.values():
+        if row["create"]["reused_existing"]:
+            row["create"]["success"] = True
+        if not row["set_params"]["param_results"]:
+            row.pop("set_params")
+    return list(rows.values())
 
-            official_create_error = row["create"].get("error") or ""
-            create_error_text = ((created_error if not use_official_toolsets else official_create_error) or "").lower()
-            if not usable and reuse_existing and ("already occupied" in create_error_text or "already exists" in create_error_text):
-                usable = True
-                row["create"]["success"] = True
-                row["create"]["reused_existing"] = True
 
-            if usable and item.get("params"):
-                if use_official_toolsets:
-                    applied = 0
-                    skipped = []
-                    param_rows = []
-                    for param in item["params"]:
-                        ptype = str(param["type"]).strip().lower()
-                        pname = param["name"]
-                        pvalue = param["value"]
-                        if ptype == "scalar":
-                            result = run_tool(
-                                "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_scalar_parameter",
-                                {{
-                                    "instance": {{"refPath": instance_path}},
-                                    "name": pname,
-                                    "value": float(pvalue),
-                                }},
-                            )
-                        elif ptype == "vector":
-                            vector_value = pvalue if isinstance(pvalue, dict) else {{}}
-                            if not vector_value and isinstance(pvalue, str):
-                                try:
-                                    parsed = json.loads(pvalue)
-                                    if isinstance(parsed, dict):
-                                        vector_value = parsed
-                                except Exception:
-                                    vector_value = {{}}
-                            result = run_tool(
-                                "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_vector_parameter",
-                                {{
-                                    "instance": {{"refPath": instance_path}},
-                                    "name": pname,
-                                    "value": {{
-                                        "r": float(vector_value.get("r", 0.0)),
-                                        "g": float(vector_value.get("g", 0.0)),
-                                        "b": float(vector_value.get("b", 0.0)),
-                                        "a": float(vector_value.get("a", 1.0)),
-                                    }},
-                                }},
-                            )
-                        elif ptype == "texture":
-                            texture_path = pvalue["refPath"] if isinstance(pvalue, dict) and "refPath" in pvalue else str(pvalue)
-                            if texture_path.startswith("{") and texture_path.endswith("}"):
-                                try:
-                                    parsed = json.loads(texture_path)
-                                    if isinstance(parsed, dict) and "refPath" in parsed:
-                                        texture_path = str(parsed["refPath"])
-                                except Exception:
-                                    pass
-                            result = run_tool(
-                                "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_texture_parameter",
-                                {{
-                                    "instance": {{"refPath": instance_path}},
-                                    "name": pname,
-                                    "value": {{"refPath": texture_path}},
-                                }},
-                            )
-                        elif ptype == "static_switch":
-                            result = run_tool_candidates(
-                                [
-                                    "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_static_switch_parameter",
-                                    "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools.set_static_switch_param",
-                                ],
-                                {{
-                                    "instance": {{"refPath": instance_path}},
-                                    "name": pname,
-                                    "value": parse_bool(pvalue),
-                                }},
-                            )
-                        else:
-                            result = {{
-                                "success": False,
-                                "error": f"Unsupported official toolset parameter type: {{param['type']}}",
-                                "output": None,
-                            }}
-                        param_rows.append({{"name": pname, "type": param["type"], "result": result}})
-                        if result["success"]:
-                            applied += 1
-                        else:
-                            skipped.append(pname)
-                    save_row = run_tool(
-                        "toolset_registry.toolsets.core.asset.AssetTools.save_assets",
-                        {{"asset_paths": [instance_path]}},
-                    )
-                    row["set_params"] = {{
-                        "success": len(skipped) == 0,
-                        "applied": applied,
-                        "skipped": skipped,
-                        "route": "official-toolset",
-                        "param_results": param_rows,
-                        "save": save_row,
-                    }}
-                else:
-                    params = [make_param(param) for param in item["params"]]
-                    set_result = MAT.set_mi_params(instance_path, params)
-                    row["set_params"] = {{
-                        "success": bool(set_result.success),
-                        "applied": int(set_result.applied),
-                        "skipped": list(set_result.skipped),
-                        "route": "local-bridge",
-                    }}
-
-            preview = dict(preview_defaults)
-            preview.update(item.get("preview", {{}}))
-            if usable and preview.get("enabled"):
-                os.makedirs(os.path.dirname(preview["out_png"]) or ".", exist_ok=True)
-                preview_ok = MAT.preview_material(
-                    instance_path,
-                    preview.get("mesh", "shaderball"),
-                    preview.get("lighting", "hdri"),
-                    int(preview.get("resolution", 512)),
-                    float(preview.get("yaw", 30.0)),
-                    float(preview.get("pitch", 15.0)),
-                    float(preview.get("distance", 0.0)),
-                    preview["out_png"],
-                )
-                row["preview"] = {{
-                    "ok": bool(preview_ok),
-                    "out_png": preview["out_png"],
-                }}
-
-            report["instances"].append(row)
-
-        print(json.dumps(report, ensure_ascii=False))
-        """
-    ).strip()
+def capture_previews(client: Any, module: Any, rows: list[dict[str, Any]], out_dir: Path) -> None:
+    for row in rows:
+        if not (row["create"]["success"] and (row.get("save") or {}).get("success")):
+            continue
+        out_png = out_dir / f"{slugify(row['path'])}-preview.png"
+        try:
+            image = module.unwrap_result(client.call_resolved_tool(
+                "EditorAppToolset", "CaptureAssetImage", {"assetPath": asset_path(row["path"])}))
+            out_png.parent.mkdir(parents=True, exist_ok=True)
+            out_png.write_bytes(base64.b64decode(image["data"]))
+            row["preview"] = {"ok": True, "out_png": str(out_png)}
+        except Exception as exc:  # A preview failure never undoes the batch; report it.
+            row["preview"] = {"ok": False, "out_png": str(out_png), "error": str(exc)}
 
 
 def render_markdown(report: dict[str, Any]) -> str:
-    lines = ["# Material Instance Batch", ""]
+    lines = ["# Material Instance Batch", "", f"- Status: `{report['status']}`", f"- Plan: `{report['plan']}`", ""]
+    if report.get("problems"):
+        lines += ["## Problems", ""] + [f"- {item}" for item in report["problems"]] + [""]
     for item in report["instances"]:
         create = item.get("create") or {}
-        lines.extend(
-            [
-                f"## {item['path']}",
-                "",
-                f"- Parent: `{item['parent_path']}`",
-                f"- Created: `{create.get('success')}`",
-            ]
-        )
+        lines += [f"## {item['path']}", "", f"- Parent: `{item['parent_path']}`", f"- Created: `{create.get('success')}`"]
         if create.get("reused_existing"):
             lines.append("- Reused existing asset: `True`")
         if create.get("error"):
             lines.append(f"- Create error: `{create['error']}`")
         if item.get("set_params"):
             lines.append(f"- Params applied: `{item['set_params']['applied']}`")
-            skipped = item["set_params"].get("skipped") or []
-            lines.append(f"- Param skipped count: `{len(skipped)}`")
+            lines.append(f"- Param skipped count: `{len(item['set_params'].get('skipped') or [])}`")
+        if item.get("save"):
+            lines.append(f"- Saved: `{item['save']['success']}`")
         if item.get("preview"):
-            lines.append(f"- Preview ok: `{item['preview']['ok']}`")
-            lines.append(f"- Preview png: `{item['preview']['out_png']}`")
+            lines.append(f"- Preview ok: `{item['preview']['ok']}` `{item['preview']['out_png']}`")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
 def command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    spec = load_spec(args.spec)
-    if args.reuse_existing:
-        spec["reuse_existing"] = True
-
+    module = builtin_mcp(ctx.skill_root)
+    spec = load_spec(args.spec) if args.spec else {}
     effect = slugify(args.effect or spec.get("effect") or spec.get("parent_path") or "material-instances")
-    preview_defaults = spec.setdefault("preview", {})
-    if args.preview:
-        preview_defaults["enabled"] = True
-    if preview_defaults.get("enabled"):
-        preview_defaults.setdefault("mesh", args.mesh)
-        preview_defaults.setdefault("lighting", args.lighting)
-        preview_defaults.setdefault("resolution", args.resolution)
-        preview_defaults.setdefault("yaw", args.yaw)
-        preview_defaults.setdefault("pitch", args.pitch)
-        preview_defaults.setdefault("distance", args.distance)
-        for instance in spec["instances"]:
-            preview = dict(preview_defaults)
-            preview.update(instance.get("preview", {}))
-            if preview.get("enabled"):
-                preview.setdefault(
-                    "out_png",
-                    str(default_report_path(ctx, "instances", effect, f"{slugify(instance['path'])}-preview", ".png")),
-                )
-            instance["preview"] = preview
+    out = Path(args.out) if args.out else default_report_path(ctx, "instances", effect, "material-instance-batch", ".json")
+    client = connect(ctx.skill_root, url=args.mcp_url, timeout=args.timeout, project=args.project)
+    try:
+        if args.from_plan:
+            plan_path = Path(args.from_plan)
+            problems: list[str] = []
+        else:
+            facts = collect_facts(client, module, spec)
+            steps, problems = build_plan(spec, facts, reuse_existing=args.reuse_existing or bool(spec.get("reuse_existing")))
+            plan_path = out.with_name(out.stem + "-plan.jsonl")
+            write_plan(plan_path, steps)
+        entries = module.load_batch(plan_path)
+        batch = None
+        if problems:
+            status = "blocked"
+        else:
+            validation = module.run_batch(client, entries, dry_run=True)
+            problems = validation["problems"]
+            if problems:
+                status = "blocked"
+            elif not args.execute:
+                status = "planned"
+            else:
+                batch = module.run_batch(client, entries)
+                status = "applied" if batch["ok"] else "failed"
+        rows = instance_rows(entries, batch, spec)
+        if batch and args.preview:
+            capture_previews(client, module, rows, out.parent)
+    finally:
+        client.close()
 
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    raw = client.exec_json(build_ue_script(spec))
     report = {
         "tool": "material_instance_batch",
+        "schema_version": SCHEMA_VERSION,
         "effect": effect,
-        "source_spec": str(Path(args.spec).resolve()),
-        "instances": raw["instances"],
+        "status": status,
+        "source_spec": str(Path(args.spec).resolve()) if args.spec else "",
+        "plan": str(plan_path.resolve()),
+        "problems": problems,
+        "transport": "epic-mcp batch",
+        "instances": rows,
+        "batch": batch,
+        "coverage_gaps": COVERAGE_GAPS,
     }
-    out = Path(args.out) if args.out else default_report_path(ctx, "instances", effect, "material-instance-batch", ".json")
     save_json(out, report)
     if args.markdown:
         write_text(out.with_suffix(".md"), render_markdown(report))
     print(out)
-    return 0
+    return 0 if status in ("planned", "applied") else 1
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Create and parameterize Unreal material instances from a JSON spec.")
-    parser.add_argument("spec", help="Path to the batch spec JSON.")
+    parser = argparse.ArgumentParser(
+        description="Plan, validate and (with --execute) create and parameterize Material Instances through Epic's built-in MCP.")
+    parser.add_argument("spec", nargs="?", help="Batch spec JSON (omit with --from-plan).")
+    parser.add_argument("--from-plan", help="Run a previously generated, reviewed JSONL plan instead of planning from a spec.")
+    parser.add_argument("--execute", action="store_true", help="Apply the plan; without it nothing is written.")
+    parser.add_argument("--reuse-existing", action="store_true", help="Update instances that already exist with the same parent.")
+    parser.add_argument("--preview", action="store_true", help="After --execute, save a thumbnail PNG per saved instance.")
+    parser.add_argument("--project", help="Refuse to run unless the MCP endpoint is served by this project.")
+    parser.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     parser.add_argument("--root", default="auto")
-    parser.add_argument("--project")
-    parser.add_argument("--endpoint")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--effect")
-    parser.add_argument("--reuse-existing", action="store_true")
-    parser.add_argument("--preview", action="store_true")
-    parser.add_argument("--mesh", default="shaderball")
-    parser.add_argument("--lighting", default="hdri")
-    parser.add_argument("--resolution", type=int, default=512)
-    parser.add_argument("--yaw", type=float, default=30.0)
-    parser.add_argument("--pitch", type=float, default=15.0)
-    parser.add_argument("--distance", type=float, default=0.0)
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")
     parser.set_defaults(func=command)
@@ -355,6 +333,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if not args.spec and not args.from_plan:
+        parser.error("give a spec, or --from-plan with a reviewed plan")
     return args.func(args)
 
 

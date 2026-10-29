@@ -17,8 +17,11 @@ from pathlib import Path
 from typing import Any
 
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
-from .mcp import DEFAULT_MCP_URL, builtin_mcp, python_remote
+from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect, python_remote
 
+
+# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+SCHEMA_VERSION = "material_audit/2"
 
 MATERIAL_PROPERTIES = [
     "MP_BaseColor", "MP_Metallic", "MP_Specular", "MP_Roughness", "MP_Anisotropy", "MP_EmissiveColor",
@@ -74,7 +77,7 @@ def node_id(ref_path: str | None) -> str:
     return (ref_path or "").rsplit(":", 1)[-1]
 
 
-def build_collect_script(asset_path: str) -> str:
+def build_collect_script(asset_path: str, *, include_nodes: bool = True) -> str:
     """ProgrammaticToolset script; every call in it must succeed or the whole script fails."""
     return textwrap.dedent(
         """
@@ -82,6 +85,7 @@ def build_collect_script(asset_path: str) -> str:
         import re
 
         TARGET = __TARGET__
+        INCLUDE_NODES = __INCLUDE_NODES__
         INFO_PROPS = __INFO_PROPS__
         NO_INPUT = set(__NO_INPUT__)
         INSTANCES = set(__INSTANCES__)
@@ -152,7 +156,7 @@ def build_collect_script(asset_path: str) -> str:
                     parameters[ref["refPath"]] = call(MI + "list_parameters", material=ref)
 
             nodes = []
-            if base_class in ("Material", "MaterialFunction"):
+            if INCLUDE_NODES and base_class in ("Material", "MaterialFunction"):
                 for expr_path in [ref_of(item) for item in call(M + "get_expressions", material_or_function=base)]:
                     expr = {"refPath": expr_path}
                     cls = short_class(expr_path)
@@ -177,6 +181,7 @@ def build_collect_script(asset_path: str) -> str:
             }
         """
     ).strip().replace("__TARGET__", json.dumps(asset_path)) \
+        .replace("__INCLUDE_NODES__", "True" if include_nodes else "False") \
         .replace("__INFO_PROPS__", json.dumps(MATERIAL_INFO_PROPS)) \
         .replace("__NO_INPUT__", json.dumps(sorted(NO_INPUT_CLASSES))) \
         .replace("__INSTANCES__", json.dumps(sorted(INSTANCE_CLASSES)))
@@ -194,6 +199,72 @@ def collect_output_connections(module: Any, client: Any, material_path: str) -> 
         if source:
             rows.append({"property": prop, "source": source, "output_name": value.get("output_name", "")})
     return rows
+
+
+REMOTE_GRAPH_SCRIPT = """
+import json, re, unreal
+L = unreal.MaterialEditingLibrary
+base = unreal.load_asset({path!r})
+is_function = isinstance(base, unreal.MaterialFunction)
+props = {{re.sub(r"[^a-z0-9]", "", name.lower()): getattr(unreal.MaterialProperty, name)
+         for name in dir(unreal.MaterialProperty) if name.startswith("MP_")}}
+
+def prop(expr, name):
+    try:
+        return expr.get_editor_property(name)
+    except Exception:
+        return None
+
+def short_class(expr):
+    name = expr.get_class().get_name()
+    return name[len("MaterialExpression"):] if name.startswith("MaterialExpression") else name
+
+nodes = []
+exprs = L.get_material_function_expressions(base) if is_function else L.get_material_expressions(base)
+for expr in exprs:
+    names = list(L.get_material_expression_input_names(expr))
+    sources = (L.get_inputs_for_material_function_expression(base, expr) if is_function
+               else L.get_inputs_for_material_expression(base, expr))
+    node = {{"id": expr.get_path_name(), "class_name": short_class(expr), "inputs": []}}
+    for index, source in enumerate(sources):
+        node["inputs"].append({{
+            "input_name": names[index] if index < len(names) else str(index),
+            "output_name": L.get_input_node_output_name_for_material_expression(expr, source) if source else "",
+            "source": source.get_path_name() if source else "",
+        }})
+    cls = node["class_name"]
+    if "Parameter" in cls and "Collection" not in cls:
+        node["parameterName"] = str(prop(expr, "parameter_name") or "")
+        node["group"] = str(prop(expr, "group") or "")
+    elif cls == "NamedRerouteUsage":
+        declaration = prop(expr, "declaration")  # Protected in UE 5.8.4; used only if a build exposes it.
+        if declaration:
+            node["declaration"] = declaration.get_path_name()
+    elif cls == "MaterialFunctionCall":
+        function = prop(expr, "material_function")
+        node["function"] = function.get_path_name() if function else ""
+    nodes.append(node)
+
+outputs = []
+if not is_function:
+    for wanted in {properties!r}:
+        enum = props.get(re.sub(r"[^a-z0-9]", "", wanted.lower()))
+        source = L.get_material_property_input_node(base, enum) if enum is not None else None
+        if source:
+            outputs.append({{"property": wanted, "source": source.get_path_name(),
+                            "output_name": L.get_material_property_input_node_output_name(base, enum)}})
+print(json.dumps({{"nodes": nodes, "outputs": outputs}}))
+"""
+
+
+def collect_remote_graph(skill_root: Path, asset_path: str, project: str | None) -> dict[str, Any]:
+    """Graph nodes and output wiring through stock MaterialEditingLibrary over Remote Execution."""
+    remote = python_remote(skill_root)
+    script = REMOTE_GRAPH_SCRIPT.format(path=asset_path, properties=MATERIAL_PROPERTIES)
+    result = remote.run_python(script, project=project)
+    if not result.get("success"):
+        raise RuntimeError(remote.stdout_of(result, kinds=("Error",)) or str(result.get("result")))
+    return json.loads(remote.stdout_of(result).strip().splitlines()[-1])
 
 
 STATS_SCRIPT = """
@@ -230,6 +301,10 @@ def trace_graph(nodes: list[dict[str, Any]], outputs: list[dict[str, Any]]) -> d
         for pin in node.get("inputs", []):
             if pin.get("source"):
                 upstream[node["id"]].add(pin["source"])
+        if node.get("declaration"):
+            upstream[node["id"]].add(node["declaration"])  # Exact usage -> declaration link, when readable.
+    usages = [node for node in nodes if node["class_name"] == "NamedRerouteUsage"]
+    reroute_links_known = bool(usages) and all(node.get("declaration") for node in usages)
 
     def walk(start: str) -> set[str]:
         seen: set[str] = set()
@@ -250,8 +325,8 @@ def trace_graph(nodes: list[dict[str, Any]], outputs: list[dict[str, Any]]) -> d
         live |= reachable
         chains.append({"property": prop, "src_guid": node_id(source), "reachable_count": len(reachable),
                        "reachable_nodes": sorted(node_id(item) for item in reachable)})
-    # Usage -> declaration links are not exposed, so keep every declaration live once any usage is.
-    if any(by_id[item]["class_name"] == "NamedRerouteUsage" for item in live if item in by_id):
+    # Without exact links (MCP route), keep every declaration live once any usage is.
+    if not reroute_links_known and any(by_id[item]["class_name"] == "NamedRerouteUsage" for item in live if item in by_id):
         for node in nodes:
             if node["class_name"] == "NamedRerouteDeclaration" and node["id"] not in live:
                 live |= walk(node["id"])
@@ -282,18 +357,22 @@ def stale_overrides(chain: list[dict[str, Any]], parameters: dict[str, list[dict
 
 
 def findings(report: dict[str, Any], instruction_budget: int, sampler_budget: int) -> list[dict[str, Any]]:
+    """Report findings. ``source`` names the report section a finding restates, so consumers that
+    already count that section (``graph_summary.dead_nodes``, ``stale_overrides``) can skip it."""
     rows = []
     for node in report["graph_summary"]["dead_nodes"]:
         if node["parameter_name"]:
-            rows.append({"rule_id": "unused_parameter", "severity": "warning", "expression_guid": node["guid"],
+            rows.append({"rule_id": "unused_parameter", "severity": "warning", "source": "graph_summary",
+                         "expression_guid": node["guid"],
                          "expression_class": node["class_name"],
                          "message": f"Parameter `{node['parameter_name']}` does not reach any output."})
         else:
-            rows.append({"rule_id": "dead_expression", "severity": "info", "expression_guid": node["guid"],
+            rows.append({"rule_id": "dead_expression", "severity": "info", "source": "graph_summary",
+                         "expression_guid": node["guid"],
                          "expression_class": node["class_name"],
                          "message": f"`{node['class_name']}` does not reach any output."})
     for override in report["stale_overrides"]:
-        rows.append({"rule_id": "stale_override", "severity": "warning",
+        rows.append({"rule_id": "stale_override", "severity": "warning", "source": "stale_overrides",
                      "message": f"Override `{override['name']}` on `{override['instance']}` matches no parent parameter."})
     stats = report["analysis"]["shader_stats"]
     if stats.get("ready"):
@@ -345,24 +424,38 @@ def legacy_raw_graph(raw: dict[str, Any], outputs: list[dict[str, Any]]) -> dict
 
 
 def audit(skill_root: Path, asset_path: str, *, url: str = DEFAULT_MCP_URL, timeout: float = 180,
-          project: str | None = None, shader_stats: bool = True,
+          project: str | None = None, shader_stats: bool = True, graph_source: str = "mcp",
           instruction_budget: int = 0, sampler_budget: int = 0) -> dict[str, Any]:
     module = builtin_mcp(skill_root)
-    client = module.UnrealMcpClient(url, module.DEFAULT_PROTOCOL, timeout, cache_dir=module.default_cache_dir())
+    client = connect(skill_root, url=url, timeout=timeout, project=project)
+    remote_graph = graph_source == "remote"
     try:
-        client.initialize()
-        raw = client.run_tool_script(build_collect_script(object_path(asset_path)))
-        outputs = collect_output_connections(module, client, raw["base"]) if raw["base_class"] == "Material" else []
+        raw = client.run_tool_script(build_collect_script(object_path(asset_path), include_nodes=not remote_graph))
+        if remote_graph:
+            outputs = []
+        else:
+            outputs = collect_output_connections(module, client, raw["base"]) if raw["base_class"] == "Material" else []
     finally:
         client.close()
+    if remote_graph and raw["base_class"] in ("Material", "MaterialFunction"):
+        graph = collect_remote_graph(skill_root, raw["base"], project)
+        raw["nodes"], outputs = graph["nodes"], graph["outputs"]
+    raw["graph_source"] = "python-remote-execution" if remote_graph else "epic-mcp"
 
-    nodes = raw["nodes"]
     if not shader_stats:
         stats = {"ready": False, "error": "skipped (--no-shader-stats)"}
     elif raw["base_class"] != "Material":
         stats = {"ready": False, "error": f"not applicable to {raw['base_class']}"}
     else:
         stats = collect_shader_stats(skill_root, asset_path, project)
+    return build_report(asset_path, raw, outputs, stats,
+                        instruction_budget=instruction_budget, sampler_budget=sampler_budget)
+
+
+def build_report(asset_path: str, raw: dict[str, Any], outputs: list[dict[str, Any]], stats: dict[str, Any], *,
+                 instruction_budget: int = 0, sampler_budget: int = 0) -> dict[str, Any]:
+    """The audit report from collected data; pure, so recorded fixtures can drive it offline."""
+    nodes = raw["nodes"]
     params = raw["parameters"]
     info = raw["info"]
     shading_models = [item.strip() for item in str(info.get("usedShadingModels") or "").split(",") if item.strip()]
@@ -375,8 +468,12 @@ def audit(skill_root: Path, asset_path: str, *, url: str = DEFAULT_MCP_URL, time
     layers.append({"name": raw["base"].rsplit(".", 1)[-1], "path": raw["base"], "is_base_material": True, "override_parameters": []})
     report: dict[str, Any] = {
         "tool": "material_audit",
+        "schema_version": SCHEMA_VERSION,
         "material_path": asset_path,
-        "transport": {"graph": "epic-mcp ProgrammaticToolset", "outputs": "epic-mcp MaterialTools",
+        "transport": {"graph": "python-remote-execution" if raw.get("graph_source") == "python-remote-execution"
+                      else "epic-mcp ProgrammaticToolset",
+                      "outputs": "python-remote-execution" if raw.get("graph_source") == "python-remote-execution"
+                      else "epic-mcp MaterialTools",
                       "shader_stats": stats.get("transport", "not-run")},
         "material_info": {
             "found": True,
@@ -416,7 +513,8 @@ def audit(skill_root: Path, asset_path: str, *, url: str = DEFAULT_MCP_URL, time
             "shader_stats_ready": bool(stats.get("ready")),
             "shader_stats": stats,
         },
-        "coverage_gaps": COVERAGE_GAPS,
+        "coverage_gaps": [gap for gap in COVERAGE_GAPS
+                          if not (gap.startswith("NamedRerouteUsage") and any(n.get("declaration") for n in nodes))],
     }
     report["analysis"]["findings"] = findings(report, instruction_budget, sampler_budget)
     report["raw_graph"] = legacy_raw_graph(raw, outputs)
@@ -462,7 +560,7 @@ def command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     report = audit(
         ctx.skill_root, args.material_path, url=args.mcp_url, timeout=args.timeout, project=args.project,
-        shader_stats=not args.no_shader_stats,
+        shader_stats=not args.no_shader_stats, graph_source=args.graph_source,
         instruction_budget=args.instruction_budget, sampler_budget=args.sampler_budget,
     )
     if not args.include_raw_graph:
@@ -483,6 +581,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project", help="Editor for shader statistics over Python Remote Execution (name or .uproject)")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--no-shader-stats", action="store_true", help="Skip the Remote Execution statistics step")
+    parser.add_argument("--graph-source", choices=("mcp", "remote"), default="mcp",
+                        help="remote: read the graph with stock MaterialEditingLibrary over Python Remote Execution "
+                             "(opt-in, read-only; one editor call instead of ~0.25 s per node)")
     parser.add_argument("--instruction-budget", type=int, default=0)
     parser.add_argument("--sampler-budget", type=int, default=0)
     parser.add_argument("--out")

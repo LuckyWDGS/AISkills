@@ -42,6 +42,17 @@ class GraphTests(unittest.TestCase):
         graph = audit.trace_graph(nodes, [{"property": "MP_BaseColor", "source": M + "Add_0", "output_name": ""}])
         self.assertEqual(graph["dead_nodes"], [])
 
+    def test_exact_reroute_links_only_when_every_usage_has_one(self):
+        decl_live = node("NamedRerouteDeclaration_0", ["Constant_0"])
+        decl_dead = node("NamedRerouteDeclaration_1", ["Constant_1"])
+        exact = [node("Add_0", ["NamedRerouteUsage_0"]), node("NamedRerouteUsage_0", declaration=M + "NamedRerouteDeclaration_0"),
+                 decl_live, decl_dead, node("Constant_0"), node("Constant_1")]
+        graph = audit.trace_graph(exact, [{"property": "MP_BaseColor", "source": M + "Add_0", "output_name": ""}])
+        self.assertEqual([item["class_name"] for item in graph["dead_nodes"]], ["Constant"])  # behind the unused declaration
+        partial = exact + [node("NamedRerouteUsage_1")]  # one usage without a readable link -> conservative fallback
+        graph = audit.trace_graph(partial, [{"property": "MP_BaseColor", "source": M + "Add_0", "output_name": ""}])
+        self.assertEqual([item["class_name"] for item in graph["dead_nodes"]], ["NamedRerouteUsage"])
+
     def test_function_outputs_are_roots(self):
         nodes = [node("FunctionOutput_0", ["Constant_0"]), node("Constant_0"), node("Constant_1")]
         graph = audit.trace_graph(nodes, [])

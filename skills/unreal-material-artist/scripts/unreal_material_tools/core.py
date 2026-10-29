@@ -3,10 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+if sys.version_info < (3, 10):  # dataclass(slots=True), str.removesuffix
+    raise SystemExit(f"The UE skills need Python 3.10 or newer; {sys.executable} is {sys.version.split()[0]}.")
 
 
 MATERIAL_DIR_NAME = "material-delivery"
