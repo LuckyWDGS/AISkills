@@ -12,16 +12,17 @@ import subprocess
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .editor import check_expected_project, endpoint_owner
+from .editor import check_expected_project, connection_hint, endpoint_owner
 from .protocol import (
     McpError, SessionExpired, _check_tool_result, _decode_response, _decode_text_value,
     _extract_text, _parse_toolsets,
 )
-from .schema import _schema_tools
+from .schema import _schema_tools, argument_problems, signature, suggest
 
 
 class UnrealMcpClient:
@@ -77,9 +78,13 @@ class UnrealMcpClient:
             detail = exc.read().decode("utf-8", errors="replace")
             if exc.code == 404 and self.session_id:
                 raise SessionExpired(f"Unknown MCP session {self.session_id}") from exc
+            if exc.code == 404 and "route_handler_not_found" in detail:
+                path = urllib.parse.urlparse(self.url).path or "/"
+                raise McpError(f"The server at {self.url} has no handler for {path!r}; UE's MCP route is /mcp "
+                               "(ModelContextProtocolSettings.ServerUrlPath).") from exc
             raise McpError(f"HTTP {exc.code} from {self.url}: {detail or exc.reason}") from exc
         except urllib.error.URLError as exc:
-            raise McpError(f"Cannot connect to Unreal MCP at {self.url}: {exc.reason}") from exc
+            raise McpError(f"Cannot connect to Unreal MCP at {self.url}: {exc.reason}. {connection_hint(self.url)}") from exc
 
     def _streaming_request(self, payload: dict[str, Any]) -> Any:
         """Call ``tools/call`` over either UE's SSE or JSON response mode.
@@ -194,7 +199,8 @@ class UnrealMcpClient:
             return response
         stderr = decode_native(stderr_bytes).strip()
         if stderr:
-            raise McpError(f"curl failed for {self.url}: {stderr}")
+            hint = f". {connection_hint(self.url)}" if "connect" in stderr.lower() else ""
+            raise McpError(f"curl failed for {self.url}: {stderr.rstrip('.')}{hint}")
         raise McpError(f"Timed out waiting for the final SSE event from {self.url}")
 
     def initialize(self) -> dict[str, Any]:
@@ -312,9 +318,14 @@ class UnrealMcpClient:
             return name
         # Match class suffixes, never an old hard-coded module namespace.
         matches = [item for item in names if item.rsplit(".", 1)[-1] == name]
-        if len(matches) != 1:
-            raise McpError(f"Toolset {name!r} is absent or ambiguous; matches: {matches}. Run list-toolsets.")
-        return matches[0]
+        if len(matches) == 1:
+            return matches[0]
+        if matches:
+            raise McpError(f"Toolset {name!r} is ambiguous: {matches}. Pass the full name.")
+        hint = suggest(name, [item.rsplit(".", 1)[-1] for item in names])
+        raise McpError(f"Toolset {name!r} is not in the live inventory"
+                       + (f"; did you mean {hint!r}?" if hint else "; run list-toolsets.")
+                       + " A missing toolset can also mean its Epic plugin is disabled.")
 
     def _url_key(self) -> str:
         return hashlib.sha1(self.url.encode("utf-8")).hexdigest()[:8]
@@ -401,11 +412,20 @@ class UnrealMcpClient:
             return None
         return None
 
+    def missing_tool_message(self, toolset: str, tool: str) -> str:
+        names = [item.get("name", "").rsplit(".", 1)[-1] for item in _schema_tools(self.describe_toolset(toolset))]
+        hint = suggest(tool, names)
+        return (f"Tool {tool!r} is not in {toolset.rsplit('.', 1)[-1]}"
+                + (f"; did you mean {hint!r}?" if hint else f"; run describe-toolset {toolset.rsplit('.', 1)[-1]} --brief."))
+
     def call_resolved_tool(self, toolset: str, tool: str, arguments: dict[str, Any]) -> Any:
         toolset = self.resolve_toolset(toolset)
         entry = self.find_tool(toolset, tool)
         if entry is None:
-            raise McpError(f"Tool {tool!r} not found in live schema for {toolset}; run describe-toolset.")
+            raise McpError(self.missing_tool_message(toolset, tool))
+        problems = argument_problems(entry, arguments)
+        if problems:
+            raise McpError(f"{toolset.rsplit('.', 1)[-1]}.{tool}: {'; '.join(problems)}. Expected {signature(entry)}")
         if self.search_mode():
             result = self.call_tool("call_tool", {
                 "toolset_name": toolset, "tool_name": tool, "arguments": arguments,

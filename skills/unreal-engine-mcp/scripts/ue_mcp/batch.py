@@ -12,6 +12,7 @@ from .client import UnrealMcpClient
 
 SCHEMA_VERSION = "builtin_mcp.batch/1"
 from .protocol import McpError, unwrap_result
+from .schema import argument_problems
 
 
 def load_batch(path: str | Path) -> list[dict[str, Any]]:
@@ -67,13 +68,12 @@ def validate_batch(client: UnrealMcpClient, entries: list[dict[str, Any]]) -> li
                 problems.append(f"{where}: {exc}")
                 continue
             if schema is None:
-                problems.append(f"{where}: tool {spec['tool']!r} not in {spec['toolset']}")
+                problems.append(f"{where}: {client.missing_tool_message(spec['toolset'], spec['tool'])}")
                 continue
             # UE marks some documented-optional fields required; pass explicit empty values for them.
-            required = (schema.get("inputSchema") or {}).get("required") or []
-            missing = [key for key in required if key not in (spec.get("args") or {})]
-            if missing:
-                problems.append(f"{where}: {spec['tool']} is missing required args {missing}")
+            issues = argument_problems(schema, spec.get("args") or {})
+            if issues:
+                problems.append(f"{where}: {spec['tool']}: {'; '.join(issues)}")
         if "expect" in entry and not entry.get("readback"):
             problems.append(f"line {entry['_line']}: \"expect\" needs a \"readback\"")
     return problems

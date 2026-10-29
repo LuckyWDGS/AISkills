@@ -85,7 +85,10 @@ call, close): ~2 s. The CLI therefore keeps its session:
 - `--new-session` initializes and closes a private session (the old behaviour).
   Library callers get a private session unless they pass `session_dir`.
 
-For many reads, one `run-script` is still cheaper than many `call`s.
+For many reads, one `run-script` is still cheaper than many `call`s. Running calls in
+parallel does not help: six concurrent calls took as long as six sequential ones (the
+server handles them one at a time), although a long-running script does not block
+short calls made meanwhile.
 
 ## Batch: ordered steps and writes
 

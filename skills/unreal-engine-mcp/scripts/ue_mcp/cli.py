@@ -141,8 +141,7 @@ def main() -> int:
         elif args.command == "describe-tool":
             value = client.find_tool(args.toolset_name, args.tool_name)
             if value is None:
-                raise McpError(f"Tool {args.tool_name!r} not found in {client.resolve_toolset(args.toolset_name)}; "
-                               "run describe-toolset --brief.")
+                raise McpError(client.missing_tool_message(client.resolve_toolset(args.toolset_name), args.tool_name))
         elif args.command == "call":
             arguments = _load_json_object(Path(args.args_file).read_text(encoding="utf-8-sig") if args.args_file else args.args)
             if args.toolset:

@@ -71,6 +71,21 @@ def endpoint_owner(url: str) -> dict[str, Any]:
     return owner
 
 
+def connection_hint(url: str) -> str:
+    """What to check when nothing answered at ``url``: who holds the port, or how to start MCP."""
+    parsed = urllib.parse.urlparse(url)
+    owner = endpoint_owner(url)
+    if owner.get("pid"):
+        who = owner.get("project") or Path(str(owner.get("executable") or "")).name or "a process"
+        return (f"Port {parsed.port} is held by {who} (pid {owner['pid']}) but it did not answer MCP at "
+                f"{parsed.path or '/'}; check that editor's ModelContextProtocolSettings (ServerUrlPath /mcp).")
+    if owner.get("reason") == "non-local endpoint":
+        return "Check that the remote editor runs the ModelContextProtocol server and is reachable."
+    return (f"Nothing is listening on port {parsed.port or 80}. Start the editor with the ModelContextProtocol "
+            "plugin and bAutoStartServer=true, or launch it with -ModelContextProtocolStartServer; "
+            "`builtin_mcp.py ensure` explains the options.")
+
+
 def check_expected_project(owner: dict[str, Any], expected: str) -> None:
     wanted = expected.replace("\\", "/").lower()
     wanted = wanted.rsplit("/", 1)[-1]

@@ -20,7 +20,7 @@ from builtin_mcp import (
 def server(*, native=False, sse=False, tool_error=False, sessions=None):
     """``sessions``: a set of live session ids; when given, unknown ids get HTTP 404 like UE."""
     calls = []
-    schema = {"name": "exists", "inputSchema": {"type": "object"}}
+    schema = {"name": "exists", "inputSchema": {"type": "object", "properties": {"asset_path": {"type": "string"}}}}
     qualified = "editor_toolset.toolsets.asset.AssetTools"
 
     class Handler(BaseHTTPRequestHandler):
@@ -128,7 +128,7 @@ class ClientTests(unittest.TestCase):
 
     def test_missing_tool_is_rejected_before_dispatch(self):
         with server(native=True) as (client, calls):
-            with self.assertRaisesRegex(McpError, "not found in live schema"):
+            with self.assertRaisesRegex(McpError, "'invented_write' is not in AssetTools"):
                 client.call_resolved_tool("AssetTools", "invented_write", {})
             self.assertFalse(any(c["method"] == "tools/call" for c in calls))
 
@@ -233,6 +233,9 @@ class FakeBatchClient:
     def __init__(self, fail=()):
         self.fail, self.sent = set(fail), []
 
+    def missing_tool_message(self, toolset, tool):
+        return f"Tool {tool!r} is not in {toolset}"
+
     def find_tool(self, toolset, tool):
         if tool == "missing":
             return None
@@ -298,6 +301,36 @@ class BatchTests(unittest.TestCase):
             path = Path(folder) / "b.jsonl"
             path.write_text('# plan\n\n{"toolset": "T", "tool": "a"}\n', encoding="utf-8")
             self.assertEqual(load_batch(path), [{"toolset": "T", "tool": "a", "_line": 3}])
+
+
+class HintTests(unittest.TestCase):
+    TOOL = {"name": "x.ObjectTools.get_properties", "inputSchema": {
+        "type": "object", "required": ["instance", "properties"],
+        "properties": {"instance": {"type": "object", "title": "/Script/CoreUObject.Object"},
+                       "properties": {"type": "array", "items": {"type": "string"}}}}}
+
+    def test_suggestions(self):
+        from ue_mcp.schema import suggest
+        self.assertEqual(suggest("IsPieRunning", ["IsPIERunning", "StopPIE"]), "IsPIERunning")
+        self.assertEqual(suggest("EditorAppTools", ["EditorAppToolset", "LogsToolset"]), "EditorAppToolset")
+        self.assertIsNone(suggest("zzz", ["EditorAppToolset"]))
+
+    def test_argument_problems(self):
+        from ue_mcp.schema import argument_problems, signature
+        self.assertEqual(argument_problems(self.TOOL, {"instance": {}, "properties": []}), [])
+        self.assertEqual(argument_problems(self.TOOL, {"instanse": {}, "properties": []}),
+                         ["unknown argument 'instanse' (did you mean 'instance'?)", "missing required argument 'instance'"])
+        open_schema = {"inputSchema": {"properties": {"a": {}}, "additionalProperties": True}}
+        self.assertEqual(argument_problems(open_schema, {"b": 1}), [])
+        self.assertEqual(signature(self.TOOL), "get_properties(instance*: Object, properties*: list[string])")
+
+    def test_client_rejects_bad_arguments_before_dispatch(self):
+        with server() as (client, calls):
+            with self.assertRaisesRegex(McpError, r"AssetTools.exists: unknown argument 'pth'.*Expected exists\("):
+                client.call_resolved_tool("AssetTools", "exists", {"pth": "/Game"})
+            self.assertFalse(any(c["params"].get("name") == "call_tool" for c in calls if c["method"] == "tools/call"))
+            with self.assertRaisesRegex(McpError, "did you mean 'AssetTools'"):
+                client.resolve_toolset("AssetTool")
 
 
 class BriefAndProjectTests(unittest.TestCase):

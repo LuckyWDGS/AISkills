@@ -362,7 +362,11 @@ def resolve_executable(name: str, override: str | None, *, peer_override: str | 
         except Exception:
             pass
     local_state = local_ffmpeg_state(name)
-    raise RuntimeError(f"{name} was not found on PATH. {local_state}")
+    raise RuntimeError(
+        f"{name} was not found on PATH. {local_state} Install FFmpeg (for example `winget install Gyan.FFmpeg`), "
+        "unpack a build so tools/ffmpeg/<build>/bin holds ffmpeg.exe and ffprobe.exe, or pass the executable path; "
+        "the binaries are per-machine and not in git."
+    )
 
 
 def format_subprocess_error(tool_name: str, command: list[str], error: subprocess.CalledProcessError) -> str:

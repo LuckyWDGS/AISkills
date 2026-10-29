@@ -2,7 +2,45 @@
 
 from __future__ import annotations
 
+import difflib
 from typing import Any
+
+
+def suggest(name: str, candidates: list[str]) -> str | None:
+    """The closest candidate for a mistyped name: exact case-insensitive match first, then fuzzy."""
+    lowered = {candidate.lower(): candidate for candidate in candidates}
+    if name.lower() in lowered:
+        return lowered[name.lower()]
+    close = difflib.get_close_matches(name.lower(), list(lowered), n=1, cutoff=0.6)
+    return lowered[close[0]] if close else None
+
+
+def argument_problems(tool: dict[str, Any], arguments: dict[str, Any]) -> list[str]:
+    """Missing required and unknown argument names, checked locally.
+
+    UE rejects a missing required argument with a full schema dump, and silently
+    ignores an unknown one, so a mistyped optional argument would change the result
+    without any error.
+    """
+    schema = tool.get("inputSchema") or {}
+    properties = schema.get("properties") or {}
+    problems = []
+    if properties and not schema.get("additionalProperties"):
+        for key in arguments:
+            if key not in properties:
+                hint = suggest(key, [name for name in properties if name not in arguments])
+                problems.append(f"unknown argument {key!r}" + (f" (did you mean {hint!r}?)" if hint else ""))
+    for key in schema.get("required") or []:
+        if key not in arguments:
+            problems.append(f"missing required argument {key!r}")
+    return problems
+
+
+def signature(tool: dict[str, Any]) -> str:
+    """``name(arg*: Type, ...) -> Return`` for error messages."""
+    row = brief_tools({"tools": [tool]})[0]
+    params = ", ".join(f"{p['name']}{'*' if p['required'] else ''}: {p['type']}" for p in row["params"])
+    return f"{row['name']}({params})" + (f" -> {row['returns']}" if row["returns"] else "")
 
 
 def _schema_tools(described: Any) -> list[dict[str, Any]]:

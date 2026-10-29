@@ -75,8 +75,11 @@ python scripts/record_fixtures.py --project <ProjectName> --check   # after an e
 Toolset names may be given as the unique class suffix (`SceneTools`); the client
 resolves it against the live inventory. Use `--args-file` for non-trivial JSON
 on PowerShell. The CLI keeps its MCP session between runs, so a repeated `call`
-costs ~0.3 s instead of ~2 s; `--new-session` opts out. In Git Bash set
-`MSYS_NO_PATHCONV=1`, or `/Game/...` arguments are rewritten to filesystem paths. On Windows, write
+costs ~0.3 s instead of ~2 s; `--new-session` opts out. Mistyped toolset, tool or
+argument names are rejected locally with a did-you-mean suggestion; UE itself
+silently ignores unknown argument names. In Git Bash set
+`MSYS_NO_PATHCONV=1`, or `/Game/...` arguments are rewritten to filesystem paths. Parallel calls are
+serialized by the server, so batch with `run-script` instead. On Windows, write
 large or CJK output with the global `--out <file>` (UTF-8) instead of piping it, or set `PYTHONUTF8=1`
 for any Python that reads the pipe; a GBK console reader garbles UTF-8 text.
 
