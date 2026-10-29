@@ -5,6 +5,33 @@ description: Use when the user needs Unreal Engine Niagara VFX help or complete 
 
 # Niagara VFX Artist
 
+For this user's new or modified UE modules, add Chinese module comments,
+descriptions and stable searchable labels/IDs using the domain's supported
+comment or stack metadata. Follow the shared
+[Chinese annotation convention](../unreal-engine-mcp/references/blueprint-programming-mcp.md#chinese-module-annotations).
+Use clear Chinese emitter/module display descriptions where supported while
+preserving existing parameter namespaces and bindings. Read-only audits should
+not insert annotations into untouched assets.
+
+## Editor transport
+
+For this user, keep editor work on background connections: do not focus, move,
+minimize, maximize or resize UE windows or send console keystrokes. For a verified
+MCP gap, check [Epic Python Remote Execution](../unreal-engine-mcp/references/official-python-remote.md)
+for that one operation. Use the shared [developer workflow](../unreal-engine-mcp/references/developer-workflow.md)
+for scoped changes and [source/diagnostic workflow](../unreal-engine-mcp/references/debugging-and-source-navigation.md)
+to trace the gameplay/animation/renderer binding and failure cause.
+
+Use Epic's MCP as the editor control path on UE 5.8+, following the sibling `unreal-engine-mcp` skill. Discover Niagara System/Assets/Component/Blueprint/Info toolsets and their schemas live. Use official system/emitter summaries, topology, renderer/stack data, module/user-variable editing, compile state, and stack issues before considering a custom plugin. Read ProgrammaticToolset's execution environment before batching official tools.
+
+If diagnostics wait on first-load compilation, check compile readiness and a
+supported background asset-load route before treating the timeout as a capability
+gap. The historical 5.8.4 case involved opening an asset; it does not authorize
+opening/focusing editor UI for this user. If background loading cannot establish
+readiness, report that specific boundary rather than repeatedly sending writes.
+
+The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired. `niagara_audit` and `niagara_material_integration_probe` read through MCP. The editor-connected modes of `niagara_asset_assistant` apply, `niagara_param_sweep`, `runtime_control_probe`, `live_asset_verify`, `controlled_preview`, `effect_control_schema` live reads, `asset_cleanup` execute, `ue_write_helpers`, and `flipbook_ue_pipeline` call retired `UnrealBridge*Library` APIs and fail fast until ported to MCP; their offline plan/report modes still work. Do the live step with MCP tools and feed the resulting JSON into the local reports. `ue_smoke`, `delivery_finalize --promote-assets` and `control_provenance_check` use only stock `unreal.*` and run over Epic Python Remote Execution. See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
+
 ## Overview
 
 Use this skill as the VFX Lead for Unreal Engine Niagara effect design, implementation, critique, integration, and optimization. It owns the effect-level direction: visual intent, gameplay readability, reference decomposition, layer structure, carrier choices, systems, emitters, renderers, events, modules, simulation targets, bounds, culling, preview, integration, and final effect delivery.
@@ -46,14 +73,12 @@ Default team model:
    For Niagara Ribbon / trail layers, explicitly state that the renderer's default UV convention is `U = ribbon length` and `V = ribbon width`. Ask the material side to put primary trail motion on raw `TexCoord0.U` / X, such as `Time * Speed -> Append(X, 0)` and length tiling `(Tiling_U, 1.0)`, while keeping width falloff on raw `TexCoord0.V` / Y. V-axis offsets may be used for vertical wobble/distortion. If a renderer uses custom UV overrides or a material intentionally remaps art-space texture axes, read it back and document the exception before handing the contract to material work.
 
 6. Implement or plan Niagara.
-   Prefer template-first Niagara creation and mutation plans over fragile ad hoc graph writing. Use `niagara_asset_assistant.py` for reviewable mutation plans and `niagara_audit.py` for readback.
-   If a required Niagara authoring capability is missing, first search official Python / Blueprint docs and local UE source for the authoritative engine/editor route. If the engine has the capability but current bridge surfaces do not, extend UnrealBridge rather than forcing raw property or export-text hacks.
-   When upstream `UnrealBridge` changes, pull the upstream skill/plugin baseline anyway instead of skipping sync just because upstream lacks Niagara. Preserve the local Niagara overlay, merge any local bridge-only dependencies back in, and regenerate generated bridge surfaces from the live local plugin after the sync.
-   On UE 5.8+, if the target operation overlaps with an official `NiagaraToolsets` tool, prefer the official ToolsetRegistry route first and keep local UnrealBridge Niagara helpers only as fallback for uncovered cases.
+   Prefer template-first creation and reviewable mutation plans. Use official MCP for execution and structural readback. `niagara_asset_assistant.py` can generate plans; apply them with official Niagara tools (its own apply path is disabled pending an MCP port), then read back with `niagara_audit.py`.
+   If a required capability appears missing, inspect current official MCP schemas, then official Python / Blueprint APIs and local UE source. Use an existing Epic route; for an evidenced uncovered operation, use a stock `unreal.*` API through `../unreal-engine-mcp/scripts/python_remote.py`. Do not write custom C++ wrappers or editor plugins.
 
 7. Validate structurally before visual tuning.
    Read the live Niagara system: emitter roles, renderer bindings, event handlers, source/receiver data flow, user parameters, parameter namespaces, bounds, sim target, renderer materials, and expected carrier route.
-   Do not collapse an emitter's responsibilities into one exclusive label. A ribbon receiver can also be an Attribute Reader receiver. Treat `role` as the human-facing primary role, and use `roles` plus `capabilities` from `niagara_audit.py` as the structural contract evidence.
+   Do not collapse an emitter's responsibilities into one exclusive label. A ribbon receiver can also be an Attribute Reader receiver. Treat `role` as the human-facing primary role, and record composite `roles` plus `capabilities` from official structural evidence. The legacy audit's report schema can guide local interpretation without requiring its bridge executor.
 
 8. Capture and self-review.
    Use controlled previews and captures after structural validation. Compare the effect against the approved design for silhouette, timing, density, width, color, brightness, spacing, and gameplay readability.
@@ -66,14 +91,14 @@ Default team model:
 
 10. Treat newly created Niagara assets as provisional until readback.
    A newly created or repaired Niagara System/Emitter is not a valid implementation asset just because the asset exists in Content Browser. After any write-side Niagara operation:
-   - read the system back with `niagara_audit.py` or an equivalent structural query
+   - read the system back with `niagara_audit.py` (official summary/topology/renderer data in one MCP round trip); add `--diagnostics` for compile state and stack issues, which wait for compilation and are bounded by `--diagnostics-timeout`
    - confirm the expected receiver/source roles, renderer family, live material bindings, and data-flow bindings
    - confirm temporary/test assets are not left in production folders as if they were implementation candidates
    If a system name implies `Ribbon` or `Trail` but the live receiver route is still sprite-only or material-less, treat that as an incomplete test route, not as a finished effect.
 
 ## Closed-Loop Tools
 
-The tooling in `tools/` and `scripts/` is part of the core workflow.
+The local planning/report/image tooling in `tools/` and `scripts/` is part of the workflow. Editor-connected audit, integration-probe, controlled-preview, cleanup and flipbook-pipeline executors below are disabled (retired UnrealBridge APIs) pending an MCP port; use official MCP for their live steps.
 
 Use these when relevant:
 
@@ -94,10 +119,10 @@ Use these when relevant:
 - `tools/flipbook_ue_pipeline.py` for one-click atlas import, texture fix, SubUV material creation, optional sprite preview, and optional first-pass Niagara hookup/verification.
 - `tools/delivery_package.py`, `tools/delivery_dashboard.py`, `tools/delivery_finalize.py`, `tools/ue_smoke.py`, `tools/learning_loop.py`, and `tools/asset_cleanup.py` for closeout.
 
-For material audits, use:
+For an official material graph read with saved evidence, use:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_audit.py <material-path> --project <project-name> --markdown
+python ../unreal-material-artist/tools/official_toolsets_bridge.py material:get_expressions --input <live-schema-args.json> --markdown
 ```
 
 ## Niagara Validation Rules
@@ -105,24 +130,24 @@ python D:/Skills/skills/unreal-material-artist/tools/material_audit.py <material
 - Do not trust editor UI screenshots as the source of truth for Niagara structure.
 - Inspect emitter handles, renderer types, material bindings, event handlers, sim target, bounds, and source/receiver responsibilities before tuning.
 - Own the real Niagara parameter truth: if a material expects `ParticleColor`, `DynamicParameter`, `SubImageIndex`, `RibbonWidth`, or custom attributes, Niagara must verify who writes them, where they are bound, and whether the live system is feeding the expected values.
-- Use `niagara_material_integration_probe.py` when a material delivery package or contract exists and you need to prove the real Niagara System/Emitter/Renderer binding, SubUV/SubImage, ParticleColor, DynamicParameter, RibbonWidth, sorting, and bounds route. Material-side `material_preview.py` evidence is not real-system integration proof.
+- When a material contract exists, prove the real System/Emitter/Renderer binding, SubUV/SubImage, ParticleColor, DynamicParameter, RibbonWidth, sorting and bounds route through official structural queries. `niagara_material_integration_probe.py` is a legacy fallback for an uncovered part of that proof. Material-side preview evidence is not real-system integration proof; preserve equivalent report fields where supported and do not fabricate a legacy gate pass.
 - Final `delivery_package.py --require-ready` should include a passing material integration probe whenever both `--final-system` and `--final-material` are supplied.
 - Attribute Reader source/receiver checks must preserve composite evidence. For example, a `Followers` emitter with a Ribbon renderer, bound ribbon material, `NiagaraDataInterfaceParticleRead`, and `SpawnParticlesFromOtherEmitter` / `SampleParticlesFromOtherEmitter` is both `trail-receiver` and `attribute-reader-receiver`; do not mark it failed just because the primary display role is `trail-receiver`.
 - If a renderer material appears missing, first determine whether the renderer slot exists. Empty `RendererProperties` is a missing renderer/emitter construction problem, not merely a material-binding problem.
 - In UE 5.7, avoid `NiagaraPythonEmitter.get_modules()` on arbitrary/template emitters as a discovery shortcut. It has caused NiagaraEditor `SharedPointer IsValid()` crashes. Prefer UPROPERTY export audits and known-safe renderer object readback.
-- Do not treat "I duplicated a base system" as equivalent to "I safely authored a multi-emitter effect." If the current bridge path cannot yet add or duplicate emitters inside one system safely, stop and record that capability gap rather than forcing half-written Niagara graph assets into existence.
+- Do not treat "I duplicated a base system" as equivalent to "I safely authored a multi-emitter effect." If the current official tools cannot yet add or duplicate emitters inside one system safely, stop and record that capability gap rather than forcing half-written Niagara graph assets into existence.
 - Also avoid assuming raw `EmitterHandles` export-text overwrite is a fallback. A live 2026-05-13 test against a `CodexTemp` Niagara system showed the engine rejected the write and round-tripped the property back unchanged. Treat that route as non-viable until a more authoritative engine-side construction path is found.
 - If the silhouette or timing is wrong, diagnose Niagara carrier/renderer/animation before pushing material brightness.
 - If the silhouette is right but color, alpha, UV flow, edge softness, or shader detail is wrong, hand the material side to `unreal-material-artist`.
 - Generated flipbook/SubUV atlas PNGs must be power-of-two on both axes by default. If a generated atlas is non-power-of-two, immediately rebuild or resize it to the nearest valid power-of-two dimensions per axis, such as raw `2160x4090` -> final `2048x4096`, and keep the raw dimensions recorded in the manifest.
 - When `tools/delivery_package.py` is given `--final-material` paths, expect it to consume approved material delivery reports from the sibling `material-delivery` session tree. A final material is stronger when Niagara delivery can prove both the Niagara-side effect package and the material-side approved delivery report.
 - For final delivery, prefer `delivery_package.py --require-ready` or `delivery_package.py check --index <delivery-index.json> --require-ready`; `niagara_asset_assistant.py apply-plan --apply --verify` can also enforce an existing ready package through `--delivery-index`, `--delivery-manifest`, `--delivery-effect`, or `--require-delivery-ready`.
-- For write-side Niagara work, prefer `niagara_asset_assistant.py apply-plan --apply --verify --auto-delivery-package` when final systems/materials are known. That route writes, audits, rebuilds the delivery package, and can require ready in one pass.
+- For write-side Niagara work, prefer official MCP edits followed by official structural/compile/issue readback and local delivery reports. `niagara_asset_assistant.py apply-plan --apply` is disabled (retired UnrealBridge APIs) pending an MCP port.
 - Approved previews only prove readiness when they match the current anchor revision and the current final system/material route. Old approvals become historical evidence, not current delivery proof.
 - Use Niagara structural contract flags or `--effect-type-contract` when a package has non-negotiable structure, for example requiring Ribbon renderers, material binding, Attribute Reader data flow, FixedBounds, and no test/debug emitters.
 - Use `--require-visual-qa` for design-fidelity delivery; otherwise `ready` only proves structural/asset route health, not that the preview visually matches the accepted design.
 - Use `delivery_chain_smoke.py` on real effects before claiming a workflow is production-safe. A smoke can pass tool execution while still reporting `risk` or `incomplete` package health; that is useful evidence, not a failure to hide.
-- Use `delivery_finalize.py --promote-assets` only after the delivery index is ready. It can dry-run or execute UE asset promotion through explicit maps or a promote root.
+- Plan promotion only after the delivery index is ready. Use official AssetTools for covered duplicate/move/save operations and verify resulting references. `delivery_finalize.py` can produce the plan; its `--promote-assets` execution uses stock `unreal.*` over Epic Python Remote Execution, so prefer AssetTools when it covers the move.
 
 ## Image Generation Bridge
 
@@ -142,6 +167,9 @@ Read only the files that matter for the current request:
 
 - [references/niagara-operations-and-workflows.md](references/niagara-operations-and-workflows.md)
   Use for templates, user parameters, scratch pad usage, renderers, animation notifies, and practical Niagara workflows.
+
+- [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md)
+  Use for official MCP coverage, supported references/topology, legacy script boundaries, and remaining fallback decisions.
 
 - [references/common-effect-patterns.md](references/common-effect-patterns.md)
   Use for common effects such as explosions, shields, trails, hits, sigils, fire, smoke, projectiles, beams, and portals.

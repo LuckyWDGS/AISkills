@@ -3,14 +3,22 @@
 import contextlib
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+import tempfile
 import threading
 import unittest
 
-from builtin_mcp import McpError, UnrealMcpClient, _decode_text_value
+from unittest.mock import patch
+
+from builtin_mcp import (
+    McpError, SessionExpired, UnrealMcpClient, _decode_text_value, brief_tools, check_expected_project,
+    endpoint_owner, load_batch, render_brief, run_batch,
+)
 
 
 @contextlib.contextmanager
-def server(*, native=False, sse=False, tool_error=False):
+def server(*, native=False, sse=False, tool_error=False, sessions=None):
+    """``sessions``: a set of live session ids; when given, unknown ids get HTTP 404 like UE."""
     calls = []
     schema = {"name": "exists", "inputSchema": {"type": "object"}}
     qualified = "editor_toolset.toolsets.asset.AssetTools"
@@ -20,13 +28,24 @@ def server(*, native=False, sse=False, tool_error=False):
             pass
 
         def do_DELETE(self):
+            calls.append({"method": "DELETE"})
             self.send_response(204)
             self.end_headers()
 
         def do_POST(self):
             data = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-            calls.append(data)
             method = data["method"]
+            session = self.headers.get("Mcp-Session-Id")
+            if sessions is not None and method != "initialize" and session not in sessions:
+                calls.append({**data, "rejected": True})
+                body = b'{"jsonrpc":"2.0","id":1,"error":{"code":-32600,"message":"Unknown session id"}}'
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            calls.append(data)
             if method == "notifications/initialized":
                 self.send_response(202)
                 self.end_headers()
@@ -34,6 +53,8 @@ def server(*, native=False, sse=False, tool_error=False):
             params = data.get("params", {})
             if method == "initialize":
                 result = {"protocolVersion": "2025-11-25", "capabilities": {"tools": {}}}
+                if sessions is not None:
+                    sessions.add("test-session")
             elif method == "tools/list":
                 if native:
                     if params.get("cursor"):
@@ -110,6 +131,221 @@ class ClientTests(unittest.TestCase):
             with self.assertRaisesRegex(McpError, "not found in live schema"):
                 client.call_resolved_tool("AssetTools", "invented_write", {})
             self.assertFalse(any(c["method"] == "tools/call" for c in calls))
+
+
+class SchemaCacheTests(unittest.TestCase):
+    def describes(self, calls):
+        return [c for c in calls if c["method"] == "tools/call" and c["params"]["name"] == "describe_toolset"]
+
+    def test_second_client_reads_schema_from_cache(self):
+        with tempfile.TemporaryDirectory() as cache, server() as (client, calls):
+            for _ in range(2):
+                fresh = UnrealMcpClient(client.url, "2025-11-25", 5, cache_dir=Path(cache))
+                fresh.call_resolved_tool("AssetTools", "exists", {})
+                fresh.close()
+            self.assertEqual(len(self.describes(calls)), 1)
+            self.assertEqual(fresh._schema_source["editor_toolset.toolsets.asset.AssetTools"], "cache")
+
+    def test_refresh_ignores_cache_and_stale_inventories_are_pruned(self):
+        with tempfile.TemporaryDirectory() as cache, server() as (client, calls):
+            first = UnrealMcpClient(client.url, "2025-11-25", 5, cache_dir=Path(cache))
+            first.describe_toolset("AssetTools")
+            stale = Path(cache) / f"{first._url_key()}-0000000000000000"
+            stale.mkdir()
+            refreshed = UnrealMcpClient(client.url, "2025-11-25", 5, cache_dir=Path(cache), refresh_schema=True)
+            refreshed.describe_toolset("AssetTools")
+            self.assertEqual(len(self.describes(calls)), 2)
+            self.assertFalse(stale.exists())
+
+    def test_tool_error_on_cached_schema_invalidates_it_without_retry(self):
+        with tempfile.TemporaryDirectory() as cache, server(tool_error=True) as (client, calls):
+            UnrealMcpClient(client.url, "2025-11-25", 5, cache_dir=Path(cache)).describe_toolset("AssetTools")
+            cached = UnrealMcpClient(client.url, "2025-11-25", 5, cache_dir=Path(cache))
+            with self.assertRaisesRegex(McpError, "asset unavailable"):
+                cached.call_resolved_tool("AssetTools", "exists", {})
+            self.assertFalse(cached._cache_file("editor_toolset.toolsets.asset.AssetTools").exists())
+            dispatched = [c for c in calls if c["method"] == "tools/call" and c["params"]["name"] == "call_tool"]
+            self.assertEqual(len(dispatched), 1)
+
+    def test_no_cache_dir_means_no_files(self):
+        with server() as (client, calls):
+            client.describe_toolset("AssetTools")
+            self.assertIsNone(client._cache_file("editor_toolset.toolsets.asset.AssetTools"))
+
+
+class SessionReuseTests(unittest.TestCase):
+    def count(self, calls, method, rejected=False):
+        return len([c for c in calls if c["method"] == method and bool(c.get("rejected")) == rejected])
+
+    def client(self, url, folder, **extra):
+        return UnrealMcpClient(url, "2025-11-25", 5, session_dir=Path(folder), **extra)
+
+    def test_second_run_resumes_without_initialize_or_discovery(self):
+        live = set()
+        with tempfile.TemporaryDirectory() as folder, server(sessions=live) as (base, calls):
+            first = self.client(base.url, folder).open()
+            first.call_resolved_tool("AssetTools", "exists", {})
+            first.close()
+            self.assertFalse(any(c["method"] == "DELETE" for c in calls))
+            second = self.client(base.url, folder).open()
+            self.assertTrue(second.session_reused)
+            second.call_resolved_tool("AssetTools", "exists", {})
+            self.assertEqual(self.count(calls, "initialize"), 1)
+            self.assertEqual(self.count(calls, "tools/list"), 1)
+
+    def test_rejected_session_reinitializes_and_resends_once(self):
+        live = set()
+        with tempfile.TemporaryDirectory() as folder, server(sessions=live) as (base, calls):
+            first = self.client(base.url, folder).open()
+            first.call_resolved_tool("AssetTools", "exists", {})
+            first.close()
+            live.clear()  # Editor restarted: the saved session id is now unknown.
+            resumed = self.client(base.url, folder).open()
+            result = resumed.call_resolved_tool("AssetTools", "exists", {})
+            self.assertTrue(_decode_text_value(result)["found"])
+            self.assertFalse(resumed.session_reused)
+            self.assertEqual(self.count(calls, "initialize"), 2)
+            executed = [c for c in calls if c["method"] == "tools/call" and not c.get("rejected")
+                        and c["params"]["name"] == "call_tool"]
+            self.assertEqual(len(executed), 2)  # One per run; the rejected attempt never executed.
+
+    def test_fresh_session_rejection_is_not_retried(self):
+        live = set()
+        with server(sessions=live) as (base, calls):
+            base.initialize()
+            live.clear()
+            with self.assertRaises(SessionExpired):
+                base.call("tools/list")
+
+    def test_stale_saved_owner_is_revalidated_before_refusing(self):
+        live = set()
+        with tempfile.TemporaryDirectory() as folder, server(sessions=live) as (base, calls):
+            first = self.client(base.url, folder).open()
+            first._owner = {"known": True, "project": "OldProject", "uproject": "X/OldProject.uproject"}
+            first.close()
+            with patch("builtin_mcp.endpoint_owner", return_value={"known": True, "project": "MCPSI", "uproject": "X/MCPSI.uproject"}):
+                resumed = self.client(base.url, folder, expected_project="MCPSI").open()
+            self.assertEqual(resumed.editor_owner()["project"], "MCPSI")
+            self.assertEqual(self.count(calls, "initialize"), 2)
+
+
+class FakeBatchClient:
+    def __init__(self, fail=()):
+        self.fail, self.sent = set(fail), []
+
+    def find_tool(self, toolset, tool):
+        if tool == "missing":
+            return None
+        return {"name": tool, "inputSchema": {"required": ["path"] if tool == "needs_path" else []}}
+
+    def call_resolved_tool(self, toolset, tool, arguments):
+        self.sent.append(tool)
+        if tool in self.fail:
+            raise McpError(f"{tool} failed")
+        return {"content": [{"type": "text", "text": json.dumps({"returnValue": {"tool": tool, "value": 1}})}]}
+
+
+class BatchTests(unittest.TestCase):
+    def entries(self, *rows):
+        return [{"toolset": "T", "_line": index + 1, **row} for index, row in enumerate(rows)]
+
+    def test_validation_blocks_everything(self):
+        client = FakeBatchClient()
+        report = run_batch(client, self.entries({"tool": "missing"}, {"tool": "needs_path", "args": {}}, {"tool": "ok"}))
+        self.assertFalse(report["ok"])
+        self.assertEqual(len(report["problems"]), 2)
+        self.assertEqual(client.sent, [])
+
+    def test_stops_at_first_failure_and_skips_rest(self):
+        client = FakeBatchClient(fail={"write"})
+        report = run_batch(client, self.entries({"tool": "a"}, {"tool": "write"}, {"tool": "b"}))
+        self.assertEqual([row["status"] for row in report["results"]], ["ok", "error", "skipped"])
+        self.assertEqual(client.sent, ["a", "write"])
+
+    def test_readback_expectation_and_continue(self):
+        client = FakeBatchClient()
+        rows = self.entries(
+            {"tool": "set", "readback": {"toolset": "T", "tool": "get"}, "expect": {"value": 2}},
+            {"tool": "set2", "readback": {"toolset": "T", "tool": "get"}, "expect": {"value": 1}},
+        )
+        report = run_batch(client, rows, continue_on_error=True)
+        self.assertEqual([row["status"] for row in report["results"]], ["mismatch", "ok"])
+        self.assertEqual(report["counts"], {"mismatch": 1, "ok": 1})
+
+    def test_expectation_tolerates_float32_but_not_type_changes(self):
+        from builtin_mcp import _expectation_met
+        self.assertTrue(_expectation_met(0.4, 0.4000000059604645))
+        self.assertTrue(_expectation_met({"x": [1, 2.5]}, {"x": [1, 2.5000001], "y": 0}))
+        self.assertFalse(_expectation_met(0.4, 0.5))
+        self.assertFalse(_expectation_met(True, 1))
+        self.assertFalse(_expectation_met([1], [1, 2]))
+
+    def test_dry_run_sends_nothing(self):
+        client = FakeBatchClient()
+        report = run_batch(client, self.entries({"tool": "a"}), dry_run=True)
+        self.assertTrue(report["ok"])
+        self.assertEqual(client.sent, [])
+
+    def test_load_batch_skips_comments(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "b.jsonl"
+            path.write_text('# plan\n\n{"toolset": "T", "tool": "a"}\n', encoding="utf-8")
+            self.assertEqual(load_batch(path), [{"toolset": "T", "tool": "a", "_line": 3}])
+
+
+class BriefAndProjectTests(unittest.TestCase):
+    SCHEMA = {"tools": [{
+        "name": "editor_toolset.toolsets.material.MaterialTools.get_property_input",
+        "description": "\n        Returns the expression feeding an output.\n\n        Args: ...",
+        "inputSchema": {"type": "object", "required": ["material"], "properties": {
+            "verbose": {"type": "boolean"},
+            "material": {"type": "object", "title": "/Script/Engine.Material"},
+            "names": {"type": "array", "items": {"type": "string"}},
+        }},
+        "outputSchema": {"properties": {"returnValue": {"title": "MaterialInputSource", "type": "object"}}},
+    }]}
+
+    def test_brief_signature(self):
+        rows = brief_tools(self.SCHEMA)
+        self.assertEqual([p["name"] for p in rows[0]["params"]], ["material", "verbose", "names"])
+        line = render_brief("MaterialTools", rows).splitlines()[1]
+        self.assertEqual(line, "  get_property_input(material*: Material, verbose: boolean, names: list[string])"
+                               " -> MaterialInputSource  # Returns the expression feeding an output.")
+
+    def test_expected_project(self):
+        owner = {"known": True, "project": "MCPSI", "uproject": r"E:\P\MCPSI\MCPSI.uproject"}
+        check_expected_project(owner, "mcpsi")
+        check_expected_project(owner, r"E:\P\MCPSI\MCPSI.uproject")
+        with self.assertRaisesRegex(McpError, "not 'VR53'"):
+            check_expected_project(owner, "VR53")
+        with self.assertRaisesRegex(McpError, "Cannot confirm"):
+            check_expected_project({"known": False, "reason": "no listener"}, "MCPSI")
+
+    def test_remote_endpoint_is_not_probed(self):
+        self.assertFalse(endpoint_owner("http://10.0.0.5:8000/mcp")["known"])
+
+
+class ToolScriptTests(unittest.TestCase):
+    def run_with(self, text):
+        client = UnrealMcpClient("http://127.0.0.1:1/mcp", "2025-11-25", 1)
+        sent = []
+
+        def fake(toolset, tool, arguments):
+            sent.append((toolset, tool, arguments))
+            return {"content": [{"type": "text", "text": text}]}
+
+        client.call_resolved_tool = fake
+        return client.run_tool_script("def run():\n    return {}"), sent
+
+    def test_unwraps_return_value_and_inner_json(self):
+        value, sent = self.run_with(json.dumps({"returnValue": json.dumps({"n": 3})}))
+        self.assertEqual(value, {"n": 3})
+        self.assertEqual(sent[0][:2], ("ProgrammaticToolset", "execute_tool_script"))
+        self.assertIn("def run()", sent[0][2]["script"])
+
+    def test_plain_dict_passes_through(self):
+        value, _ = self.run_with(json.dumps({"a": 1, "b": 2}))
+        self.assertEqual(value, {"a": 1, "b": 2})
 
 
 if __name__ == "__main__":

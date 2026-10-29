@@ -1,5 +1,7 @@
 # Graph Refactor Apply
 
+> **Editor execution disabled:** this pipeline's live mode called retired UnrealBridge APIs and now fails fast. Use MCP tools for the live step (see [official-toolsets-vs-local.md](official-toolsets-vs-local.md)); offline modes are unaffected.
+
 ## Use This When
 
 - `graph_diff_refactor.py` or `material_toolset_builder.py refactor-plan` has identified a likely material-side fix.

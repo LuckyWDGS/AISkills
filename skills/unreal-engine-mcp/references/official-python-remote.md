@@ -28,9 +28,20 @@ restarting UE. Confirm discovery rather than assuming success from a Boolean
 return. If a different build requires restart, do not restart an active editor
 merely to add annotations without coordinating with the user.
 
-## Connect using Epic's shipped client
+## Connect with the bundled client
 
-Load the client directly from the selected engine installation:
+`scripts/python_remote.py` loads `remote_execution.py` from the selected engine
+(`--engine-root`, `UE_ENGINE_ROOT`, or a running editor's install), waits for
+discovery, and refuses to run unless exactly one editor matches `--project`:
+
+```powershell
+python scripts/python_remote.py nodes
+python scripts/python_remote.py --project MyGame exec --file <session>/probe.py
+```
+
+The JSON result is Epic's `command_result` (`success`, `result`, `output` lines)
+plus the selected node. From Python, call `python_remote.run_python(script,
+project=...)`. The equivalent direct use of Epic's module is:
 
 ```python
 sys.path.insert(0, str(engine_root / 'Plugins/Experimental/PythonScriptPlugin/Content/Python'))

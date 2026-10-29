@@ -3,4 +3,4 @@ interface:
   short_description: "Blueprints and animation through Epic's official MCP"
   icon_small: "./assets/unreal-engine-mcp-small.png"
   icon_large: "./assets/unreal-engine-mcp.png"
-  default_prompt: "Use $unreal-engine-mcp to inspect and implement UE Blueprint or animation logic through Epic's official MCP, using Epic editor APIs before a narrow custom fallback for verified gaps."
+  default_prompt: "Use $unreal-engine-mcp to inspect and implement UE Blueprint or animation logic through Epic's official MCP, using Epic's Python Remote Execution only for verified MCP gaps."

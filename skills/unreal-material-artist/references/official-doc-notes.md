@@ -52,9 +52,9 @@ Use these notes as source-backed anchors, then verify details against the active
 - Nanite material work needs a mesh/material contract. Check blend support, WPO displacement/clamping, UV interpolation assumptions, fallback mesh behavior, and Nanite override material before blaming only shader math.
 - Mobile/Android material plans need concrete feature and quality-level gates. Use quality switches, simpler material instances, smaller packed textures, fewer translucent layers, and measured overdraw instead of generic "optimize mobile" advice.
 - Official `UMaterialEditingLibrary` and Material Editing Blueprint API are source-backed create/connect/recompile/parameter/usage/statistics surfaces. Python scripting is editor-only, not a cooked runtime route.
-- Public primary docs were found for `UMaterialEditingLibrary`, but not for this skill's local `toolset_registry.toolsets.core.material.MaterialTools`, `MaterialInstanceTools`, or `TextureTools` names. Keep those behind runtime availability checks and local smoke-test evidence.
+- The earlier 5.7 web pass did not establish the later MCP surface. UE 5.8.4's installed Epic EditorToolset source supplies MaterialTools, MaterialInstanceTools, TextureTools, ObjectTools, and ProgrammaticToolset. Discover their current names/schemas through official MCP; do not reuse the historical `toolset_registry.toolsets.core.*` namespace.
 - Niagara renderer materials must match the renderer carrier. The material skill may declare required inputs such as `ParticleColor`, `DynamicParameter`, `SubImageIndex`, or ribbon UV assumptions; live renderer bindings remain Niagara-owned.
 
 ## Verification Habit
 
-When the engine version matters, browse official docs for the active version and inspect the asset through UnrealBridge or verified editor tooling. Treat web docs as the capability map, local tool availability as runtime evidence, and live asset readback as ground truth.
+When the engine version matters, browse official docs for the active version and inspect the asset through Epic MCP first, with Epic Python Remote Execution only for a proven gap. Treat web docs as the capability map, local tool availability as runtime evidence, and live asset readback as ground truth.

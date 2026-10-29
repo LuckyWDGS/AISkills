@@ -216,5 +216,6 @@ task list is not a claim that every specialized editor or debugger API exists.
 
 Check the live schema for breakpoint/debug stepping, semantic lint, specialized
 graph layout, private properties and other advanced needs before declaring a
-gap. Use a narrowly scoped bridge fallback only when the official operation is
-actually unavailable. Keep the rest of the workflow on Epic MCP.
+gap. When the official operation is actually unavailable, use a public
+`unreal.*` API through [background Remote Execution](official-python-remote.md)
+for that one operation. Keep the rest of the workflow on Epic MCP.

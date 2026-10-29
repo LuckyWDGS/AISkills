@@ -1,18 +1,20 @@
 ---
 name: unreal-engine-mcp
-description: Inspect, implement and debug Unreal Engine Blueprints, Animation Blueprints, state machines and their C++ or asset dependencies through Epic's official MCP. Use for UE programming, graph connections, source navigation, runtime/crash diagnosis and editor automation; prefer public Epic APIs before a narrow custom bridge for verified gaps.
+description: Drive a running Unreal Engine 5.8+ editor through Epic's built-in MCP server (127.0.0.1:8000/mcp) and, for verified MCP gaps, Epic's Python Remote Execution. Use to inspect, implement and debug Blueprints, Animation Blueprints, state machines, actors, assets and levels, and their C++ dependencies; for graph connections, source navigation, runtime/crash diagnosis and editor automation. Also the shared transport for the material, Niagara and flipbook UE skills.
 ---
 
 # Unreal Engine MCP
 
-Use Epic's standard MCP server as the primary interface on UE 5.8+. Treat the custom UnrealBridge Python bridge as an optional fallback, not a co-equal transport.
+Use Epic's built-in MCP server (UE 5.8+) as the editor interface. For an
+operation MCP does not cover, use public `unreal.*` APIs through Epic's
+[Python Remote Execution](references/official-python-remote.md). There is no
+custom plugin or TCP bridge: UnrealBridge is retired and must not be installed,
+started or suggested.
 
 For this user, keep editor automation in background connections. Do not move,
 minimize, maximize, resize or focus UE windows, or use mouse/keyboard input to
 send Python through an editor console, unless the user explicitly requests that
-UI operation. For a verified MCP gap, prefer Epic's own
-[Python Remote Execution](references/official-python-remote.md) through its
-supported local endpoint. Do not silently resume UI automation after a failure.
+UI operation. Do not silently resume UI automation after a failure.
 
 For implementation or repair, read [developer workflow](references/developer-workflow.md).
 For code lookup, errors or crashes, read [debugging and source navigation](references/debugging-and-source-navigation.md).
@@ -22,69 +24,90 @@ For programmer tasks, start with [Blueprint programming](references/blueprint-pr
 `scripts/inspect_blueprint.py` captures existing nodes/pins and verifies both ends
 of each wire without authoring, compiling or saving the asset.
 
-## Transport priority
+## Transport routing
 
-Always prefer Epic's built-in MCP whenever its live schema covers the requested operation. Do not choose the plugin because its wrapper is shorter, its documentation is more familiar, or an older inventory omitted a recently added official tool. Epic updates become available automatically through runtime discovery.
+Every individual operation goes through the first route that covers it:
 
-Apply these hard routing rules:
+1. **Built-in MCP tool**, discovered live from the target editor
+   (`scripts/builtin_mcp.py`). Includes `ProgrammaticToolset` for batching
+   registered tools; it is not an unrestricted Python console.
+2. **Public Epic editor/Python API** through background Remote Execution
+   (`scripts/python_remote.py`), only after searching the current toolsets and
+   inspecting the candidate schema. Return to MCP for the next covered step.
 
-- Read `tools/list` first. If it exposes `list_toolsets` / `describe_toolset` / `call_tool`, use search mode; otherwise use the exact native tool names and schemas. The bundled client handles both modes and pagination. Static inventories are orientation only.
-- When official MCP and UnrealBridge overlap, use official MCP.
-- Declare a capability gap only after searching the current official toolsets and inspecting the candidate schema.
-- A missing toolset can mean its Epic plugin is disabled. Check the installed engine's plugin descriptor and required domain dependencies before calling it a capability gap; enable the needed official plugin within the user's authorized setup scope and refresh discovery.
-- Keep any plugin fallback isolated to the missing operation; return to official MCP for later covered operations.
-- Before arbitrary bridge Python, check the official `ProgrammaticToolset` for supported batching/orchestration.
-- For an MCP gap, consider a documented Epic editor/Python API through an available supported background execution route before introducing a custom plugin. Respect this user's no-UI preference. ProgrammaticToolset orchestrates registered tools; it is not an unrestricted `unreal` Python console.
+If neither covers the operation, report the gap (operation, toolsets checked,
+engine version) instead of patching engine files or writing a plugin. Fewer
+round trips alone never justify leaving MCP.
 
-Use the bundled client from the skill directory:
+Discovery rules:
+
+- Read `tools/list` first. If it exposes `list_toolsets` / `describe_toolset` /
+  `call_tool`, the client uses search mode; otherwise native qualified names.
+  Static inventories in references are orientation only; runtime schema wins.
+- A missing toolset can mean its Epic plugin is disabled. Check the installed
+  engine's plugin descriptor and domain dependencies before calling it a gap;
+  enable the official plugin within the user's authorized setup scope and refresh.
+- Before the first call in a domain, run `describe-toolset <toolset> --brief`
+  (one signature line per tool), then `describe-tool <toolset> <tool>` for the
+  full schema and enum values of each tool you will call. Do not dump a full
+  `describe-toolset` into context: NiagaraToolset_System is ~600 KB, its brief
+  view ~7 KB. Never guess tool names, arguments, or enum values.
 
 ```powershell
-python scripts/builtin_mcp.py status
+python scripts/builtin_mcp.py status                 # includes the serving editor's project and level
 python scripts/builtin_mcp.py ensure
 python scripts/builtin_mcp.py list-toolsets
-python scripts/builtin_mcp.py describe-toolset EditorToolset.EditorAppToolset
-python scripts/builtin_mcp.py call IsPIERunning --toolset EditorToolset.EditorAppToolset --args '{}'
+python scripts/builtin_mcp.py describe-toolset MaterialTools --brief
+python scripts/builtin_mcp.py describe-tool MaterialTools get_property_input
+python scripts/builtin_mcp.py --expect-project <ProjectName> call IsPIERunning --toolset EditorAppToolset --args '{}'
+python scripts/builtin_mcp.py call get_current_level --toolset SceneTools --args-file <session>/args.json
+python scripts/builtin_mcp.py run-script <session>/reads.py   # ProgrammaticToolset, def run() -> dict
+python scripts/builtin_mcp.py batch <session>/steps.jsonl --dry-run   # validate, then run without --dry-run
+python scripts/python_remote.py --project <ProjectName> exec --file <session>/probe.py
 ```
 
-Follow this decision sequence:
+Toolset names may be given as the unique class suffix (`SceneTools`); the client
+resolves it against the live inventory. Use `--args-file` for non-trivial JSON
+on PowerShell. The CLI keeps its MCP session between runs, so a repeated `call`
+costs ~0.3 s instead of ~2 s; `--new-session` opts out. In Git Bash set
+`MSYS_NO_PATHCONV=1`, or `/Game/...` arguments are rewritten to filesystem paths.
 
-1. Run `builtin_mcp.py status` against `http://127.0.0.1:8000/mcp`.
-2. Prefer Epic-only startup within the authorized setup: enable `ModelContextProtocol` plus the needed domain toolset plugins, and use `bAutoStartServer=true` or launch flags `-ModelContextProtocolStartServer -ModelContextProtocolPort=8000` for an authorized launch. `ModelContextProtocol.StartServer 8000` is the editor console command, not a reason to drive the console with mouse/keyboard. Preserve an active editor and its unsaved work. `builtin_mcp.py ensure` checks availability and explains these routes. Legacy bootstrap requires explicit `ensure --allow-bridge-bootstrap --bridge-project <target>`; never discover and start an arbitrary editor on a multi-editor host.
-3. Run `list-toolsets`, then `describe-toolset <full-toolset-name>` before the first call in a domain. Never guess tool names, arguments, or enum values.
-4. Call the underlying tool with the full toolset name and the short tool name from its schema.
-5. If MCP cannot perform the operation, check UE's own editor/public Epic APIs next. Use `bridge.py` only for the remaining demonstrated gap or unavailable official execution route; lack of arbitrary Python in ProgrammaticToolset alone does not justify a custom plugin.
+Choose the multi-step route by what failure must look like:
 
-Use this fallback order for every individual operation:
+- **Many reads** → `run-script`. One editor round trip, but one failing call
+  fails the whole script; read the
+  [ProgrammaticToolset rules](references/builtin-mcp.md#programmatictoolset-batching) first.
+- **Writes or ordered steps** → `batch <file.jsonl>`. One request per step in a
+  shared session, each with its own result; validates every tool and required
+  argument first, stops at the first failure, and can read back each step with
+  an `expect` check. Run `--dry-run` first and put the save step
+  (`AssetTools.save_assets` with the intended packages only) on its own line.
+  See [batch](references/builtin-mcp.md#batch-ordered-steps-and-writes).
 
-1. **Built-in MCP tool** discovered live from UE.
-2. **Public Epic editor/Python API** through a supported background connection, when it can perform the missing operation. Use editor UI only when explicitly requested by this user. Do not patch engine files or assume arbitrary Python is available through MCP.
-3. **Narrow bridge wrapper around an Epic editor API** when the above routes cannot complete the operation. For Niagara, prefer the plugin's `get/set_official_*_data` and `add_official_module` wrappers because they call Epic's external-edit utilities.
-4. **Plugin-specific helper** only for the remaining proven gap. Do not keep the rest of the workflow on the plugin after one fallback.
+Startup: enable `ModelContextProtocol` plus the needed domain toolset plugins and
+set `bAutoStartServer=true`, or launch with `-ModelContextProtocolStartServer
+-ModelContextProtocolPort=8000` for an authorized launch. `ensure` only checks
+the endpoint and explains these routes; it never starts or relaunches an editor.
+Only one editor can own port 8000. `status` reports the listening process's
+`.uproject`, engine version and current level; on a multi-editor host pass
+`--expect-project <name>` (or set `UE_MCP_PROJECT`) so every command refuses an
+endpoint served by another project, and pass `--project` to `python_remote.py`.
 
-For common asset work, live UE 5.8 already covers the normal path:
+Common asset work that live UE 5.8 MCP covers:
 
 - Texture import: `TextureTools.import_file`, then `ObjectTools.set_properties` and `AssetTools.save_assets`.
 - Material graph authoring: `MaterialTools.create_material/add_expression/connect_*/recompile`; use `MaterialInstanceTools` for instance parameters.
 - Niagara: create from a system template, add Epic's `/Niagara/DefaultAssets/Templates/Emitters/LocationBasedRibbon.LocationBasedRibbon`, then use `GetRendererSchema`, `SetRendererData`, `SetStackInputData`, compile-state, and stack-issue tools. Find templates by the `RibbonRenderer=1` asset tag rather than name alone.
 
-If live MCP and supported public Epic API routes cannot perform one of these
-operations, keep its proven custom-plugin fallback minimal:
+Do not use the Project Settings **MCP Toolset Servers** entry as the agent-to-UE endpoint. That list makes UE act as an MCP client. The UE server uses `/mcp` with Streamable HTTP, not the root URL or legacy GET `/sse`.
 
-- Texture: `Asset.import_texture2d_from_file`.
-- Material: `Material.create_material` + `Material.apply_material_graph_ops`; validate with `get_material_graph` and `get_material_compile_errors`.
-- Niagara Ribbon: `add_ribbon_renderer_to_emitter`; for renderer edits prefer `get_official_renderer_data_summary` + `set_official_renderer_data`; for stack gaps use `add_official_module` + official stack input data setters.
-
-Do not use arbitrary persistent Python merely to batch operations that the built-in MCP already exposes. Check the built-in `ProgrammaticToolset` first; without a suitable batch surface, use official tools sequentially or a supported Epic editor API route. Fewer round trips alone do not justify a custom plugin.
-
-Do not use the Project Settings **MCP Toolset Servers** entry as the Codex-to-UE endpoint. That list makes UE act as an MCP client. The UE server uses `/mcp` with Streamable HTTP, not the root URL or legacy GET `/sse`.
-
-Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection guidance, and [ue-5.8.4-audit.md](references/ue-5.8.4-audit.md) for the release/source audit and maintenance boundaries. The 54-toolset/833-tool count is a historical 5.8.0 project snapshot, not a 5.8.4 limit. Runtime schema always wins.
+Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection guidance, and [ue-5.8.4-audit.md](references/ue-5.8.4-audit.md) for the release/source audit. Runtime schema always wins over recorded tool counts.
 
 ## Shared material / Niagara routing
 
-The `unreal-material-artist`, `niagara-vfx-artist`, and `vfx-flipbook-generator` skills use this same discovery and transport policy. Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP whenever exposed. `ProgrammaticToolset.get_execution_environment` must be read before its first script; use it to batch registered tools rather than sending arbitrary Python through the custom plugin.
+The `unreal-material-artist`, `niagara-vfx-artist`, and `vfx-flipbook-generator` skills use this same routing. Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Read `ProgrammaticToolset.get_execution_environment` before its first script.
 
-Local image processing, reference locks, visual comparison, manifests, and report packaging can remain local: they are workflow code, not a reason to require an editor plugin. Legacy scripts that instantiate `BridgeClient` or reference `UnrealBridge*Library` still require the custom plugin, even when a field says `use_official_toolsets=true`. Do not call an entire legacy pipeline just to perform an operation already covered by MCP. Record any remaining fallback as one specific operation plus official discovery evidence, engine version, and readback result.
+Local image processing, reference locks, visual comparison, manifests, and report packaging stay local: they are workflow code. Legacy scripts in those skills that call `UnrealBridge*Library` are disabled and fail fast; perform the operation with MCP tools and feed the result into the local report code instead.
 
 ## Field-tested UE 5.8 MCP notes
 
@@ -97,8 +120,8 @@ useful when the editor exposes the same UE 5.8 MCP implementation:
   full names from that inventory when this happens.
 - UE 5.8 can return `application/json` for `tools/call` despite advertising
   `text/event-stream`. The bundled `scripts/builtin_mcp.py` accepts both modes;
-  if a copied older helper reports an SSE timeout, update it before falling
-  back to UnrealBridge or hand-written transport code.
+  if a copied older helper reports an SSE timeout, update it before writing
+  hand-written transport code.
 - In the current Object/Scene tool schemas, fields described as optional may
   still be marked required. Pass explicit empty values (`name: ""`,
   `tag: ""`, `collision_channels: []`, and `null` for object filters) rather
@@ -133,10 +156,6 @@ initialize alone is not editor readiness: refresh `list-toolsets`, verify that
 the required domain has registered, then make a safe editor-state read such as
 `EditorAppToolset.IsPIERunning` or `SceneTools.get_current_level`.
 
-Do not require `bridge.py ping` for an Epic-only project. Only when already using
-an explicitly selected custom-plugin fallback, check its `ready:true` before
-fallback execution and select the intended project on multi-editor hosts.
-
 ## Blueprint and programming workflow
 
 Blueprint is the user's preferred implementation surface for gameplay and
@@ -148,8 +167,7 @@ an existing project convention, while preserving the requested Blueprint interfa
 
 Read [references/blueprint-programming-mcp.md](references/blueprint-programming-mcp.md)
 for official graph inspection, component/default edits, batching, compile/log
-verification, and the observed Chinese-editor DSL limitation. The legacy
-`bridge-blueprint-api.md` is a fallback API reference, not the primary route.
+verification, and the observed Chinese-editor DSL limitation.
 
 For Animation Blueprints, animation state machines, BlendSpaces, Montages,
 StateTree and Behavior Trees, read
@@ -169,8 +187,7 @@ compile if the operation requires it. Do not re-layout the logic graph or start
 PIE solely to add comments. Review compiler errors/warnings through
 the returned result and LogsToolset; use a bounded PIE/Simulate check when runtime
 behavior changed. Use meaningful function/variable names and keep functions
-focused. Do not invoke the custom plugin merely to satisfy a bridge-only lint or
-layout convention. Do not replay a DSL dump until its completeness is verified.
+focused. Do not replay a DSL dump until its completeness is verified.
 
 For this user's authored modules, add a **Chinese module comment frame and
 searchable textual labels** before delivery. Give the module a stable ID, a
@@ -207,4 +224,4 @@ state which were actually completed.
 | Official background Python for an MCP gap | [Epic Python Remote Execution](references/official-python-remote.md) |
 | MCP protocol, startup and discovery | [Built-in MCP](references/builtin-mcp.md) |
 | Version/source audit and historical boundaries | [UE 5.8.4 audit](references/ue-5.8.4-audit.md) |
-| A proven remaining custom-plugin operation | [Custom bridge operations and API index](references/custom-bridge-operations.md) |
+| Stock UE Python snippets for a Remote Execution gap | [Actors](references/ue-python-actors.md), [Assets](references/ue-python-assets.md), [Materials](references/ue-python-materials.md) |

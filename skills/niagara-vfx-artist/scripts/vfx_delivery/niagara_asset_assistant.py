@@ -1836,7 +1836,7 @@ def build_parser() -> argparse.ArgumentParser:
     apply_plan.add_argument("--risk", action="append", default=[])
     apply_plan.add_argument("--package-notes", default="")
     apply_plan.add_argument("--require-ready-after-package", action="store_true")
-    apply_plan.add_argument("--apply", action="store_true", help="Actually execute the generated script through unreal-bridge.")
+    apply_plan.add_argument("--apply", action="store_true", help="Actually execute the generated script through unreal-engine-mcp.")
     apply_plan.set_defaults(func=apply_plan_command)
 
     inspect = subparsers.add_parser("inspect-system")

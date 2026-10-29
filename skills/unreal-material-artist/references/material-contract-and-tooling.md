@@ -257,12 +257,12 @@ High-level routing:
 
 Use [official-toolsets-vs-local.md](official-toolsets-vs-local.md) for the source-backed/public API versus local `toolset_registry` policy. Short rule: prefer public/source-backed Unreal APIs or locally confirmed editor toolsets for supported mutations, then immediately validate with local audit/preview/reporting tools.
 
-Use the bridge wrapper directly when you need a confirmed local/editor toolset call with saved evidence:
+Use the MCP wrapper directly when you need a confirmed editor toolset call with saved evidence:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/official_toolsets_bridge.py asset:duplicate --input D:/payloads/duplicate.json --endpoint 127.0.0.1:8628 --markdown
-python D:/Skills/skills/unreal-material-artist/tools/official_toolsets_bridge.py material_instance:set_scalar_parameter --input D:/payloads/set-radius.json --endpoint 127.0.0.1:8628 --markdown
-python D:/Skills/skills/unreal-material-artist/tools/official_toolsets_bridge.py material:create --input D:/payloads/create-material.json --endpoint 127.0.0.1:8628 --markdown
+python D:/Skills/skills/unreal-material-artist/tools/official_toolsets_bridge.py asset:duplicate --input D:/payloads/duplicate.json --markdown
+python D:/Skills/skills/unreal-material-artist/tools/official_toolsets_bridge.py material_instance:set_scalar_parameter --input D:/payloads/set-radius.json --markdown
+python D:/Skills/skills/unreal-material-artist/tools/official_toolsets_bridge.py material:create --input D:/payloads/create-material.json --markdown
 ```
 
 Do not pretend editor texture tools replace local texture import audit/fix, generated-texture QA, or flipbook/packing helpers unless the active editor route has been smoke-tested.
@@ -281,7 +281,7 @@ Auto-rebuilt legal materials are no longer only preview-side recovery assets. Th
 Typical commands:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
+python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project UnrealAI --markdown
 python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier post_process --register-rebuilt-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --width 320 --height 180 --markdown
 python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py auto-promote <asset-id> --self-review approved --report-path D:/path/to/material-preview.json --apply
 ```

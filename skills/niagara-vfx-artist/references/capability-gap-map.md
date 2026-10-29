@@ -1,5 +1,12 @@
 # Capability Gap Map
 
+UE 5.8.4 routing update: this is a historical workflow/implementation map,
+not proof of current official MCP gaps. Use Epic MCP for covered Niagara and
+editor operations; custom overlay and upstream-sync entries below describe
+retired UnrealBridge implementations that no longer run. Recheck each gap
+against live discovery; use Epic Python Remote Execution for a remaining one. See
+[niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md).
+
 This map describes what is still missing to turn a reference image or text brief into a fully usable Niagara effect with minimal guesswork.
 
 ## Already Covered
@@ -119,7 +126,7 @@ What it adds:
 - missing Ribbon Renderer construction for receiver emitters
 - existing renderer material binding repair
 - generated UE Python apply scripts
-- optional `unreal-bridge` apply and readback verification
+- optional `unreal-engine-mcp` apply and readback verification
 
 ### 7. Visual Diff QA
 

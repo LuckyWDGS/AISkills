@@ -1,5 +1,18 @@
 # Material Toolset Builder
 
+> **Editor execution disabled:** this pipeline's live mode called retired UnrealBridge APIs and now fails fast. Use MCP tools for the live step (see [official-toolsets-vs-local.md](official-toolsets-vs-local.md)); offline modes are unaffected.
+
+## UE 5.8.4 transport boundary
+
+`recipe` and `refactor-plan` remain useful offline planners. `build` and
+`recipe --execute` still depend on the custom bridge, even when they call
+ToolsetRegistry internally. For covered graph operations use Epic MCP's
+MaterialTools, ObjectTools, MaterialInstanceTools, AssetTools, and
+ProgrammaticToolset instead. Discover current names/schemas; the old
+`MaterialTools.create` name below belongs to a legacy executor, while the
+installed 5.8.4 source exposes `create_material`. See
+[official-toolsets-vs-local.md](official-toolsets-vs-local.md).
+
 ## Use This When
 
 - You need a higher-level material recipe package instead of hand-writing a low-level MaterialTools graph spec.

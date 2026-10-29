@@ -2,19 +2,7 @@
 
 ## Working Directory
 
-- This skill is now worked on directly from `D:\Skills\skills\niagara-vfx-artist`.
-- Treat this directory as the active project root for Niagara VFX tool and workflow iteration.
-- The parent repository remains `D:\Skills`, but ordinary session memory for this skill should live here, not in the parent root.
-
-## Session Memory
-
-- Use `$codex-session-continuity` for this project.
-- First read `.codex/session/HANDOFF.md`.
-- Then read `.codex/session/PROJECT.md`.
-- Read `.codex/session/ASSETS.md` when reference images, generated VFX assets, or design anchors matter.
-- Read `.codex/session/DEBUG_SCREENSHOTS.md` when runtime previews or visual verification captures matter.
-- Read `.codex/session/DECISIONS.md` when architecture or workflow decisions matter.
-- Keep session memory under `D:\Skills\skills\niagara-vfx-artist\.codex\session\`.
+- Work in this repository's `skills/niagara-vfx-artist` directory; resolve resources relative to the skill instead of the historical `D:\Skills` checkout.
 
 ## Niagara VFX Workflow
 
@@ -27,10 +15,9 @@
 - If the active anchor changes, treat earlier previews, diffs, tuning notes, and diagnoses as historical only until they are revalidated against the new anchor.
 - If the intended active anchor exists only in the thread and has not been cached locally, stop before implementation and mark the task blocked by missing durable anchor cache.
 - Do not treat a generated texture as a valid implementation asset until it is both imported into UE and verified as referenced by the live material or renderer route being reviewed.
-- When Niagara capability is missing, search official Python / Blueprint docs and local UE source first. If the engine exposes an authoritative editor/runtime route but the current bridge does not, extend UnrealBridge instead of forcing fragile reflection or export-text hacks.
+- On UE 5.8+, discover and use Epic MCP tools first, including ProgrammaticToolset for batching. If a capability is missing, inspect official APIs and local UE source, then use a stock `unreal.*` API through Epic Python Remote Execution for that operation. UnrealBridge is retired; do not duplicate an existing official MCP route or use reflection/export-text hacks to bypass editor semantics.
 
-## Checkpoint
+## Local Outputs
 
-- Before final responses that complete or pause project work, update `.codex/session/HANDOFF.md`.
 - Keep runtime previews, audits, tuning logs, and gap diagnoses under `.codex/session/vfx-delivery/`.
 - Do not commit `.codex/session/`, generated previews, local caches, API keys, or one-off experiments unless explicitly promoted.

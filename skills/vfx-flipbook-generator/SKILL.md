@@ -5,6 +5,23 @@ description: Plan, generate, extend, repair, and pack VFX flipbook atlases for s
 
 # VFX Flipbook Generator
 
+## Unreal handoff
+
+When connecting to UE for this user, use background connections and preserve UE
+window state; do not send console keystrokes or focus/resize/minimize the editor.
+For a verified MCP gap, check [Epic Python Remote Execution](../unreal-engine-mcp/references/official-python-remote.md)
+for that one operation. For import/binding changes and failure diagnosis, use the
+shared [developer workflow](../unreal-engine-mcp/references/developer-workflow.md)
+and [source/diagnostic workflow](../unreal-engine-mcp/references/debugging-and-source-navigation.md).
+
+When authoring or changing UE material/Niagara modules for this user, include
+Chinese module comments, descriptions and stable searchable module IDs; follow
+the shared [Chinese annotation convention](../unreal-engine-mcp/references/blueprint-programming-mcp.md#chinese-module-annotations).
+Preserve existing parameter bindings. Local-only atlas generation does not
+require adding or modifying UE annotations.
+
+Atlas generation, FFmpeg extraction, alpha QA, packing, and manifests run locally and do not need an Unreal editor plugin. When importing or wiring the atlas into UE 5.8+, follow the sibling `unreal-engine-mcp` official MCP policy: discover TextureTools.import_file, ObjectTools properties, MaterialTools/MaterialInstanceTools, AssetTools, and NiagaraToolsets, then use direct MCP. Read ProgrammaticToolset's environment before batching. The older Niagara `flipbook_ue_pipeline.py` called retired UnrealBridge APIs and is disabled pending an MCP port. File readiness alone is not live material/Niagara binding proof.
+
 Use this skill when the user wants a flipbook atlas, not just a single concept image.
 
 This skill owns three things:
@@ -17,6 +34,8 @@ This skill owns three things:
 6. Run the batch plan one phase at a time, stop on anchor approval gates, and prefer image-reference edit for intra-phase fill after an anchor is accepted.
 7. Gate Unreal/Niagara delivery with a UE readiness check before calling an atlas direct material/SubUV-ready.
 
+Resolve script paths relative to this skill directory. Sample media/job paths below are placeholders in the active workspace.
+
 ## Workflow
 
 1. Quantify the source before committing to a grid.
@@ -24,7 +43,7 @@ This skill owns three things:
    - Run:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_job_scaffold.py "smoke 12x12 6s"
+python scripts/flipbook_job_scaffold.py "smoke 12x12 6s"
 ```
 
    - The scaffold writes:
@@ -37,7 +56,7 @@ python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_job_scaffold.py 
    - Run:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
+python scripts/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
 ```
 
    - Treat the route result as the first decision, not as a hard law.
@@ -45,8 +64,8 @@ python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_route_advisor.py
 2. Use the correct route.
    - `direct-extract`
      - Use when source sample pressure is healthy enough for the requested grid.
-     - Prefer `D:/Skills/skills/vfx-flipbook-generator/tools/flipbook_builder.py`.
-     - The tool auto-discovers local FFmpeg binaries under `D:/Skills/skills/vfx-flipbook-generator/tools/ffmpeg` before falling back to system `PATH`.
+     - Prefer `tools/flipbook_builder.py`.
+     - The tool auto-discovers local FFmpeg binaries under `tools/ffmpeg` before falling back to system `PATH`.
      - Keep `--fit contain` unless you explicitly want cropping. `contain` scales the full source frame into the cell and pads as needed; `cover` crops to fill.
    - `hybrid`
      - Use when the source has some good motion but not enough clean temporal coverage.
@@ -95,7 +114,7 @@ python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_route_advisor.py
    - For pre-made frame folders, generated anchor families, or hand-curated PNG frames, use:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/frame_atlas_packer.py D:/path/to/frames --grid 12x12 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
+python scripts/frame_atlas_packer.py D:/path/to/frames --grid 12x12 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
 ```
 
    - Default to power-of-two final atlas output.
@@ -119,13 +138,13 @@ python D:/Skills/skills/vfx-flipbook-generator/scripts/frame_atlas_packer.py D:/
    - For Unreal-bound atlases, run:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
+python scripts/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
    - When a folder contains multiple generated candidates, build a selection catalog so the user can see recommended, usable, conditional, and blocked variants in one place:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
+python scripts/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
 ```
 
 8. Hand off to the right downstream skill when needed.
@@ -139,57 +158,57 @@ python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_asset_catalog.py
 Source-video route:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 12x12 --frames 144 --cell-size 171x341 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two
+python tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 12x12 --frames 144 --cell-size 171x341 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two
 ```
 
 Route decision:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_route_advisor.py --grid 12x12 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
+python scripts/flipbook_route_advisor.py --grid 12x12 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
 ```
 
 Job scaffold from a short request:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_job_scaffold.py "smoke 12x12 6s" --out-root D:/flipbook-jobs
+python scripts/flipbook_job_scaffold.py "smoke 12x12 6s" --out-root D:/flipbook-jobs
 ```
 
 Frame-plan scaffold with default system-imagegen workflow:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_plan.py D:/flipbook-jobs/smoke-12x12-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
+python scripts/flipbook_batch_plan.py D:/flipbook-jobs/smoke-12x12-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
 ```
 
 Phase runner with anchor approval gates:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
+python scripts/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
+python scripts/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
+python scripts/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
 ```
 
 Generated-frame packing:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/frame_atlas_packer.py D:/frames/smoke_a --grid 10x10 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_10x10.png
+python scripts/frame_atlas_packer.py D:/frames/smoke_a --grid 10x10 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_10x10.png
 ```
 
 Unreal/Niagara readiness gate:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/ue_flipbook_readiness.py D:/atlas_out/smoke_10x10.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
+python scripts/ue_flipbook_readiness.py D:/atlas_out/smoke_10x10.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
 Asset catalog for a candidate folder:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_asset_catalog.py D:/atlas_out --out D:/atlas_out/atlas-catalog.md --json-out D:/atlas_out/atlas-catalog.json
+python scripts/flipbook_asset_catalog.py D:/atlas_out --out D:/atlas_out/atlas-catalog.md --json-out D:/atlas_out/atlas-catalog.json
 ```
 
 Resize a ready atlas/alpha pair to 2K and 4K delivery derivatives:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres
+python scripts/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres
 ```
 
 ## Reference Map

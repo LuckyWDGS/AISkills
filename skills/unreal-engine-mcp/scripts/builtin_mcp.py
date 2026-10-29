@@ -4,9 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
+import os
 import queue
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -25,6 +29,10 @@ DEFAULT_PROTOCOL = "2025-11-25"
 
 class McpError(RuntimeError):
     pass
+
+
+class SessionExpired(McpError):
+    """The server rejected the session id (HTTP 404); the request was not executed."""
 
 
 def _decode_response(body: bytes, content_type: str) -> Any:
@@ -47,8 +55,30 @@ def _decode_response(body: bytes, content_type: str) -> Any:
     return messages[-1]
 
 
+def default_state_dir() -> Path:
+    """Per-user client state: UE_MCP_CACHE_DIR, else LOCALAPPDATA / XDG cache."""
+    override = os.environ.get("UE_MCP_CACHE_DIR")
+    if override:
+        return Path(override)
+    if sys.platform == "win32":
+        root = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
+    else:
+        root = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    return root / "unreal-engine-mcp"
+
+
+def default_cache_dir() -> Path:
+    return default_state_dir() / "schemas"
+
+
+def default_session_dir() -> Path:
+    return default_state_dir() / "sessions"
+
+
 class UnrealMcpClient:
-    def __init__(self, url: str, protocol: str, timeout: float) -> None:
+    def __init__(self, url: str, protocol: str, timeout: float, *,
+                 cache_dir: Path | None = None, refresh_schema: bool = False,
+                 session_dir: Path | None = None, expected_project: str | None = None) -> None:
         self.url = url
         self.protocol = protocol
         self.timeout = timeout
@@ -58,6 +88,18 @@ class UnrealMcpClient:
         self._tools: list[dict[str, Any]] | None = None
         self._toolsets: list[dict[str, Any]] | None = None
         self._schemas: dict[str, Any] = {}
+        # Search-mode toolset schemas can be hundreds of KB; cache them per live inventory.
+        self.cache_dir = Path(cache_dir) if cache_dir else None
+        self.refresh_schema = refresh_schema
+        self._schema_source: dict[str, str] = {}
+        self._fingerprint: str | None = None
+        # Reusing a session across CLI runs skips initialize, discovery and close (~300 ms each).
+        # A session the server still accepts proves the same editor process, so the inventory and
+        # editor identity saved with it stay valid; an expired one returns 404 and is re-initialized.
+        self.session_dir = Path(session_dir) if session_dir else None
+        self.session_reused = False
+        self.expected_project = expected_project
+        self._owner: dict[str, Any] | None = None
 
     def _request(self, payload: dict[str, Any], *, expect_body: bool = True) -> Any:
         headers = {
@@ -84,6 +126,8 @@ class UnrealMcpClient:
                 return _decode_response(body, response.headers.get("Content-Type", ""))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
+            if exc.code == 404 and self.session_id:
+                raise SessionExpired(f"Unknown MCP session {self.session_id}") from exc
             raise McpError(f"HTTP {exc.code} from {self.url}: {detail or exc.reason}") from exc
         except urllib.error.URLError as exc:
             raise McpError(f"Cannot connect to Unreal MCP at {self.url}: {exc.reason}") from exc
@@ -184,6 +228,8 @@ class UnrealMcpClient:
                 process.kill()
                 _, stderr_bytes = process.communicate()
 
+        if status == 404 and self.session_id:
+            raise SessionExpired(f"Unknown MCP session {self.session_id}")
         if status is not None and status >= 400:
             raise McpError(f"HTTP {status} from {self.url}")
         if response is None and "application/json" in content_type:
@@ -245,7 +291,17 @@ class UnrealMcpClient:
             "method": method,
             "params": params or {},
         }
-        response = self._streaming_request(payload) if method == "tools/call" else self._request(payload)
+        send = self._streaming_request if method == "tools/call" else self._request
+        try:
+            response = send(payload)
+        except SessionExpired:
+            if not self.session_reused:
+                raise
+            # A rejected session never executed the request, so re-sending after re-initializing is safe.
+            self.reinitialize()
+            request_id = payload["id"] = self.next_id
+            self.next_id += 1
+            response = send(payload)
         if not isinstance(response, dict):
             raise McpError(f"Invalid MCP response: {response!r}")
         if "error" in response:
@@ -311,9 +367,58 @@ class UnrealMcpClient:
             raise McpError(f"Toolset {name!r} is absent or ambiguous; matches: {matches}. Run list-toolsets.")
         return matches[0]
 
+    def _url_key(self) -> str:
+        return hashlib.sha1(self.url.encode("utf-8")).hexdigest()[:8]
+
+    def schema_fingerprint(self) -> str:
+        """Hash of the live inventory; a changed plugin/toolset set invalidates cached schemas."""
+        if self._fingerprint is None:
+            inventory = {
+                "tools": sorted((tool.get("name", ""), json.dumps(tool.get("inputSchema"), sort_keys=True))
+                                for tool in self.list_tools()),
+                "toolsets": self.list_toolsets(),
+            }
+            text = json.dumps(inventory, sort_keys=True, ensure_ascii=False)
+            self._fingerprint = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+        return self._fingerprint
+
+    def _cache_file(self, name: str) -> Path | None:
+        if not self.cache_dir or not self.search_mode():
+            return None  # Native mode already carries every schema in tools/list.
+        return self.cache_dir / f"{self._url_key()}-{self.schema_fingerprint()}" / f"{name}.json"
+
+    def _write_cache(self, path: Path, schema: Any) -> None:
+        try:
+            if self.cache_dir and self.cache_dir.is_dir():
+                prefix = f"{self._url_key()}-"
+                for stale in self.cache_dir.iterdir():
+                    if stale.is_dir() and stale.name.startswith(prefix) and stale != path.parent:
+                        shutil.rmtree(stale, ignore_errors=True)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temp = path.with_suffix(".tmp")
+            temp.write_text(json.dumps(schema, ensure_ascii=False), encoding="utf-8")
+            temp.replace(path)
+        except OSError:
+            pass  # The cache is an optimisation; never fail a call because of it.
+
+    def invalidate_schema(self, name: str) -> None:
+        self._schemas.pop(name, None)
+        self._schema_source.pop(name, None)
+        path = self._cache_file(name)
+        if path:
+            path.unlink(missing_ok=True)
+
     def describe_toolset(self, name: str) -> Any:
         name = self.resolve_toolset(name)
         if name not in self._schemas:
+            cache = self._cache_file(name)
+            if cache and cache.is_file() and not self.refresh_schema:
+                try:
+                    self._schemas[name] = json.loads(cache.read_text(encoding="utf-8"))
+                    self._schema_source[name] = "cache"
+                    return self._schemas[name]
+                except (OSError, json.JSONDecodeError):
+                    pass
             if self.search_mode():
                 result = self.call_tool("describe_toolset", {"toolset_name": name})
                 _check_tool_result(result)
@@ -326,28 +431,133 @@ class UnrealMcpClient:
                     if tool["name"].rpartition(".")[0] == name
                 ]}
             self._schemas[name] = schema
+            self._schema_source[name] = "live"
+            if cache:
+                self._write_cache(cache, schema)
         return self._schemas[name]
+
+    def find_tool(self, toolset: str, tool: str) -> dict[str, Any] | None:
+        """The tool's schema entry, or None. A cache miss is re-checked against the live schema."""
+        toolset = self.resolve_toolset(toolset)
+        for attempt in range(2):
+            candidates = [
+                item for item in _schema_tools(self.describe_toolset(toolset))
+                if item.get("name") in {tool, f"{toolset}.{tool}"}
+            ]
+            if len(candidates) == 1:
+                return candidates[0]
+            if attempt == 0 and self._schema_source.get(toolset) == "cache":
+                self.invalidate_schema(toolset)
+                continue
+            return None
+        return None
 
     def call_resolved_tool(self, toolset: str, tool: str, arguments: dict[str, Any]) -> Any:
         toolset = self.resolve_toolset(toolset)
-        described = self.describe_toolset(toolset)
-        tools = described.get("tools", [])
-        if isinstance(tools, dict):
-            tools = [{"name": name, **value} for name, value in tools.items()]
-        candidates = [item for item in tools if item.get("name") in {tool, f"{toolset}.{tool}"}]
-        if len(candidates) != 1:
+        entry = self.find_tool(toolset, tool)
+        if entry is None:
             raise McpError(f"Tool {tool!r} not found in live schema for {toolset}; run describe-toolset.")
         if self.search_mode():
             result = self.call_tool("call_tool", {
                 "toolset_name": toolset, "tool_name": tool, "arguments": arguments,
             })
         else:
-            result = self.call_tool(candidates[0]["name"], arguments)
+            result = self.call_tool(entry["name"], arguments)
+        if isinstance(result, dict) and result.get("isError") and self._schema_source.get(toolset) == "cache":
+            # The call may have failed on a stale cached schema; refresh it for the next run, never retry here.
+            self.invalidate_schema(toolset)
         _check_tool_result(result)
         return result
 
+    def run_tool_script(self, script: str) -> Any:
+        """Run a ProgrammaticToolset script (``def run() -> dict``) in one round trip.
+
+        Inside the script, ``execute_tool(full_tool_name, json_text)`` calls any
+        registered tool. Returns the decoded dict from ``run()``.
+        """
+        result = self.call_resolved_tool("ProgrammaticToolset", "execute_tool_script", {"script": script})
+        value = _decode_text_value(result)
+        if isinstance(value, dict) and set(value) == {"returnValue"}:
+            value = value["returnValue"]
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                pass
+        return value
+
+    def _session_file(self) -> Path | None:
+        return self.session_dir / f"{self._url_key()}.json" if self.session_dir else None
+
+    def open(self) -> "UnrealMcpClient":
+        """Resume a saved session when one exists, else initialize a new one."""
+        path = self._session_file()
+        record: dict[str, Any] = {}
+        if path and path.is_file():
+            try:
+                record = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                record = {}
+        if record.get("url") == self.url and record.get("session_id"):
+            self.session_id = record["session_id"]
+            self.protocol = record.get("protocol") or self.protocol
+            self.initialize_result = record.get("initialize_result")
+            self._tools = record.get("tools")
+            self._toolsets = record.get("toolsets")
+            self._owner = record.get("owner")
+            self.session_reused = True
+            # Fresh JSON-RPC ids so concurrent runs sharing a session never collide.
+            self.next_id = secrets.randbelow(10**9) + 1000
+        else:
+            self.initialize()
+        try:
+            self._check_expected_project()
+        except McpError:
+            if not self.session_reused:
+                raise
+            self.reinitialize()  # The saved identity may predate an editor switch; re-check against a fresh session.
+        return self
+
+    def reinitialize(self) -> None:
+        self.session_id = None
+        self.session_reused = False
+        self._tools = self._toolsets = self._owner = self._fingerprint = None
+        self._schemas.clear()
+        self._schema_source.clear()
+        self.initialize()
+        self._check_expected_project()
+
+    def editor_owner(self) -> dict[str, Any]:
+        if self._owner is None:
+            self._owner = endpoint_owner(self.url)
+        return self._owner
+
+    def _check_expected_project(self) -> None:
+        if self.expected_project:
+            check_expected_project(self.editor_owner(), self.expected_project)
+
+    def save_session(self) -> None:
+        path = self._session_file()
+        if not path or not self.session_id:
+            return
+        record = {
+            "url": self.url, "session_id": self.session_id, "protocol": self.protocol,
+            "initialize_result": self.initialize_result, "tools": self._tools,
+            "toolsets": self._toolsets, "owner": self._owner, "saved_at": time.time(),
+        }
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temp = path.with_suffix(f".{os.getpid()}.tmp")
+            temp.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+            temp.replace(path)
+        except OSError:
+            pass
+
     def close(self) -> None:
         if not self.session_id:
+            return
+        if self.session_dir:
+            self.save_session()  # Keep the session open for the next run.
             return
         headers = {
             "Accept": "application/json, text/event-stream",
@@ -401,59 +611,265 @@ def _parse_toolsets(text: str) -> list[dict[str, str]]:
     return entries
 
 
-def _start_via_bridge(url: str, timeout: float, project: str) -> dict[str, Any]:
+def _schema_tools(described: Any) -> list[dict[str, Any]]:
+    tools = described.get("tools", []) if isinstance(described, dict) else []
+    if isinstance(tools, dict):
+        tools = [{"name": name, **value} for name, value in tools.items()]
+    return [tool for tool in tools if isinstance(tool, dict)]
+
+
+def _type_label(schema: Any) -> str:
+    if not isinstance(schema, dict):
+        return "any"
+    if schema.get("type") == "array":
+        return f"list[{_type_label(schema.get('items'))}]"
+    title = schema.get("title")
+    if title:
+        # UObject references are titled with their class path, e.g. /Script/Engine.Material.
+        return title.rsplit(".", 1)[-1] if title.startswith("/Script/") else title
+    return str(schema.get("type") or "any")
+
+
+def brief_tools(described: Any) -> list[dict[str, Any]]:
+    """Compact signatures: name, params (required first), return type, first description line."""
+    rows = []
+    for tool in _schema_tools(described):
+        schema = tool.get("inputSchema") or {}
+        required = set(schema.get("required") or [])
+        params = [
+            {"name": key, "type": _type_label(value), "required": key in required}
+            for key, value in (schema.get("properties") or {}).items()
+        ]
+        params.sort(key=lambda item: not item["required"])
+        output = ((tool.get("outputSchema") or {}).get("properties") or {}).get("returnValue")
+        summary = next((line.strip() for line in (tool.get("description") or "").splitlines() if line.strip()), "")
+        rows.append({
+            "name": tool.get("name", "").rsplit(".", 1)[-1],
+            "params": params,
+            "returns": _type_label(output) if output else "",
+            "summary": summary[:120],
+        })
+    return rows
+
+
+def render_brief(toolset: str, rows: list[dict[str, Any]]) -> str:
+    lines = [f"{toolset} ({len(rows)} tools; * = required; describe-tool <toolset> <tool> for the full schema)"]
+    for row in rows:
+        params = ", ".join(f"{p['name']}{'*' if p['required'] else ''}: {p['type']}" for p in row["params"])
+        returns = f" -> {row['returns']}" if row["returns"] else ""
+        lines.append(f"  {row['name']}({params}){returns}  # {row['summary']}")
+    return "\n".join(lines)
+
+
+def endpoint_owner(url: str) -> dict[str, Any]:
+    """Identify the local editor process listening on a loopback MCP URL.
+
+    Returns pid, executable, .uproject, project name and engine version when
+    they can be read; ``{"known": False, ...}`` otherwise. Read-only.
+    """
     parsed = urllib.parse.urlparse(url)
     if parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
-        raise McpError("Refusing to start an MCP listener for a non-local URL")
-    port = parsed.port or 8000
-    bridge = Path(__file__).with_name("bridge.py")
-    code = (
-        "from unreal_bridge import Editor; "
-        f"print(Editor.execute_console_command(command='ModelContextProtocol.StartServer {port}'))"
-    )
-    process = subprocess.run(
-        [sys.executable, str(bridge), f"--project={project}", "--json", "--timeout", str(max(5, int(timeout))), "exec", code],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout + 5,
-    )
-    if process.returncode != 0:
-        raise McpError(f"Failed to start Unreal MCP through UnrealBridge: {process.stderr or process.stdout}")
+        return {"known": False, "reason": "non-local endpoint"}
+    port = parsed.port or 80
     try:
-        return json.loads(process.stdout)
-    except json.JSONDecodeError:
-        return {"success": True, "output": process.stdout.strip()}
+        if sys.platform == "win32":
+            # netstat finds the listener in ~50 ms; Get-NetTCPConnection takes over a second.
+            listing = subprocess.run(["netstat", "-ano", "-p", "TCP"], capture_output=True, text=True,
+                                     errors="replace", timeout=10).stdout
+            pid = next((int(cols[-1]) for cols in (line.split() for line in listing.splitlines())
+                        if len(cols) >= 5 and cols[-2].upper() == "LISTENING"
+                        and cols[1].rsplit(":", 1)[-1] == str(port)), None)
+            if pid is None:
+                return {"known": False, "reason": f"no process is listening on port {port}"}
+            script = (f"Get-CimInstance Win32_Process -Filter 'ProcessId={pid}' | "
+                      "Select-Object ExecutablePath,CommandLine | ConvertTo-Json -Compress")
+            proc = subprocess.run(["powershell", "-NoProfile", "-Command", script],
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
+            info = json.loads(proc.stdout) if proc.stdout.strip() else {}
+            exe, command = info.get("ExecutablePath") or "", info.get("CommandLine") or ""
+        else:
+            proc = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-Fp"],
+                                  capture_output=True, text=True, timeout=10)
+            pids = [line[1:] for line in proc.stdout.splitlines() if line.startswith("p")]
+            if not pids:
+                return {"known": False, "reason": f"no process is listening on port {port}"}
+            pid = int(pids[0])
+            command = subprocess.run(["ps", "-o", "command=", "-p", str(pid)],
+                                     capture_output=True, text=True, timeout=10).stdout.strip()
+            exe = command.split(" ", 1)[0]
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        return {"known": False, "reason": f"process lookup failed: {exc}"}
 
-
-def _connect(args: argparse.Namespace, *, start_if_needed: bool = False) -> UnrealMcpClient:
-    client = UnrealMcpClient(args.url, args.protocol, args.timeout)
-    try:
-        client.initialize()
-        return client
-    except McpError:
-        if not start_if_needed:
-            raise
-    if not args.allow_bridge_bootstrap or not args.bridge_project:
-        raise McpError(
-            "Official MCP is unavailable. Enable Epic's ModelContextProtocol plugin, then use "
-            "the editor console: ModelContextProtocol.StartServer 8000; or launch with "
-            "-ModelContextProtocolStartServer -ModelContextProtocolPort=8000. "
-            "Legacy bootstrap requires ensure --allow-bridge-bootstrap --bridge-project <target>."
-        )
-    _start_via_bridge(args.url, args.timeout, args.bridge_project)
-    deadline = time.monotonic() + min(max(args.timeout, 3), 20)
-    last_error: Exception | None = None
-    while time.monotonic() < deadline:
-        client = UnrealMcpClient(args.url, args.protocol, args.timeout)
+    match = re.search(r'"([^"]+\.uproject)"|(\S+\.uproject)', command, re.IGNORECASE)
+    uproject = (match.group(1) or match.group(2)) if match else ""
+    owner: dict[str, Any] = {
+        "known": bool(uproject), "pid": pid, "executable": exe, "uproject": uproject,
+        "project": Path(uproject).stem if uproject else "",
+    }
+    exe_path = Path(exe)
+    if exe_path.name.lower().startswith("unrealeditor") and len(exe_path.parents) >= 4:
+        build = exe_path.parents[2] / "Build" / "Build.version"  # <root>/Engine/Binaries/<Platform>/<exe>
         try:
-            client.initialize()
-            return client
+            version = json.loads(build.read_text(encoding="utf-8"))
+            owner["engine_version"] = f"{version['MajorVersion']}.{version['MinorVersion']}.{version['PatchVersion']}"
+        except (OSError, KeyError, json.JSONDecodeError):
+            pass
+    if not uproject:
+        owner["reason"] = "listener has no .uproject on its command line"
+    return owner
+
+
+def check_expected_project(owner: dict[str, Any], expected: str) -> None:
+    wanted = expected.replace("\\", "/").lower()
+    wanted = wanted.rsplit("/", 1)[-1]
+    wanted = wanted[: -len(".uproject")] if wanted.endswith(".uproject") else wanted
+    if not owner.get("known"):
+        raise McpError(f"Cannot confirm the MCP endpoint serves {expected!r}: {owner.get('reason')}")
+    if owner["project"].lower() != wanted:
+        raise McpError(
+            f"MCP endpoint is served by project {owner['project']!r} ({owner['uproject']}), not {expected!r}. "
+            "Close or reconfigure the other editor, or point --url at the intended one."
+        )
+
+
+def load_batch(path: str | Path) -> list[dict[str, Any]]:
+    """Read a JSONL batch: one {"toolset", "tool", "args"?, "readback"?, "expect"?, "label"?} per line."""
+    entries = []
+    for number, line in enumerate(Path(path).read_text(encoding="utf-8-sig").splitlines(), start=1):
+        text = line.strip()
+        if not text or text.startswith("#"):
+            continue
+        try:
+            entry = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise McpError(f"{path}:{number}: invalid JSON: {exc}") from exc
+        if not isinstance(entry, dict):
+            raise McpError(f"{path}:{number}: each line must be a JSON object")
+        entries.append({**entry, "_line": number})
+    return entries
+
+
+def _unwrap(result: Any) -> Any:
+    value = _decode_text_value(result)
+    return value["returnValue"] if isinstance(value, dict) and set(value) == {"returnValue"} else value
+
+
+def _expectation_met(expect: Any, actual: Any) -> bool:
+    if isinstance(expect, dict) and isinstance(actual, dict):
+        return all(key in actual and _expectation_met(value, actual[key]) for key, value in expect.items())
+    if isinstance(expect, list) and isinstance(actual, list):
+        return len(expect) == len(actual) and all(map(_expectation_met, expect, actual))
+    if isinstance(expect, bool) or isinstance(actual, bool):
+        return type(expect) is type(actual) and expect == actual
+    numbers = (int, float)
+    if isinstance(expect, numbers) and isinstance(actual, numbers):
+        # UE stores most values as float32: 0.4 reads back as 0.4000000059604645.
+        return math.isclose(expect, actual, rel_tol=1e-6, abs_tol=1e-6)
+    return expect == actual
+
+
+def validate_batch(client: UnrealMcpClient, entries: list[dict[str, Any]]) -> list[str]:
+    """Check every call and readback against the live schema before anything runs."""
+    problems = []
+    for entry in entries:
+        for step, spec in (("call", entry), ("readback", entry.get("readback"))):
+            if spec is None:
+                continue
+            where = f"line {entry['_line']} {step}"
+            if not isinstance(spec, dict) or not spec.get("toolset") or not spec.get("tool"):
+                problems.append(f"{where}: needs \"toolset\" and \"tool\"")
+                continue
+            if not isinstance(spec.get("args", {}), dict):
+                problems.append(f"{where}: \"args\" must be an object")
+                continue
+            try:
+                schema = client.find_tool(spec["toolset"], spec["tool"])
+            except McpError as exc:
+                problems.append(f"{where}: {exc}")
+                continue
+            if schema is None:
+                problems.append(f"{where}: tool {spec['tool']!r} not in {spec['toolset']}")
+                continue
+            # UE marks some documented-optional fields required; pass explicit empty values for them.
+            required = (schema.get("inputSchema") or {}).get("required") or []
+            missing = [key for key in required if key not in (spec.get("args") or {})]
+            if missing:
+                problems.append(f"{where}: {spec['tool']} is missing required args {missing}")
+        if "expect" in entry and not entry.get("readback"):
+            problems.append(f"line {entry['_line']}: \"expect\" needs a \"readback\"")
+    return problems
+
+
+def run_batch(client: UnrealMcpClient, entries: list[dict[str, Any]], *,
+              dry_run: bool = False, continue_on_error: bool = False) -> dict[str, Any]:
+    """Run calls sequentially in one session; stop at the first failure unless told otherwise.
+
+    Unlike ProgrammaticToolset scripts, each call is a separate request with its own result,
+    so earlier successful steps are reported even when a later one fails. Nothing is retried.
+    """
+    problems = validate_batch(client, entries)
+    if problems or dry_run:
+        return {"ok": not problems, "validated": not problems, "dry_run": dry_run, "problems": problems,
+                "planned": [f"{e['toolset']}.{e['tool']}" for e in entries if not problems]}
+    results: list[dict[str, Any]] = []
+    stopped = False
+    for index, entry in enumerate(entries):
+        row: dict[str, Any] = {"index": index, "line": entry["_line"], "label": entry.get("label", ""),
+                               "tool": f"{entry['toolset']}.{entry['tool']}"}
+        if stopped:
+            results.append({**row, "status": "skipped"})
+            continue
+        try:
+            row["result"] = _unwrap(client.call_resolved_tool(entry["toolset"], entry["tool"], entry.get("args") or {}))
+            row["status"] = "ok"
         except McpError as exc:
-            last_error = exc
-            time.sleep(0.5)
-    raise McpError(f"Unreal MCP did not become ready after start: {last_error}")
+            row.update(status="error", error=str(exc))
+        readback = entry.get("readback")
+        if row["status"] == "ok" and readback:
+            try:
+                actual = _unwrap(client.call_resolved_tool(readback["toolset"], readback["tool"], readback.get("args") or {}))
+                row["readback"] = {"tool": f"{readback['toolset']}.{readback['tool']}", "result": actual}
+                if "expect" in entry and not _expectation_met(entry["expect"], actual):
+                    row.update(status="mismatch", error=f"readback {actual!r} does not match expect {entry['expect']!r}")
+            except McpError as exc:
+                row.update(status="readback_error", error=str(exc))
+        results.append(row)
+        stopped = row["status"] != "ok" and not continue_on_error
+    counts: dict[str, int] = {}
+    for row in results:
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    return {"ok": counts.get("ok", 0) == len(results), "validated": True, "counts": counts, "results": results}
+
+
+def _connect(args: argparse.Namespace) -> UnrealMcpClient:
+    client = UnrealMcpClient(
+        args.url, args.protocol, args.timeout,
+        cache_dir=None if args.no_cache else default_cache_dir(),
+        refresh_schema=args.refresh_schema,
+        session_dir=None if args.new_session else default_session_dir(),
+        expected_project=args.expect_project,
+    )
+    try:
+        client.open()
+    except McpError as exc:
+        if args.command != "ensure":
+            raise
+        raise McpError(
+            f"{exc}. Official MCP is unavailable. Enable Epic's ModelContextProtocol plugin and set "
+            "bAutoStartServer=true in Editor > General > ModelContextProtocolSettings, or launch with "
+            "-ModelContextProtocolStartServer -ModelContextProtocolPort=8000. This client never starts "
+            "or relaunches an editor."
+        ) from exc
+    return client
+
+
+def _current_level(client: UnrealMcpClient) -> str:
+    try:
+        value = _decode_text_value(client.call_resolved_tool("SceneTools", "get_current_level", {}))
+    except McpError:
+        return ""
+    value = value.get("returnValue", value) if isinstance(value, dict) else value
+    return value.get("refPath", "") if isinstance(value, dict) else str(value or "")
 
 
 def _load_json_object(value: str) -> dict[str, Any]:
@@ -482,33 +898,51 @@ def main() -> int:
     parser.add_argument("--protocol", default=DEFAULT_PROTOCOL)
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--json", action="store_true", help="Print the complete MCP result as JSON")
+    parser.add_argument("--expect-project", default=os.environ.get("UE_MCP_PROJECT"),
+                        help="Fail unless the endpoint is served by this project (name or .uproject); env UE_MCP_PROJECT")
+    parser.add_argument("--no-cache", action="store_true", help="Do not read or write the toolset schema cache")
+    parser.add_argument("--refresh-schema", action="store_true", help="Ignore cached schemas and fetch them live")
+    parser.add_argument("--new-session", action="store_true",
+                        help="Do not resume or keep a saved MCP session; initialize and close a fresh one")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status", help="Initialize a session and print server capabilities")
-    ensure = sub.add_parser("ensure", help="Check official MCP; show native startup guidance if unavailable")
-    ensure.add_argument("--allow-bridge-bootstrap", action="store_true", help="Explicitly allow legacy plugin startup as a last resort")
-    ensure.add_argument("--bridge-project", help="Required target editor project for legacy bootstrap")
+    sub.add_parser("ensure", help="Check official MCP; show native startup guidance if unavailable")
     sub.add_parser("list-tools", help="List top-level MCP tools")
     sub.add_parser("list-resources", help="List MCP resources")
     sub.add_parser("list-toolsets", help="List discoverable Unreal toolsets")
     describe = sub.add_parser("describe-toolset", help="Describe every tool in one Unreal toolset")
     describe.add_argument("toolset_name")
+    describe.add_argument("--brief", action="store_true", help="One signature line per tool instead of the full schema")
+    describe_tool = sub.add_parser("describe-tool", help="Full schema of one tool")
+    describe_tool.add_argument("toolset_name")
+    describe_tool.add_argument("tool_name")
     call = sub.add_parser("call", help="Call a top-level MCP tool or a toolset tool")
     call.add_argument("tool_name")
     call.add_argument("--toolset")
     call.add_argument("--args", default="{}", help="JSON object with tool arguments")
     call.add_argument("--args-file", help="Read UTF-8 JSON arguments from a file (recommended on PowerShell)")
+    script = sub.add_parser("run-script", help="Run a ProgrammaticToolset script file (def run() -> dict) in one round trip")
+    batch = sub.add_parser("batch", help="Run a JSONL file of calls sequentially in one session, with optional readback")
+    batch.add_argument("batch_file")
+    batch.add_argument("--dry-run", action="store_true", help="Only validate tools and required args against the live schema")
+    batch.add_argument("--continue-on-error", action="store_true", help="Keep going after a failed step")
+    batch.add_argument("--out", help="Write the full results here and print only a summary")
+    script.add_argument("script_file")
     inventory = sub.add_parser("inventory", help="Describe every discoverable toolset")
     inventory.add_argument("--output", help="Optional UTF-8 JSON output path")
     args = parser.parse_args()
 
     client: UnrealMcpClient | None = None
+    exit_code = 0
     try:
-        client = _connect(args, start_if_needed=args.command == "ensure")
+        client = _connect(args)
         if args.command in {"status", "ensure"}:
             value = {
                 "url": args.url,
                 "sessionId": client.session_id,
                 **(client.initialize_result or {}),
+                "session": "reused" if client.session_reused else "new",
+                "editor": {**client.editor_owner(), "current_level": _current_level(client)},
             }
         elif args.command == "list-tools":
             value = {"tools": client.list_tools()}
@@ -517,7 +951,17 @@ def main() -> int:
         elif args.command == "list-toolsets":
             value = client.list_toolsets()
         elif args.command == "describe-toolset":
-            value = client.describe_toolset(args.toolset_name)
+            described = client.describe_toolset(args.toolset_name)
+            if args.brief:
+                rows = brief_tools(described)
+                value = rows if args.json else render_brief(client.resolve_toolset(args.toolset_name), rows)
+            else:
+                value = described
+        elif args.command == "describe-tool":
+            value = client.find_tool(args.toolset_name, args.tool_name)
+            if value is None:
+                raise McpError(f"Tool {args.tool_name!r} not found in {client.resolve_toolset(args.toolset_name)}; "
+                               "run describe-toolset --brief.")
         elif args.command == "call":
             arguments = _load_json_object(Path(args.args_file).read_text(encoding="utf-8-sig") if args.args_file else args.args)
             if args.toolset:
@@ -526,6 +970,18 @@ def main() -> int:
                 result = client.call_tool(args.tool_name, arguments)
                 _check_tool_result(result)
             value = result if args.json else _decode_text_value(result)
+        elif args.command == "run-script":
+            value = client.run_tool_script(Path(args.script_file).read_text(encoding="utf-8-sig"))
+        elif args.command == "batch":
+            value = run_batch(client, load_batch(args.batch_file), dry_run=args.dry_run,
+                              continue_on_error=args.continue_on_error)
+            if args.out:
+                output = Path(args.out)
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                value = {key: value[key] for key in ("ok", "validated", "counts", "problems") if key in value}
+                value["out"] = str(output.resolve())
+            exit_code = 0 if value["ok"] else 1
         elif args.command == "inventory":
             toolsets = [dict(item) for item in client.list_toolsets()]
             for index, toolset in enumerate(toolsets, start=1):
@@ -551,8 +1007,8 @@ def main() -> int:
         else:
             raise AssertionError(args.command)
         _emit(value, args.json)
-        return 0
-    except (McpError, subprocess.TimeoutExpired) as exc:
+        return exit_code
+    except (McpError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     finally:

@@ -1,194 +1,91 @@
-# Official And Editor Toolsets Vs Local Workflow
+# Epic MCP and local material workflow
 
-Updated: 2026-06-08
+Checked: 2026-10-28, installed UE 5.8.4 / CL 58902052.
 
-This note compares source-backed Unreal material editing APIs, locally smoke-tested editor toolsets, and the current local `UnrealBridge` + `unreal-material-artist` workflow.
+## Control path
 
-## Summary
+Use Epic's ModelContextProtocol server directly. The sibling
+`unreal-engine-mcp/scripts/builtin_mcp.py` discovers search mode (three meta tools)
+and native mode (individual qualified tools). Read live schemas before calls;
+domain plugins must be loaded in the active project.
 
-- Public UE 5.7 docs back `UMaterialEditingLibrary` and Material Editing Blueprint/Python APIs for many standard material editing operations.
-- The `toolset_registry` tool names below were local/editor smoke-tested in this project, but public primary docs were not found for those names in the 2026-06-08 web pass.
-- Use local/editor toolset routes only after runtime availability is confirmed in the active editor.
-- Local UnrealBridge and skill tooling remain best for transport, auditing, preview, QA, reporting, and production workflow.
-- Best control model:
-  - `UnrealBridge` remains the transport/orchestration spine
-  - source-backed APIs or confirmed local editor toolsets perform standard mutations when available
-  - local skill tooling validates, previews, audits, and packages the result
+Installed Epic source:
+`Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/editor_toolset/toolsets/`.
+MaterialTools delegates graph operations to UMaterialEditingLibrary. These
+are Epic tools, not project-local replacements. Module prefixes can change;
+never hard-code the old `toolset_registry.toolsets.core.*` namespace.
 
-## Table Of Contents
+## Coverage in the installed source
 
-- [Local Toolsets Confirmed Useful](#local-toolsets-confirmed-useful)
-- [Smoke-Proven Local Toolset Cases](#smoke-proven-local-toolset-cases)
-- [Practical Division Of Labor](#practical-division-of-labor)
-- [Current Gap Notes](#current-gap-notes)
-- [Recommended Working Rule](#recommended-working-rule)
+| Need | Official surface | Local responsibility |
+|---|---|---|
+| Material, function, MPC creation | MaterialTools create_material, create_function, create_parameter_collection | Render contract and naming |
+| Expression discovery/create/delete | list_expression_classes, add_expression, delete_expression, get_expressions | Interpret graph intent |
+| Graph readback and wiring | Pin names, get_expression_inputs, get_property_input, connect/disconnect tools | Validate expected outputs and visual result |
+| Expression/material/texture properties | ObjectTools list/get/set/reset properties | Supported fields and role-correct values |
+| Compile/layout/cleanup | MaterialTools recompile, layout_expressions, delete_unused_expressions | Confirm actual compile evidence; no invented statistics |
+| MI lifecycle and overrides | MaterialInstanceTools scalar/vector/texture/static-switch, parent, clear, override tools | Parameter ownership and permutation budgets |
+| Texture import | TextureTools import_file/get_size; ObjectTools properties; AssetTools save | Alpha/channel/POT checks and source provenance |
+| Asset lifecycle/references | AssetTools duplicate/move/save/dirty/dependencies/referencers | Scoped changes and readback |
+| Multi-step orchestration | ProgrammaticToolset get_execution_environment/execute_tool_script | Registered tools within the official sandbox |
+| Carrier previews | Official scene/editor/capture tools where exposed | Deterministic setup, comparison, acceptance |
+| Specialized compile stats/private fields | No equivalence established by source names alone | Check live tools; document a narrow gap if needed |
+| Images, atlases, reports, contracts | Local file tools | No editor plugin needed |
 
-## Local Toolsets Confirmed Useful
+Installed source counts: MaterialTools 22, MaterialInstanceTools 13,
+ObjectTools 6, TextureTools 2, AssetTools 21, ProgrammaticToolset 2.
+These counts are not runtime availability or a hotfix delta.
 
-- `toolset_registry.toolsets.core.material.MaterialTools`
-- `toolset_registry.toolsets.core.material_instance.MaterialInstanceTools`
-- `toolset_registry.toolsets.core.texture.TextureTools`
-- `toolset_registry.toolsets.core.asset.AssetTools`
-- related expansion candidates:
-  - `toolset_registry.toolsets.core.scene.SceneTools`
-  - `toolset_registry.toolsets.core.actor.ActorTools`
-  - `toolset_registry.toolsets.core.blueprint.BlueprintTools`
+The 2026-10-28 live 5.8.4 audit matched those counts and successfully read a
+project material's expressions and exposed parameters, material property schema
+and values, and a texture's dimensions. The material CLI also resolved
+`material:get_expressions` and saved `transport: epic-mcp-http` with a successful
+result. This confirms the direct transport route, not graph-write, texture-import
+or shader-statistics coverage; those writes were not exercised by the audit.
 
-## Smoke-Proven Local Toolset Cases
+add_expression returns an expression UObject reference. Use it with ObjectTools
+and graph connection tools; lack of a custom GUID is not a capability gap.
+Query current pins/enums rather than translating old bridge schemas.
+Read back after writes and save intended assets.
 
-Live-tested on 2026-05-15:
+## CLI and legacy boundaries
 
-- `AssetTools.create_folder`
-- `AssetTools.exists`
-- `AssetTools.duplicate`
-- `AssetTools.save_assets`
-- `MaterialInstanceTools.create`
-- `MaterialInstanceTools.list_parameters`
-- `MaterialInstanceTools.set_scalar_parameter`
-- `MaterialInstanceTools.get_scalar_parameter`
-- `MaterialTools.create`
-- `MaterialTools.add_expression`
-- `MaterialTools.connect_to_output`
-- `MaterialTools.recompile`
-- `TextureTools.get_size`
+`tools/official_toolsets_bridge.py` retains its filename for compatibility,
+but defaults to direct MCP HTTP:
 
-Additional material-workflow integrations proven on 2026-05-15:
+```powershell
+python tools/official_toolsets_bridge.py material:get_expressions --input args.json --markdown
+python tools/official_toolsets_bridge.py texture:import_file --input import-args.json --markdown
+```
 
-- `material_instance_batch.py`
-  - now supports `use_official_toolsets=true`
-  - local toolset route proved for:
-    - MI create
-    - scalar parameter writes
-    - asset save
-- `material_preview.py`
-  - `sprite_card` preview harness now runs through a toolset-first scene route
-  - static-mesh preview actor spawn/removal now prefers `SceneTools`
-  - label and transform updates can use `ActorTools`
-  - `decal` preview also passed on the toolset-first scene route
-- `material_toolset_builder.py`
-  - now supports higher-level build chains:
-    - create material
-    - add expressions
-    - write expression properties
-    - connect expressions
-    - connect to material output
-    - recompile
-    - save
-  - now supports recipe/refactor workflow layers:
-    - `recipe` emits route, parameter table, texture requirements, preview/audit plan, and executable builder spec
-    - `refactor-plan` turns graph-diff likely causes or explicit operations into guarded one-at-a-time patch plans
-    - `build` preserves the low-level spec execution route
-  - templates now supported:
-    - `constant_scalar`
-    - `constant3_color`
-    - `scalar_parameter`
-    - `vector_parameter`
-    - `texture_parameter_2d`
-    - `particle_color`
-    - `dynamic_parameter`
-    - `fresnel`
-    - `depth_fade`
-    - `add_pair`
-    - `multiply_pair`
-    - `emissive_color_scalar`
-    - `basecolor_roughness_pair`
-  - important implementation detail:
-    - route-aware recipe specs use the local `create_material` path so domain, blend, shading model, and two-sided intent are created with the material
-    - route usage flags such as `NiagaraSprites` and `NiagaraRibbons` are applied through a local whitelist that calls UE's safe `MaterialEditingLibrary.set_base_material_usage`
-    - legacy specs without a route still use confirmed `MaterialTools.create` for asset creation
-    - expression create/property/connect/output work uses local `UnrealBridgeMaterialLibrary` guid-aware route
-    - this hybrid route is intentional because `MaterialTools.add_expression` does not return the stable guid needed for downstream graph operations
-- `material_preview.py`
-  - `ribbon` preview route also passed after moving Niagara temp asset duplicate/save/delete to confirmed `AssetTools`
-- `texture_import_fix.py`
-  - apply mode now saves through confirmed `AssetTools.save_assets`
-  - smoke passed on `WhiteSquareTexture`
-- `material_domain_rebuilder.py`
-  - now supports automatic rebuild from ordinary `Surface` materials into legal:
-    - `DeferredDecal`
-    - `PostProcess`
-  - migration path now carries over:
-    - basic nodes
-    - node property values
-    - node-to-node connections
-    - compatible output connections
-    - compile + save
-  - smoke passed on `M_OfficialTemplateSmoke`:
-    - rebuilt legal `DeferredDecal` material with `3` expressions and `1` output connection
-    - rebuilt legal `PostProcess` material with `3` expressions and `1` output connection
-- `material_preview.py`
-  - now chains render-contract gate -> automatic domain rebuild -> preview continuation
-  - smoke passed for:
-    - `Surface -> DeferredDecal -> continue decal preview`
-    - `Surface -> PostProcess -> continue post_process preview`
-  - rebuilt legal materials can now be optionally formalized into `material_asset_library` candidates instead of remaining preview-only recovery assets
-  - the preview-side formalization route now:
-    - registers rebuilt `DeferredDecal` as category `decal`
-    - registers rebuilt `PostProcess` as category `post_process`
-    - attaches the preview report path to the candidate record for later `auto-promote`
+The JSON file must match the live schema. `--mcp-url` or UNREAL_MCP_URL selects
+the editor endpoint. Reports record actual transport and resolved toolset. Tool
+errors produce a failed report and nonzero exit code, without retry.
 
-Current partial scene-route note:
+UnrealBridge (custom plugin + TCP) is retired. Older pipelines still construct
+`BridgeClient`, which now runs over Epic's Python Remote Execution.
+Their editor-connected modes call retired `UnrealBridge*Library` APIs and now
+fail fast: `graph_refactor_apply`, `material_asset_library register-material`,
+`material_domain_audit`, `material_domain_rebuilder`,
+`material_function_linter`, `material_instance_batch`, `material_preview`,
+`material_toolset_builder build` / `recipe --execute`, `runtime_param_trace`,
+`shader_permutation_report`, `texture_import_audit`, and `texture_import_fix`.
+Their offline planning/report modes still work. Perform the live step with MCP
+tools, save the result JSON, and feed it into the local report code. Each is
+pending a port to MCP. `material_audit` is already ported: it reads
+through MCP and is the reference pattern for porting the rest.
 
-- `post_process` preview now uses toolset scene spawning for its preview geometry and volume creation path
-- but the final preview still depends on the material actually being a valid post-process material
-- a failed `post_process` preview at this stage should first be interpreted as a material-domain or render-contract failure, not automatically as a scene-tooling failure
-- `decal` and `post_process` now both have render-contract gate behavior
-  - `decal`: requires `Material Domain == DeferredDecal`
-  - `post_process`: requires `Material Domain == PostProcess`
-  - when the domain is wrong, preview now exits early with:
-    - `preview_route = blocked-render-contract`
-    - a structured gate finding
-  - this prevents misdiagnosing a domain mismatch as a scene-tool or preview-harness failure
-  - both gates were smoke-tested against a `Surface` material and now correctly report:
-    - `decal_render_contract`
-    - `post_process_render_contract`
-  - those blocked states are no longer dead ends when the workflow allows recovery:
-    - the preview tool can now rebuild into a legal domain material and continue
+For an operation no MCP tool covers, use a stock `unreal.*` API through
+`../unreal-engine-mcp/scripts/python_remote.py`. Record the uncovered operation,
+engine version, candidate live tools inspected, and readback. Return to MCP for
+the next covered step.
 
-## Practical Division Of Labor
+## Version evidence
 
-| Area | Source-backed/local toolset | Local Bridge / Skill | Better Primary Path |
-|---|---|---|---|
-| Create Material | yes | yes | confirmed API/toolset |
-| Add Material Expression | yes | yes | confirmed API/toolset |
-| Connect Material Output | yes | yes | confirmed API/toolset |
-| Recompile Material | yes | yes | confirmed API/toolset |
-| Create Material Instance | yes | yes | confirmed API/toolset |
-| Set MI scalar/vector/texture/static-switch | yes | yes | confirmed API/toolset |
-| List MI parameters | yes | yes | confirmed API/toolset |
-| Duplicate/move/save asset | yes | yes | confirmed API/toolset |
-| Texture size query | yes | yes | confirmed API/toolset |
-| High-level simple material graph build | partial | yes | hybrid |
-| Material graph audit | no | yes | local |
-| Stale override detection | no | yes | local |
-| Material preview harness | no | yes | local |
-| Texture import audit/fix | no | yes | local |
-| Generated texture QA | no | yes | local |
-| Channel packing / flipbook normalization | no | yes | local |
-| Delivery / report packaging | no | yes | local |
-
-## Current Gap Notes
-
-- `TextureTools` surface is currently thin in the tested build; it does not replace the local texture import and QA toolchain.
-- Confirmed editor material toolsets are strong at direct mutation, but they do not replace:
-  - `material_audit.py`
-  - `material_preview.py`
-  - `texture_import_audit.py`
-  - `texture_import_fix.py`
-  - `texture_asset_report.py`
-  - `runtime_param_trace.py`
-- Therefore confirmed editor material toolsets should be treated as mutation primitives, not as full workflow replacements.
-
-## Recommended Working Rule
-
-1. Use public/source-backed APIs or locally confirmed toolset mutations first when a standard operation exists.
-2. Use local tooling immediately after for:
-   - audit
-   - preview
-   - import validation
-   - reporting
-3. For higher-level material graph authoring, use a hybrid route when needed:
-   - source-backed or confirmed toolset route for asset creation
-   - local guid-aware bridge operations for downstream graph wiring and property writes
-4. Keep `UnrealBridge` as the only external control spine so Codex still has one stable way to talk to UE.
-5. When a render-contract recovery produces a usable rebuilt material, prefer registering it as a candidate asset immediately so the result can move into the formal library/promote flow instead of staying a hidden preview artifact.
+[UE 5.8 release notes](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-8-release-notes)
+introduce experimental MCP.
+[5.8.4 Hotfix Released](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775)
+(2026-10-20) lists a fix for programmatic material Usage Flags leaving
+CachedExpressionData stale, plus material root-pin undo and shader compiler
+fixes. It does not announce additional MCP tools. This does not prove the
+complete 5.8.0 and 5.8.4 schemas are identical.

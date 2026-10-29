@@ -2,21 +2,24 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
+from .mcp import builtin_mcp
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
 
 
 TOOLSET_ALIASES = {
-    "asset": "toolset_registry.toolsets.core.asset.AssetTools",
-    "material": "toolset_registry.toolsets.core.material.MaterialTools",
-    "material_instance": "toolset_registry.toolsets.core.material_instance.MaterialInstanceTools",
-    "texture": "toolset_registry.toolsets.core.texture.TextureTools",
-    "scene": "toolset_registry.toolsets.core.scene.SceneTools",
-    "actor": "toolset_registry.toolsets.core.actor.ActorTools",
-    "blueprint": "toolset_registry.toolsets.core.blueprint.BlueprintTools",
+    "asset": "AssetTools",
+    "material": "MaterialTools",
+    "material_instance": "MaterialInstanceTools",
+    "texture": "TextureTools",
+    "object": "ObjectTools",
+    "programmatic": "ProgrammaticToolset",
+    "scene": "SceneTools",
+    "actor": "ActorTools",
+    "blueprint": "BlueprintTools",
 }
 
 
@@ -32,12 +35,31 @@ def _qualify_tool_name(tool: str) -> str:
     return f"{toolset}.{local_tool.strip()}"
 
 
+def call_official(skill_root: Path, qualified_tool: str, payload: dict[str, Any], url: str, timeout: int) -> dict[str, Any]:
+    """Call Epic directly. No plugin discovery, bootstrap, or automatic retry."""
+    module = builtin_mcp(skill_root)
+    client = module.UnrealMcpClient(url, module.DEFAULT_PROTOCOL, timeout)
+    try:
+        client.initialize()
+        toolset, _, tool = qualified_tool.rpartition(".")
+        resolved = client.resolve_toolset(toolset)
+        result = client.call_resolved_tool(resolved, tool, payload)
+        return {
+            "success": True, "error": "", "transport": "epic-mcp-http",
+            "resolved_toolset_name": resolved, "output": module._decode_text_value(result),
+        }
+    finally:
+        client.close()
+
+
 def _render_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# Official Toolset Call",
         "",
         f"- Tool: `{report['qualified_tool']}`",
         f"- Success: `{report['success']}`",
+        f"- Transport: `{report.get('transport', 'unknown')}`",
+        f"- Resolved toolset: `{report.get('resolved_toolset_name') or ''}`",
     ]
     if report.get("error"):
         lines.append(f"- Error: `{report['error']}`")
@@ -63,34 +85,14 @@ def _render_markdown(report: dict[str, Any]) -> str:
 
 def command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-
     qualified_tool = _qualify_tool_name(args.tool)
-    payload = json.loads(Path(args.input).read_text(encoding="utf-8")) if args.input else {}
-    script = (
-        "import json\n"
-        "import unreal\n"
-        f"payload = {json.dumps(payload, ensure_ascii=False)!r}\n"
-        f"result = unreal.UnrealBridgeToolsetRegistryLibrary.execute_qualified_tool({qualified_tool!r}, json.dumps(payload, ensure_ascii=False), True)\n"
-        "output = None\n"
-        "if result.json_output:\n"
-        "    try:\n"
-        "        output = json.loads(result.json_output)\n"
-        "    except Exception:\n"
-        "        output = result.json_output\n"
-        "print(json.dumps({\n"
-        "  'success': result.success,\n"
-        "  'error': result.error,\n"
-        "  'qualified_tool': result.qualified_tool_name,\n"
-        "  'requested_toolset_name': result.requested_toolset_name,\n"
-        "  'resolved_toolset_name': result.resolved_toolset_name,\n"
-        "  'tool_name': result.tool_name,\n"
-        "  'json_input': result.json_input,\n"
-        "  'output': output,\n"
-        "}, ensure_ascii=False))\n"
-    )
-    raw = client.exec_json(script)
+    payload = json.loads(Path(args.input).read_text(encoding="utf-8-sig")) if args.input else {}
+    if not isinstance(payload, dict):
+        raise SystemExit("Input must be a JSON object.")
+    try:
+        raw = call_official(ctx.skill_root, qualified_tool, payload, args.mcp_url, args.timeout)
+    except Exception as exc:
+        raw = {"success": False, "error": str(exc), "transport": "epic-mcp-http"}
 
     report = {
         "tool": "official_toolsets_bridge",
@@ -99,6 +101,8 @@ def command(args: argparse.Namespace) -> int:
         "error": raw["error"],
         "input": payload,
         "output": raw.get("output"),
+        "transport": raw["transport"],
+        "resolved_toolset_name": raw.get("resolved_toolset_name"),
     }
     effect = slugify(args.effect or qualified_tool)
     stem = slugify(args.stem or qualified_tool.split(".")[-1])
@@ -107,16 +111,15 @@ def command(args: argparse.Namespace) -> int:
     if args.markdown:
         write_text(out.with_suffix(".md"), _render_markdown(report))
     print(out)
-    return 0
+    return 0 if report["success"] else 1
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Execute confirmed editor/toolset operations through UnrealBridge and save a structured report.")
-    parser.add_argument("tool", help="Qualified tool name or alias form like asset:duplicate, material:create, material_instance:set_scalar_parameter.")
+    parser = argparse.ArgumentParser(description="Call Epic's live MCP tools directly and save structured evidence.")
+    parser.add_argument("tool", help="Qualified tool name or alias form like asset:exists, material:create_material, material_instance:set_scalar_parameter.")
     parser.add_argument("--input", help="Path to a JSON payload file. Defaults to {}.")
     parser.add_argument("--root", default="auto")
-    parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--mcp-url", default=os.environ.get("UNREAL_MCP_URL", "http://127.0.0.1:8000/mcp"))
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--effect")
     parser.add_argument("--stem")

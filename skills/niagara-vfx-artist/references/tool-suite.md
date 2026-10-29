@@ -1,5 +1,7 @@
 # Closed-Loop Tool Suite
 
+> **UnrealBridge retired.** Commands below that pass `--endpoint` or describe UnrealBridge transport document legacy live modes that now fail fast. Do those live steps with Epic MCP tools; offline plan/report modes still work. See [niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md).
+
 This suite is core to the skill, not optional scaffolding.
 
 ## Folder Split
@@ -133,7 +135,7 @@ Purpose:
 - add a missing Ribbon Renderer to a receiver emitter when `RendererProperties` is empty
 - repair existing renderer material bindings when a renderer slot is present
 - render the UE Python apply script in dry-run mode
-- optionally execute through `unreal-bridge` with `apply-plan --apply`
+- optionally execute through `unreal-engine-mcp` with `apply-plan --apply`
 - read the Niagara system back after writing with `--verify`
 - optionally require an existing delivery package to be ready before the apply can count as complete
 - optionally run post-apply audit -> delivery package -> ready check with `--auto-delivery-package`
@@ -221,38 +223,6 @@ Workflow notes:
 - pass `--strict-unknown` when missing binding evidence should fail instead of only warning
 - pass `--fail-on-warning --strict` for automation gates that require every expected binding to be proven
 - do not implement this check inside `unreal-material-artist`; that skill owns the material contract and preview evidence, not the live Niagara hookup
-
-### `tools/unrealbridge_upstream_audit.py`
-
-Purpose:
-- fetch the latest `TornLux/UnrealBridge` upstream baseline
-- compare the upstream baseline against the installed local `unreal-bridge` skill and the live UE project plugin
-- treat upstream changes as sync-worthy even when upstream still lacks Niagara support
-- preserve local Niagara overlay files instead of letting upstream baseline sync erase them
-- custom-merge `UnrealBridge.Build.cs` so upstream additions land while local Niagara module dependencies stay present
-- regenerate `bridge_manifest.json` and project `Content/Python/unreal_bridge.py` from the live local plugin surface after sync
-
-Key commands:
-
-```powershell
-python tools/unrealbridge_upstream_audit.py --markdown
-python tools/unrealbridge_upstream_audit.py --markdown --sync-local
-python tools/unrealbridge_upstream_audit.py --markdown --sync-local --bridge-endpoint 127.0.0.1:50343
-```
-
-Workflow notes:
-- Daily rule: if upstream changed at all, sync the upstream baseline first; do not gate the pull on Niagara capability.
-- Local Niagara overlay files stay owned locally:
-  - `Source/UnrealBridge/Public/UnrealBridgeNiagaraLibrary.h`
-  - `Source/UnrealBridge/Private/UnrealBridgeNiagaraLibrary.cpp`
-- Generated bridge surfaces are not copied blindly from upstream:
-  - installed skill `scripts/bridge_manifest.json`
-  - project plugin `Content/Python/unreal_bridge.py`
-- Those generated files should be regenerated from the live local plugin surface after the baseline sync so the final bridge still exposes local Niagara APIs.
-- 2026-05-15 bridge-runtime lesson:
-  - if `ping` works but `exec` suddenly starts returning `success=false` with `error=\"None\"`, inspect the UE log for Python wrapper failures before blaming Niagara
-  - one real cause was a smoke script rebinding top-level `sys`, which polluted stdout/stderr restoration in the old server wrapper
-  - after changing `UnrealBridgeServer.cpp`, do a full plugin rebuild or a clean Live Coding compile before judging whether the bridge fix worked
 
 ### `tools/delivery_package.py`
 
@@ -366,10 +336,10 @@ python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --ef
 Workflow notes:
 - default asset destinations are derived under `/Game/CodexTemp/<Effect>/Textures/` and `/Game/CodexTemp/<Effect>/Materials/`.
 - when `--niagara-hookup` is enabled, default Niagara destination is `/Game/CodexTemp/<Effect>/Niagara/NS_<Effect>_SubUV`.
-- texture import now prefers the formal `UnrealBridgeAssetLibrary.ImportTexture2DFromFile` route. Under the hood that bridge API currently still uses UE's import task pipeline because official `TextureTools` does not expose a usable import verb in this build.
+- This section describes the legacy `flipbook_ue_pipeline.py` implementation. On UE 5.8.4, prefer direct MCP `TextureTools.import_file`, ObjectTools texture properties, MaterialTools graph authoring, AssetTools save, and Niagara stack/renderer tools. The old assertion that TextureTools has no import verb is superseded. The pipeline below still requires UnrealBridge and is not the default path for covered operations.
 - the tool then runs `texture_import_fix.py` and `material_audit.py` automatically and records their report paths.
-- material creation is intentionally hybrid:
-  - official `MaterialTools.create` creates the asset
+- legacy material creation is hybrid:
+  - the old executor calls `MaterialTools.create`; current 5.8.4 source uses `create_material`
   - local guid-aware material graph ops wire `TextureSampleParameterSubUV`, `ParticleColor`, and the output chain
 - optional preview uses a temporary Niagara sprite harness with the requested `SubImageSize`, so the screenshot checks the real SubUV grid rather than only a mesh/shaderball surrogate.
 - preview Niagara now defaults to a transient `/Engine/Transient...` duplicate instead of writing a `/Game/CodexTemp/MaterialPreview/...` content asset
@@ -535,7 +505,6 @@ This keeps cached references, audits, previews, cleanup reports, and tuning logs
 22. `flipbook_builder.py`
 23. `learning_loop.py`
 24. `asset_cleanup.py`
-25. `unrealbridge_upstream_audit.py`
 
 That order matches the closed loop:
 

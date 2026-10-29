@@ -1,13 +1,23 @@
+"""Editor Python execution for legacy pipelines, over Epic's Python Remote Execution.
+
+UnrealBridge (custom plugin + TCP) is retired. ``BridgeClient`` keeps its old
+interface so stock-``unreal.*`` scripts still run through Epic's
+PythonScriptPlugin endpoint; scripts that call ``UnrealBridge*Library`` fail
+fast and must be ported to built-in MCP tools.
+"""
+
 from __future__ import annotations
 
+import importlib.util
 import json
-import os
-import subprocess
-import sys
-import time
+import re
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any
+
+
+RETIRED_LIBRARY = re.compile(r"\bUnrealBridge\w*Library\b|\bunreal_bridge\b")
 
 
 class BridgeError(RuntimeError):
@@ -20,34 +30,35 @@ class BridgeResult:
     stderr: str
 
 
-def find_bridge_script(skill_root: Path) -> Path:
-    candidates = [
-        os.environ.get("UNREAL_BRIDGE_SCRIPT"),
-        str(Path.home() / ".codex" / "skills" / "unreal-bridge" / "scripts" / "bridge.py"),
-        str(skill_root.parent / "unreal-bridge" / "scripts" / "bridge.py"),
-    ]
-    for candidate in candidates:
-        if candidate and Path(candidate).exists():
-            return Path(candidate)
-    raise BridgeError("Unable to locate unreal-bridge/scripts/bridge.py")
+def _load_python_remote(skill_root: Path) -> ModuleType:
+    path = skill_root.parent / "unreal-engine-mcp" / "scripts" / "python_remote.py"
+    if not path.is_file():
+        raise BridgeError(f"Unable to locate {path}; install the sibling unreal-engine-mcp skill")
+    spec = importlib.util.spec_from_file_location("ue_python_remote", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 def parse_json_output(text: str) -> Any:
+    """Return the last complete JSON value printed, compact or indented."""
     stripped = text.strip()
     if not stripped:
-        raise BridgeError("Bridge returned empty stdout")
-    for line in reversed(stripped.splitlines()):
-        line = line.strip()
-        if not line:
+        raise BridgeError("Editor script printed nothing")
+    decoder = json.JSONDecoder()
+    lines = stripped.splitlines()
+    for index in range(len(lines) - 1, -1, -1):
+        if not lines[index].lstrip().startswith(("{", "[")):
             continue
+        tail = "\n".join(lines[index:]).lstrip()
         try:
-            return json.loads(line)
+            value, end = decoder.raw_decode(tail)
         except json.JSONDecodeError:
             continue
-    try:
-        return json.loads(stripped)
-    except json.JSONDecodeError as exc:
-        raise BridgeError(f"Unable to parse JSON from bridge stdout:\n{stripped}") from exc
+        if not tail[end:].strip():
+            return value
+    raise BridgeError(f"Unable to parse JSON from editor output:\n{stripped}")
 
 
 class BridgeClient:
@@ -58,64 +69,36 @@ class BridgeClient:
         endpoint: str | None = None,
         timeout_seconds: int = 120,
     ) -> None:
-        self.bridge_script = find_bridge_script(skill_root)
+        if endpoint:
+            raise BridgeError("--endpoint targeted the retired UnrealBridge TCP server; select the editor with --project")
+        self._remote = _load_python_remote(Path(skill_root))
         self.project = project
-        self.endpoint = endpoint
         self.timeout_seconds = timeout_seconds
 
-    def _base_command(self) -> list[str]:
-        command = [sys.executable, str(self.bridge_script)]
-        if self.project:
-            command.append(f"--project={self.project}")
-        if self.endpoint:
-            command.append(f"--endpoint={self.endpoint}")
-        command.append(f"--timeout={self.timeout_seconds}")
-        return command
-
     def ping(self) -> Any:
-        command = self._base_command() + ["--json", "ping"]
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        last_error = ""
-        for attempt in range(3):
-            proc = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=max(self.timeout_seconds, 15),
-                env=env,
-                check=False,
-            )
-            if proc.returncode == 0:
-                return parse_json_output(proc.stdout)
-            last_error = proc.stderr.strip() or proc.stdout.strip() or "Bridge ping failed"
-            if "no UnrealBridge editors found" not in last_error or attempt == 2:
-                break
-            time.sleep(1.0 + attempt)
-        raise BridgeError(last_error)
+        try:
+            with self._remote.PythonRemote(project=self.project) as remote:
+                return remote.connect()
+        except self._remote.RemoteError as exc:
+            raise BridgeError(str(exc)) from exc
 
     def exec_python(self, script_text: str, *, no_preflight: bool = False) -> BridgeResult:
-        command = self._base_command() + ["exec", "--stdin"]
-        if no_preflight:
-            command.insert(len(self._base_command()), "--no-preflight")
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        proc = subprocess.run(
-            command,
-            input=script_text,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=self.timeout_seconds,
-            env=env,
-            check=False,
-        )
-        if proc.returncode != 0:
-            raise BridgeError(proc.stderr.strip() or proc.stdout.strip() or "Bridge exec failed")
-        return BridgeResult(stdout=proc.stdout, stderr=proc.stderr)
+        del no_preflight  # The UnrealBridge AST preflight no longer exists.
+        retired = sorted(set(RETIRED_LIBRARY.findall(script_text)))
+        if retired:
+            raise BridgeError(
+                f"This pipeline calls retired UnrealBridge APIs ({', '.join(retired)}). "
+                "Perform the operation with Epic's built-in MCP tools (unreal-engine-mcp/scripts/builtin_mcp.py) instead."
+            )
+        try:
+            result = self._remote.run_python(script_text, project=self.project)
+        except self._remote.RemoteError as exc:
+            raise BridgeError(str(exc)) from exc
+        stdout = self._remote.stdout_of(result)
+        errors = self._remote.stdout_of(result, kinds=("Warning", "Error"))
+        if not result.get("success"):
+            raise BridgeError(errors or str(result.get("result")) or "Editor script failed")
+        return BridgeResult(stdout=stdout, stderr=errors)
 
     def exec_json(self, script_text: str, *, no_preflight: bool = False) -> Any:
         result = self.exec_python(script_text, no_preflight=no_preflight)

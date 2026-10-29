@@ -5,6 +5,29 @@ description: Use when Codex needs a UE Material/Shader Specialist for material g
 
 # Unreal Material Artist
 
+## Editor transport
+
+For this user, keep editor work on background connections: do not focus, move,
+minimize, maximize or resize UE windows or send console keystrokes. For a verified
+MCP gap, check [Epic Python Remote Execution](../unreal-engine-mcp/references/official-python-remote.md)
+for that one operation. Use the shared [developer workflow](../unreal-engine-mcp/references/developer-workflow.md)
+for safe scoped edits and [source/diagnostic workflow](../unreal-engine-mcp/references/debugging-and-source-navigation.md)
+when locating the binding, shader/tool implementation or cause of failure.
+
+For this user's new or modified material modules, add Chinese comment frames,
+Chinese parameter groups/descriptions where supported, and stable searchable
+module IDs. Follow the shared
+[Chinese annotation convention](../unreal-engine-mcp/references/blueprint-programming-mcp.md#chinese-module-annotations)
+with material-appropriate editor tools. Preserve existing parameter identifiers
+and bindings; textual labels do not require runtime Gameplay Tags. Read-only
+audits should not insert comments into untouched assets.
+
+On UE 5.8+, use Epic's MCP directly through the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`. Discover the active schema before calling MaterialTools, MaterialInstanceTools, ObjectTools, TextureTools, AssetTools, or ProgrammaticToolset. They are Epic engine plugins in 5.8.4; old `toolset_registry.toolsets.core.*` module names are historical and must not be hard-coded.
+
+`tools/official_toolsets_bridge.py` calls MCP over HTTP and resolves aliases such as `material:get_expressions` from live discovery. UnrealBridge (custom plugin + TCP) is retired; there is no plugin transport.
+
+Material graph creation, node reference readback, wiring, MI parameters, texture import, and exposed UObject properties use official MCP tools. Local file QA, manifests, image packing, and reports remain local. `tools/material_audit.py` reads through MCP (plus Remote Execution for shader statistics). The editor-connected modes of the older domain-audit, recipe-builder, MI-batch, import-fix, and preview scripts call retired `UnrealBridge*Library` APIs and fail fast until ported; their offline modes still work. Do the live step with MCP and feed its JSON into the local report code. See [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md) for the list.
+
 ## Overview
 
 Use this skill as the Material/Shader Specialist for production-facing Unreal Engine material work: turn a visual target into a usable material, read and critique existing graphs, decide when textures beat pure math, generate needed texture assets, write or review HLSL, and validate performance after the target look is proven.
@@ -57,22 +80,22 @@ Default team model:
    Prefer clear graph nodes for ordinary math and engine-tracked texture samples. Use Custom HLSL only when it meaningfully improves fidelity, reduces graph complexity, or implements math that nodes cannot express cleanly.
 
 7.1. Verify versioned editor/tooling APIs before write-side mutations.
-   Prefer public/source-backed Unreal APIs such as `UMaterialEditingLibrary` when they cover the operation. For project-local `MaterialTools`, `MaterialInstanceTools`, `TextureTools`, `AssetTools`, or `toolset_registry` routes, first confirm runtime/editor availability and keep local smoke-test evidence; public primary docs found in the 2026-06-08 web pass back `UMaterialEditingLibrary`, not those local toolset names. Use [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md) and `tools/official_toolsets_bridge.py` when that route is actually available.
+   Discover and call Epic's live MCP tools first. MaterialTools delegates standard graph operations to `UMaterialEditingLibrary`, so a custom wrapper is unnecessary when those tools cover the operation. Use returned UObject references for downstream edits; lack of a bridge-style GUID is not a capability gap. Check ProgrammaticToolset for batching. Use [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md) and `tools/official_toolsets_bridge.py` for direct calls and saved evidence.
 
 8. Plan, generate, and QA textures when needed.
-   Start with [references/texture-strategy-selection-and-rules.md](references/texture-strategy-selection-and-rules.md) when choosing single texture vs Flipbook/SubUV vs atlas vs generated mask. Use [references/texture-prompts-vfx.md](references/texture-prompts-vfx.md) only when fire, ember, smoke, lightning, or related VFX prompt templates are needed, and use [references/texture-domain-foliage-water.md](references/texture-domain-foliage-water.md) for leaf-card or water-reference texture policy. [references/texture-strategy-and-ai-prompts.md](references/texture-strategy-and-ai-prompts.md) is only the router. Also read [references/texture-prompt-framework.md](references/texture-prompt-framework.md) and [references/generated-texture-qa.md](references/generated-texture-qa.md) before generation. Use `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md` for actual image generation, then run `tools/texture_asset_report.py` before treating generated files as UE-ready. If a generated asset passes review and looks reusable, register it into the library. If it fails review, reject or regenerate it instead of silently keeping it as future stock.
+   Start with [references/texture-strategy-selection-and-rules.md](references/texture-strategy-selection-and-rules.md) when choosing single texture vs Flipbook/SubUV vs atlas vs generated mask. Use [references/texture-prompts-vfx.md](references/texture-prompts-vfx.md) only when fire, ember, smoke, lightning, or related VFX prompt templates are needed, and use [references/texture-domain-foliage-water.md](references/texture-domain-foliage-water.md) for leaf-card or water-reference texture policy. [references/texture-strategy-and-ai-prompts.md](references/texture-strategy-and-ai-prompts.md) is only the router. Also read [references/texture-prompt-framework.md](references/texture-prompt-framework.md) and [references/generated-texture-qa.md](references/generated-texture-qa.md) before generation. Use the installed sibling `cm-imagegen` skill for actual image generation, then run `tools/texture_asset_report.py` before treating generated files as UE-ready. If a generated asset passes review and looks reusable, register it into the library. If it fails review, reject or regenerate it instead of silently keeping it as future stock.
    When the material uses a full texture set, use [references/texture-set-pipeline.md](references/texture-set-pipeline.md) and `tools/texture_set_pipeline.py` to check BaseColor, Normal, RMA/ORM/MRA, Opacity, and Emissive together, emit import-fix batch specs, and pack Roughness/Metallic/AO when needed.
    When texture source, prompt, original file, import settings, repair history, packed-channel sources, or reuse rights matter, use [references/material-source-provenance.md](references/material-source-provenance.md) and `tools/material_source_provenance.py` before calling the texture set reusable.
    For foliage or vegetation cards, missing leaf diffuse/alpha or a believable leaf-card carrier is an asset gap to resolve, not just a visual caveat: search the `foliage` library category first; if no approved asset fits, use `cm-imagegen` from the user's reference image when available, QA with `--role foliage`, import/audit/fix settings, then preview on a masked two-sided card.
 
 9. Audit and self-review.
-   Use structural checks first, then controlled previews or in-level captures. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the review loop and CLI tool. Treat performance findings as evidence and triage, not automatic permission to lower the look. Use `tools/material_preview.py` for repeatable mesh, shaderball, complexity, parameter sweep, and carrier previews. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
+   Use official structural checks first, then controlled previews or in-level captures through official scene/editor tools where exposed. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the evidence model. Treat performance findings as evidence and triage, not automatic permission to lower the look. `tools/material_preview.py` remains a legacy bridge executor for specific uncovered preview needs; do not make it a prerequisite for normal material work. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
    For master-material or MI-family cleanup, also use Unreal's Material Analyzer when the editor is available, and use `tools/shader_permutation_report.py` or `tools/permutation_budget_guard.py` when static switches/static masks are the risk.
    When one preview is too narrow, use [references/preview-matrix.md](references/preview-matrix.md) and `tools/preview_matrix.py` to plan or execute a matrix across background intent, exposure intent, distance, angle, time, parameter tier, quality, lighting, and carrier.
    For Additive/Translucent/Ribbon/Decal routes, use [references/translucency-sorting-probe.md](references/translucency-sorting-probe.md) and `tools/translucency_sorting_probe.py` to check material-side DepthFade/SoftParticle evidence plus optional Niagara sorting/bounds proof. Keep real Niagara System/Emitter/Renderer proof in `niagara-vfx-artist`.
 
 10. Check domain, blend, shading model, and render contract for non-standard materials.
-   For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Run `tools/material_domain_audit.py` when UnrealBridge is available.
+   For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Read supported domain properties through official ObjectTools; reserve the legacy `tools/material_domain_audit.py` executor for a demonstrated audit gap.
    For custom or complex water, also read [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md) before authoring. A water material needs a concrete route, node plan, texture roles, carrier preview, and water-specific audit; do not stop at naming the shading model.
    For fire, flame, burning, ember, smoke, heat-haze, lava, magma, plasma, or energy-flame materials, read [references/fire-energy-material-playbook.md](references/fire-energy-material-playbook.md) before authoring. A fire-family material needs a concrete route, carrier, texture plan, node graph, motion plan, preview, and audit; do not stop at `Additive + Unlit + Emissive`.
 
@@ -121,10 +144,10 @@ Default team model:
    When the project has many Material Functions or master-material dependencies, use [references/material-function-dependency-map.md](references/material-function-dependency-map.md), `tools/material_function_dependency_map.py`, and `tools/material_function_linter.py` to identify function reuse hotspots, large/switch-heavy functions, duplicate names, missing inputs/outputs, preview-default issues, and likely cleanup targets.
 
 24. Use recipe builder or refactor planner for repeatable graph work.
-   When the task fits a known route such as fire flipbook, additive fire ribbon, Android one-sample fire ribbon fallback, decal stain, two-sided foliage, water, energy ribbon, or dissolve edge, use [references/material-toolset-builder.md](references/material-toolset-builder.md) and `tools/material_toolset_builder.py recipe` to generate the route, parameter table, texture requirements, preview/audit plan, and executable builder spec. During `recipe --execute`, required usage flags must go through the builder's whitelisted `MaterialUsage` setter. When `graph_diff_refactor.py` explains a failed regression, use `tools/material_toolset_builder.py refactor-plan` to turn those causes into a narrow, guarded patch plan before mutating the graph.
+   When a known recipe fits, use [references/material-toolset-builder.md](references/material-toolset-builder.md) and `tools/material_toolset_builder.py recipe` to generate the route, parameters, textures, and validation plan offline. Execute covered steps with official MCP, preserving the recipe's render contract and usage flags. The builder's `build` / `recipe --execute` paths remain legacy bridge executors and are reserved for demonstrated gaps. Use `refactor-plan` to turn graph-diff findings into a guarded patch plan before mutation.
 
 25. Apply graph refactors only through a reviewable candidate flow.
-   When a refactor plan is ready to execute, use [references/graph-refactor-apply.md](references/graph-refactor-apply.md) and `tools/graph_refactor_apply.py`. Default to dry-run first. In `--execute` mode, the tool must duplicate a backup and candidate, leave the original material untouched, apply only whitelisted operations, then run before/after audit, preview, and regression when a baseline exists.
+   Use [references/graph-refactor-apply.md](references/graph-refactor-apply.md) and `tools/graph_refactor_apply.py` for a dry-run candidate plan. Execute covered duplicate/edit/save steps through official MCP. Its legacy `--execute` path is a fallback; retain the backup/candidate, whitelisted edits, before/after readback, and applicable preview/regression evidence regardless of transport.
 
 26. Approve material reuse through a hard acceptance gate.
    When a material is intended to become final reusable evidence for Niagara, gameplay, or another downstream package, use [references/material-acceptance-gate.md](references/material-acceptance-gate.md) and `tools/material_acceptance_gate.py`. This gate reads the delivery package and linked evidence, requires contract, preview, audit, domain audit, regression, texture-set, budget, usage-flag, and parameter-table proof, then writes a Niagara-consumable report with `delivery_summary.approved_for_reuse=true` only when the material side is actually ready.
@@ -133,7 +156,7 @@ Default team model:
    When the material should become a strongly reusable stock asset, use [references/material-acceptance-gate-v2.md](references/material-acceptance-gate-v2.md) and `tools/material_acceptance_gate_v2.py` so parameter schema, source provenance, preview matrix, readability, and translucent sorting evidence become hard gates instead of only supporting reports. Then use [references/library-promotion-gate.md](references/library-promotion-gate.md) and `tools/library_promotion_gate.py` to decide whether the candidate should become approved library stock.
 
 28. Close the loop with one material-side smoke chain.
-   When the question is no longer "what evidence do we still need?" but "can the current evidence actually run end to end as one chain?", use [references/material-delivery-smoke.md](references/material-delivery-smoke.md) and `tools/material_delivery_smoke.py`. It now orchestrates smoke-tier MI generation, static-switch expansion, permutation guard, live preview-matrix capture, readability, regression, v2 acceptance, and optional library-promotion judgment in one report. Default to planning mode; only use `--execute` when live UE is intentionally in scope. When repeated reruns would otherwise waste time, pair it with [references/smoke-resume-cache.md](references/smoke-resume-cache.md) and `tools/smoke_resume_cache.py`.
+   When the question is no longer "what evidence do we still need?" but "can the current evidence actually run end to end as one chain?", use [references/material-delivery-smoke.md](references/material-delivery-smoke.md) and `tools/material_delivery_smoke.py` for planning. Its live orchestration includes legacy bridge executors; use `--execute` only for an evidenced gap within the authorized task. Otherwise run covered operations through official MCP and retain the equivalent evidence without inventing passes for incompatible legacy report gates. When repeated reruns would otherwise waste time, pair it with [references/smoke-resume-cache.md](references/smoke-resume-cache.md) and `tools/smoke_resume_cache.py`.
 
 ## Hard Rules
 
@@ -168,7 +191,7 @@ Default team model:
 - Do not present `Additive + Unlit + Emissive` as a finished fire material by itself. Fire needs shape language, color bands, alpha/mask or flipbook logic, motion, carrier context, and overdraw review.
 - Do not use a single panning fire mask as a hero flame unless the target is explicitly stylized/static and the preview proves it. Hero fire usually needs flipbook/SubUV or a richer carrier contract.
 - Do not read, trace, debug, or write live Niagara emitter/system parameter wiring as part of this skill. Return the material-side contract and let `niagara-vfx-artist` own the real Niagara hookup.
-- Do not present local `toolset_registry` tool names as public Unreal APIs unless the active editor/runtime confirms them; keep those behind availability checks and local smoke-test evidence.
+- Distinguish installed Epic source, active MCP discovery, and a successful live operation. A plugin being installed does not prove it is loaded, and a 5.8.0 inventory does not establish what changed in the 5.8.4 hotfix.
 
 ## Performance Judgment
 
@@ -192,7 +215,7 @@ Performance review order:
 
 ## Tooling
 
-Detailed command examples live in the reference files. Use this as the compact entry map:
+Detailed command examples live in the reference files. Use this as the compact entry map. Local planning/report/image tools remain usable, but the editor-connected audit, preview, MI-batch, import-fix and legacy executors listed below are conditional fallback tools, not the default control path. Gather covered live evidence through MCP first.
 
 | Need | Tool |
 |---|---|
@@ -238,32 +261,11 @@ Current preview carrier note:
 
 Editor/toolset note:
 
-- Public UE 5.7 docs back `UMaterialEditingLibrary` and Material Editing Blueprint/Python APIs for common material create/connect/recompile/parameter operations.
-- The `toolset_registry` toolsets below are local/editor availability-gated routes that were smoke-tested in this project, not public-doc-backed API names. Confirm they exist in the active editor before using them.
-- Use the local toolset route first for supported mutations only after that availability check:
-  - `MaterialTools.create`
-  - `MaterialTools.add_expression`
-  - `MaterialTools.connect_to_output`
-  - `MaterialTools.recompile`
-  - `MaterialInstanceTools.create`
-  - `MaterialInstanceTools.list_parameters`
-  - `MaterialInstanceTools.set/get_scalar_parameter`
-  - `MaterialInstanceTools.set/get_vector_parameter`
-  - `MaterialInstanceTools.set/get_texture_parameter`
-  - `AssetTools.exists`
-  - `AssetTools.create_folder`
-  - `AssetTools.duplicate`
-  - `AssetTools.move`
-  - `AssetTools.save_assets`
-  - `TextureTools.get_size`
-- Use local tooling first for:
-  - audits
-  - import fixes
-  - generated-texture QA
-  - preview harnesses
-  - channel packing / flipbook normalization
-  - delivery reporting
-- Use `tools/official_toolsets_bridge.py` when you want a direct toolset call with saved JSON/Markdown evidence.
+- Epic's UE 5.8.4 source ships MaterialTools (22 tools), MaterialInstanceTools (13), ObjectTools (6), TextureTools (2), and ProgrammaticToolset (2). These source counts describe the installed build; use the active server inventory for availability.
+- Standard graph readback and wiring can use returned UObject references: `get_expressions`, `get_expression_inputs`, `get_property_input`, `get_expression_input_names`, and `get_expression_output_names`. A custom GUID wrapper is not required for the normal graph route.
+- Import with `TextureTools.import_file`; apply supported texture/expression properties with `ObjectTools.set_properties`; save with `AssetTools.save_assets` and read back. Discover required fields and enums first.
+- `tools/official_toolsets_bridge.py` calls Epic MCP directly and saves transport plus resolved-toolset evidence.
+- Keep local image QA, packing, visual comparisons, contracts, and delivery reports. Check specialized compiler/statistics, private-property, and controlled-preview needs against the live tools first; for a remaining gap use a stock `unreal.*` API through `../unreal-engine-mcp/scripts/python_remote.py`.
 
 ## Reference Map
 
@@ -433,7 +435,7 @@ Editor/toolset note:
   Use when generating, accepting, rejecting, or importing AI-created textures, masks, atlases, flipbooks, ramps, flow maps, normals, or packed data.
 
 - [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md)
-  Use when deciding whether a local/editor toolset route is available for write-side mutations or whether local UnrealBridge/audit/preview tooling should remain primary.
+  Use for direct Epic MCP material/texture/MI operations, legacy-tool boundaries, and demonstrated fallback gaps.
 
 - [references/official-doc-notes.md](references/official-doc-notes.md)
   Use when you need the source-backed principles behind UE material inputs, expression nodes, Custom HLSL, and performance view modes.

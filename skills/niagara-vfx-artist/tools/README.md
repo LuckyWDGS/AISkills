@@ -13,7 +13,6 @@
 - `visual_diff_qa.py`
 - `gap_diagnosis.py`
 - `live_asset_verify.py`
-- `unrealbridge_upstream_audit.py`
 - `delivery_package.py`
 - `delivery_chain_smoke.py`
 - `delivery_dashboard.py`

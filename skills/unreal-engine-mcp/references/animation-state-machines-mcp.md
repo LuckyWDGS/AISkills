@@ -92,9 +92,8 @@ flags or save automatically to hide this side effect.
    For missing state/transition topology operations, use a supported public Epic
    editor/Python API through [background Remote Execution](official-python-remote.md)
    when it covers the operation. Preserve window state; do not drive the console.
-   If supported background routes cannot
-   complete the operation, record the narrow gap and use only the relevant
-   adapter operations in [bridge-anim-api.md](bridge-anim-api.md). Return to
+   If neither route can complete the operation, report the narrow gap with
+   the discovery evidence instead of adding a custom plugin. Return to
    official tools for covered work. Do not patch Epic's engine/toolset files.
 4. Arrange only authored nodes when needed without UI activation, inspect
    connections/defaults, compile the ABP and

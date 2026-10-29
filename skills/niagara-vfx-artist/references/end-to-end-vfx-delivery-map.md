@@ -168,7 +168,7 @@ These are the main gaps that would make the workflow more complete and less manu
 - Asset plan generator: derive the minimum texture/material/Niagara asset set, low-end variants, naming, and folder plan before implementation.
 - Integration hookup planner: write down socket/notify/Blueprint/GAS/Sequencer ownership, user parameters, trigger timing, and source transform contract.
 - Write-side UE helpers: create/duplicate/reset material and Niagara assets, apply EffectType/scalability/folder rules, and safely retire stale routes.
-- Niagara asset assistant: produce dry-run mutation plans, generate UE Python apply scripts, optionally execute through `unreal-bridge`, and read back the asset structure after writing.
+- Niagara asset assistant: produce dry-run mutation plans, generate UE Python apply scripts, optionally execute through `unreal-engine-mcp`, and read back the asset structure after writing.
 - Safe Niagara renderer construction: add missing Ribbon Renderer objects and verify nested renderer material bindings from the renderer object, not from the parent emitter export string alone.
 - Visual diff QA: compare captured previews against the approved reference on silhouette, brightness, density, width, spacing, and motion path.
 - Delivery packaging: export a final manifest with approved previews, tuning recipe, fallback note, and risk note.

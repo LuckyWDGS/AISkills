@@ -338,48 +338,6 @@
 
 如果改完没有改善这个具体症状，要重新归因，不要继续把同一个参数推得更极端。
 
-### UnrealBridge 执行层污染
-
-这不是 Niagara 参数问题，但会直接影响 Niagara 自动化调试。
-
-#### 症状
-
-- `bridge.py ping` 正常
-- `gen_manifest.py` 一类固定脚本可能正常
-- 但普通 `exec` / `exec-file` 开始返回：
-  - `success=false`
-  - `error="None"`
-- 或 UE log 里出现：
-  - `AttributeError: 'str' object has no attribute 'stdout'`
-
-#### 真实原因
-
-2026-05-15 的一次 smoke script 把顶层变量命名成了 `sys`：
-
-```python
-sys = '/Game/CodexTemp/...'
-```
-
-UnrealBridge server 的 Python 包装器本来会在 `finally` 里恢复 `sys.stdout` / `sys.stderr`。
-如果用户脚本把顶层 `sys` 重新绑定成字符串，旧包装器就可能在收尾时访问到错误对象，导致后续 `exec` 会话被污染。
-
-#### 处理方式
-
-1. 先看 UE log 是否有 `str has no attribute stdout`
-2. 如果有：
-   - 不要继续怀疑 Niagara 资产本体
-   - 这是 bridge exec 包装器/脚本命名污染
-3. 已落地修复：
-   - server wrapper 改成使用私有别名保存 Python `sys` 模块
-   - 输出恢复走 `__stdout__` / `__stderr__` fallback
-4. 实操建议：
-   - ad hoc bridge smoke script 不要把顶层变量命名成 `sys`
-   - 如果会话已经污染，重开 UE editor 进入新会话最稳
-
-#### 一句话经验
-
-当 `ping` 正常但 `exec` 突然统一返回 `error=None` 时，先查 bridge Python wrapper 是否被脚本全局名污染，不要先改 Niagara。
-
 ### 性能问题检查清单
 
 - [ ] 粒子数是否超预算

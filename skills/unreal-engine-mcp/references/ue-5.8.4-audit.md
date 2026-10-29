@@ -147,14 +147,13 @@ public Epic API route for a missing MCP operation before a custom adapter.
    operations, and registered-tool orchestration.
 2. Local skills own artistic decisions, contracts, reference/image processing,
    comparisons, reports, and delivery evidence. These do not require custom C++.
-3. UnrealBridge is an optional adapter for specific proven gaps. Record the
-   operation, live tools checked, version, and successful readback. Recheck the
-   gap after engine upgrades; do not port new official tools into custom wrappers.
+3. Epic Python Remote Execution (`scripts/python_remote.py`) covers a proven
+   MCP gap through public `unreal.*` APIs. Record the operation, live tools
+   checked, version, and readback. Recheck the gap after engine upgrades.
 
-Legacy `BridgeClient` pipelines remain present for compatibility. Their
-ToolsetRegistry calls or `use_official_toolsets=true` flags do not make their
-transport Epic-only. The material `official_toolsets_bridge.py` CLI now uses
-direct HTTP by default, with explicit, reasoned legacy fallback only.
+UnrealBridge has been retired: no custom editor plugin or TCP transport is
+supported. Legacy material/Niagara scripts that call `UnrealBridge*Library`
+fail fast until they are ported to MCP tools.
 
 ## Refresh procedure
 

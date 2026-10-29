@@ -1,5 +1,7 @@
 # Preview Matrix
 
+> **Editor execution disabled:** this pipeline's live mode called retired UnrealBridge APIs and now fails fast. Use MCP tools for the live step (see [official-toolsets-vs-local.md](official-toolsets-vs-local.md)); offline modes are unaffected.
+
 ## Use This When
 
 - One preview is not enough to judge a material across practical contexts.

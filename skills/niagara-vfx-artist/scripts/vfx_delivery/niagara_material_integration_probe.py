@@ -4,14 +4,11 @@ import argparse
 import json
 import re
 import sys
-import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, resolve_root_context, save_json, slugify, utc_now_iso, write_text
-from .niagara_audit import build_ue_script as build_niagara_audit_script
-from .niagara_audit import summarize as summarize_niagara_audit
+from .niagara_audit import audit as run_niagara_audit
 
 
 RENDERER_PROPS = [
@@ -71,33 +68,27 @@ def text_has_any(blob: str, tokens: list[str]) -> bool:
     return any(token.lower() in lowered for token in tokens if token)
 
 
-def build_renderer_props_script(renderer_paths: list[str]) -> str:
-    paths = [path for path in renderer_paths if path]
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
+# MCP renderer data names that differ from the legacy export-text property names.
+RENDERER_PROP_ALIASES = {"SubImageBlend": "bSubImageBlend", "MaterialParameterBindings": "MaterialParameters"}
 
-        PROP = unreal.UnrealBridgePropertyLibrary
-        RENDERER_PATHS = {paths!r}
-        PROP_NAMES = {RENDERER_PROPS!r}
 
-        def read_export(path, prop_name):
-            try:
-                text, ok = PROP.get_u_property_as_export_text(path, prop_name)
-                return {{"success": bool(ok), "text": text}}
-            except Exception as exc:
-                return {{"success": False, "text": "", "error": str(exc)}}
-
-        rows = []
-        for renderer_path in RENDERER_PATHS:
-            rows.append({{
-                "renderer_path": renderer_path,
-                "properties": {{name: read_export(renderer_path, name) for name in PROP_NAMES}},
-            }})
-        print(json.dumps({{"renderer_properties": rows}}, ensure_ascii=False))
-        """
-    ).strip()
+def renderer_props_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    """Build renderer property evidence from the MCP renderer data the Niagara audit already holds."""
+    rows = []
+    for emitter in audit.get("emitters") or []:
+        for renderer in emitter.get("versioned_renderer_objects") or []:
+            data = renderer.get("renderer_data") if isinstance(renderer, dict) else None
+            if not isinstance(data, dict):
+                continue
+            properties = {}
+            for name in RENDERER_PROPS:
+                key = RENDERER_PROP_ALIASES.get(name, name)
+                if key in data:
+                    value = data[key]
+                    text = value.get("refPath", "") if name == "Material" and isinstance(value, dict) else json.dumps(value, ensure_ascii=False)
+                    properties[name] = {"success": True, "text": text}
+            rows.append({"renderer_path": renderer.get("object_path", ""), "properties": properties})
+    return {"renderer_properties": rows}
 
 
 def audit_renderer_paths(audit: dict[str, Any]) -> list[str]:
@@ -396,23 +387,12 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
     generated_audit_path = ""
 
     if args.system_path and not audit:
-        client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-        client.ping()
-        raw_audit = client.exec_json(build_niagara_audit_script(args.system_path), no_preflight=True)
-        audit = summarize_niagara_audit(raw_audit)
+        audit = run_niagara_audit(ctx.skill_root, args.system_path, timeout=args.timeout)
         audit_path = default_report_path(ctx, "audits/niagara", slugify(args.system_path), "niagara-audit", ".json")
         save_json(audit_path, audit)
         generated_audit_path = str(audit_path)
 
-    should_fetch_renderer_props = bool(
-        args.system_path
-        and audit_renderer_paths(audit)
-        and (not args.niagara_audit or args.project or args.endpoint)
-    )
-    if should_fetch_renderer_props:
-        client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-        client.ping()
-        live_props = client.exec_json(build_renderer_props_script(audit_renderer_paths(audit)), no_preflight=True)
+    live_props = renderer_props_from_audit(audit)
 
     expectations = derive_expectations(args, contract, package, preview)
     renderer_rows = collect_renderer_evidence(audit, live_props)
@@ -530,8 +510,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-require-bounds", action="store_true")
     parser.add_argument("--strict-unknown", action="store_true", help="Treat missing binding evidence for expected inputs as errors instead of warnings.")
     parser.add_argument("--fail-on-warning", action="store_true")
-    parser.add_argument("--project")
-    parser.add_argument("--endpoint")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

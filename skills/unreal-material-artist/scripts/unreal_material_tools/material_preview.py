@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .bridge import BridgeClient
-from .core import default_report_path, load_json, resolve_root_context, save_json, slugify, utc_now_iso, write_text
-from .material_audit import build_ue_script as build_material_audit_script
+from .core import default_report_path, load_json, resolve_root_context, save_json, skill_root, slugify, utc_now_iso, write_text
+from .material_audit import audit as run_material_audit
 from .material_domain_rebuilder import build_ue_script as build_domain_rebuilder_script, _default_target_path
 from .niagara_contract_audit import build_ue_script as build_niagara_contract_script, summarize as summarize_niagara_contract
 
@@ -141,11 +141,12 @@ def audit_material_snapshot(
     client: BridgeClient,
     material_path: str,
 ) -> dict[str, Any]:
-    raw = client.exec_json(build_material_audit_script(material_path, 0, 0))
+    del client  # The audit reads the graph through Epic MCP, not the legacy client.
+    report = run_material_audit(skill_root(), material_path, shader_stats=False)
     return {
-        "material_info": raw["material_info"],
-        "graph": raw["graph"],
-        "analysis": raw["analysis"],
+        "material_info": report["material_info"],
+        "graph": report["raw_graph"],
+        "analysis": report["analysis"],
     }
 
 
