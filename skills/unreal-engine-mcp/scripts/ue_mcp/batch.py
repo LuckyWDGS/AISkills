@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -79,18 +80,52 @@ def validate_batch(client: UnrealMcpClient, entries: list[dict[str, Any]]) -> li
     return problems
 
 
+PACKAGE_PATH = re.compile(r"^/(?!Script/)[A-Za-z0-9_]+/\S*$")  # sub-object paths (":Expr") included
+
+
+def referenced_packages(entries: list[dict[str, Any]]) -> list[str]:
+    """Package paths named anywhere in the steps' args and readbacks (/Game/M/MI_X.MI_X -> /Game/M/MI_X)."""
+    found: set[str] = set()
+
+    def walk(value: Any) -> None:
+        if isinstance(value, dict):
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+        elif isinstance(value, str) and PACKAGE_PATH.match(value):
+            head, _, leaf = value.split(":", 1)[0].rpartition("/")
+            found.add(f"{head}/{leaf.split('.', 1)[0]}")
+
+    for entry in entries:
+        walk(entry.get("args"))
+        walk((entry.get("readback") or {}).get("args"))
+    return sorted(found)
+
+
 def run_batch(client: UnrealMcpClient, entries: list[dict[str, Any]], *,
-              dry_run: bool = False, continue_on_error: bool = False) -> dict[str, Any]:
+              dry_run: bool = False, continue_on_error: bool = False, allow_pie: bool = False) -> dict[str, Any]:
     """Run calls sequentially in one session; stop at the first failure unless told otherwise.
 
     Unlike ProgrammaticToolset scripts, each call is a separate request with its own result,
     so earlier successful steps are reported even when a later one fails. Nothing is retried.
+    Execution is refused while PIE runs (asset queries are unreliable then) unless ``allow_pie``.
+    Every package the steps reference is checked before and after: ``left_dirty`` lists those
+    that end unsaved but were clean or absent before, e.g. a parent material touched by an
+    instance edit. Packages the steps never name are not checked.
     """
     problems = validate_batch(client, entries)
     if problems or dry_run:
         return {"schema_version": SCHEMA_VERSION, "ok": not problems, "validated": not problems, "dry_run": dry_run,
                 "problems": problems,
                 "planned": [f"{e['toolset']}.{e['tool']}" for e in entries if not problems]}
+    if not allow_pie and client.pie_running():
+        return {"schema_version": SCHEMA_VERSION, "ok": False, "validated": True, "refused": "pie",
+                "problems": ["Play-In-Editor is running: asset queries are unreliable and writes unsafe. "
+                             "Stop PIE (or pass --allow-pie for PIE-aware reads) and run again."]}
+    packages = referenced_packages(entries)
+    before = {package: client.package_dirty(package) for package in packages}
     results: list[dict[str, Any]] = []
     stopped = False
     for index, entry in enumerate(entries):
@@ -118,5 +153,6 @@ def run_batch(client: UnrealMcpClient, entries: list[dict[str, Any]], *,
     counts: dict[str, int] = {}
     for row in results:
         counts[row["status"]] = counts.get(row["status"], 0) + 1
+    left_dirty = [package for package in packages if client.package_dirty(package) and not before.get(package)]
     return {"schema_version": SCHEMA_VERSION, "ok": counts.get("ok", 0) == len(results), "validated": True,
-            "counts": counts, "results": results}
+            "counts": counts, "results": results, "checked_packages": packages, "left_dirty": left_dirty}

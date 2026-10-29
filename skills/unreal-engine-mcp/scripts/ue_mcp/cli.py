@@ -107,6 +107,7 @@ def main() -> int:
     batch.add_argument("batch_file")
     batch.add_argument("--dry-run", action="store_true", help="Only validate tools and required args against the live schema")
     batch.add_argument("--continue-on-error", action="store_true", help="Keep going after a failed step")
+    batch.add_argument("--allow-pie", action="store_true", help="Run even while Play-In-Editor is running (PIE-aware reads only)")
     batch.add_argument("--out", help="Write the full results here and print only a summary")
     script.add_argument("script_file")
     inventory = sub.add_parser("inventory", help="Describe every discoverable toolset")
@@ -154,14 +155,14 @@ def main() -> int:
             value = client.run_tool_script(Path(args.script_file).read_text(encoding="utf-8-sig"))
         elif args.command == "batch":
             value = run_batch(client, load_batch(args.batch_file), dry_run=args.dry_run,
-                              continue_on_error=args.continue_on_error)
+                              continue_on_error=args.continue_on_error, allow_pie=args.allow_pie)
             if args.out:
                 output = Path(args.out)
                 output.parent.mkdir(parents=True, exist_ok=True)
                 output.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-                value = {key: value[key] for key in ("ok", "validated", "counts", "problems") if key in value}
+                value = {key: value[key] for key in ("ok", "validated", "counts", "problems", "left_dirty") if key in value}
                 value["out"] = str(output.resolve())
-            exit_code = 0 if value["ok"] else 1
+            exit_code = 0 if value["ok"] and not value.get("left_dirty") else 1
         elif args.command == "inventory":
             toolsets = [dict(item) for item in client.list_toolsets()]
             for index, toolset in enumerate(toolsets, start=1):

@@ -181,6 +181,11 @@ class Smoke:
 
     def run(self) -> int:
         a = self.args
+        if self.client.pie_running():
+            print("Play-In-Editor is running: asset queries report wrong results during PIE "
+                  "(existing assets look missing). Stop PIE and run the smoke again.")
+            self.client.close()
+            return 2
         self.check("builtin_mcp status", [], self.status)
         self.check("describe-toolset --brief", [], self.brief)
         self.check("batch (reads + readback)", [a.material], self.batch_reads)

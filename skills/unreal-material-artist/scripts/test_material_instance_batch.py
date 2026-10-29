@@ -73,6 +73,25 @@ class PlanTests(unittest.TestCase):
         self.assertIn("does not exist", problems[0])
 
 
+class PieGuardTests(unittest.TestCase):
+    def test_pie_blocks_planning_and_still_writes_a_report(self):
+        import json
+        import tempfile
+        from unittest.mock import MagicMock, patch
+        client = MagicMock()
+        client.pie_running.return_value = True
+        with tempfile.TemporaryDirectory() as folder:
+            spec = Path(folder) / "spec.json"
+            spec.write_text(json.dumps({"parent_path": PARENT, "instances": [{"path": "/Game/Materials/MI_New"}]}), encoding="utf-8")
+            out = Path(folder) / "report.json"
+            with patch.object(mib, "connect", return_value=client):
+                code = mib.main([str(spec), "--execute", "--root", folder, "--out", str(out)])
+            report = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual((code, report["status"]), (1, "blocked"))
+        self.assertIn("Play-In-Editor", report["problems"][0])
+        client.call_resolved_tool.assert_not_called()
+
+
 class ReportTests(unittest.TestCase):
     def test_rows_keep_legacy_shape(self):
         steps, _ = mib.build_plan(spec(

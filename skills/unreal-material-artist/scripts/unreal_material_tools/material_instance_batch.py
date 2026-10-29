@@ -263,28 +263,35 @@ def command(args: argparse.Namespace) -> int:
     out = Path(args.out) if args.out else default_report_path(ctx, "instances", effect, "material-instance-batch", ".json")
     client = connect(ctx.skill_root, url=args.mcp_url, timeout=args.timeout, project=args.project)
     try:
-        if args.from_plan:
-            plan_path = Path(args.from_plan)
-            problems: list[str] = []
-        else:
-            facts = collect_facts(client, module, spec)
-            steps, problems = build_plan(spec, facts, reuse_existing=args.reuse_existing or bool(spec.get("reuse_existing")))
-            plan_path = out.with_name(out.stem + "-plan.jsonl")
-            write_plan(plan_path, steps)
-        entries = module.load_batch(plan_path)
+        entries: list[dict[str, Any]] = []
         batch = None
-        if problems:
+        plan_path = Path(args.from_plan) if args.from_plan else out.with_name(out.stem + "-plan.jsonl")
+        if client.pie_running():
+            # During PIE, existence checks report false, so a plan would try to recreate existing assets.
+            problems = ["Play-In-Editor is running; stop PIE and run again."]
             status = "blocked"
         else:
-            validation = module.run_batch(client, entries, dry_run=True)
-            problems = validation["problems"]
+            problems = []
+            if not args.from_plan:
+                facts = collect_facts(client, module, spec)
+                steps, problems = build_plan(spec, facts, reuse_existing=args.reuse_existing or bool(spec.get("reuse_existing")))
+                write_plan(plan_path, steps)
+            entries = module.load_batch(plan_path)
             if problems:
                 status = "blocked"
-            elif not args.execute:
-                status = "planned"
             else:
-                batch = module.run_batch(client, entries)
-                status = "applied" if batch["ok"] else "failed"
+                validation = module.run_batch(client, entries, dry_run=True)
+                problems = validation["problems"]
+                if problems:
+                    status = "blocked"
+                elif not args.execute:
+                    status = "planned"
+                else:
+                    batch = module.run_batch(client, entries)
+                    status = "applied" if batch["ok"] else "failed"
+                    if batch.get("left_dirty"):
+                        problems = [f"left unsaved after the batch (clean or absent before): {', '.join(batch['left_dirty'])}"]
+                        status = "applied_with_side_effects" if batch["ok"] else status
         rows = instance_rows(entries, batch, spec)
         if batch and args.preview:
             capture_previews(client, module, rows, out.parent)
@@ -308,7 +315,7 @@ def command(args: argparse.Namespace) -> int:
     if args.markdown:
         write_text(out.with_suffix(".md"), render_markdown(report))
     print(out)
-    return 0 if status in ("planned", "applied") else 1
+    return 0 if status in ("planned", "applied") else 1  # side effects or failures need a look
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -20,7 +20,7 @@ from typing import Any
 from .editor import check_expected_project, connection_hint, endpoint_owner
 from .protocol import (
     McpError, SessionExpired, _check_tool_result, _decode_response, _decode_text_value,
-    _extract_text, _parse_toolsets,
+    _extract_text, _parse_toolsets, unwrap_result,
 )
 from .schema import _schema_tools, argument_problems, signature, suggest
 
@@ -495,6 +495,17 @@ class UnrealMcpClient:
         self._schema_source.clear()
         self.initialize()
         self._check_expected_project()
+
+    def pie_running(self) -> bool:
+        """Whether Play-In-Editor (or Simulate) runs; asset queries are unreliable while it does."""
+        return bool(unwrap_result(self.call_resolved_tool("EditorAppToolset", "IsPIERunning", {})))
+
+    def package_dirty(self, package: str) -> bool | None:
+        """Unsaved state of one package; None when it does not exist (yet)."""
+        try:
+            return bool(unwrap_result(self.call_resolved_tool("AssetTools", "is_dirty", {"asset_path": package})))
+        except McpError:
+            return None
 
     def editor_owner(self) -> dict[str, Any]:
         if self._owner is None:

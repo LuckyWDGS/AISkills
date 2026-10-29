@@ -105,6 +105,15 @@ short calls made meanwhile.
 - Steps run in order; the first `error`, `readback_error` or `mismatch` stops the
   batch and later steps are reported `skipped`. `--continue-on-error` keeps going.
 - `expect` compares the readback result: equal for scalars, key subset for objects.
+- Execution is refused while Play-In-Editor runs: during PIE, asset queries
+  report existing assets as missing and `is_dirty` fails. `--allow-pie` exists
+  for PIE-aware reads only. `--dry-run` validation still works.
+- Every package the steps name (args and readbacks, sub-object paths reduced to
+  their package) is checked before and after. `left_dirty` lists packages left
+  unsaved that were clean or absent before, and the CLI exits 1. A live test
+  found exactly this: creating a material instance and setting a static switch
+  marked the parent material unsaved although only the instance was saved.
+  Packages the steps never name are not checked.
 - Nothing is retried, and nothing is atomic: steps before a failure stay applied.
   Read back uncertain writes before deciding what to do next.
 - `--out <file>` writes the full per-step results and prints only the summary.

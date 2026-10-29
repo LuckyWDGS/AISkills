@@ -41,10 +41,14 @@ spec ──► collect_facts (live, read-only) ──► build_plan (pure) ─�
    schema-required argument must exist in the live schema.
 6. **Execute only with `--execute`.** `--from-plan <file>` runs a reviewed or
    hand-edited plan without re-planning.
-7. **Map results into the legacy report shape** so downstream tools keep
+7. **Treat `left_dirty` as a failure to explain.** The batch lists referenced
+   packages it left unsaved (for example a parent material). Do not save them
+   to hide it; report them, and reload the package from disk only with the
+   user's approval.
+8. **Map results into the legacy report shape** so downstream tools keep
    working, and add `status` (`planned` / `blocked` / `applied` / `failed`),
    `plan`, `problems` and `coverage_gaps`. Exit 0 only for `planned`/`applied`.
-8. **Side outputs after the batch.** Images and other non-JSON results (for
+9. **Side outputs after the batch.** Images and other non-JSON results (for
    example `EditorAppToolset.CaptureAssetImage` previews) are fetched after the
    run, never as batch steps.
 

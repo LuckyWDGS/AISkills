@@ -91,7 +91,8 @@ Choose the multi-step route by what failure must look like:
 - **Writes or ordered steps** → `batch <file.jsonl>`. One request per step in a
   shared session, each with its own result; validates every tool and required
   argument first, stops at the first failure, and can read back each step with
-  an `expect` check. Run `--dry-run` first and put the save step
+  an `expect` check; it refuses to run during PIE and reports referenced packages
+  left unsaved (`left_dirty`). Run `--dry-run` first and put the save step
   (`AssetTools.save_assets` with the intended packages only) on its own line.
   See [batch](references/builtin-mcp.md#batch-ordered-steps-and-writes).
 

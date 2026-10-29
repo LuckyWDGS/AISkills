@@ -230,8 +230,15 @@ class SessionReuseTests(unittest.TestCase):
 
 
 class FakeBatchClient:
-    def __init__(self, fail=()):
-        self.fail, self.sent = set(fail), []
+    def __init__(self, fail=(), pie=False, dirty_after=()):
+        self.fail, self.sent, self.pie = set(fail), [], pie
+        self.dirty, self.dirty_after = set(), set(dirty_after)
+
+    def pie_running(self):
+        return self.pie
+
+    def package_dirty(self, package):
+        return package in self.dirty
 
     def missing_tool_message(self, toolset, tool):
         return f"Tool {tool!r} is not in {toolset}"
@@ -245,6 +252,7 @@ class FakeBatchClient:
         self.sent.append(tool)
         if tool in self.fail:
             raise McpError(f"{tool} failed")
+        self.dirty |= self.dirty_after  # a write that also touches other packages
         return {"content": [{"type": "text", "text": json.dumps({"returnValue": {"tool": tool, "value": 1}})}]}
 
 
@@ -289,6 +297,36 @@ class BatchTests(unittest.TestCase):
         self.assertEqual(unwrap_result(wrapped), {"parent": {"refPath": "/Game/M.M"}})
         self.assertTrue(_expectation_met({"parent": {"refPath": "/Game/M.M"}}, {"parent": "/Game/M.M"}))
         self.assertFalse(_expectation_met({"refPath": "/Game/A.A"}, "/Game/B.B"))
+
+    def test_pie_refuses_execution_but_not_validation(self):
+        client = FakeBatchClient(pie=True)
+        report = run_batch(client, self.entries({"tool": "a"}))
+        self.assertEqual((report["ok"], report["refused"]), (False, "pie"))
+        self.assertEqual(client.sent, [])
+        self.assertTrue(run_batch(client, self.entries({"tool": "a"}), dry_run=True)["ok"])
+        self.assertTrue(run_batch(client, self.entries({"tool": "a"}), allow_pie=True)["ok"])
+
+    def test_side_effects_on_referenced_packages_are_reported(self):
+        # The create step names the parent; the edit leaves it unsaved although only the instance is saved.
+        client = FakeBatchClient(dirty_after={"/Game/M/M_Parent"})
+        report = run_batch(client, self.entries(
+            {"tool": "create", "args": {"folder_path": "/Game/S", "asset_name": "MI", "parent": {"refPath": "/Game/M/M_Parent.M_Parent"}}},
+            {"tool": "save", "args": {"asset_paths": ["/Game/S/MI"]}}))
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["left_dirty"], ["/Game/M/M_Parent"])
+        self.assertIn("/Game/S/MI", report["checked_packages"])
+
+    def test_packages_dirty_before_are_not_blamed(self):
+        client = FakeBatchClient(dirty_after={"/Game/M/M_Parent"})
+        client.dirty.add("/Game/M/M_Parent")
+        report = run_batch(client, self.entries({"tool": "a", "args": {"m": {"refPath": "/Game/M/M_Parent.M_Parent"}}}))
+        self.assertEqual(report["left_dirty"], [])
+
+    def test_referenced_packages(self):
+        from ue_mcp.batch import referenced_packages
+        entries = [{"args": {"expr": {"refPath": "/Game/M/M_X.M_X:MaterialExpressionAdd_3"}, "cls": "/Script/Engine.Material",
+                             "name": "Roughness"}, "readback": {"args": {"path": "/Engine/BasicShapes/Cube"}}}]
+        self.assertEqual(referenced_packages(entries), ["/Engine/BasicShapes/Cube", "/Game/M/M_X"])
 
     def test_dry_run_sends_nothing(self):
         client = FakeBatchClient()

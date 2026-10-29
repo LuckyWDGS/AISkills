@@ -330,6 +330,9 @@ python tools/material_instance_batch.py spec.json --project MyGame --execute --p
 python tools/material_instance_batch.py --from-plan reviewed-plan.jsonl --execute        # run a reviewed plan
 ```
 
+During PIE the tool reports `blocked` without planning. After `--execute`, status
+`applied_with_side_effects` means a referenced package (typically the parent material) was left
+unsaved; the report lists it; do not save it blindly.
 `--preview` saves `EditorAppToolset.CaptureAssetImage` thumbnails; mesh, lighting and camera options of the
 retired plugin preview are no longer available.
 
