@@ -72,15 +72,12 @@ spec ──► collect_facts (live, read-only) ──► build_plan (pure) ─�
   the dry-run validation, and that nothing changed (`exists`, `is_dirty`).
   Run `--execute` only in a scratch folder the user approved.
 
-## Retired-tool registry
+## Status
 
-Each skill lists its unported tools in `scripts/retired_tools.json` with the MCP
-route to use instead and the modes that still work offline. `BridgeClient`
-refuses a listed tool before any network call and prints that route; SKILL.md
-marks it *(not ported)* or *(live step not ported)*. When a port lands, delete
-its entry and its SKILL.md marks: `test_retired_tools.py` fails while the
-registry and the modules that still construct `BridgeClient` around
-`UnrealBridge*Library` calls disagree.
+Every UnrealBridge-era tool is now ported, plan-only, or removed, and the
+`BridgeClient` shim and retired-tool registry are gone. Writers that still only
+plan and could gain an MCP executor this way: `niagara_asset_assistant` (Niagara
+mutation plans) and `graph_refactor_apply` (material refactors on a candidate).
 
 ## CLI conventions
 

@@ -1,169 +1,68 @@
+"""Trace runtime-facing parameter sources for a material and an optional Niagara system.
+
+Material parameters, the instance chain and the graph come from ``material_audit``
+(Epic MCP, live or ``--material-audit``); Niagara user variables and renderer
+bindings come from a ``niagara_audit.py`` report (``--niagara-audit``); MPC
+parameters are read with ObjectTools. Links are name matches for review, not proof
+of a live binding: ``niagara_material_integration_probe.py`` owns that check.
+"""
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
+from .mcp import DEFAULT_MCP_URL, call_tool
 
 
-def split_csv(value: str | None) -> list[str]:
-    if not value:
+# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+SCHEMA_VERSION = "runtime_param_trace/2"
+COVERAGE_GAPS = [
+    "Niagara rapid-iteration parameter values are not exposed by MCP; links use user variables and renderer bindings.",
+    "CollectionParameter nodes do not expose their collection asset over MCP; pass --mpc to read a collection.",
+]
+
+
+def load_report(path: str, tool: str) -> dict[str, Any]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if payload.get("tool") != tool:
+        raise SystemExit(f"{path}: expected a {tool} report, got `{payload.get('tool')}`.")
+    return payload
+
+
+def niagara_sources(niagara: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """User variables and renderer bindings a material parameter could be driven by."""
+    if not niagara:
         return []
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def build_ue_script(material_path: str, system_path: str | None, mpc_paths: list[str]) -> str:
-    payload = json.dumps({"material_path": material_path, "system_path": system_path or "", "mpc_paths": mpc_paths}, ensure_ascii=False)
-    return textwrap.dedent(
-        f"""
-        import json
-        import re
-        import unreal
-
-        MAT = unreal.UnrealBridgeMaterialLibrary
-        N = getattr(unreal, "UnrealBridgeNiagaraLibrary", None)
-        payload = json.loads({payload!r})
-        material_path = payload["material_path"]
-        system_path = payload["system_path"]
-        mpc_paths = payload["mpc_paths"]
-
-        def guid_text(value):
-            try:
-                return value.to_string()
-            except Exception:
-                return str(value)
-
-        def serialize_param_default(param):
-            return {{
-                "name": param.name,
-                "param_type": param.param_type,
-                "value": param.value,
-                "guid": guid_text(param.guid),
-            }}
-
-        def serialize_param(param):
-            return {{
-                "name": param.name,
-                "param_type": param.param_type,
-                "value": param.value,
-            }}
-
-        def serialize_node(node):
-            return {{
-                "guid": guid_text(node.guid),
-                "class_name": node.class_name,
-                "caption": node.caption,
-                "desc": node.desc,
-                "key_properties": node.key_properties,
-                "input_names": list(node.input_names),
-                "output_names": list(node.output_names),
-            }}
-
-        material_info = MAT.get_material_info(material_path)
-        chain = MAT.list_material_instance_chain(material_path)
-        graph = MAT.get_material_graph(material_path)
-        mi = MAT.get_material_instance_parameters(material_path) if material_info.is_material_instance else None
-
-        mpcs = []
-        for mpc_path in mpc_paths:
-            info = MAT.get_material_parameter_collection(mpc_path)
-            mpcs.append({{
-                "path": info.path,
-                "found": info.found,
-                "name": info.name,
-                "scalar_parameters": [{{"name": p.name, "default_value": p.default_value, "id": guid_text(p.id)}} for p in info.scalar_parameters],
-                "vector_parameters": [{{"name": p.name, "default_value": str(p.default_value), "id": guid_text(p.id)}} for p in info.vector_parameters],
-            }})
-
-        graph_nodes = [serialize_node(node) for node in graph.nodes]
-
-        rapid_params = []
-        if system_path and N is not None:
-            try:
-                for p in N.list_rapid_iteration_parameters(system_path):
-                    rapid_params.append({{
-                        "parameter_name": str(p.parameter_name),
-                        "value_text": str(p.value_text),
-                        "type_name": str(p.type_name),
-                        "script_usage": str(p.script_usage),
-                        "emitter_name": str(p.emitter_name),
-                        "emitter_path": str(p.emitter_path),
-                        "script_path": str(p.script_path),
-                        "offset": int(p.offset),
-                        "size_bytes": int(p.size_bytes),
-                    }})
-            except Exception as exc:
-                rapid_params.append({{"error": str(exc)}})
-
-        print(json.dumps({{
-            "material_info": {{
-                "found": material_info.found,
-                "name": material_info.name,
-                "path": material_info.path,
-                "is_material_instance": material_info.is_material_instance,
-                "parent_path": material_info.parent_path,
-                "base_path": material_info.base_path,
-                "material_domain": material_info.material_domain,
-                "blend_mode": material_info.blend_mode,
-                "usage_flags": list(material_info.usage_flags),
-                "scalar_parameters": [serialize_param_default(item) for item in material_info.scalar_parameters],
-                "vector_parameters": [serialize_param_default(item) for item in material_info.vector_parameters],
-                "texture_parameters": [serialize_param_default(item) for item in material_info.texture_parameters],
-                "static_switch_parameters": [serialize_param_default(item) for item in material_info.static_switch_parameters],
-            }},
-            "chain": {{
-                "found": chain.found,
-                "path": chain.path,
-                "layers": [
-                    {{
-                        "name": layer.name,
-                        "path": layer.path,
-                        "is_base_material": layer.is_base_material,
-                        "override_parameters": [serialize_param(item) for item in layer.override_parameters],
-                    }}
-                    for layer in chain.layers
-                ]
-            }},
-            "mi_parameters": None if mi is None else {{
-                "name": mi.name,
-                "parent_path": mi.parent_path,
-                "parameters": [serialize_param(item) for item in mi.parameters],
-            }},
-            "graph": {{
-                "found": graph.found,
-                "path": graph.path,
-                "is_material_function": graph.is_material_function,
-                "nodes": graph_nodes,
-            }},
-            "mpcs": mpcs,
-            "rapid_iteration_parameters": rapid_params,
-        }}, ensure_ascii=False))
-        """
-    ).strip()
+    rows = [{"kind": "user_variable", "name": str(item.get("name") or ""), "emitter": "",
+             "detail": json.dumps(item.get("defaultValue"), ensure_ascii=False)[:200]}
+            for item in niagara.get("user_variables") or []]
+    for emitter in niagara.get("emitters") or []:
+        for renderer in (emitter.get("parsed") or {}).get("versioned_renderer_objects") or []:
+            for key, value in (renderer.get("renderer_data") or {}).items():
+                if "Binding" not in key:
+                    continue
+                bound = ((value or {}).get("parameter") or value or {}).get("name") if isinstance(value, dict) else value
+                if bound and bound != "None":
+                    rows.append({"kind": "renderer_binding", "name": str(bound), "emitter": emitter.get("name", ""),
+                                 "detail": f"{renderer.get('class_name', '')}.{key}"})
+    return rows
 
 
 def infer_mpc_refs(nodes: list[dict[str, Any]]) -> list[dict[str, str]]:
-    refs: list[dict[str, str]] = []
+    refs = []
     for node in nodes:
         class_name = str(node.get("class_name") or "")
-        key = str(node.get("key_properties") or "")
-        caption = str(node.get("caption") or "")
-        if "CollectionParameter" not in class_name and "Collection" not in caption:
+        if "CollectionParameter" not in class_name:
             continue
-        path_match = re.search(r"/(?:Game|Engine)/[^;\s,]+", key)
-        refs.append(
-            {
-                "class_name": class_name,
-                "caption": caption,
-                "key_properties": key,
-                "collection_path_hint": path_match.group(0) if path_match else "",
-            }
-        )
+        key = json.dumps(node.get("key_properties") or {}, ensure_ascii=False)
+        path_match = re.search(r"/(?:Game|Engine)/[^;\s,\"]+", key)
+        refs.append({"class_name": class_name, "caption": str(node.get("caption") or ""), "key_properties": key,
+                     "collection_path_hint": path_match.group(0) if path_match else ""})
     return refs
 
 
@@ -173,88 +72,127 @@ def infer_runtime_links(report: dict[str, Any]) -> list[dict[str, Any]]:
         for key in ("scalar_parameters", "vector_parameters", "texture_parameters", "static_switch_parameters")
         for item in report["material_info"].get(key) or []
     }
-    rapid = report.get("rapid_iteration_parameters") or []
-    links: list[dict[str, Any]] = []
+    sources = report.get("niagara_parameter_sources") or []
+    links = []
     for name, param in material_params.items():
-        name_tokens = {token.lower() for token in re.split(r"[^A-Za-z0-9]+", name) if token}
+        tokens = {token.lower() for token in re.split(r"[^A-Za-z0-9]+", name) if token}
         matched = []
-        for row in rapid:
-            pname = str(row.get("parameter_name") or "")
-            lowered = pname.lower()
-            if name.lower() in lowered:
-                matched.append(row)
-                continue
-            token_overlap = [token for token in name_tokens if token and token in lowered]
-            if len(token_overlap) >= 2:
+        for row in sources:
+            lowered = row["name"].lower()
+            if name.lower() in lowered or len([token for token in tokens if token in lowered]) >= 2:
                 matched.append(row)
         if matched:
-            links.append(
-                {
-                    "material_param": name,
-                    "param_type": param.get("param_type"),
-                    "matched_rapid_params": matched,
-                }
-            )
+            links.append({"material_param": name, "param_type": param.get("param_type"), "matched_sources": matched})
     return links
 
 
+def read_mpcs(skill_root: Path, paths: list[str], *, url: str, timeout: float, project: str | None) -> list[dict[str, Any]]:
+    rows = []
+    for path in paths:
+        package = path.split(".", 1)[0]
+        ref = {"refPath": f"{package}.{package.rsplit('/', 1)[-1]}"}
+        try:
+            value = call_tool(skill_root, "ObjectTools", "get_properties",
+                              {"instance": ref, "properties": ["scalarParameters", "vectorParameters"]},
+                              url=url, timeout=timeout, project=project)
+            value = value.get("returnValue", value) if isinstance(value, dict) else value
+            props = json.loads(value) if isinstance(value, str) else value
+        except Exception as exc:  # A missing collection is reported, not fatal.
+            rows.append({"path": package, "found": False, "error": str(exc)})
+            continue
+        rows.append({
+            "path": package, "found": True, "name": package.rsplit("/", 1)[-1],
+            "scalar_parameters": [{"name": item.get("parameterName"), "default_value": item.get("defaultValue")}
+                                  for item in props.get("scalarParameters") or []],
+            "vector_parameters": [{"name": item.get("parameterName"), "default_value": item.get("defaultValue")}
+                                  for item in props.get("vectorParameters") or []],
+        })
+    return rows
+
+
+def build_report(audit: dict[str, Any], niagara: dict[str, Any] | None, mpcs: list[dict[str, Any]]) -> dict[str, Any]:
+    info = audit["material_info"]
+    layers = audit.get("instance_chain", {}).get("layers") or []
+    graph = audit.get("raw_graph") or {"found": False, "nodes": []}
+    report = {
+        "tool": "runtime_param_trace",
+        "schema_version": SCHEMA_VERSION,
+        "transport": "epic-mcp (material_audit, niagara_audit, ObjectTools)",
+        "material_info": info,
+        "chain": {"found": True, "path": info.get("path"), "layers": layers},
+        "mi_parameters": None if not info.get("is_material_instance") else {
+            "name": info.get("name"), "parent_path": info.get("parent_path"),
+            "parameters": layers[0]["override_parameters"] if layers else [],
+        },
+        "graph": graph,
+        "mpcs": mpcs,
+        "niagara_system": (niagara or {}).get("system_path", ""),
+        "niagara_parameter_sources": niagara_sources(niagara),
+        "coverage_gaps": COVERAGE_GAPS,
+    }
+    report["mpc_refs"] = infer_mpc_refs(graph.get("nodes") or [])
+    report["runtime_links"] = infer_runtime_links(report)
+    return report
+
+
 def render_markdown(report: dict[str, Any]) -> str:
+    info = report["material_info"]
     lines = [
-        f"# Runtime Param Trace: {report['material_info']['path']}",
-        "",
-        f"- Domain: `{report['material_info']['material_domain']}`",
-        f"- Blend mode: `{report['material_info']['blend_mode']}`",
-        f"- Base material: `{report['material_info']['base_path']}`",
-        "",
-        "## Chain",
-        "",
+        f"# Runtime Param Trace: {info['path']}", "",
+        f"- Domain: `{info.get('material_domain')}`",
+        f"- Blend mode: `{info.get('blend_mode')}`",
+        f"- Base material: `{info.get('base_path')}`",
+        f"- Niagara system: `{report['niagara_system'] or 'none'}`",
+        "", "## Chain", "",
     ]
     for layer in report["chain"]["layers"]:
         tag = "BASE" if layer["is_base_material"] else "MI"
         lines.append(f"- [{tag}] `{layer['path']}` overrides={len(layer['override_parameters'])}")
     lines.extend(["", "## MPC Hints", ""])
-    mpc_refs = report.get("mpc_refs") or []
-    if mpc_refs:
-        for item in mpc_refs:
-            lines.append(f"- `{item['class_name']}` `{item['caption']}` path_hint=`{item['collection_path_hint'] or 'none'}`")
-    else:
-        lines.append("- No obvious Material Parameter Collection references in the graph.")
-    lines.extend(["", "## Rapid Iteration Links", ""])
-    links = report.get("runtime_links") or []
-    if links:
-        for item in links:
-            lines.append(f"- `{item['material_param']}` -> {len(item['matched_rapid_params'])} rapid params")
-    else:
-        lines.append("- No obvious rapid-iteration matches to material parameter names.")
+    lines += [f"- `{item['class_name']}` `{item['caption']}` path_hint=`{item['collection_path_hint'] or 'none'}`"
+              for item in report["mpc_refs"]] or ["- No Material Parameter Collection nodes in the graph."]
+    lines.extend(["", "## Niagara Links", ""])
+    lines += [f"- `{item['material_param']}` -> " + ", ".join(f"{row['kind']} `{row['name']}`" for row in item["matched_sources"])
+              for item in report["runtime_links"]] or ["- No name matches between material parameters and Niagara sources."]
     return "\n".join(lines).rstrip() + "\n"
 
 
 def command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    raw = client.exec_json(build_ue_script(args.material_path, args.system_path, args.mpc))
-    raw["mpc_refs"] = infer_mpc_refs(raw["graph"]["nodes"])
-    raw["runtime_links"] = infer_runtime_links(raw)
-    effect = slugify(args.effect or args.material_path)
-    out = Path(args.out) if args.out else default_report_path(ctx, "runtime-trace", effect, f"{slugify(args.material_path)}-runtime-param-trace", ".json")
-    save_json(out, raw)
+    if args.material_audit:
+        audit = load_report(args.material_audit, "material_audit")
+        if "raw_graph" not in audit:
+            raise SystemExit(f"{args.material_audit} has no raw_graph; re-run material_audit.py with --include-raw-graph.")
+    else:
+        from .material_audit import audit as run_audit
+
+        audit = run_audit(ctx.skill_root, args.material_path, url=args.mcp_url, timeout=args.timeout,
+                          project=args.project, shader_stats=False, graph_source=args.graph_source)
+    niagara = load_report(args.niagara_audit, "niagara_audit") if args.niagara_audit else None
+    mpcs = read_mpcs(ctx.skill_root, args.mpc, url=args.mcp_url, timeout=args.timeout, project=args.project) if args.mpc else []
+    report = build_report(audit, niagara, mpcs)
+    material_path = args.material_path or report["material_info"].get("path", "")
+    effect = slugify(args.effect or material_path)
+    out = Path(args.out) if args.out else default_report_path(ctx, "runtime-trace", effect, f"{slugify(material_path)}-runtime-param-trace", ".json")
+    save_json(out, report)
     if args.markdown:
-        write_text(out.with_suffix(".md"), render_markdown(raw))
+        write_text(out.with_suffix(".md"), render_markdown(report))
     print(out)
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Trace runtime-facing parameter sources for a material and optional Niagara system.")
-    parser.add_argument("material_path")
+    parser.add_argument("material_path", nargs="?", default="", help="Material to read live; optional with --material-audit")
+    parser.add_argument("--material-audit", help="material_audit.py --include-raw-graph report instead of a live read")
+    parser.add_argument("--niagara-audit", help="niagara_audit.py report of the system that drives the material")
+    parser.add_argument("--mpc", action="append", default=[], help="Material Parameter Collection to read (repeatable)")
     parser.add_argument("--root", default="auto")
-    parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    parser.add_argument("--project", help="Refuse to run unless the MCP endpoint is served by this project.")
+    parser.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--graph-source", choices=("mcp", "remote"), default="mcp")
     parser.add_argument("--effect")
-    parser.add_argument("--system-path")
-    parser.add_argument("--mpc", action="append", default=[])
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")
     parser.set_defaults(func=command)
@@ -264,6 +202,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if not (args.material_path or args.material_audit):
+        parser.error("give a material path or --material-audit")
     return args.func(args)
 
 

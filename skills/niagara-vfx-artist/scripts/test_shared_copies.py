@@ -8,7 +8,6 @@ SKILLS = Path(__file__).resolve().parents[2]
 PAIRS = [
     ("niagara-vfx-artist/scripts/vfx_delivery/core.py", "vfx-flipbook-generator/scripts/vfx_delivery/core.py"),
     ("niagara-vfx-artist/scripts/vfx_delivery/mcp.py", "unreal-material-artist/scripts/unreal_material_tools/mcp.py"),
-    ("niagara-vfx-artist/scripts/vfx_delivery/bridge.py", "unreal-material-artist/scripts/unreal_material_tools/bridge.py"),
 ]
 
 

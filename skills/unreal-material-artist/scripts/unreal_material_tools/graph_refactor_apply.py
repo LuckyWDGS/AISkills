@@ -4,11 +4,9 @@ import argparse
 import json
 import subprocess
 import sys
-import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, resolve_root_context, save_json, slugify, utc_now_iso, write_text
 from .material_regression import default_baseline_path
 from .material_toolset_builder import GRAPH_DIFF_CATEGORY_TO_OPERATION, REFACTOR_OPERATIONS, normal_operation_name
@@ -256,372 +254,6 @@ def build_apply_payload(resolved: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_ue_script(payload: dict[str, Any]) -> str:
-    payload_text = json.dumps(payload, ensure_ascii=False)
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
-
-        MAT = unreal.UnrealBridgeMaterialLibrary
-        TR = unreal.UnrealBridgeToolsetRegistryLibrary
-        PAYLOAD = json.loads({payload_text!r})
-
-        def guid_text(value):
-            try:
-                return value.to_string()
-            except Exception:
-                try:
-                    return str(value)
-                except Exception:
-                    return ""
-
-        def package_path(path):
-            return str(path or "").split(".", 1)[0]
-
-        def asset_ref(path):
-            pkg = package_path(path)
-            if not pkg:
-                return ""
-            return pkg + "." + pkg.rsplit("/", 1)[-1]
-
-        def run_tool(name, payload):
-            result = TR.execute_qualified_tool(name, json.dumps(payload, ensure_ascii=False), True)
-            output = None
-            if result.json_output:
-                try:
-                    output = json.loads(result.json_output)
-                except Exception:
-                    output = result.json_output
-            return {{"success": bool(result.success), "error": result.error, "output": output}}
-
-        def enum_value(enum_cls, names):
-            for name in names:
-                if hasattr(enum_cls, name):
-                    return getattr(enum_cls, name)
-            return None
-
-        def domain_enum(value):
-            key = str(value or "").replace(" ", "").lower()
-            mapping = {{
-                "surface": ["MD_SURFACE"],
-                "deferreddecal": ["MD_DEFERRED_DECAL"],
-                "postprocess": ["MD_POST_PROCESS"],
-                "ui": ["MD_UI"],
-                "lightfunction": ["MD_LIGHT_FUNCTION"],
-                "volume": ["MD_VOLUME"],
-                "runtimevirtualtexture": ["MD_RUNTIME_VIRTUAL_TEXTURE"],
-                "virtualtexture": ["MD_VIRTUAL_TEXTURE"],
-            }}
-            return enum_value(unreal.MaterialDomain, mapping.get(key, [str(value or "")]))
-
-        def blend_enum(value):
-            key = str(value or "").replace(" ", "").replace("_", "").lower()
-            mapping = {{
-                "opaque": ["BLEND_OPAQUE"],
-                "masked": ["BLEND_MASKED"],
-                "translucent": ["BLEND_TRANSLUCENT"],
-                "additive": ["BLEND_ADDITIVE"],
-                "modulate": ["BLEND_MODULATE"],
-                "alphacomposite": ["BLEND_ALPHA_COMPOSITE"],
-                "alphaholdout": ["BLEND_ALPHA_HOLDOUT"],
-            }}
-            return enum_value(unreal.BlendMode, mapping.get(key, [str(value or "")]))
-
-        def shading_enum(value):
-            key = str(value or "").replace(" ", "").replace("_", "").lower()
-            mapping = {{
-                "defaultlit": ["MSM_DEFAULT_LIT"],
-                "unlit": ["MSM_UNLIT"],
-                "subsurface": ["MSM_SUBSURFACE"],
-                "preintegratedskin": ["MSM_PREINTEGRATED_SKIN"],
-                "clearcoat": ["MSM_CLEAR_COAT"],
-                "subsurfaceprofile": ["MSM_SUBSURFACE_PROFILE"],
-                "twosidedfoliage": ["MSM_TWOSIDED_FOLIAGE"],
-                "hair": ["MSM_HAIR"],
-                "cloth": ["MSM_CLOTH"],
-                "eye": ["MSM_EYE"],
-                "singlelayerwater": ["MSM_SINGLELAYERWATER"],
-                "thintranslucent": ["MSM_THIN_TRANSLUCENT"],
-            }}
-            return enum_value(unreal.MaterialShadingModel, mapping.get(key, [str(value or "")]))
-
-        def set_prop(material, prop, value, row):
-            try:
-                material.set_editor_property(prop, value)
-                row["changes"].append({{"property": prop, "success": True, "value": str(value)}})
-                return True
-            except Exception as exc:
-                row["changes"].append({{"property": prop, "success": False, "value": str(value), "error": str(exc)}})
-                return False
-
-        def graph_output(material_ref, property_name):
-            graph = MAT.get_material_graph(material_ref)
-            for output in list(graph.output_connections):
-                if str(output.dst_property_name or "") == property_name:
-                    return output
-            return None
-
-        def node_guid_by_text(material_ref, text):
-            graph = MAT.get_material_graph(material_ref)
-            needle = str(text or "")
-            for node in list(graph.nodes):
-                if guid_text(node.guid) == needle:
-                    return node.guid
-            return None
-
-        def add_expr(material_ref, class_path, x, y, props=None):
-            added = MAT.add_material_expression(material_ref, class_path, int(x), int(y))
-            row = {{
-                "class": class_path,
-                "success": bool(added.success),
-                "error": added.error,
-                "guid": guid_text(getattr(added, "guid", "")),
-            }}
-            if added.success and props:
-                prop_rows = []
-                for name, value in props:
-                    ok = MAT.set_material_expression_property(material_ref, added.guid, name, str(value))
-                    prop_rows.append({{"name": name, "value": str(value), "success": bool(ok)}})
-                row["properties"] = prop_rows
-            return added, row
-
-        def apply_usage_flags(material_ref, usage_flags):
-            material = unreal.EditorAssetLibrary.load_asset(package_path(material_ref))
-            rows = []
-            if material is None:
-                return [{{"success": False, "error": "candidate material could not be loaded"}}]
-            setter = getattr(unreal.MaterialEditingLibrary, "set_base_material_usage", None)
-            legacy_setter = getattr(unreal.MaterialEditingLibrary, "set_material_usage", None)
-            usage_map = {{
-                "niagarasprites": "MATUSAGE_NIAGARA_SPRITES",
-                "niagararibbons": "MATUSAGE_NIAGARA_RIBBONS",
-                "staticmesh": "MATUSAGE_STATIC_MESH",
-                "particlesprites": "MATUSAGE_PARTICLE_SPRITES",
-                "meshparticles": "MATUSAGE_MESH_PARTICLES",
-                "niagarameshparticles": "MATUSAGE_NIAGARA_MESH_PARTICLES",
-                "splinemesh": "MATUSAGE_SPLINE_MESH",
-                "water": "MATUSAGE_WATER",
-            }}
-            for raw in usage_flags or []:
-                compact = "".join(ch for ch in str(raw or "") if ch.isalnum()).lower()
-                for prefix in ("busedwith", "usedwith", "matusage"):
-                    if compact.startswith(prefix):
-                        compact = compact[len(prefix):]
-                        break
-                enum_name = usage_map.get(compact)
-                row = {{"requested": raw, "enum": enum_name, "success": False, "before": None, "after": None, "error": ""}}
-                usage = getattr(unreal.MaterialUsage, enum_name, None) if enum_name else None
-                if usage is None:
-                    row["error"] = "unsupported usage flag"
-                    rows.append(row)
-                    continue
-                try:
-                    before = bool(unreal.MaterialEditingLibrary.has_material_usage(material, usage))
-                    if not before:
-                        if setter is not None:
-                            setter(material, usage, True)
-                        elif legacy_setter is not None:
-                            legacy_setter(material, usage)
-                        else:
-                            raise RuntimeError("no safe usage setter")
-                    after = bool(unreal.MaterialEditingLibrary.has_material_usage(material, usage))
-                    row.update({{"success": after, "before": before, "after": after}})
-                except Exception as exc:
-                    row["error"] = str(exc)
-                rows.append(row)
-            return rows
-
-        def apply_route_restore(material_ref, route):
-            row = {{"operation": "restore_route_contract", "success": False, "changes": [], "usage_flags": []}}
-            if not route:
-                row["error"] = "missing route_restore payload"
-                return row
-            material = unreal.EditorAssetLibrary.load_asset(package_path(material_ref))
-            if material is None:
-                row["error"] = "candidate material could not be loaded"
-                return row
-            ok = True
-            domain = domain_enum(route.get("domain"))
-            if domain is not None:
-                ok = set_prop(material, "material_domain", domain, row) and ok
-            blend = blend_enum(route.get("blend_mode"))
-            if blend is not None:
-                ok = set_prop(material, "blend_mode", blend, row) and ok
-            shading = shading_enum(route.get("shading_model"))
-            if shading is not None:
-                ok = set_prop(material, "shading_model", shading, row) and ok
-            ok = set_prop(material, "two_sided", bool(route.get("two_sided")), row) and ok
-            ok = set_prop(material, "use_material_attributes", bool(route.get("use_material_attributes")), row) and ok
-            row["usage_flags"] = apply_usage_flags(material_ref, route.get("usage_flags") or [])
-            try:
-                material.post_edit_change()
-                material.mark_package_dirty()
-            except Exception:
-                pass
-            row["success"] = bool(ok and all(item.get("success") for item in row["usage_flags"] or [{{"success": True}}]))
-            return row
-
-        def apply_fresnel(material_ref):
-            row = {{"operation": "add_fresnel_layer", "success": False, "nodes": [], "connections": []}}
-            existing = graph_output(material_ref, "EmissiveColor")
-            fresnel, fresnel_row = add_expr(material_ref, "/Script/Engine.MaterialExpressionFresnel", -520, -260)
-            intensity, intensity_row = add_expr(
-                material_ref,
-                "/Script/Engine.MaterialExpressionScalarParameter",
-                -520,
-                -80,
-                [("ParameterName", "S_RefactorFresnelIntensity"), ("DefaultValue", "0.0")],
-            )
-            color, color_row = add_expr(
-                material_ref,
-                "/Script/Engine.MaterialExpressionVectorParameter",
-                -520,
-                80,
-                [("ParameterName", "V_RefactorFresnelColor"), ("DefaultValue", "(R=1.0,G=1.0,B=1.0,A=1.0)")],
-            )
-            mul_a, mul_a_row = add_expr(material_ref, "/Script/Engine.MaterialExpressionMultiply", -240, -170)
-            mul_b, mul_b_row = add_expr(material_ref, "/Script/Engine.MaterialExpressionMultiply", 20, -130)
-            add_node = None
-            add_row = {{"class": "/Script/Engine.MaterialExpressionAdd", "success": True}}
-            if existing is not None:
-                add_node, add_row = add_expr(material_ref, "/Script/Engine.MaterialExpressionAdd", 270, -80)
-            row["nodes"] = [fresnel_row, intensity_row, color_row, mul_a_row, mul_b_row, add_row]
-            if not all(item.get("success") for item in row["nodes"]):
-                row["error"] = "node creation failed"
-                return row
-            links = [
-                ("fresnel_to_intensity", MAT.connect_material_expressions(material_ref, fresnel.guid, "", mul_a.guid, "A")),
-                ("intensity_to_multiply", MAT.connect_material_expressions(material_ref, intensity.guid, "", mul_a.guid, "B")),
-                ("scaled_to_color", MAT.connect_material_expressions(material_ref, mul_a.guid, "", mul_b.guid, "A")),
-                ("color_to_rim", MAT.connect_material_expressions(material_ref, color.guid, "", mul_b.guid, "B")),
-            ]
-            if existing is not None and add_node is not None:
-                MAT.disconnect_material_output(material_ref, "EmissiveColor")
-                links.extend(
-                    [
-                        ("old_emissive_to_add", MAT.connect_material_expressions(material_ref, existing.src_guid, str(existing.src_output_name or ""), add_node.guid, "A")),
-                        ("rim_to_add", MAT.connect_material_expressions(material_ref, mul_b.guid, "", add_node.guid, "B")),
-                        ("add_to_emissive", MAT.connect_material_output(material_ref, add_node.guid, "", "EmissiveColor")),
-                    ]
-                )
-            else:
-                links.append(("rim_to_emissive", MAT.connect_material_output(material_ref, mul_b.guid, "", "EmissiveColor")))
-            row["connections"] = [{{"name": name, "success": bool(ok)}} for name, ok in links]
-            row["success"] = all(item["success"] for item in row["connections"])
-            return row
-
-        def apply_depth_fade(material_ref):
-            row = {{"operation": "add_depth_fade", "success": False, "nodes": [], "connections": []}}
-            existing = graph_output(material_ref, "Opacity")
-            if existing is None:
-                row["error"] = "Opacity output is not connected; DepthFade needs an opacity chain to soften."
-                return row
-            fade, fade_row = add_expr(material_ref, "/Script/Engine.MaterialExpressionDepthFade", -40, 280)
-            distance, distance_row = add_expr(
-                material_ref,
-                "/Script/Engine.MaterialExpressionScalarParameter",
-                -320,
-                360,
-                [("ParameterName", "S_RefactorDepthFadeDistance"), ("DefaultValue", "64.0")],
-            )
-            row["nodes"] = [fade_row, distance_row]
-            if not all(item.get("success") for item in row["nodes"]):
-                row["error"] = "node creation failed"
-                return row
-            MAT.disconnect_material_output(material_ref, "Opacity")
-            links = [
-                ("old_opacity_to_depthfade", MAT.connect_material_expressions(material_ref, existing.src_guid, str(existing.src_output_name or ""), fade.guid, "Opacity")),
-                ("distance_to_depthfade", MAT.connect_material_expressions(material_ref, distance.guid, "", fade.guid, "FadeDistance")),
-                ("depthfade_to_opacity", MAT.connect_material_output(material_ref, fade.guid, "", "Opacity")),
-            ]
-            row["connections"] = [{{"name": name, "success": bool(ok)}} for name, ok in links]
-            row["success"] = all(item["success"] for item in row["connections"])
-            return row
-
-        def apply_output_repair(material_ref, before_outputs):
-            row = {{"operation": "repair_output_chain", "success": False, "repairs": [], "blocked": []}}
-            for output in before_outputs or []:
-                prop = str(output.get("dst_property_name") or "")
-                if not prop:
-                    continue
-                src_guid = node_guid_by_text(material_ref, output.get("src_guid"))
-                if src_guid is None:
-                    row["blocked"].append({{"property": prop, "reason": "before source guid is not present in candidate graph", "src_guid": output.get("src_guid")}})
-                    continue
-                MAT.disconnect_material_output(material_ref, prop)
-                ok = MAT.connect_material_output(material_ref, src_guid, str(output.get("src_output_name") or ""), prop)
-                row["repairs"].append({{"property": prop, "success": bool(ok), "src_guid": output.get("src_guid"), "src_output_name": output.get("src_output_name")}})
-            row["success"] = bool(row["repairs"]) and all(item.get("success") for item in row["repairs"]) and not row["blocked"]
-            if not row["repairs"] and not row["blocked"]:
-                row["error"] = "no before output rows were provided"
-            return row
-
-        target_ref = asset_ref(PAYLOAD["target_material"])
-        backup_ref = asset_ref(PAYLOAD["backup_path"])
-        candidate_ref = asset_ref(PAYLOAD["candidate_path"])
-        report = {{
-            "tool": "graph_refactor_apply_ue",
-            "target_material": PAYLOAD["target_material"],
-            "backup_path": package_path(PAYLOAD["backup_path"]),
-            "backup_ref": backup_ref,
-            "candidate_path": package_path(PAYLOAD["candidate_path"]),
-            "candidate_ref": candidate_ref,
-            "duplicates": [],
-            "operations": [],
-            "compile": None,
-            "save": None,
-            "transaction": {{"name": "Codex graph refactor apply candidate", "used": False}},
-        }}
-
-        source_asset = unreal.EditorAssetLibrary.load_asset(package_path(PAYLOAD["target_material"]))
-        if source_asset is None:
-            raise RuntimeError("Could not load target material: " + str(PAYLOAD["target_material"]))
-
-        for label, new_ref in (("backup", backup_ref), ("candidate", candidate_ref)):
-            result = run_tool("toolset_registry.toolsets.core.asset.AssetTools.duplicate", {{"path": target_ref, "new_path": new_ref}})
-            report["duplicates"].append({{"role": label, "target": new_ref, **result}})
-            if not result["success"]:
-                raise RuntimeError(f"Could not duplicate {{label}} material: {{result['error']}}")
-
-        transaction = None
-        try:
-            transaction = unreal.ScopedEditorTransaction("Codex graph refactor apply candidate")
-            report["transaction"]["used"] = True
-        except Exception as exc:
-            report["transaction"]["error"] = str(exc)
-
-        def run_operations():
-            for op in PAYLOAD.get("operations") or []:
-                name = op.get("operation")
-                if not op.get("executable"):
-                    report["operations"].append({{"operation": name, "success": False, "skipped": True, "reason": op.get("blocked_reason") or "not executable"}})
-                    continue
-                if name == "restore_route_contract":
-                    report["operations"].append(apply_route_restore(candidate_ref, PAYLOAD.get("route_restore") or {{}}))
-                elif name == "repair_output_chain":
-                    report["operations"].append(apply_output_repair(candidate_ref, PAYLOAD.get("before_output_connections") or []))
-                elif name == "add_fresnel_layer":
-                    report["operations"].append(apply_fresnel(candidate_ref))
-                elif name == "add_depth_fade":
-                    report["operations"].append(apply_depth_fade(candidate_ref))
-                else:
-                    report["operations"].append({{"operation": name, "success": False, "skipped": True, "reason": "unsupported operation"}})
-
-        if transaction is not None:
-            with transaction:
-                run_operations()
-        else:
-            run_operations()
-
-        compile_ok = MAT.compile_material(candidate_ref, False)
-        report["compile"] = {{"success": bool(compile_ok)}}
-        report["save"] = run_tool("toolset_registry.toolsets.core.asset.AssetTools.save_assets", {{"asset_paths": [backup_ref, candidate_ref]}})
-        print(json.dumps(report, ensure_ascii=False))
-        """
-    ).strip()
-
-
 def summarize_report(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"path": str(path), "exists": False}
@@ -686,8 +318,6 @@ def validation_commands(args: argparse.Namespace, ctx: Any, target: str, candida
         items: list[str] = []
         if args.project:
             items.extend(["--project", args.project])
-        if args.endpoint:
-            items.extend(["--endpoint", args.endpoint])
         items.extend(["--timeout", str(args.timeout)])
         return items
 
@@ -698,11 +328,10 @@ def validation_commands(args: argparse.Namespace, ctx: Any, target: str, candida
     preview = [
         sys.executable,
         str(tool_root / "material_preview.py"),
-        "render",
+        "capture",
         candidate,
         "--carrier",
         args.carrier,
-        "--with-complexity",
         "--markdown",
         *ue_args(),
     ]
@@ -811,7 +440,7 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
         "effect": effect,
         "layer": layer,
         "label": label,
-        "execute": bool(args.execute),
+        "execute": False,  # Plan only: the UnrealBridge graph-surgery executor was retired.
         "inputs": resolved["source_paths"],
         "target_material": resolved["target_material"],
         "candidate_path": resolved["candidate_path"],
@@ -832,36 +461,14 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
         "gate": {},
     }
 
-    if not args.execute:
-        report["validation_plan"] = validation_commands(args, ctx, resolved["target_material"], object_ref(resolved["candidate_path"]))
-        report["gate"] = {"ready_for_acceptance": False, "reason": "dry_run_only"}
-        return report, out
-
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    before_commands = validation_commands(args, ctx, resolved["target_material"], object_ref(resolved["candidate_path"]))
-    report["validation"]["before_audit"] = run_command(before_commands["before_audit"], ctx.project_root)  # type: ignore[arg-type]
-    report["validation"]["before_domain_audit"] = run_command(before_commands["before_domain_audit"], ctx.project_root)  # type: ignore[arg-type]
-
-    ue_report = client.exec_json(build_ue_script(payload), no_preflight=True)
-    report["ue_apply"] = ue_report
-    candidate_ref = ue_report.get("candidate_ref") or object_ref(resolved["candidate_path"])
-
-    after_commands = validation_commands(args, ctx, resolved["target_material"], candidate_ref)
-    report["validation"]["after_audit"] = run_command(after_commands["after_audit"], ctx.project_root)  # type: ignore[arg-type]
-    report["validation"]["after_domain_audit"] = run_command(after_commands["after_domain_audit"], ctx.project_root)  # type: ignore[arg-type]
-    report["validation"]["preview"] = run_command(after_commands["preview"], ctx.project_root)  # type: ignore[arg-type]
-    preview_report = report["validation"]["preview"].get("report_path") or ""
-    regression_commands = validation_commands(args, ctx, resolved["target_material"], candidate_ref, preview_report)
-    regression_command = regression_commands.get("regression")
-    if regression_command:
-        report["validation"]["regression"] = run_command(regression_command, ctx.project_root)
-    else:
-        report["validation"]["regression"] = {
-            "skipped": True,
-            "reason": "No regression baseline was found. Create one with material_regression.py baseline or pass --baseline.",
-        }
-    report["gate"] = evaluate_gate(report)
+    report["validation_plan"] = validation_commands(args, ctx, resolved["target_material"], object_ref(resolved["candidate_path"]))
+    report["mcp_route"] = [
+        f"AssetTools.duplicate {resolved['target_material']} -> {resolved['backup_path']} (backup) and -> {resolved['candidate_path']}",
+        "Apply each feasible operation to the candidate with MaterialTools.add_expression / connect_expressions / "
+        "connect_to_output (builtin_mcp.py batch with get_expression_inputs / get_property_input readbacks), then recompile",
+        "Run validation_plan: audits before/after, a capture of the candidate, and regression against the baseline",
+    ]
+    report["gate"] = {"ready_for_acceptance": False, "reason": "plan_only"}
     return report, out
 
 
@@ -945,9 +552,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--label")
     parser.add_argument("--carrier", default="mesh")
     parser.add_argument("--baseline", help="Optional material_regression baseline path.")
-    parser.add_argument("--execute", action="store_true", help="Actually duplicate/apply in UE. Without this, only writes a review plan.")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

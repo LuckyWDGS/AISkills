@@ -1,6 +1,6 @@
 # Preview Matrix
 
-> **Editor execution disabled:** this pipeline's live mode called retired UnrealBridge APIs and now fails fast. Use MCP tools for the live step (see [official-toolsets-vs-local.md](official-toolsets-vs-local.md)); offline modes are unaffected.
+> **Plan only:** the UnrealBridge executor behind `--execute` was removed. Epic MCP has no camera, lighting, background or exposure axes, so each cell's command is a `material_preview.py capture`; stage that context in the level, capture it, and pass the reports on with `--preview-report`.
 
 ## Use This When
 
@@ -12,7 +12,7 @@
 
 `preview_matrix.py` builds a structured preview matrix around `material_preview.py`.
 
-By default it writes a dry-run plan with per-cell commands. With `--execute`, it calls `material_preview.py render` for every supported cell and records the resulting preview reports. Each executed cell uses a unique preview effect name like `<matrix-effect>-cell-001`, so preview JSON/PNG evidence does not overwrite neighboring cells.
+It writes a plan with one capture command per cell. Each cell uses a unique preview effect name like `<matrix-effect>-cell-001`, so preview JSON/PNG evidence does not overwrite neighboring cells. `--execute` is refused.
 
 ## Typical Commands
 
@@ -22,10 +22,10 @@ Plan a small matrix:
 python tools/preview_matrix.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background black,busy --angle "0,0;45,10" --quality low,medium --markdown
 ```
 
-Execute against UnrealBridge:
+Plan from a delivery package:
 
 ```powershell
-python tools/preview_matrix.py --package D:/reports/material-delivery-package.json --background black,neutral,busy --distance 0,2,5 --time 0.25,1.0 --quality low,high --execute --project <Project> --markdown
+python tools/preview_matrix.py --package D:/reports/material-delivery-package.json --background black,neutral,busy --distance 0,2,5 --time 0.25,1.0 --quality low,high --markdown
 ```
 
 ## Axes
@@ -53,7 +53,7 @@ Important fields:
 
 - `cells[]`: planned context and command per preview.
 - `summary`: planned/executed/pass/fail counts.
-- `gate.ready_for_regression_coverage`: true only after `--execute` and no failed cells.
+- `gate.ready_for_regression_coverage`: stays false; coverage comes from the captured cell reports.
 - `evidence.preview_reports[]`: executed `material_preview.py` report paths.
 
 ## Limitation

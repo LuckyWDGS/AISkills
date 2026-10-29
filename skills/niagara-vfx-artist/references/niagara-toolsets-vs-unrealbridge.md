@@ -64,9 +64,15 @@ visual tuning. Local reports still own composite roles, renderer/material
 contracts, accepted anchors, image QA, comparisons, and delivery. They can
 consume official evidence without making UnrealBridge mandatory.
 
-UnrealBridge (custom plugin + TCP) is retired. The editor-connected modes of
-`niagara_asset_assistant` apply, `niagara_param_sweep`, `runtime_control_probe`, `live_asset_verify`, `controlled_preview`, `effect_control_schema` live reads, `asset_cleanup` execute, `ue_write_helpers`, and `flipbook_ue_pipeline` call `UnrealBridge*Library` APIs and fail fast until ported to MCP.
-Their offline plan/report modes still work.
+UnrealBridge (custom plugin + TCP) is retired and no tool constructs a plugin
+client any more. Ported to Epic MCP: `niagara_audit`, `niagara_material_integration_probe`,
+`live_asset_verify` and `ue_smoke` (texture/material reads plus `niagara_audit`
+renderer materials), `effect_control_schema` and `control_provenance_check`
+(user variables from `niagara_audit`), `asset_cleanup` and
+`delivery_finalize --promote-assets` (AssetTools / SceneTools batches). Previews use
+`unreal-engine-mcp/scripts/capture.py`. `niagara_asset_assistant` plans only. The
+plugin-only `controlled_preview`, `flipbook_ue_pipeline`, `niagara_param_sweep`,
+`runtime_control_probe` and `ue_write_helpers` were removed.
 
 `niagara_audit.py` is ported: one ProgrammaticToolset script reads the system
 summary/data/dependencies and each emitter's data, topology and renderer data,
@@ -78,9 +84,10 @@ roles come from module names and `data_interface_bindings` stays empty; the
 report lists this under `coverage_gaps`. `niagara_material_integration_probe`
 reads renderer bindings from the audit's renderer data instead of the plugin.
 
-Port the remaining writers (for example `niagara_asset_assistant` apply) with
+An executor for `niagara_asset_assistant` plans would follow
 [porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md):
-live facts, a pure plan, then `builtin_mcp.py batch` with readbacks.
+live facts (emitter and renderer `StackItemReference`s from the topology tools), a
+pure plan, then `builtin_mcp.py batch` with readbacks.
 
 Possible fallback candidates include specialized particle event-handler
 construction, private-property diagnostics, live control/provenance probes,

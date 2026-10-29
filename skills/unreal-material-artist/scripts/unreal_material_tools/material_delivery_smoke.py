@@ -278,8 +278,6 @@ def build_preview_matrix_command(
         "--strict",
     ]
     command.extend(preview_matrix_axis_args(args))
-    if args.execute:
-        command.append("--execute")
     if args.project:
         command.extend(["--project", args.project])
     if args.endpoint:
@@ -1020,7 +1018,7 @@ def next_actions(
     if not ready_for_live_smoke:
         actions.append("Fix package or parameter-schema availability first so the smoke chain can plan real variants.")
     if not args.execute:
-        actions.append("Rerun with --execute when live UnrealBridge/UE is available to create variants and capture preview evidence.")
+        actions.append("Rerun with --execute against a running editor (Epic MCP) to create the variant instances, then capture each tier with material_preview.py capture.")
     if "material_regression" in advisory and not args.no_require_regression:
         actions.append(f"Lock an accepted baseline with material_regression.py baseline so smoke can prove drift safety. Expected path: `{baseline_path}`.")
     if args.resume_cache:
@@ -1184,22 +1182,10 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
             )
             continue
         command, preview_path = build_preview_matrix_command(args, package_path, effect, tier, variant_label, material_instance_path, run_dir)
-        if not args.execute:
-            steps.append(planned_step(preview_name, command, preview_path, "Run with --execute to capture live preview-matrix evidence for this tier."))
-        else:
-            step = execute_step(
-                ctx,
-                effect=effect,
-                name=preview_name,
-                command=command,
-                planned_report_path=preview_path,
-                evaluator=evaluate_preview_matrix,
-                input_paths=[package_path, batch_report_path],
-                use_cache=args.resume_cache,
-            )
-            steps.append(step)
-            if step.get("report_path"):
-                matrix_report_paths.append(Path(str(step["report_path"])))
+        # preview_matrix only plans: its render harness was retired. Each tier is staged and captured
+        # with material_preview.py capture, then scored and regressed from those reports.
+        steps.append(planned_step(preview_name, command, preview_path,
+                                  "Stage this tier's carrier and capture it with material_preview.py capture."))
 
     readability_command, readability_report_path = build_readability_command(args, effect, material_path, matrix_report_paths, run_dir)
     if not args.execute:

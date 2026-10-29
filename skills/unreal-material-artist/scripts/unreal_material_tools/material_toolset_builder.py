@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 import sys
+import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import resolve_root_context, save_json, slugify, utc_now_iso, write_text
+from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
 
 
 RECIPE_ALIASES = {
@@ -38,39 +40,6 @@ RECIPE_ALIASES = {
     "energy-ribbon": "energy_ribbon",
     "dissolve": "dissolve_edge",
     "dissolve-edge": "dissolve_edge",
-}
-
-
-MATERIAL_USAGE_FLAG_ENUMS = {
-    "beamtrails": "MATUSAGE_BEAM_TRAILS",
-    "clothing": "MATUSAGE_CLOTHING",
-    "editorcompositing": "MATUSAGE_EDITOR_COMPOSITING",
-    "geometrycache": "MATUSAGE_GEOMETRY_CACHE",
-    "geometrycollections": "MATUSAGE_GEOMETRY_COLLECTIONS",
-    "hairstrands": "MATUSAGE_HAIR_STRANDS",
-    "heterogeneousvolumes": "MATUSAGE_HETEROGENEOUS_VOLUMES",
-    "instancedskinnedmesh": "MATUSAGE_INSTANCED_SKINNED_MESH",
-    "instancedstaticmesh": "MATUSAGE_INSTANCED_STATIC_MESHES",
-    "instancedstaticmeshes": "MATUSAGE_INSTANCED_STATIC_MESHES",
-    "lidarpointcloud": "MATUSAGE_LIDAR_POINT_CLOUD",
-    "meshdeformer": "MATUSAGE_MESH_DEFORMER",
-    "meshparticles": "MATUSAGE_MESH_PARTICLES",
-    "morphtargets": "MATUSAGE_MORPH_TARGETS",
-    "nanite": "MATUSAGE_NANITE",
-    "neuralnetworks": "MATUSAGE_NEURAL_NETWORKS",
-    "niagarameshparticles": "MATUSAGE_NIAGARA_MESH_PARTICLES",
-    "niagararibbons": "MATUSAGE_NIAGARA_RIBBONS",
-    "niagarasprites": "MATUSAGE_NIAGARA_SPRITES",
-    "particlesprites": "MATUSAGE_PARTICLE_SPRITES",
-    "skeletalmesh": "MATUSAGE_SKELETAL_MESH",
-    "splinemesh": "MATUSAGE_SPLINE_MESH",
-    "splinemeshes": "MATUSAGE_SPLINE_MESH",
-    "staticlighting": "MATUSAGE_STATIC_LIGHTING",
-    "staticmesh": "MATUSAGE_STATIC_MESH",
-    "virtualheightfieldmesh": "MATUSAGE_VIRTUAL_HEIGHTFIELD_MESH",
-    "volumetriccloud": "MATUSAGE_VOLUMETRIC_CLOUD",
-    "voxels": "MATUSAGE_VOXELS",
-    "water": "MATUSAGE_WATER",
 }
 
 
@@ -224,7 +193,7 @@ RECIPE_DEFINITIONS: dict[str, dict[str, Any]] = {
             {"template": "vector_parameter", "alias": "main_color", "parameter_name": "Color_Main", "default_value": "(R=1.0,G=0.35,B=0.05,A=1.0)", "x": -980, "y": 260},
             {"template": "vector_parameter", "alias": "core_color", "parameter_name": "Color_Core", "default_value": "(R=1.0,G=0.82,B=0.28,A=1.0)", "x": -980, "y": 420},
             {"template": "particle_color", "alias": "particle_color", "x": -980, "y": 580},
-            {"template": "component_mask", "alias": "particle_alpha", "source_expression": "particle_color", "mask": "A", "x": -720, "y": 640},
+            {"template": "component_mask", "alias": "particle_alpha", "source_expression": "particle_color", "source_output_name": "RGBA", "mask": "A", "x": -720, "y": 640},
             {"template": "dynamic_parameter", "alias": "dynamic_parameter", "x": -980, "y": 820},
             {"template": "scalar_parameter", "alias": "intensity", "parameter_name": "Intensity", "default_value": "4.0", "x": -720, "y": 260},
             {"template": "scalar_parameter", "alias": "core_boost", "parameter_name": "Core_Boost", "default_value": "3.0", "x": -720, "y": 420},
@@ -329,7 +298,7 @@ RECIPE_DEFINITIONS: dict[str, dict[str, Any]] = {
             {"template": "vector_parameter", "alias": "main_color", "parameter_name": "Color_Main", "default_value": "(R=1.0,G=0.32,B=0.06,A=1.0)", "x": -560, "y": 260},
             {"template": "vector_parameter", "alias": "core_color", "parameter_name": "Color_Core", "default_value": "(R=1.0,G=0.72,B=0.22,A=1.0)", "x": -560, "y": 420},
             {"template": "particle_color", "alias": "particle_color", "x": -560, "y": 580},
-            {"template": "component_mask", "alias": "particle_alpha", "source_expression": "particle_color", "mask": "A", "x": -300, "y": 640},
+            {"template": "component_mask", "alias": "particle_alpha", "source_expression": "particle_color", "source_output_name": "RGBA", "mask": "A", "x": -300, "y": 640},
             {"template": "dynamic_parameter", "alias": "dynamic_parameter", "x": -560, "y": 820},
             {"template": "scalar_parameter", "alias": "intensity", "parameter_name": "Intensity", "default_value": "1.5", "x": -300, "y": 260},
             {"template": "scalar_parameter", "alias": "core_boost", "parameter_name": "Core_Boost", "default_value": "1.5", "x": -300, "y": 420},
@@ -413,7 +382,7 @@ RECIPE_DEFINITIONS: dict[str, dict[str, Any]] = {
             "shading_model": "TwoSidedFoliage",
             "two_sided": True,
             "expected_outputs": ["BaseColor", "OpacityMask", "Roughness", "SubsurfaceColor", "Normal"],
-            "usage_flags": ["StaticMesh", "Foliage"],
+            "usage_flags": ["StaticMesh", "InstancedStaticMeshes"],  # foliage renders as instanced static meshes
         },
         "carrier": "mesh",
         "texture_requirements": [
@@ -494,6 +463,7 @@ RECIPE_DEFINITIONS: dict[str, dict[str, Any]] = {
             {"template": "vector_parameter", "alias": "water_color", "parameter_name": "V_ShallowColor", "default_value": "(R=0.08,G=0.42,B=0.52,A=1.0)", "x": -650, "y": -120, "output_property": "MP_BaseColor"},
             {"template": "scalar_parameter", "alias": "roughness", "parameter_name": "S_Roughness", "default_value": "0.04", "x": -650, "y": 60, "output_property": "MP_Roughness"},
             {"template": "scalar_parameter", "alias": "opacity", "parameter_name": "S_WaterOpacity", "default_value": "0.5", "x": -650, "y": 220, "output_property": "MP_Opacity"},
+            {"template": "single_layer_water_output", "alias": "water_output", "x": -200, "y": 360},
         ],
         "preview": {"carrier": "mesh", "with_complexity": True},
         "audit_focus": ["Single Layer Water route", "normal strength", "water preview context", "shading-model budget"],
@@ -977,6 +947,10 @@ def expand_templates(spec: dict[str, Any]) -> dict[str, Any]:
             _append_expr_props(expanded, rough_alias, [{"name": "R", "value": str(item.get("roughness", "0.5"))}])
             _append_output(expanded, color_alias, "MP_BaseColor")
             _append_output(expanded, rough_alias, "MP_Roughness")
+        elif template == "single_layer_water_output":
+            # SingleLayerWater materials fail to compile without this output node.
+            alias = item.get("alias") or f"{prefix}_slw_output"
+            _append_expr(expanded, alias, "/Script/Engine.MaterialExpressionSingleLayerWaterMaterialOutput", x, y)
         else:
             raise SystemExit(f"Unknown material builder template `{template}`.")
     return expanded
@@ -1019,10 +993,9 @@ def make_recipe_builder_spec(args: argparse.Namespace, definition: dict[str, Any
 
 def preview_command(tool_root: Path, material_path: str, effect: str, layer: str, preview: dict[str, Any]) -> str:
     carrier = preview.get("carrier") or "mesh"
-    complexity = " --with-complexity" if preview.get("with_complexity") else ""
     return (
-        f"python {tool_root.as_posix()}/tools/material_preview.py render {material_path} "
-        f"--carrier {carrier}{complexity} --markdown"
+        f"python {tool_root.as_posix()}/tools/material_preview.py capture {material_path} "
+        f"--route {'thumbnail' if carrier == 'mesh' else 'viewport'} --carrier {carrier} --markdown"
     )
 
 
@@ -1241,229 +1214,274 @@ def refactor_validation_plan(tool_root: Path, target: str, effect: str, layer: s
     return [
         f"python {tool_root.as_posix()}/tools/material_audit.py {material} --include-raw-graph --markdown",
         f"python {tool_root.as_posix()}/tools/material_domain_audit.py {material} --markdown",
-        f"python {tool_root.as_posix()}/tools/material_preview.py render {material} --with-complexity --markdown",
+        f"python {tool_root.as_posix()}/tools/material_preview.py capture {material} --markdown",
         f"python {tool_root.as_posix()}/tools/material_regression.py compare --effect {effect} --layer {layer} --preview-report <new-preview.json> --strict --markdown",
     ]
 
 
-def build_ue_script(spec: dict[str, Any]) -> str:
-    payload = json.dumps(spec, ensure_ascii=False)
-    usage_payload = json.dumps(MATERIAL_USAGE_FLAG_ENUMS, ensure_ascii=False)
-    return (
-        "import json\n"
-        "import unreal\n"
-        "MAT = unreal.UnrealBridgeMaterialLibrary\n"
-        "TR = unreal.UnrealBridgeToolsetRegistryLibrary\n"
-        f"spec = json.loads({payload!r})\n"
-        f"USAGE_FLAG_ENUMS = json.loads({usage_payload!r})\n"
-        "report = {'material': None, 'usage_flags': [], 'expressions': [], 'connections': [], 'recompile': None, 'save': None}\n"
-        "\n"
-        "def run_tool(name, payload):\n"
-        "    r = TR.execute_qualified_tool(name, json.dumps(payload, ensure_ascii=False), True)\n"
-        "    out = None\n"
-        "    if r.json_output:\n"
-        "        try:\n"
-        "            out = json.loads(r.json_output)\n"
-        "        except Exception:\n"
-        "            out = r.json_output\n"
-        "    return {'success': r.success, 'error': r.error, 'output': out}\n"
-        "\n"
-        "def normalize_usage_flag(value):\n"
-        "    text = str(value or '').strip()\n"
-        "    compact = ''.join(ch for ch in text if ch.isalnum()).lower()\n"
-        "    for prefix in ('busedwith', 'usedwith', 'matusage'):\n"
-        "        if compact.startswith(prefix):\n"
-        "            compact = compact[len(prefix):]\n"
-        "            break\n"
-        "    return compact\n"
-        "\n"
-        "class NullTransaction:\n"
-        "    def __enter__(self):\n"
-        "        return self\n"
-        "    def __exit__(self, exc_type, exc, tb):\n"
-        "        return False\n"
-        "\n"
-        "def apply_usage_flags(material_path, requested_flags):\n"
-        "    flags = []\n"
-        "    for raw in requested_flags or []:\n"
-        "        if raw not in flags:\n"
-        "            flags.append(raw)\n"
-        "    if not flags:\n"
-        "        return []\n"
-        "    material = unreal.load_asset(material_path)\n"
-        "    if material is None:\n"
-        "        return [{'requested': raw, 'success': False, 'changed': False, 'error': f'Could not load material: {material_path}'} for raw in flags]\n"
-        "    if not isinstance(material, unreal.Material):\n"
-        "        return [{'requested': raw, 'success': False, 'changed': False, 'error': 'Usage flags can only be applied to a base UMaterial.'} for raw in flags]\n"
-        "    setter = getattr(unreal.MaterialEditingLibrary, 'set_base_material_usage', None)\n"
-        "    legacy_setter = getattr(unreal.MaterialEditingLibrary, 'set_material_usage', None)\n"
-        "    transaction = NullTransaction()\n"
-        "    try:\n"
-        "        transaction = unreal.ScopedEditorTransaction('Codex set material usage flags')\n"
-        "    except Exception:\n"
-        "        pass\n"
-        "    rows = []\n"
-        "    with transaction:\n"
-        "        for raw in flags:\n"
-        "            key = normalize_usage_flag(raw)\n"
-        "            enum_name = USAGE_FLAG_ENUMS.get(key)\n"
-        "            row = {'requested': raw, 'normalized': key, 'enum': enum_name, 'success': False, 'changed': False, 'before': None, 'after': None, 'error': ''}\n"
-        "            if not enum_name:\n"
-        "                row['error'] = 'Unsupported material usage flag for safe setter whitelist.'\n"
-        "                rows.append(row)\n"
-        "                continue\n"
-        "            usage = getattr(unreal.MaterialUsage, enum_name, None)\n"
-        "            if usage is None:\n"
-        "                row['error'] = f'Unreal MaterialUsage enum is not available: {enum_name}'\n"
-        "                rows.append(row)\n"
-        "                continue\n"
-        "            try:\n"
-        "                before = bool(unreal.MaterialEditingLibrary.has_material_usage(material, usage))\n"
-        "                if not before:\n"
-        "                    if setter is not None:\n"
-        "                        setter(material, usage, True)\n"
-        "                    elif legacy_setter is not None:\n"
-        "                        legacy_setter(material, usage)\n"
-        "                    else:\n"
-        "                        raise RuntimeError('MaterialEditingLibrary has no safe material usage setter.')\n"
-        "                after = bool(unreal.MaterialEditingLibrary.has_material_usage(material, usage))\n"
-        "                row['before'] = before\n"
-        "                row['after'] = after\n"
-        "                row['changed'] = before != after\n"
-        "                row['success'] = after\n"
-        "            except Exception as exc:\n"
-        "                row['error'] = repr(exc)\n"
-        "            rows.append(row)\n"
-        "    try:\n"
-        "        material.post_edit_change()\n"
-        "        material.mark_package_dirty()\n"
-        "    except Exception:\n"
-        "        pass\n"
-        "    return rows\n"
-        "\n"
-        "folder_path = spec['folder_path']\n"
-        "asset_name = spec['asset_name']\n"
-        "target_path = f\"{folder_path}/{asset_name}\"\n"
-        "route = spec.get('route') or {}\n"
-        "mat_ref = None\n"
-        "if route:\n"
-        "    created = MAT.create_material(\n"
-        "        target_path,\n"
-        "        str(route.get('domain') or 'Surface'),\n"
-        "        str(route.get('shading_model') or 'DefaultLit'),\n"
-        "        str(route.get('blend_mode') or 'Opaque'),\n"
-        "        bool(route.get('two_sided')),\n"
-        "        bool(route.get('use_material_attributes')),\n"
-        "    )\n"
-        "    create_row = {\n"
-        "        'success': bool(created.success),\n"
-        "        'error': created.error,\n"
-        "        'output': {'returnValue': {'refPath': created.path}},\n"
-        "        'route': 'local-create-material-with-route',\n"
-        "        'requested_route': route,\n"
-        "    }\n"
-        "    if created.success:\n"
-        "        mat_ref = created.path\n"
-        "else:\n"
-        "    create_row = run_tool('toolset_registry.toolsets.core.material.MaterialTools.create', {\n"
-        "        'folder_path': folder_path,\n"
-        "        'asset_name': asset_name,\n"
-        "    })\n"
-        "    if create_row['success'] and isinstance(create_row['output'], dict):\n"
-        "        mat_ref = (create_row['output'].get('returnValue') or {}).get('refPath')\n"
-        "report['material'] = create_row\n"
-        "if not mat_ref:\n"
-        "    mat_ref = f\"{target_path}.{asset_name}\"\n"
-        "requested_usage_flags = route.get('usage_flags') or spec.get('usage_flags') or []\n"
-        "report['usage_flags'] = apply_usage_flags(mat_ref, requested_usage_flags)\n"
-        "\n"
-        "expr_refs = {}\n"
-        "expr_guids = {}\n"
-        "for item in spec.get('expressions') or []:\n"
-        "    add_result = MAT.add_material_expression(\n"
-        "        mat_ref,\n"
-        "        item['expression_class'],\n"
-        "        int(item.get('x', 0)),\n"
-        "        int(item.get('y', 0)),\n"
-        "    )\n"
-        "    alias = item.get('alias') or item['expression_class'].rsplit('.', 1)[-1]\n"
-        "    row = {'success': bool(add_result.success), 'error': add_result.error, 'resolved_class': add_result.resolved_class}\n"
-        "    if add_result.success:\n"
-        "        graph = MAT.get_material_graph(mat_ref)\n"
-        "        matches = []\n"
-        "        for node in list(graph.nodes):\n"
-        "            if node.class_name == add_result.resolved_class.replace('MaterialExpression', '') and int(node.x) == int(item.get('x', 0)) and int(node.y) == int(item.get('y', 0)):\n"
-        "                matches.append(node)\n"
-        "        if matches:\n"
-        "            target = matches[-1]\n"
-        "            expr_guids[alias] = target.guid\n"
-        "            expr_refs[alias] = target.class_name\n"
-        "            row['key_properties'] = target.key_properties\n"
-        "            row['caption'] = target.caption\n"
-        "        else:\n"
-        "            row['success'] = False\n"
-        "            row['error'] = 'Could not map new expression to graph node after creation.'\n"
-        "    report['expressions'].append({'alias': alias, 'result': row})\n"
-        "for item in spec.get('expression_properties') or []:\n"
-        "    alias = item['expression']\n"
-        "    expr_guid = expr_guids.get(alias)\n"
-        "    if expr_guid is None:\n"
-        "        report.setdefault('expression_properties', []).append({'target': item, 'success': False, 'error': f\"Unknown expression alias: {alias}\"})\n"
-        "        continue\n"
-        "    prop_results = []\n"
-        "    for prop in item.get('properties') or []:\n"
-        "        ok = MAT.set_material_expression_property(\n"
-        "            mat_ref,\n"
-        "            expr_guid,\n"
-        "            prop['name'],\n"
-        "            str(prop['value']),\n"
-        "        )\n"
-        "        prop_results.append({'name': prop['name'], 'value': prop['value'], 'success': bool(ok)})\n"
-        "    report.setdefault('expression_properties', []).append({'expression': alias, 'results': prop_results})\n"
-        "\n"
-        "for item in spec.get('connections') or []:\n"
-        "    from_guid = expr_guids.get(item['from_expression'])\n"
-        "    to_guid = expr_guids.get(item['to_expression'])\n"
-        "    if from_guid is None or to_guid is None:\n"
-        "        report['connections'].append({'target': item, 'success': False, 'error': 'Unknown expression alias in connection'})\n"
-        "        continue\n"
-        "    ok = MAT.connect_material_expressions(\n"
-        "        mat_ref,\n"
-        "        from_guid,\n"
-        "        str(item.get('from_output_name', '')),\n"
-        "        to_guid,\n"
-        "        item['to_input_name'],\n"
-        "    )\n"
-        "    row = {'success': bool(ok), 'error': '' if ok else 'connect_material_expressions returned false'}\n"
-        "    report['connections'].append({'target': item, 'result': row})\n"
-        "\n"
-        "for item in spec.get('output_connections') or []:\n"
-        "    expr_guid = expr_guids.get(item['expression'])\n"
-        "    if expr_guid is None:\n"
-        "        report['connections'].append({'target': item, 'success': False, 'error': f\"Unknown expression alias: {item['expression']}\"})\n"
-        "        continue\n"
-        "    property_name = str(item['material_property'])\n"
-        "    if property_name.startswith('MP_'):\n"
-        "        property_name = property_name[3:]\n"
-        "    ok = MAT.connect_material_output(\n"
-        "        mat_ref,\n"
-        "        expr_guid,\n"
-        "        str(item.get('output_name', '')),\n"
-        "        property_name,\n"
-        "    )\n"
-        "    row = {'success': bool(ok), 'error': '' if ok else 'connect_material_output returned false'}\n"
-        "    report['connections'].append({'target': item, 'result': row})\n"
-        "\n"
-        "if spec.get('recompile', True):\n"
-        "    ok = MAT.compile_material(mat_ref, False)\n"
-        "    report['recompile'] = {'success': bool(ok), 'error': '' if ok else 'compile_material returned false'}\n"
-        "report['save'] = run_tool('toolset_registry.toolsets.core.asset.AssetTools.save_assets', {'asset_paths': [mat_ref]})\n"
-        "report['material_ref'] = mat_ref\n"
-        "report['expression_aliases'] = list(expr_guids.keys())\n"
-        "final_info = MAT.get_material_info(mat_ref)\n"
-        "report['final_usage_flags'] = list(final_info.usage_flags) if final_info.found else []\n"
-        "print(json.dumps(report, ensure_ascii=False))\n"
-    )
+BUILD_SCHEMA_VERSION = "material_toolset_builder.build/2"
+
+
+def _enum(prefix: str, value: Any) -> str:
+    """'Additive' -> 'BLEND_Additive'; values already carrying the prefix pass through."""
+    text = str(value or "").replace(" ", "")
+    return text if text.startswith(prefix) else f"{prefix}{text}"
+
+
+def route_properties(route: dict[str, Any]) -> dict[str, Any]:
+    """Material route -> UMaterial properties as ObjectTools writes them."""
+    return {
+        "materialDomain": _enum("MD_", route.get("domain") or "Surface"),
+        "blendMode": _enum("BLEND_", route.get("blend_mode") or "Opaque"),
+        "shadingModel": _enum("MSM_", route.get("shading_model") or "DefaultLit"),
+        "twoSided": bool(route.get("two_sided")),
+        "bUseMaterialAttributes": bool(route.get("use_material_attributes")),
+    }
+
+
+def ue_property_name(name: str) -> str:
+    """Builder specs use UE names ('ParameterName', 'R'); ObjectTools reads them lowerCamel."""
+    return name[:1].lower() + name[1:]
+
+
+VECTOR_TEXT = re.compile(r"([RGBA])\s*=\s*([-+0-9.eE]+)", re.IGNORECASE)
+# UnrealBridge-era pin names in recipe specs -> engine pin names ("" is an unnamed single input).
+LEGACY_INPUT_NAMES = {"input": "", "coordinates": "UVs", "exponent": "Exp"}
+
+
+def ue_property_value(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    if text.startswith("(") and VECTOR_TEXT.search(text):  # "(R=1.0,G=0.3,B=0.1,A=1.0)"
+        parts = {key.lower(): float(number) for key, number in VECTOR_TEXT.findall(text)}
+        return {channel: parts.get(channel, 1.0 if channel == "a" else 0.0) for channel in "rgba"}
+    if text.lower() in ("true", "false"):
+        return text.lower() == "true"
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    if text.startswith("/") and "/" in text[1:]:
+        package, _, obj = text.partition(".")
+        return {"refPath": f"{package}.{obj or package.rsplit('/', 1)[-1]}"}
+    return text
+
+
+def build_create_script(spec: dict[str, Any]) -> str:
+    """ProgrammaticToolset script: create the material, set its route and usage flags, add every expression.
+
+    Tool failures abort a script, so this holds only steps that do not depend on spec values
+    the engine might reject; properties and wiring follow as a per-step batch.
+    """
+    route = spec.get("route") or {}
+    payload = {
+        "folder": spec["folder_path"], "name": spec["asset_name"],
+        "route": route_properties(route) if route else {},
+        "usage": [normalize_usage_flag_name(flag) for flag in (route.get("usage_flags") or spec.get("usage_flags") or [])],
+        "expressions": [{"alias": item.get("alias") or item["expression_class"].rsplit(".", 1)[-1],
+                         "class": item["expression_class"], "x": int(item.get("x", 0)), "y": int(item.get("y", 0))}
+                        for item in spec.get("expressions") or []],
+    }
+    return textwrap.dedent(
+        """
+        import json
+
+        SPEC = json.loads(__SPEC__)
+        M = "editor_toolset.toolsets.material.MaterialTools."
+        O = "editor_toolset.toolsets.object.ObjectTools."
+
+        def call(tool, **args):
+            return json.loads(json.dumps(execute_tool(tool, json.dumps(args))["returnValue"]))
+
+        def ref_of(value):
+            return value.get("refPath", "") if isinstance(value, dict) else str(value or "")
+
+        def run():
+            material = ref_of(call(M + "create_material", folder_path=SPEC["folder"], asset_name=SPEC["name"]))
+            target = {"refPath": material}
+            if SPEC["route"]:
+                call(O + "set_properties", instance=target, values=json.dumps(SPEC["route"]))
+            usage = {}
+            if SPEC["usage"]:
+                names = json.loads(call(O + "list_properties", instance=target))
+                available = {name[len("bUsedWith"):].lower(): name for name in names if name.startswith("bUsedWith")}
+                usage = {flag: available.get(flag, "") for flag in SPEC["usage"]}
+                values = {name: True for name in usage.values() if name}
+                if values:
+                    call(O + "set_properties", instance=target, values=json.dumps(values))
+            aliases, pins = {}, {}
+            for item in SPEC["expressions"]:
+                ref = {"refPath": ref_of(call(M + "add_expression", material_or_function=target,
+                                              expression_class={"refPath": item["class"]}, x=item["x"], y=item["y"]))}
+                aliases[item["alias"]] = ref["refPath"]
+                # Reading the pins also builds lazily created outputs (DynamicParameter) before wiring.
+                pins[item["alias"]] = {"in": call(M + "get_expression_input_names", expression=ref),
+                                       "out": call(M + "get_expression_output_names", expression=ref)}
+            return {"material": material, "usage": usage, "aliases": aliases, "pins": pins}
+        """
+    ).strip().replace("__SPEC__", repr(json.dumps(payload, ensure_ascii=False)))
+
+
+def normalize_usage_flag_name(value: Any) -> str:
+    compact = "".join(ch for ch in str(value or "") if ch.isalnum()).lower()
+    for prefix in ("busedwith", "usedwith", "matusage"):
+        if compact.startswith(prefix):
+            return compact[len(prefix):]
+    return compact
+
+
+def resolve_input_name(name: str, inputs: list[str]) -> str | None:
+    """The engine pin for a spec input name, or None when the expression has no such pin."""
+    real = ["" if pin == "None" else pin for pin in inputs]
+    if name in real:
+        return name
+    lowered = {pin.lower(): pin for pin in real}
+    if name.lower() in lowered:
+        return lowered[name.lower()]
+    legacy = LEGACY_INPUT_NAMES.get(name.lower())
+    return legacy if legacy is not None and legacy in real else None
+
+
+def build_wiring_steps(spec: dict[str, Any], material: str, aliases: dict[str, str],
+                       pins: dict[str, dict[str, list[str]]] | None = None,
+                       missing_objects: set[str] | None = None) -> tuple[list[dict[str, Any]], list[str]]:
+    """Batch steps for expression properties, wiring, outputs and recompile; returns (steps, problems).
+
+    ``pins`` (alias -> engine input/output names) maps legacy pin names; ``missing_objects``
+    lists referenced assets that do not exist, whose properties are left at their defaults.
+    """
+    steps: list[dict[str, Any]] = []
+    problems: list[str] = []
+    pins = pins or {}
+    missing_objects = missing_objects or set()
+    line = 0
+
+    def add(entry: dict[str, Any]) -> None:
+        nonlocal line
+        line += 1
+        steps.append({**entry, "_line": line})
+
+    for item in spec.get("expression_properties") or []:
+        ref = aliases.get(item["expression"])
+        if not ref:
+            problems.append(f"expression_properties: unknown alias {item['expression']!r}")
+            continue
+        values = {}
+        for prop in item.get("properties") or []:
+            value = ue_property_value(prop["value"])
+            if isinstance(value, dict) and value.get("refPath") in missing_objects:
+                problems.append(f"{item['expression']}.{prop['name']}: {value['refPath']} does not exist; left at its default")
+                continue
+            values[ue_property_name(prop["name"])] = value
+        if not values:
+            continue
+        add({"label": f"{item['expression']}: properties", "kind": "properties",
+             "toolset": "ObjectTools", "tool": "set_properties",
+             "args": {"instance": {"refPath": ref}, "values": json.dumps(values)},
+             "readback": {"toolset": "ObjectTools", "tool": "get_properties",
+                          "args": {"instance": {"refPath": ref}, "properties": sorted(values)}},
+             "expect": values})
+    for item in spec.get("connections") or []:
+        source, target = aliases.get(item["from_expression"]), aliases.get(item["to_expression"])
+        if not (source and target):
+            problems.append(f"connection {item['from_expression']} -> {item['to_expression']}: unknown alias")
+            continue
+        to_input = item["to_input_name"]
+        if item["to_expression"] in pins:
+            to_input = resolve_input_name(to_input, pins[item["to_expression"]]["in"])
+            if to_input is None:
+                problems.append(f"{item['to_expression']} has no input {item['to_input_name']!r} "
+                                f"(pins: {pins[item['to_expression']]['in']})")
+                continue
+        add({"label": f"{item['from_expression']} -> {item['to_expression']}.{item['to_input_name']}", "kind": "connect",
+             "toolset": "MaterialTools", "tool": "connect_expressions",
+             "args": {"from_expression": {"refPath": source}, "from_output_name": str(item.get("from_output_name", "")),
+                      "to_expression": {"refPath": target}, "to_input_name": to_input}})
+    for item in spec.get("output_connections") or []:
+        source = aliases.get(item["expression"])
+        if not source:
+            problems.append(f"output {item['material_property']}: unknown alias {item['expression']!r}")
+            continue
+        prop = _enum("MP_", item["material_property"])
+        add({"label": f"{item['expression']} -> {prop}", "kind": "output",
+             "toolset": "MaterialTools", "tool": "connect_to_output",
+             "args": {"expression": {"refPath": source}, "output_name": str(item.get("output_name", "")),
+                      "material_property": prop},
+             "readback": {"toolset": "MaterialTools", "tool": "get_property_input",
+                          "args": {"material": {"refPath": material}, "material_property": prop}},
+             "expect": {"expression": {"refPath": source}}})
+    if spec.get("recompile", True):
+        add({"label": "recompile", "kind": "recompile", "toolset": "MaterialTools", "tool": "recompile",
+             "args": {"material_or_function": {"refPath": material}}})
+    return steps, problems
+
+
+def run_build(skill_root: Path, spec: dict[str, Any], *, execute: bool, url: str, timeout: float,
+              project: str | None) -> dict[str, Any]:
+    """Plan (always) and, with ``execute``, create the material through Epic MCP."""
+    module = builtin_mcp(skill_root)
+    package = f"{spec['folder_path'].rstrip('/')}/{spec['asset_name']}"
+    report: dict[str, Any] = {
+        "tool": "material_toolset_builder", "schema_version": BUILD_SCHEMA_VERSION, "transport": "epic-mcp",
+        "material_ref": f"{package}.{spec['asset_name']}", "execute": execute, "problems": [],
+        "create_script": build_create_script(spec), "expressions": [], "usage_flags": [], "steps": [],
+        "material": None, "recompile": None, "save": None,
+    }
+    client = connect(skill_root, url=url, timeout=timeout, project=project)
+    try:
+        if module.unwrap_result(client.call_resolved_tool("AssetTools", "exists", {"path": package})):
+            report["problems"].append(f"{package} already exists; the builder only creates new materials")
+        if client.pie_running():
+            report["problems"].append("Play-In-Editor is running; stop PIE and run again.")
+        if report["problems"] or not execute:
+            report["status"] = "blocked" if report["problems"] else "planned"
+            return report
+        try:
+            created = client.run_tool_script(report["create_script"])
+        except module.McpError as exc:
+            exists = module.unwrap_result(client.call_resolved_tool("AssetTools", "exists", {"path": package}))
+            report["material"] = {"success": False, "error": str(exc)}
+            report["problems"].append(f"create script failed: {exc}" + (
+                f"; {package} was created but is unsaved, inspect or delete it" if exists else ""))
+            report["status"] = "failed"
+            return report
+        material, aliases = created["material"], created["aliases"]
+        report["material_ref"] = material
+        report["material"] = {"success": True, "route": "epic-mcp MaterialTools.create_material"}
+        report["usage_flags"] = [{"requested": flag, "property": name, "success": bool(name),
+                                  "error": "" if name else "no matching bUsedWith* property"}
+                                 for flag, name in created["usage"].items()]
+        report["expressions"] = [{"alias": alias, "result": {"success": bool(ref), "ref": ref}} for alias, ref in aliases.items()]
+        referenced = sorted({value["refPath"] for item in spec.get("expression_properties") or []
+                             for prop in item.get("properties") or []
+                             for value in [ue_property_value(prop["value"])]
+                             if isinstance(value, dict) and "refPath" in value})
+        missing = {path for path in referenced if not module.unwrap_result(
+            client.call_resolved_tool("AssetTools", "exists", {"path": path.split(".", 1)[0]}))}
+        steps, problems = build_wiring_steps(spec, material, aliases, created.get("pins"), missing)
+        report["warnings"] = [item for item in problems if item.endswith("left at its default")]
+        report["problems"] += [item for item in problems if item not in report["warnings"]]
+        batch = module.run_batch(client, steps, continue_on_error=True)
+        report["batch"] = batch
+        report["steps"] = [{"label": row.get("label"), "status": row.get("status"), "error": row.get("error", "")}
+                           for row in batch.get("results", [])]
+        report["problems"] += batch.get("problems") or []
+        report["recompile"] = next(({"success": row["status"] == "ok", "error": row["error"]}
+                                    for row in report["steps"] if row["label"] == "recompile"), None)
+        failed = [row for row in report["steps"] if row["status"] != "ok"] or report["problems"] \
+            or not all(row["success"] for row in report["usage_flags"])
+        if failed:
+            # Leave the new material unsaved so the failing steps can be inspected and fixed in place.
+            report["save"] = {"success": False, "error": "skipped: earlier steps failed; the material is unsaved"}
+            report["status"] = "failed"
+        else:
+            saved = module.unwrap_result(client.call_resolved_tool("AssetTools", "save_assets", {"asset_paths": [package]}))
+            report["save"] = {"success": bool(saved), "error": "" if saved else "save_assets returned false"}
+            report["status"] = "applied" if saved else "failed"
+    finally:
+        client.close()
+    return report
 
 
 def render_build_markdown(report: dict[str, Any]) -> str:
@@ -1471,43 +1489,20 @@ def render_build_markdown(report: dict[str, Any]) -> str:
         "# Material Toolset Builder",
         "",
         f"- Material: `{report.get('material_ref')}`",
-        f"- Material create success: `{(report.get('material') or {}).get('success')}`",
-        "",
-        "## Expressions",
+        f"- Status: `{report.get('status')}`",
         "",
     ]
-    for item in report.get("expressions") or []:
-        result = item.get("result") or {}
-        lines.append(f"- `{item.get('alias')}` success=`{result.get('success')}` error=`{result.get('error')}`")
+    lines += [f"- Problem: {problem}" for problem in report.get("problems") or []]
+    lines += [f"- Warning: {warning}" for warning in report.get("warnings") or []]
     if report.get("usage_flags"):
         lines.extend(["", "## Usage Flags", ""])
-        for item in report.get("usage_flags") or []:
-            lines.append(
-                f"- `{item.get('requested')}` enum=`{item.get('enum')}` "
-                f"success=`{item.get('success')}` changed=`{item.get('changed')}` error=`{item.get('error')}`"
-            )
-        lines.append(f"- Final usage flags: `{', '.join(report.get('final_usage_flags') or []) or 'none'}`")
-    if report.get("expression_properties"):
-        lines.extend(["", "## Expression Properties", ""])
-        for item in report.get("expression_properties") or []:
-            lines.append(f"- `{item.get('expression')}`")
-            for result in item.get("results") or []:
-                lines.append(f"  - `{result.get('name')}`=`{result.get('value')}` success=`{result.get('success')}`")
-    lines.extend(["", "## Output Connections", ""])
-    for item in report.get("connections") or []:
-        if "result" in item:
-            result = item["result"]
-            lines.append(f"- `{item['target']}` success=`{result.get('success')}` error=`{result.get('error')}`")
-        else:
-            lines.append(f"- `{item.get('target')}` success=`False` error=`{item.get('error')}`")
-    lines.extend(
-        [
-            "",
-            f"- Recompile success: `{(report.get('recompile') or {}).get('success')}`",
-            f"- Save success: `{(report.get('save') or {}).get('success')}`",
-            "",
-        ]
-    )
+        lines += [f"- `{item['requested']}` -> `{item['property']}` success=`{item['success']}` {item['error']}"
+                  for item in report["usage_flags"]]
+    lines.extend(["", "## Expressions", ""])
+    lines += [f"- `{item['alias']}` success=`{item['result']['success']}`" for item in report.get("expressions") or []]
+    lines.extend(["", "## Steps", ""])
+    lines += [f"- `{row['label']}` `{row['status']}` {row['error']}" for row in report.get("steps") or []]
+    lines.extend(["", f"- Save success: `{(report.get('save') or {}).get('success')}`", ""])
     return "\n".join(lines)
 
 
@@ -1570,15 +1565,13 @@ def command_build(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     spec = expand_templates(load_spec(args.spec))
     effect = slugify(args.effect or spec.get("asset_name") or "material-toolset-builder")
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    report = client.exec_json(build_ue_script(spec))
+    report = run_build(ctx.skill_root, spec, execute=args.execute, url=args.mcp_url, timeout=args.timeout, project=args.project)
     out = Path(args.out) if args.out else ctx.material_root / "toolset-material-build" / effect / "material-toolset-builder.json"
     save_json(out, report)
     if args.markdown:
         write_text(out.with_suffix(".md"), render_build_markdown(report))
     print(out)
-    return 0
+    return 0 if report["status"] in ("planned", "applied") else 1
 
 
 def command_recipe(args: argparse.Namespace) -> int:
@@ -1593,13 +1586,15 @@ def command_recipe(args: argparse.Namespace) -> int:
             root=args.root,
             spec=str(spec_path),
             project=args.project,
-            endpoint=args.endpoint,
+            mcp_url=args.mcp_url,
             timeout=args.timeout,
             effect=f"{report.get('effect')}-{report.get('layer')}",
             out=args.build_report_out,
             markdown=args.markdown,
+            execute=True,
         )
-        command_build(build_args)
+        print(out)
+        return command_build(build_args)
     print(out)
     return 0
 
@@ -1636,7 +1631,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build UE material recipes and safe graph refactor plans.")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    build = sub.add_parser("build", help="Execute a low-level builder spec through UnrealBridge and MaterialTools.")
+    build = sub.add_parser("build", help="Plan, or with --execute create, a material from a builder spec through Epic MCP.")
     add_build_args(build)
     build.set_defaults(func=command_build)
 
@@ -1655,7 +1650,7 @@ def build_parser() -> argparse.ArgumentParser:
     recipe.add_argument("--inline-build-spec", action="store_true")
     recipe.add_argument("--execute", action="store_true", help="Also create the material in UE using the generated builder spec.")
     recipe.add_argument("--project")
-    recipe.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    recipe.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     recipe.add_argument("--timeout", type=int, default=180)
     recipe.add_argument("--markdown", action="store_true")
     recipe.set_defaults(func=command_recipe)
@@ -1682,9 +1677,10 @@ def build_parser() -> argparse.ArgumentParser:
 def add_build_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("spec", help="Path to the builder spec JSON.")
     parser.add_argument("--root", default="auto")
-    parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    parser.add_argument("--project", help="Refuse to run unless the MCP endpoint is served by this project.")
+    parser.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--execute", action="store_true", help="Create the material; without it the spec is only checked.")
     parser.add_argument("--effect")
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

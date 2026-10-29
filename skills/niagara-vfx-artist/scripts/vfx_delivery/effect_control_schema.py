@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .control_common import (
     find_control,
     infer_group,
@@ -22,31 +20,22 @@ from .core import normalize_cli_global_args, write_text
 from .effect_state import control_schema_default, integration_default, load_effect_record
 
 
-def build_system_user_variables_script(system_path: str) -> str:
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
-
-        summary = unreal.UnrealBridgeNiagaraLibrary.get_official_system_user_variables_summary({system_path!r})
-        rows = []
-        for item in list(summary.variables):
-            rows.append({{
-                "name": str(item.name),
-                "type_name": str(item.type_name),
-                "type_object_path": str(item.type_path),
-                "value_struct_path": str(item.value_struct_path),
-                "value_json": str(item.value_json),
-                "description": str(item.description),
-            }})
-        print(json.dumps({{
-            "success": bool(summary.success),
-            "error": str(summary.error),
-            "system_path": str(summary.system_path),
-            "variables": rows,
-        }}, ensure_ascii=False))
-        """
-    ).strip()
+def user_variables_summary(niagara_audit: dict[str, Any]) -> dict[str, Any]:
+    """System user variables from a ``niagara_audit`` report, in the summary shape the control rows read."""
+    rows = []
+    for item in niagara_audit.get("user_variables") or []:
+        type_path = ((item.get("type") or {}).get("classStructOrEnum") or {}).get("refPath", "")
+        default = item.get("defaultValue") or {}
+        rows.append({
+            "name": str(item.get("name") or ""),
+            "type_name": type_path.rsplit(".", 1)[-1] if type_path else "",
+            "type_object_path": type_path,
+            "value_struct_path": ((default.get("struct") or {}).get("refPath", "")) if isinstance(default, dict) else "",
+            "value_json": json.dumps(default.get("value") if isinstance(default, dict) else default, ensure_ascii=False),
+            "description": str(item.get("description") or ""),
+        })
+    return {"success": True, "error": "", "system_path": niagara_audit.get("system_path", ""), "variables": rows,
+            "source": "niagara_audit (epic-mcp)"}
 
 
 def load_json_file(path: str | None) -> dict[str, Any]:
@@ -224,10 +213,13 @@ def build_schema(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
     all_controls = controls_from_integration(integration, integration_source)
 
     live_summary = {}
-    if args.system_path and (args.project or args.endpoint):
-        client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-        client.ping()
-        live_summary = client.exec_json(build_system_user_variables_script(args.system_path), no_preflight=True)
+    niagara_report = load_json_file(args.niagara_audit) if args.niagara_audit else None
+    if niagara_report is None and args.system_path and (args.live or args.project):
+        from .niagara_audit import audit
+
+        niagara_report = audit(ctx.skill_root, args.system_path, timeout=args.timeout)
+    if niagara_report:
+        live_summary = user_variables_summary(niagara_report)
         all_controls.extend(
             controls_from_system_summary(
                 live_summary,
@@ -356,8 +348,9 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--material-delivery-package", default="")
     generate.add_argument("--material-contract", default="")
     generate.add_argument("--extra-control", action="append", default=[])
+    generate.add_argument("--niagara-audit", default="", help="niagara_audit.py report to read user variables from")
+    generate.add_argument("--live", action="store_true", help="Read --system-path user variables live through Epic MCP")
     generate.add_argument("--project")
-    generate.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     generate.add_argument("--timeout", type=int, default=180)
     generate.add_argument("--out")
     generate.add_argument("--note", action="append", default=[])

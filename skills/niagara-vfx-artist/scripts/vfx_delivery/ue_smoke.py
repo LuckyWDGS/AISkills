@@ -4,10 +4,10 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient, BridgeError
 from .core import default_report_path, normalize_cli_global_args_no_subcommand, resolve_root_context, save_json, utc_now_iso, write_text
-from .live_asset_verify import build_ue_script as build_live_asset_verify_script
+from .live_asset_verify import collect as collect_live_asset_route
 from .live_asset_verify import verification_passed
+from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
 
 
 def render_markdown(report: dict[str, Any]) -> str:
@@ -17,7 +17,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Status: `{report.get('status')}`",
         f"- Generated UTC: `{report.get('generated_utc')}`",
         f"- Project: `{report.get('project') or 'default'}`",
-        f"- Endpoint: `{report.get('endpoint') or 'auto'}`",
+        f"- Endpoint: `{report.get('endpoint') or DEFAULT_MCP_URL}`",
         f"- Verification passed: `{report.get('verification_passed')}`",
         f"- Blocked reason: {report.get('blocked_reason') or 'none'}",
         "",
@@ -39,7 +39,7 @@ def command(args: argparse.Namespace) -> int:
         "generated_utc": utc_now_iso(),
         "effect": args.effect or "",
         "project": args.project or "",
-        "endpoint": args.endpoint or "",
+        "endpoint": args.mcp_url,
         "status": "unknown",
         "blocked_reason": "",
         "source_policy": args.source_policy,
@@ -50,10 +50,11 @@ def command(args: argparse.Namespace) -> int:
         "renderer_path": args.renderer_path,
         "verification_passed": False,
     }
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
     try:
-        report["ping"] = client.ping()
-    except BridgeError as exc:
+        client = connect(ctx.skill_root, url=args.mcp_url, timeout=args.timeout, project=args.project)
+        report["ping"] = client.editor_owner()
+        client.close()
+    except (builtin_mcp().McpError, OSError) as exc:
         report["status"] = "blocked"
         report["blocked_reason"] = str(exc)
         save_json(out, report)
@@ -63,11 +64,8 @@ def command(args: argparse.Namespace) -> int:
         return 2 if args.require_ue else 0
 
     if args.texture_asset_path and args.material_path:
-        raw = client.exec_json(
-            build_live_asset_verify_script(args.texture_asset_path, args.material_path, args.renderer_path),
-            no_preflight=True,
-        )
-        report.update(raw)
+        report.update(collect_live_asset_route(ctx.skill_root, args.texture_asset_path, args.material_path,
+                                               args.renderer_path, url=args.mcp_url, timeout=args.timeout))
         report["source_policy"] = args.source_policy
         report["verification_passed"] = verification_passed(report)
         report["status"] = "pass" if report["verification_passed"] else "risk"
@@ -87,7 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", default="auto")
     parser.add_argument("--effect", default="")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    parser.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--require-ue", action="store_true", help="Return non-zero if UE is unavailable; otherwise blocked smoke is recorded and skipped.")
     parser.add_argument("--source-policy", default="ue-only", choices=("generated", "required", "ue-only"))

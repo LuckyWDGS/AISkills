@@ -155,7 +155,8 @@ class MaterialToolsetBuilderTests(unittest.TestCase):
 
             output_props = {item["material_property"] for item in spec["output_connections"]}
             self.assertEqual(output_props, {"MP_EmissiveColor", "MP_Opacity"})
-            self.assertIn("--carrier ribbon --with-complexity", report["preview_plan"]["command"])
+            self.assertIn("capture", report["preview_plan"]["command"])
+            self.assertIn("--route viewport --carrier ribbon", report["preview_plan"]["command"])
             self.assertTrue(any("packed-mask" in warning for warning in report["warnings"]))
             self.assertTrue(any("first-pass" in warning for warning in report["warnings"]))
             self.assertTrue(any("same folder" in warning for warning in report["warnings"]))

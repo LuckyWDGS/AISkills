@@ -113,8 +113,8 @@ Needed:
 Why it matters:
 - audits alone do not complete the loop; we also need safe creation and repair tools
 
-Current first-pass tool:
-- `tools/ue_write_helpers.py`
+Current first-pass route:
+- `builtin_mcp.py batch` with AssetTools / MaterialInstanceTools / NiagaraToolset_System steps and readbacks
 
 Current higher-level assistant:
 - `tools/niagara_asset_assistant.py`
@@ -125,8 +125,7 @@ What it adds:
 - MI creation and parameter override setup
 - missing Ribbon Renderer construction for receiver emitters
 - existing renderer material binding repair
-- generated UE Python apply scripts
-- optional `unreal-engine-mcp` apply and readback verification
+- plans whose operations map onto NiagaraToolset_System tools, applied through `builtin_mcp.py batch` with readbacks
 
 ### 7. Visual Diff QA
 

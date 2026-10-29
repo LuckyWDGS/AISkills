@@ -16,7 +16,7 @@ On UE 5.8+, use Epic's MCP directly through the sibling `unreal-engine-mcp/scrip
 
 `tools/official_toolsets_bridge.py` calls MCP over HTTP and resolves aliases such as `material:get_expressions` from live discovery. UnrealBridge (custom plugin + TCP) is retired; there is no plugin transport.
 
-Material graph creation, node reference readback, wiring, MI parameters, texture import, and exposed UObject properties use official MCP tools. Local file QA, manifests, image packing, and reports remain local. `tools/material_audit.py` and `tools/material_domain_audit.py` read through MCP (plus Remote Execution for shader statistics), and `tools/material_preview.py capture` takes previews through MCP. The editor-connected modes of the older recipe-builder, MI-batch, import-fix, and preview scripts call retired `UnrealBridge*Library` APIs and fail fast until ported; their offline modes still work. Do the live step with MCP and feed its JSON into the local report code. See [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md) for the list.
+Material graph creation, node reference readback, wiring, MI parameters, texture import, and exposed UObject properties use official MCP tools. Local file QA, manifests, image packing, and reports remain local. Every editor-connected tool here runs on Epic MCP (plus Remote Execution for shader statistics): audits, texture import audit/fix, function lint, permutation report, runtime trace, MI batch, the recipe builder and `material_preview.py capture`. `graph_refactor_apply.py`, `preview_matrix.py` and `preview_environment_executor.py` only plan. See [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md).
 
 ## Overview
 
@@ -31,8 +31,6 @@ Default team model:
 - For full Niagara VFX tasks, accept the material contract from Niagara, implement or review only the material route, then return required material inputs, carrier assumptions, and performance risks so Niagara can wire, preview, and tune the whole effect.
 - Do not override Niagara carrier or timing decisions unless the material route proves them technically impossible or unnecessarily expensive; report that tradeoff back as a recommendation.
 - Do not treat live Niagara system reads, Niagara parameter writes, renderer-binding hookup, emitter graph inspection, rapid-iteration ownership tracing, or real-system semantic plumbing as this skill's core responsibility. Those belong to `niagara-vfx-artist`.
-
-*(not ported)*: the tool only works against the editor and still needs an MCP port. *(live step not ported)*: its offline modes work, but the editor step needs a port. Running a live step prints the MCP route to use instead (from `scripts/retired_tools.json`).
 
 ## Core Workflow
 
@@ -66,7 +64,7 @@ Default team model:
    When the user names or provides a texture asset as the visual source, preserve that texture identity. Procedural math may reveal, mask, rotate, recolor, feather, or remap the texture, but must not replace the named texture with a procedurally drawn lookalike unless the user approves that substitution.
 
 6. Search the reusable asset library before generating.
-   Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search` *(live step not ported)*. Reuse `approved` assets first only when they pass the material contract and reference-fidelity gate. In reference-driven or custom work, library assets are candidates, not authority: reject generic/simple matches that would change the intended style, scale, pattern language, color, motion, alpha shape, or material identity. Only generate a new texture when the library does not already have a suitable reviewed asset.
+   Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search`. Reuse `approved` assets first only when they pass the material contract and reference-fidelity gate. In reference-driven or custom work, library assets are candidates, not authority: reject generic/simple matches that would change the intended style, scale, pattern language, color, motion, alpha shape, or material identity. Only generate a new texture when the library does not already have a suitable reviewed asset.
 
 7. Build the material route.
    Prefer clear graph nodes for ordinary math and engine-tracked texture samples. Use Custom HLSL only when it meaningfully improves fidelity, reduces graph complexity, or implements math that nodes cannot express cleanly.
@@ -82,7 +80,7 @@ Default team model:
 
 9. Audit and self-review.
    Use official structural checks first, then controlled previews or in-level captures through official scene/editor tools where exposed. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the evidence model. Treat performance findings as evidence and triage, not automatic permission to lower the look. Capture previews with `tools/material_preview.py capture <material>` (the editor's material thumbnail) or `--route viewport --pose x,y,z,pitch,yaw,roll --carrier <carrier>` for a carrier already placed in the level; the posed capture does not move the user's viewport camera. Its `render`/`sweep` modes still need a port. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
-   For master-material or MI-family cleanup, also use Unreal's Material Analyzer when the editor is available, and use `tools/shader_permutation_report.py` *(not ported)* or `tools/permutation_budget_guard.py` when static switches/static masks are the risk.
+   For master-material or MI-family cleanup, also use Unreal's Material Analyzer when the editor is available, and use `tools/shader_permutation_report.py` or `tools/permutation_budget_guard.py` when static switches/static masks are the risk.
    When one preview is too narrow, use [references/preview-matrix.md](references/preview-matrix.md) and `tools/preview_matrix.py` to plan or execute a matrix across background intent, exposure intent, distance, angle, time, parameter tier, quality, lighting, and carrier.
    For Additive/Translucent/Ribbon/Decal routes, use [references/translucency-sorting-probe.md](references/translucency-sorting-probe.md) and `tools/translucency_sorting_probe.py` to check material-side DepthFade/SoftParticle evidence plus optional Niagara sorting/bounds proof. Keep real Niagara System/Emitter/Renderer proof in `niagara-vfx-artist`.
 
@@ -117,7 +115,7 @@ Default team model:
 
 18. Turn parameter schemas into executable MI tiers.
    When the parameter contract exists and the next step is wider preview or gameplay-safe tuning, use [references/material-variant-runner.md](references/material-variant-runner.md) and `tools/material_variant_runner.py` to generate `default`, `low`, `high`, `extreme`, and `gameplay-safe` material-instance tiers, plus `material_instance_batch.py` specs and preview-matrix command scaffolds.
-   When static switches also matter, follow with [references/static-switch-variant-expander.md](references/static-switch-variant-expander.md) and `tools/static_switch_variant_expander.py` so the chain covers permutation space instead of only dynamic parameters. Then use [references/permutation-budget-guard.md](references/permutation-budget-guard.md), `tools/permutation_budget_guard.py`, and `tools/shader_permutation_report.py` *(not ported)* before that switch space becomes a shader-permutation liability.
+   When static switches also matter, follow with [references/static-switch-variant-expander.md](references/static-switch-variant-expander.md) and `tools/static_switch_variant_expander.py` so the chain covers permutation space instead of only dynamic parameters. Then use [references/permutation-budget-guard.md](references/permutation-budget-guard.md), `tools/permutation_budget_guard.py`, and `tools/shader_permutation_report.py` before that switch space becomes a shader-permutation liability.
 
 19. Upgrade preview intent axes into a real harness plan.
    When `preview_matrix.py` still treats background, exposure, or parameter tiers as intent-only, use [references/preview-scene-harness-upgrade.md](references/preview-scene-harness-upgrade.md) and `tools/preview_scene_harness_upgrade.py` to map those axes to concrete harness capabilities, variant MIs, and executable commands.
@@ -133,13 +131,13 @@ Default team model:
    When multiple material, texture, regression, graph-diff, graph-refactor-apply, or permutation reports have accumulated, use [references/project-material-health.md](references/project-material-health.md) and `tools/project_material_health.py` to build heatlists for risky materials, texture sets, failed regressions, unsafe refactor candidates, parameter collisions, static-switch pressure, and suspicious master-material candidates.
 
 23. Map material-function dependencies before large-scale cleanup.
-   When the project has many Material Functions or master-material dependencies, use [references/material-function-dependency-map.md](references/material-function-dependency-map.md), `tools/material_function_dependency_map.py`, and `tools/material_function_linter.py` *(not ported)* to identify function reuse hotspots, large/switch-heavy functions, duplicate names, missing inputs/outputs, preview-default issues, and likely cleanup targets.
+   When the project has many Material Functions or master-material dependencies, use [references/material-function-dependency-map.md](references/material-function-dependency-map.md), `tools/material_function_dependency_map.py`, and `tools/material_function_linter.py` to identify function reuse hotspots, large/switch-heavy functions, duplicate names, missing inputs/outputs, preview-default issues, and likely cleanup targets.
 
 24. Use recipe builder or refactor planner for repeatable graph work.
-   When a known recipe fits, use [references/material-toolset-builder.md](references/material-toolset-builder.md) and `tools/material_toolset_builder.py recipe` *(live step not ported)* to generate the route, parameters, textures, and validation plan offline. Execute covered steps with official MCP, preserving the recipe's render contract and usage flags. The builder's `build` / `recipe --execute` paths remain legacy bridge executors and are reserved for demonstrated gaps. Use `refactor-plan` to turn graph-diff findings into a guarded patch plan before mutation.
+   When a known recipe fits, use [references/material-toolset-builder.md](references/material-toolset-builder.md) and `tools/material_toolset_builder.py recipe` to generate the route, parameters, textures, and validation plan offline; `recipe --execute` (or `build <spec> --execute`) then creates the material through MCP. It only creates new materials, saves only when every step succeeded, and leaves a failed build unsaved for inspection; missing referenced textures stay at their defaults with a warning. Use `refactor-plan` to turn graph-diff findings into a guarded patch plan before mutation.
 
 25. Apply graph refactors only through a reviewable candidate flow.
-   Use [references/graph-refactor-apply.md](references/graph-refactor-apply.md) and `tools/graph_refactor_apply.py` *(live step not ported)* for a dry-run candidate plan. Execute covered duplicate/edit/save steps through official MCP. Its legacy `--execute` path is a fallback; retain the backup/candidate, whitelisted edits, before/after readback, and applicable preview/regression evidence regardless of transport.
+   Use [references/graph-refactor-apply.md](references/graph-refactor-apply.md) and `tools/graph_refactor_apply.py` for a candidate plan (it only plans: its `mcp_route` lists the AssetTools duplicate and MaterialTools edit steps to run as a `builtin_mcp.py batch`). Retain the backup/candidate, whitelisted edits, before/after readback, and applicable preview/regression evidence regardless of transport.
 
 26. Approve material reuse through a hard acceptance gate.
    When a material is intended to become final reusable evidence for Niagara, gameplay, or another downstream package, use [references/material-acceptance-gate.md](references/material-acceptance-gate.md) and `tools/material_acceptance_gate.py`. This gate reads the delivery package and linked evidence, requires contract, preview, audit, domain audit, regression, texture-set, budget, usage-flag, and parameter-table proof, then writes a Niagara-consumable report with `delivery_summary.approved_for_reuse=true` only when the material side is actually ready.
@@ -148,7 +146,7 @@ Default team model:
    When the material should become a strongly reusable stock asset, use [references/material-acceptance-gate-v2.md](references/material-acceptance-gate-v2.md) and `tools/material_acceptance_gate_v2.py` so parameter schema, source provenance, preview matrix, readability, and translucent sorting evidence become hard gates instead of only supporting reports. Then use [references/library-promotion-gate.md](references/library-promotion-gate.md) and `tools/library_promotion_gate.py` to decide whether the candidate should become approved library stock.
 
 28. Close the loop with one material-side smoke chain.
-   When the question is no longer "what evidence do we still need?" but "can the current evidence actually run end to end as one chain?", use [references/material-delivery-smoke.md](references/material-delivery-smoke.md) and `tools/material_delivery_smoke.py` for planning. Its live orchestration includes legacy bridge executors; use `--execute` only for an evidenced gap within the authorized task. Otherwise run covered operations through official MCP and retain the equivalent evidence without inventing passes for incompatible legacy report gates. When repeated reruns would otherwise waste time, pair it with [references/smoke-resume-cache.md](references/smoke-resume-cache.md) and `tools/smoke_resume_cache.py`.
+   When the question is no longer "what evidence do we still need?" but "can the current evidence actually run end to end as one chain?", use [references/material-delivery-smoke.md](references/material-delivery-smoke.md) and `tools/material_delivery_smoke.py` for planning. `--execute` runs the MCP steps (variant instances through `material_instance_batch`); preview tiers stay planned until each is staged and captured with `material_preview.py capture`, so readability and regression wait on that evidence instead of passing. When repeated reruns would otherwise waste time, pair it with [references/smoke-resume-cache.md](references/smoke-resume-cache.md) and `tools/smoke_resume_cache.py`.
 
 ## Hard Rules
 
@@ -207,14 +205,14 @@ Performance review order:
 
 ## Tooling
 
-Detailed command examples live in the reference files. Use this as the compact entry map. Local planning/report/image tools remain usable, but the editor-connected audit, preview, MI-batch, import-fix and legacy executors listed below are conditional fallback tools, not the default control path. Gather covered live evidence through MCP first.
+Detailed command examples live in the reference files. Use this as the compact entry map. Editor-connected tools run on Epic MCP; local planning, report and image tools need no editor.
 
 | Need | Tool |
 |---|---|
 | Turn a reference or tutorial into a material work order | `tools/reference_to_material_plan.py` |
 | Write or validate a Niagara-to-material contract | `tools/material_contract.py` |
-| Build recipe packages or guarded graph plans | `tools/material_toolset_builder.py` *(live step not ported)* |
-| Apply a reviewed refactor to a duplicated candidate | `tools/graph_refactor_apply.py` *(live step not ported)* |
+| Build recipe packages or guarded graph plans | `tools/material_toolset_builder.py` |
+| Plan a reviewed refactor on a duplicated candidate | `tools/graph_refactor_apply.py` (plan only) |
 | Gather delivery evidence | `tools/delivery_packager.py` |
 | Approve delivery or stock reuse | `tools/material_acceptance_gate.py`, `tools/material_acceptance_gate_v2.py`, `tools/library_promotion_gate.py` |
 | Lock or compare accepted previews | `tools/material_regression.py`, `tools/regression_baseline_set.py` |
@@ -226,11 +224,11 @@ Detailed command examples live in the reference files. Use this as the compact e
 | Parameter schema / MI handoff | `tools/material_parameter_schema.py`, `tools/material_instance_batch.py` |
 | Graph and render-contract audit | `tools/material_audit.py`, `tools/material_domain_audit.py` |
 | Translucency/additive/ribbon sorting evidence | `tools/translucency_sorting_probe.py` |
-| Texture file, set, import, and provenance checks | `tools/texture_asset_report.py`, `tools/texture_set_pipeline.py`, `tools/texture_import_audit.py` *(not ported)*, `tools/texture_import_fix.py` *(not ported)*, `tools/material_source_provenance.py` |
-| Carrier previews and matrices | `tools/material_preview.py capture` (`render`/`sweep` not ported), `tools/preview_matrix.py`, `tools/preview_readability_score.py` |
-| Runtime parameter source tracing | `tools/runtime_param_trace.py` *(not ported)* |
+| Texture file, set, import, and provenance checks | `tools/texture_asset_report.py`, `tools/texture_set_pipeline.py`, `tools/texture_import_audit.py`, `tools/texture_import_fix.py`, `tools/material_source_provenance.py` |
+| Carrier previews and matrices | `tools/material_preview.py capture`, `tools/preview_matrix.py` (plan only), `tools/preview_readability_score.py` |
+| Runtime parameter source tracing | `tools/runtime_param_trace.py` |
 | Channel packing and flipbook cleanup | `tools/channel_packer.py`, `tools/flipbook_normalizer.py` |
-| Reusable asset search, registration, and promotion | `tools/material_asset_library.py` *(live step not ported)* |
+| Reusable asset search, registration, and promotion | `tools/material_asset_library.py` |
 
 Approved material assets now also emit a higher-level delivery report under `<project>/.codex/session/material-delivery/deliveries/`, so rebuilt-material approval is visible in the workflow output and not only as a catalog state change.
 
@@ -246,7 +244,7 @@ Current preview route note:
 
 - `material_preview.py capture` writes a standard `material_preview` report (`mode: capture`) that the acceptance gate, regression baselines, readability score and delivery packager read. MCP exposes no shader-complexity view, so `complexity_ok` stays unset rather than failing.
 - `--route thumbnail` is the editor's material sphere; `--route viewport` captures whatever carrier is already in the level, so place the mesh/card/decal/Niagara carrier first with official SceneTools.
-- The retired `render` harnesses (temporary Niagara sprite/ribbon systems, decal wall, post-process volume) are not ported. These previews review material behavior only; real Niagara bindings, live parameter sources and runtime writebacks stay with `niagara-vfx-artist` and its `niagara_material_integration_probe.py`.
+- The UnrealBridge-era `render`/`sweep` harnesses (temporary Niagara sprite/ribbon systems, decal wall, post-process volume, shader-complexity view) were removed. These previews review material behavior only; real Niagara bindings, live parameter sources and runtime writebacks stay with `niagara-vfx-artist` and its `niagara_material_integration_probe.py`.
 
 Editor/toolset note:
 

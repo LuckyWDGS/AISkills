@@ -1,17 +1,18 @@
 # Material Toolset Builder
 
-> **Editor execution disabled:** this pipeline's live mode called retired UnrealBridge APIs and now fails fast. Use MCP tools for the live step (see [official-toolsets-vs-local.md](official-toolsets-vs-local.md)); offline modes are unaffected.
-
 ## UE 5.8.4 transport boundary
 
-`recipe` and `refactor-plan` remain useful offline planners. `build` and
-`recipe --execute` still depend on the custom bridge, even when they call
-ToolsetRegistry internally. For covered graph operations use Epic MCP's
-MaterialTools, ObjectTools, MaterialInstanceTools, AssetTools, and
-ProgrammaticToolset instead. Discover current names/schemas; the old
-`MaterialTools.create` name below belongs to a legacy executor, while the
-installed 5.8.4 source exposes `create_material`. See
-[official-toolsets-vs-local.md](official-toolsets-vs-local.md).
+`recipe` and `refactor-plan` are offline planners. `build <spec> --execute` and
+`recipe --execute` create the material through Epic MCP in two stages: one
+ProgrammaticToolset script runs `MaterialTools.create_material`, sets the route
+(`materialDomain`, `blendMode`, `shadingModel`, `twoSided`) and `bUsedWith*`
+usage flags, adds every expression and reads each node's real pins; then a
+`builtin_mcp` batch sets expression properties (with readbacks), connects pins,
+wires outputs and recompiles. Spec pin names from the old plugin (`Input`,
+`Coordinates`, `Exponent`) are mapped to engine pins. The material is saved only
+when every step succeeded; otherwise it is left unsaved with the failing steps in
+the report. Referenced textures that do not exist stay at their defaults with a
+warning. The builder refuses a target that already exists.
 
 ## Use This When
 
@@ -24,10 +25,10 @@ installed 5.8.4 source exposes `create_material`. See
 `material_toolset_builder.py` has three layers:
 
 - `recipe`: offline-first high-level recipe builder. It emits a material route, parameter table, texture requirements, preview plan, audit plan, and executable builder spec.
-- `build`: low-level spec executor. It creates a material through UnrealBridge/MaterialTools and wires expressions/outputs. Legacy direct `spec.json` invocation still works.
+- `build`: low-level spec executor. Without `--execute` it checks the target; with it, it creates the material through Epic MCP and wires expressions/outputs. Legacy direct `spec.json` invocation still works.
 - `refactor-plan`: graph-diff-aware patch planner. It converts likely causes or explicit operations into one-at-a-time refactor steps, guardrails, and validation commands.
 
-The default posture is safe: `recipe` and `refactor-plan` write evidence and specs without mutating UE assets. Use `recipe --execute` only when UnrealBridge is online and the generated route/spec has been reviewed. Use `graph_refactor_apply.py` after `refactor-plan` when a guarded candidate apply is needed.
+The default posture is safe: `recipe` and `refactor-plan` write evidence and specs without mutating UE assets. Use `recipe --execute` once the generated route/spec has been reviewed and the editor's MCP endpoint is up. Use `graph_refactor_apply.py` after `refactor-plan` when a guarded candidate apply is needed.
 
 ## Table Of Contents
 
@@ -163,13 +164,7 @@ Dry run first:
 python tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --markdown
 ```
 
-Then execute against a duplicated candidate:
-
-```powershell
-python tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --execute --project <Project> --carrier sprite --markdown
-```
-
-The apply tool leaves the original material untouched, creates backup/candidate duplicates, applies only whitelisted operations, and collects before/after audit, preview, and regression evidence when a baseline exists.
+The plan's `mcp_route` lists the backup/candidate duplicates and the whitelisted MaterialTools edits to run as a `builtin_mcp.py batch`; its `validation_plan` holds the before/after audit, capture and regression commands. The original material is never touched.
 
 ## Validation Loop
 
@@ -178,7 +173,7 @@ After a recipe build or a refactor patch:
 ```powershell
 python tools/material_audit.py /Game/Materials/M_Foo --include-raw-graph --markdown
 python tools/material_domain_audit.py /Game/Materials/M_Foo --markdown
-python tools/material_preview.py render /Game/Materials/M_Foo --with-complexity --markdown
+python tools/material_preview.py capture /Game/Materials/M_Foo --markdown
 python tools/material_regression.py compare --effect Foo --layer Surface --preview-report D:/path/new-preview.json --strict --markdown
 ```
 

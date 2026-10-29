@@ -1,6 +1,6 @@
 # Closed-Loop Tool Suite
 
-> **UnrealBridge retired.** Commands below that pass `--endpoint` or describe UnrealBridge transport document legacy live modes that now fail fast. Do those live steps with Epic MCP tools; offline plan/report modes still work. See [niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md).
+> **Epic MCP only.** UnrealBridge is retired; every editor-connected tool below reads or writes through Epic's built-in MCP (`--mcp-url`, `--project`). See [niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md).
 
 This suite is core to the skill, not optional scaffolding.
 
@@ -103,19 +103,6 @@ Purpose:
 - verify where each declared control actually comes from
 - confirm whether a schema row is backed by live Niagara user-variable evidence, material parameter evidence, or only a placeholder declaration
 
-### `tools/runtime_control_probe.py`
-
-Purpose:
-- validate that a runtime Niagara control can be set and read back on a live or transient component route
-- optionally capture before/after preview images and report whether the visual output changed enough to count as a real response
-- supports ROI-aware visual diff so small center-area changes are not diluted by the full 768x768 preview frame
-
-### `tools/niagara_param_sweep.py`
-
-Purpose:
-- sweep a runtime Niagara control across multiple values
-- capture one preview per value and compose a comparison sheet for faster control tuning
-
 ### `tools/motion_qa.py`
 
 Purpose:
@@ -125,46 +112,28 @@ Purpose:
 ### `tools/niagara_asset_assistant.py`
 
 Purpose:
-- generate reviewable Niagara asset mutation plans
-- create systems from templates without losing valid emitter graphs
-- add emitters to a system from emitter assets through bridge-backed authoritative editor routes
-- duplicate emitters inside a system through bridge-backed authoritative editor routes
-- remove emitters from a system cleanly
-- toggle emitter enabled state in a system
-- create and tune material instances for planned layers
-- add a missing Ribbon Renderer to a receiver emitter when `RendererProperties` is empty
-- repair existing renderer material bindings when a renderer slot is present
-- render the UE Python apply script in dry-run mode
-- optionally execute through `unreal-engine-mcp` with `apply-plan --apply`
-- read the Niagara system back after writing with `--verify`
-- optionally require an existing delivery package to be ready before the apply can count as complete
-- optionally run post-apply audit -> delivery package -> ready check with `--auto-delivery-package`
+- generate reviewable Niagara asset mutation plans (it has no executor)
+- plan systems from templates without losing valid emitter graphs
+- plan emitter adds, duplicates, removals and enable toggles inside a system
+- plan material instances for planned layers
+- plan a missing Ribbon Renderer for a receiver emitter when `RendererProperties` is empty
+- plan renderer material repairs when a renderer slot is present
+- `inspect-system` reads a live system back through `niagara_audit` (Epic MCP)
 
 Key commands:
 
 ```powershell
 python tools/niagara_asset_assistant.py plan-template --effect WingEcho --template-system /Game/VFX/Templates/NS_RibbonTrail_Template --target-system /Game/VFX/WingEcho/NS_WingEcho_Assisted --material-parent /Game/VFX/Masters/MFX_RibbonTrail
 python tools/niagara_asset_assistant.py repair-plan --audit .codex/session/vfx-delivery/audits/niagara/.../niagara-audit.json --default-material /Game/VFX/WingEcho/MI_Ribbon
-python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --verify
-python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --verify --apply
-python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --apply --verify --delivery-index .codex/session/vfx-delivery/delivery/WingEcho/delivery-index.json
-python tools/niagara_asset_assistant.py apply-plan --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --apply --verify --auto-delivery-package --final-system /Game/VFX/WingEcho/NS_WingEcho --final-material /Game/VFX/WingEcho/MI_WingEcho --effect-type-contract trail
+python tools/niagara_asset_assistant.py inspect-system /Game/VFX/WingEcho/NS_WingEcho
 ```
 
-Safety notes:
-- `apply-plan` is dry-run unless `--apply` is provided.
-- The generated UE Python script is saved beside the plan so it can be inspected before execution.
-- `apply-plan --apply` now always forces readback verification even if `--verify` was omitted.
-- `apply-plan --apply --verify --delivery-index <index>` and `--delivery-effect <effect>` enforce `delivery_health.overall == ready`; if the package is incomplete/risk/blocked, the command exits non-zero and cannot be treated as complete.
-- `apply-plan --apply --verify --auto-delivery-package --require-ready-after-package` is the preferred "write then prove" route when the final package context is known.
-- Material binding repair only patches an existing renderer `Material=` slot.
-- Empty receiver `RendererProperties` can be repaired with `add_ribbon_renderer`; empty source emitters remain source-only unless a separate implementation plan says otherwise.
-- Avoid using `NiagaraPythonEmitter.get_modules()` as a generic template-discovery probe in UE 5.7. A real project test crashed NiagaraEditor with a `SharedPointer IsValid()` assertion; use property exports and renderer object readback instead.
-
-### `tools/ue_write_helpers.py`
-
-Purpose:
-- provide first-pass write-side Unreal helpers for duplicate, move, MI creation, Niagara template duplication, and system property updates
+Applying a plan:
+- run its operations with NiagaraToolset_System (`CreateNiagaraSystem`, `AddEmitter`, `RemoveEmitter`, `AddRenderer`, `SetRendererData`, `AddModule`, `SetStackInputData`, `ApplyStackIssueFix`) and AssetTools / MaterialInstanceTools through `builtin_mcp.py batch`, with a readback per write and the save on its own line
+- then run `niagara_audit.py` and `delivery_package.py --require-ready`; a write is not complete until the package is ready
+- Material binding repair only patches an existing renderer `Material` slot.
+- Empty receiver `RendererProperties` can be repaired with `AddRenderer`; empty source emitters remain source-only unless a separate implementation plan says otherwise.
+- Do not call `NiagaraPythonEmitter.get_modules()` on template emitters over Remote Execution as a discovery shortcut; it crashed NiagaraEditor on UE 5.7. Read modules through the MCP topology tools.
 
 ### `tools/visual_diff_qa.py`
 
@@ -194,7 +163,7 @@ Purpose:
 - verify that a generated texture candidate exists locally
 - verify that the corresponding UE texture asset exists
 - verify that the live material instance references that texture
-- optionally verify that the live renderer references the expected material
+- optionally verify that the live renderer references the expected material (`--renderer-path <system>[:<emitter>]`, read through `niagara_audit`)
 - prevent "generated but never actually wired" textures from being treated as implementation state
 
 Source policy:
@@ -313,69 +282,6 @@ Workflow notes:
 - the atlas uses row-major order: frame 0 at top-left, then left-to-right, top-to-bottom.
 - for Niagara Sprite Renderer SubUV setup, use `ue_notes.sub_uv_columns`, `ue_notes.sub_uv_rows`, and `ue_notes.suggested_play_rate_fps` from the manifest.
 
-### `tools/flipbook_ue_pipeline.py`
-
-Purpose:
-- turn a local flipbook atlas into a UE texture asset plus a ready-to-preview SubUV material in one command
-- bridge the current gap between atlas generation and UE material hookup
-- reuse local UnrealBridge transport plus existing material-skill audit/fix tools while hiding the multi-step glue
-- optionally render a sprite preview with the requested SubUV grid
-- optionally duplicate and patch a Niagara sprite system, bind the new material, add `SubUVAnimation`, set playback-driving stack inputs, and run verification reports
-- optionally promote the generated texture/material/Niagara route from `/Game/CodexTemp/...` into a target `/Game/VFX/...` folder, with duplicate-or-move behavior plus post-promote verification
-- optionally capture a controlled final effect preview and create a pending approval record for that exact system/material/grid context
-- optionally gate real promote on an already-approved effect preview record for the same context
-
-Key command:
-
-```powershell
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --effect-preview --approval-create-pending --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --promote --promote-policy vfx-effect --promote-group CodexSmoke --promote-effect-name Dust36 --promote-mode duplicate --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --promote --promote-policy studio-project-family-effect --promote-studio OpenAI --promote-project-name UnrealAI --promote-effect-family Dust --promote-effect-name Dust36 --promote-mode duplicate --markdown
-```
-
-Workflow notes:
-- default asset destinations are derived under `/Game/CodexTemp/<Effect>/Textures/` and `/Game/CodexTemp/<Effect>/Materials/`.
-- when `--niagara-hookup` is enabled, default Niagara destination is `/Game/CodexTemp/<Effect>/Niagara/NS_<Effect>_SubUV`.
-- This section describes the legacy `flipbook_ue_pipeline.py` implementation. On UE 5.8.4, prefer direct MCP `TextureTools.import_file`, ObjectTools texture properties, MaterialTools graph authoring, AssetTools save, and Niagara stack/renderer tools. The old assertion that TextureTools has no import verb is superseded. The pipeline below still requires UnrealBridge and is not the default path for covered operations.
-- the tool then runs `texture_import_fix.py` and `material_audit.py` automatically and records their report paths.
-- legacy material creation is hybrid:
-  - the old executor calls `MaterialTools.create`; current 5.8.4 source uses `create_material`
-  - local guid-aware material graph ops wire `TextureSampleParameterSubUV`, `ParticleColor`, and the output chain
-- optional preview uses a temporary Niagara sprite harness with the requested `SubImageSize`, so the screenshot checks the real SubUV grid rather than only a mesh/shaderball surrogate.
-- preview Niagara now defaults to a transient `/Engine/Transient...` duplicate instead of writing a `/Game/CodexTemp/MaterialPreview/...` content asset
-- transient preview now uses one stable object per carrier/template pair, for example `/Engine/Transient.NS_CodexPreview_Transient_sprite_NS_Toolset_ModuleSmoke`
-- explicit maintenance is now available through sibling material tooling:
-  - `python ..\unreal-material-artist\tools\material_preview.py transient list ...`
-  - `python ..\unreal-material-artist\tools\material_preview.py transient recycle ...`
-  - `python ..\unreal-material-artist\tools\material_preview.py transient recycle-all ...`
-  - `python ..\unreal-material-artist\tools\material_preview.py transient prune [--apply] ...`
-- preview success now includes cleanup truth; if the route falls back to a content asset and cleanup fails, the image may still render but the preview should not be treated as fully passed
-- Niagara hookup is also intentionally hybrid:
-  - duplicate/save uses official `AssetTools`
-  - renderer patching uses direct UE Python object property writes
-  - `SubUVAnimation` / stack input writes use `UnrealBridgeNiagaraLibrary` official external-edit wrappers
-  - verification uses `live_asset_verify.py`, `niagara_audit.py`, and compile-state readback
-- if the atlas sits beside a `flipbook-manifest.json`, the tool auto-inherits playback seconds from `clip.duration_seconds` unless `--niagara-playback-seconds` overrides it.
-- `--effect-preview` captures a controlled preview of the active Niagara system through `controlled_preview.py niagara`.
-- `--approval-create-pending` writes a pending review into `effect-preview-approvals/<effect>.json` for the exact system/material/grid/playback context.
-- real `--promote` now expects an already-approved effect preview by default; use `tools/effect_preview_approval.py decide --effect <effect> --review-id <id> --status approved` after visual review, or explicitly bypass with `--allow-promote-without-approved-preview`.
-- texture import route is reported explicitly in the pipeline report:
-  - `bridge-uassetlibrary` = direct formal `UnrealBridgeAssetLibrary` API
-  - `bridge-uassetlibrary-reflection` = same formal API reached through reflection when the Python binding table has not refreshed yet
-  - `plugin-python-helper` = last-resort plugin Python fallback
-- promote stage supports:
-  - `--promote` to enable promote
-  - `--promote-policy vfx-effect` as the default formal naming rule
-  - `--promote-base /Game/VFX`, `--promote-group CodexSmoke`, `--promote-effect-name Dust36` to derive `/Game/VFX/CodexSmoke/Dust36`
-  - `--promote-policy studio-project-family-effect` for a more production-shaped template, for example `--promote-studio OpenAI --promote-project-name UnrealAI --promote-effect-family Dust --promote-effect-name Dust36` -> `/Game/VFX/OpenAI/UnrealAI/Dust/Dust36`
-  - `--promote-root /Game/VFX/MyEffect` still overrides policy-derived roots when you need an explicit destination
-  - `--promote-mode duplicate|move`
-  - `--promote-dry-run` for path planning without mutation
-  - duplicate mode automatically repatches the promoted material's flipbook texture parameter and the promoted Niagara renderer material binding before verification
-  - markdown and JSON reports now show both the requested policy and the effective policy, so manual-root overrides are easy to spot during review
-
 ### `tools/delivery_chain_smoke.py`
 
 Purpose:
@@ -405,9 +311,9 @@ Purpose:
 - run the same `delivery_package.py check --index --require-ready` logic before writing `.codex/session/vfx-delivery/finalized/<effect>/finalize.json`
 - record final systems, final materials, source manifest, source summary, and notes for handoff
 - optionally promote UE assets with `--promote-assets`, `--promote-root`, `--promote-map`, `--promote-mode move|duplicate`, and `--dry-run-promote`
-- `delivery_finalize.py` can also derive a formal promote root from the same shared naming policies as `flipbook_ue_pipeline.py`, for example `--promote-policy studio-project-family-effect --promote-studio OpenAI --promote-project-name UnrealAI --promote-effect-family Dust --promote-effect-name Dust36`
+- `delivery_finalize.py` can also derive a formal promote root from the shared naming policies in `promote_naming.py`, for example `--promote-policy studio-project-family-effect --promote-studio OpenAI --promote-project-name UnrealAI --promote-effect-family Dust --promote-effect-name Dust36`
 - because `delivery_finalize.py` reuses `delivery_package.py check --require-ready`, it now naturally inherits the final `effect_preview_approval` gate too
-- use dry-run promote first; real promote touches UE assets and should only run after the package is ready
+- use dry-run promote first; real promote runs an AssetTools batch (duplicate or move, optional save) with existence readbacks, refuses existing targets, and should only run after the package is ready
 
 ### `tools/learning_loop.py`
 
@@ -442,12 +348,6 @@ Purpose:
 - emit structural warnings before visual tuning
 - feed `niagara_material_integration_probe.py` when the question is specifically whether a material contract is truly satisfied by the live Niagara route
 
-### `tools/controlled_preview.py`
-
-Purpose:
-- create deterministic preview captures that do not rely on editor UI screenshots
-- support material previews, fixed-camera actor captures, and first-pass Niagara captures
-
 ### `tools/design_compare_checklist.py`
 
 Purpose:
@@ -458,7 +358,7 @@ Purpose:
 
 Purpose:
 - safely report stale local artifacts
-- optionally delete tagged Unreal preview actors and disposable local artifacts after a report is reviewed
+- optionally delete tagged Unreal preview actors (`SceneTools.remove_from_scene`) and Codex temp assets (`AssetTools.delete` with an `exists` readback) as one batch after a report is reviewed
 - when `report --effect <name>` is used, read the latest `delivery-index.json` and include a `delivery_guard` summary
 - surface open delivery gates during cleanup so cleanup/finalization does not accidentally hide an incomplete package
 - can scan UE temp Niagara assets such as `/Game/CodexTemp/MaterialPreview/NS_CodexPreview_*` and smoke-only Niagara outputs
@@ -487,14 +387,14 @@ This keeps cached references, audits, previews, cleanup reports, and tuning logs
 2. `reference_acceptance.py`
 3. `layer_evidence.py`
 4. `visual_layer_map.py`
-5. `controlled_preview.py`
+5. `../unreal-engine-mcp/scripts/capture.py`
 6. `preview_approval.py`
 7. `asset_plan.py`
 8. `integration_plan.py`
 9. `niagara_audit.py`
 10. `niagara_material_integration_probe.py`
 11. `niagara_asset_assistant.py`
-12. `ue_write_helpers.py`
+12. `builtin_mcp.py batch` for the plan's writes
 13. `visual_diff_qa.py`
 14. `design_compare_checklist.py`
 15. `gap_diagnosis.py`

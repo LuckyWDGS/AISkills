@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import argparse
-import json
-import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
+from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
 from .core import normalize_cli_global_args_no_subcommand, resolve_root_context, save_json, utc_now_iso
 from .delivery_package import check_delivery_payload, find_latest_delivery_index, load_delivery_payload
 from .effect_state import effect_folder
@@ -64,52 +62,59 @@ def default_promote_maps(payload: dict[str, Any], promote_root: str) -> list[dic
     return mappings
 
 
-def promote_script(mappings: list[dict[str, str]], mode: str, save_assets: bool) -> str:
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
+def promote_steps(mappings: list[dict[str, str]], mode: str, save_assets: bool,
+                  blocked: dict[str, str]) -> list[dict[str, Any]]:
+    """AssetTools batch steps for the mappings not in ``blocked`` (source -> reason). Pure."""
+    steps: list[dict[str, Any]] = []
+    for item in mappings:
+        source, target = package_path(item.get("source", "")), package_path(item.get("target", ""))
+        if source in blocked:
+            continue
+        steps.append({"label": f"{mode} {source} -> {target}", "source": source, "kind": mode,
+                      "toolset": "AssetTools", "tool": "duplicate" if mode == "duplicate" else "move",
+                      "args": {"path": source, "new_path": target},
+                      "readback": {"toolset": "AssetTools", "tool": "exists", "args": {"path": target}},
+                      "expect": True})
+        if save_assets:
+            steps.append({"label": f"save {target}", "source": source, "kind": "save",
+                          "toolset": "AssetTools", "tool": "save_assets", "args": {"asset_paths": [target]},
+                          "readback": {"toolset": "AssetTools", "tool": "is_dirty", "args": {"asset_path": target}},
+                          "expect": False})
+    return [{**step, "_line": index} for index, step in enumerate(steps, start=1)]
 
-        EAL = unreal.EditorAssetLibrary
-        tools = unreal.AssetToolsHelpers.get_asset_tools()
-        mappings = {json.dumps(mappings, ensure_ascii=False)!r}
-        mappings = json.loads(mappings)
-        mode = {mode!r}
-        results = []
 
-        def package_path(path):
-            path = (path or "").split(".", 1)[0]
-            return path
-
-        def split_target(path):
-            pkg = package_path(path)
-            folder, name = pkg.rsplit("/", 1)
-            return folder, name
-
+def promote_with_mcp(ctx, args: argparse.Namespace, mappings: list[dict[str, str]]) -> dict[str, Any]:
+    module = builtin_mcp(ctx.skill_root)
+    client = connect(ctx.skill_root, url=args.mcp_url, timeout=args.timeout, project=args.project)
+    try:
+        exists = lambda path: bool(module.unwrap_result(client.call_resolved_tool("AssetTools", "exists", {"path": path})))
+        blocked: dict[str, str] = {}
         for item in mappings:
-            source = package_path(item.get("source", ""))
-            target = package_path(item.get("target", ""))
-            row = {{"source": source, "target": target, "mode": mode, "success": False, "error": ""}}
-            try:
-                if not EAL.does_asset_exist(source):
-                    row["error"] = "source asset missing"
-                elif EAL.does_asset_exist(target):
-                    row["error"] = "target asset already exists"
-                elif mode == "duplicate":
-                    folder, name = split_target(target)
-                    asset = unreal.load_asset(source)
-                    created = tools.duplicate_asset(name, folder, asset)
-                    row["success"] = created is not None
-                else:
-                    row["success"] = bool(EAL.rename_asset(source, target))
-                if row["success"] and {save_assets!r}:
-                    EAL.save_asset(target, False)
-            except Exception as exc:
-                row["error"] = str(exc)
-            results.append(row)
-        print(json.dumps({{"success": all(item["success"] for item in results), "results": results}}, ensure_ascii=False))
-        """
-    ).strip()
+            source, target = package_path(item.get("source", "")), package_path(item.get("target", ""))
+            if not exists(source):
+                blocked[source] = "source asset missing"
+            elif exists(target):
+                blocked[source] = "target asset already exists"
+        steps = promote_steps(mappings, args.promote_mode, args.save_promoted_assets, blocked)
+        batch = module.run_batch(client, steps) if steps else {"ok": True, "results": []}
+    finally:
+        client.close()
+    status = {}
+    for row in batch.get("results", []):
+        step = steps[row["index"]]
+        if row.get("status") != "ok" and step["source"] not in status:
+            status[step["source"]] = row.get("error") or row.get("status", "")
+    results = []
+    for item in mappings:
+        source, target = package_path(item.get("source", "")), package_path(item.get("target", ""))
+        error = blocked.get(source) or status.get(source, "")
+        ran = source not in blocked and any(step["source"] == source for step in steps)
+        results.append({"source": source, "target": target, "mode": args.promote_mode,
+                        "success": ran and not error,
+                        "error": error})
+    return {"success": all(item["success"] for item in results) and not batch.get("problems"),
+            "results": results, "transport": "epic-mcp batch", "problems": batch.get("problems") or [],
+            "left_dirty": batch.get("left_dirty") or []}
 
 
 def run_promote(ctx, args: argparse.Namespace, payload: dict[str, Any]) -> dict[str, Any]:
@@ -146,9 +151,7 @@ def run_promote(ctx, args: argparse.Namespace, payload: dict[str, Any]) -> dict[
             "naming": promote_details,
             "promote_root": resolved_promote_root,
         }
-    client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    result = client.exec_json(promote_script(mappings, args.promote_mode, args.save_promoted_assets), no_preflight=True)
+    result = promote_with_mcp(ctx, args, mappings)
     return {
         "enabled": True,
         "naming": promote_details,
@@ -237,7 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dry-run-promote", action="store_true")
     parser.add_argument("--save-promoted-assets", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    parser.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     parser.add_argument("--timeout", type=int, default=180)
     parser.set_defaults(func=command)
     return parser

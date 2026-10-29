@@ -57,58 +57,26 @@ def resolved_environment(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def build_preview_command(args: argparse.Namespace, environment: dict[str, Any], out: Path | None = None) -> list[str]:
+    """The capture to run once the environment is staged; background/exposure/light rig stay plan intent."""
+    del environment  # Recorded in the plan; MCP capture cannot apply it.
     command = [
         sys.executable,
         str(material_preview_tool()),
-        "render",
+        "capture",
         args.material_path,
         "--root",
         str(args.root),
+        "--route",
+        "thumbnail" if args.carrier == "mesh" else "viewport",
         "--carrier",
         args.carrier,
-        "--mesh",
-        args.mesh,
-        "--lighting",
-        args.lighting,
-        "--resolution",
-        str(args.resolution),
-        "--yaw",
-        str(args.yaw),
-        "--pitch",
-        str(args.pitch),
-        "--distance",
-        str(args.distance),
-        "--fov",
-        str(args.fov),
-        "--sim-time",
-        str(args.sim_time),
-        "--background-preset",
-        str(environment["background_preset"]),
-        "--exposure-bias",
-        str(environment["exposure_bias"]),
-        "--light-rig",
-        str(environment["light_rig"]),
     ]
-    if args.width:
-        command.extend(["--width", str(args.width)])
-    if args.height:
-        command.extend(["--height", str(args.height)])
     if args.effect:
         command.extend(["--effect", args.effect])
-    if args.template_system:
-        command.extend(["--template-system", args.template_system])
-    if args.verify_system_path:
-        command.extend(["--verify-system-path", args.verify_system_path])
-    if args.with_complexity:
-        command.append("--with-complexity")
     if out:
         command.extend(["--out", str(out)])
-    if args.complexity_out:
-        command.extend(["--complexity-out", args.complexity_out])
     if args.project:
         command.extend(["--project", args.project])
-    if args.endpoint:
-        command.extend(["--endpoint", args.endpoint])
     if args.timeout:
         command.extend(["--timeout", str(args.timeout)])
     if args.markdown_previews:
@@ -258,6 +226,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.execute:
+        parser.error("--execute drove the retired UnrealBridge render harness (camera, lighting, background and exposure axes), which Epic MCP does not expose. Stage each context in the level, capture it with material_preview.py capture --route viewport --pose ..., and pass the reports on with --preview-report.")
     return args.func(args)
 
 

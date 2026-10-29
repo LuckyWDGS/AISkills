@@ -401,7 +401,7 @@ class MaterialDeliverySmokeTests(unittest.TestCase):
             self.assertEqual(by_name["permutation_budget_guard"]["status"], "pass")
             self.assertEqual(by_name["material_instance_batch"]["status"], "planned")
 
-    def test_execute_runs_full_chain(self) -> None:
+    def test_execute_runs_live_steps_and_plans_captures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             package = write_json(root, "package.json", package_payload())
@@ -515,12 +515,16 @@ class MaterialDeliverySmokeTests(unittest.TestCase):
                         "--require-ready",
                     ]
                 )
-            self.assertEqual(code, 0, stderr)
+            # Live MCP steps run; preview tiers are captured by staging carriers, so they stay planned
+            # and readability scoring waits for that capture evidence instead of passing.
+            self.assertNotEqual(code, 0, stderr)
             report = json.loads(Path(stdout.strip()).read_text(encoding="utf-8"))
-            self.assertEqual(report["status"], "pass")
-            self.assertTrue(report["gate"]["smoke_passed"])
+            statuses = {step["name"]: step["status"] for step in report["steps"]}
+            self.assertEqual(statuses["material_instance_batch"], "pass")
+            self.assertEqual({statuses[name] for name in statuses if name.startswith("preview_matrix:")}, {"planned"})
+            self.assertEqual(report["gate"]["blocked_steps"], ["preview_readability_score"])
+            self.assertFalse(report["gate"]["smoke_passed"])
             self.assertEqual(report["summary"]["risk_count"], 0)
-            self.assertEqual(report["steps"][-1]["status"], "pass")
 
     def test_resume_cache_reuses_completed_planning_steps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

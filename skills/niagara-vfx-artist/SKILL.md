@@ -20,9 +20,7 @@ gap. The historical 5.8.4 case involved opening an asset; it does not authorize
 opening/focusing editor UI for this user. If background loading cannot establish
 readiness, report that specific boundary rather than repeatedly sending writes.
 
-The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired. `niagara_audit` and `niagara_material_integration_probe` read through MCP. The editor-connected modes of `niagara_asset_assistant` apply, `niagara_param_sweep`, `runtime_control_probe`, `live_asset_verify`, `controlled_preview`, `effect_control_schema` live reads, `asset_cleanup` execute, `ue_write_helpers`, and `flipbook_ue_pipeline` call retired `UnrealBridge*Library` APIs and fail fast until ported to MCP; their offline plan/report modes still work. Do the live step with MCP tools and feed the resulting JSON into the local reports; for previews that is `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). `ue_smoke`, `delivery_finalize --promote-assets` and `control_provenance_check` use only stock `unreal.*` and run over Epic Python Remote Execution. See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
-
-*(not ported)*: the tool only works against the editor and still needs an MCP port. *(live step not ported)*: its offline modes work, but the editor step needs a port. Running a live step prints the MCP route to use instead (from `scripts/retired_tools.json`).
+The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired and every editor-connected tool here runs on Epic MCP: `niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`, `ue_smoke`, `effect_control_schema` / `control_provenance_check` (user variables via `niagara_audit`), `asset_cleanup` and `delivery_finalize --promote-assets` (AssetTools batches). `niagara_asset_assistant` plans; apply its plans with NiagaraToolset_System tools through `builtin_mcp.py batch`. Previews use `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
 
 ## Overview
 
@@ -65,7 +63,7 @@ Default team model:
    For Niagara Ribbon / trail layers, explicitly state that the renderer's default UV convention is `U = ribbon length` and `V = ribbon width`. Ask the material side to put primary trail motion on raw `TexCoord0.U` / X, such as `Time * Speed -> Append(X, 0)` and length tiling `(Tiling_U, 1.0)`, while keeping width falloff on raw `TexCoord0.V` / Y. V-axis offsets may be used for vertical wobble/distortion. If a renderer uses custom UV overrides or a material intentionally remaps art-space texture axes, read it back and document the exception before handing the contract to material work.
 
 6. Implement or plan Niagara.
-   Prefer template-first creation and reviewable mutation plans. Use official MCP for execution and structural readback. `niagara_asset_assistant.py` can generate plans; apply them with official Niagara tools (its own apply path is disabled pending an MCP port), then read back with `niagara_audit.py`.
+   Prefer template-first creation and reviewable mutation plans. Use official MCP for execution and structural readback. `niagara_asset_assistant.py` generates the plans (it has no executor); apply them with NiagaraToolset_System tools (`AddEmitter`, `AddRenderer`, `SetRendererData`, `AddModule`, `SetStackInputData`, `ApplyStackIssueFix`) and AssetTools through `builtin_mcp.py batch`, then read back with `niagara_audit.py` (`niagara_asset_assistant.py inspect-system` runs the same audit).
    If a required capability appears missing, inspect current official MCP schemas, then official Python / Blueprint APIs and local UE source. Use an existing Epic route; for an evidenced uncovered operation, use a stock `unreal.*` API through `../unreal-engine-mcp/scripts/python_remote.py`. Do not write custom C++ wrappers or editor plugins.
 
 7. Validate structurally before visual tuning.
@@ -94,7 +92,7 @@ Default team model:
 
 ## Closed-Loop Tools
 
-The local planning/report/image tooling in `tools/` and `scripts/` is part of the workflow. `niagara_audit.py` and `niagara_material_integration_probe.py` read through MCP. The tools marked *(not ported)* or *(live step not ported)* below are disabled in the editor (retired UnrealBridge APIs) pending an MCP port; use official MCP for those live steps.
+The local planning/report/image tooling in `tools/` and `scripts/` is part of the workflow. Editor-connected tools below run on Epic MCP.
 
 Use these when relevant:
 
@@ -106,14 +104,14 @@ Use these when relevant:
 - `tools/integration_plan.py` for notify/socket/owner/user-parameter hookup planning.
 - `tools/niagara_audit.py` for system/emitter/renderer readback.
 - `tools/niagara_material_integration_probe.py` for checking a real Niagara System against material-side contract/delivery/preview evidence.
-- `tools/niagara_asset_assistant.py` *(live step not ported)* for template-based Niagara creation or repair plans.
-- `../unreal-engine-mcp/scripts/capture.py` for MCP viewport frames and thumbnails (step 8). `tools/controlled_preview.py` *(live step not ported)* remains only for its offline modes.
+- `tools/niagara_asset_assistant.py` for template-based Niagara creation or repair plans (plan only).
+- `../unreal-engine-mcp/scripts/capture.py` for MCP viewport frames and thumbnails (step 8).
 - `tools/effect_preview_approval.py` for final effect preview approval records that can gate promotion after visual review.
 - `tools/visual_diff_qa.py` and `tools/design_compare_checklist.py` for visual comparison.
 - `tools/gap_diagnosis.py` and `tools/parameter_tuning_log.py` for intentional tuning.
 - `tools/flipbook_builder.py` for video-to-SubUV flipbook recommendation and atlas generation.
-- `tools/flipbook_ue_pipeline.py` *(not ported)* for one-click atlas import, texture fix, SubUV material creation, optional sprite preview, and optional first-pass Niagara hookup/verification.
-- `tools/delivery_package.py`, `tools/delivery_dashboard.py`, `tools/delivery_finalize.py`, `tools/ue_smoke.py`, `tools/learning_loop.py`, and `tools/asset_cleanup.py` *(not ported)* for closeout.
+- For a flipbook route: build the atlas with `vfx-flipbook-generator`, import and fix it with `unreal-material-artist`'s `texture_import_fix.py`, author the SubUV material with its `material_toolset_builder.py recipe fire_flipbook --execute`, then hook it up with NiagaraToolset_System and verify with `live_asset_verify.py`.
+- `tools/delivery_package.py`, `tools/delivery_dashboard.py`, `tools/delivery_finalize.py`, `tools/ue_smoke.py`, `tools/learning_loop.py`, and `tools/asset_cleanup.py` for closeout.
 
 For an official material graph read with saved evidence, use:
 
@@ -140,13 +138,13 @@ python ../unreal-material-artist/tools/official_toolsets_bridge.py material:get_
 - If the silhouette is right but color, alpha, UV flow, edge softness, or shader detail is wrong, hand the material side to `unreal-material-artist`.
 - Generated flipbook/SubUV atlas PNGs must be power-of-two on both axes by default. If a generated atlas is non-power-of-two, immediately rebuild or resize it to the nearest valid power-of-two dimensions per axis, such as raw `2160x4090` -> final `2048x4096`, and keep the raw dimensions recorded in the manifest.
 - When `tools/delivery_package.py` is given `--final-material` paths, expect it to consume approved material delivery reports from the sibling `material-delivery` session tree. A final material is stronger when Niagara delivery can prove both the Niagara-side effect package and the material-side approved delivery report.
-- For final delivery, prefer `delivery_package.py --require-ready` or `delivery_package.py check --index <delivery-index.json> --require-ready`; `niagara_asset_assistant.py apply-plan --apply --verify` *(live step not ported)* can also enforce an existing ready package through `--delivery-index`, `--delivery-manifest`, `--delivery-effect`, or `--require-delivery-ready`.
-- For write-side Niagara work, prefer official MCP edits followed by official structural/compile/issue readback and local delivery reports. `niagara_asset_assistant.py apply-plan --apply` is disabled (retired UnrealBridge APIs) pending an MCP port.
+- For final delivery, prefer `delivery_package.py --require-ready` or `delivery_package.py check --index <delivery-index.json> --require-ready`.
+- For write-side Niagara work, prefer official MCP edits followed by official structural/compile/issue readback and local delivery reports. `niagara_asset_assistant.py` only plans those edits.
 - Approved previews only prove readiness when they match the current anchor revision and the current final system/material route. Old approvals become historical evidence, not current delivery proof.
 - Use Niagara structural contract flags or `--effect-type-contract` when a package has non-negotiable structure, for example requiring Ribbon renderers, material binding, Attribute Reader data flow, FixedBounds, and no test/debug emitters.
 - Use `--require-visual-qa` for design-fidelity delivery; otherwise `ready` only proves structural/asset route health, not that the preview visually matches the accepted design.
 - Use `delivery_chain_smoke.py` on real effects before claiming a workflow is production-safe. A smoke can pass tool execution while still reporting `risk` or `incomplete` package health; that is useful evidence, not a failure to hide.
-- Plan promotion only after the delivery index is ready. Use official AssetTools for covered duplicate/move/save operations and verify resulting references. `delivery_finalize.py` can produce the plan; its `--promote-assets` execution uses stock `unreal.*` over Epic Python Remote Execution, so prefer AssetTools when it covers the move.
+- Plan promotion only after the delivery index is ready. Use official AssetTools for covered duplicate/move/save operations and verify resulting references. `delivery_finalize.py --dry-run-promote` shows the mappings; `--promote-assets` runs them as an AssetTools batch (duplicate or move, optional save) with existence readbacks and refuses a target that already exists.
 
 ## Image Generation Bridge
 

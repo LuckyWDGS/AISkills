@@ -121,7 +121,7 @@ Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection guid
 
 The `unreal-material-artist`, `niagara-vfx-artist`, and `vfx-flipbook-generator` skills use this same routing. Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Image capture uses `scripts/capture.py` (`EditorAppToolset.CaptureViewport` / `CaptureAssetImage`, `mcp_capture/1` reports). Read `ProgrammaticToolset.get_execution_environment` before its first script.
 
-Local image processing, reference locks, visual comparison, manifests, and report packaging stay local: they are workflow code. Legacy scripts in those skills that call `UnrealBridge*Library` are disabled and fail fast; perform the operation with MCP tools and feed the result into the local report code instead.
+Local image processing, reference locks, visual comparison, manifests, and report packaging stay local: they are workflow code. Their editor-connected tools all run on Epic MCP; none constructs a plugin client.
 
 ## Field-tested UE 5.8 MCP notes
 
@@ -233,7 +233,7 @@ state which were actually completed.
 | Read logic and actual pin connections | [Graph inspection](references/blueprint-graph-inspection.md) |
 | Animation Blueprint, state machines and AI | [Animation and AI](references/animation-state-machines-mcp.md) |
 | Official background Python for an MCP gap | [Epic Python Remote Execution](references/official-python-remote.md) |
-| Porting a legacy UnrealBridge writer (plan → batch) | [Porting legacy writers](references/porting-legacy-writers.md) |
+| Writing an MCP executor for a plan (plan → batch) | [Porting legacy writers](references/porting-legacy-writers.md) |
 | Rules shared by all four UE skills | [Shared conventions](references/shared-conventions.md) |
 | MCP protocol, startup and discovery | [Built-in MCP](references/builtin-mcp.md) |
 | Version/source audit and historical boundaries | [UE 5.8.4 audit](references/ue-5.8.4-audit.md) |

@@ -203,57 +203,63 @@ def collect_output_connections(module: Any, client: Any, material_path: str) -> 
 
 REMOTE_GRAPH_SCRIPT = """
 import json, re, unreal
-L = unreal.MaterialEditingLibrary
-base = unreal.load_asset({path!r})
-is_function = isinstance(base, unreal.MaterialFunction)
-props = {{re.sub(r"[^a-z0-9]", "", name.lower()): getattr(unreal.MaterialProperty, name)
-         for name in dir(unreal.MaterialProperty) if name.startswith("MP_")}}
 
-def prop(expr, name):
-    try:
-        return expr.get_editor_property(name)
-    except Exception:
-        return None
+# Remote Execution shares the editor's __main__; keep asset references local so nothing stays loaded.
+def _codex_material_graph():
+    L = unreal.MaterialEditingLibrary
+    base = unreal.load_asset({path!r})
+    is_function = isinstance(base, unreal.MaterialFunction)
+    props = {{re.sub(r"[^a-z0-9]", "", name.lower()): getattr(unreal.MaterialProperty, name)
+             for name in dir(unreal.MaterialProperty) if name.startswith("MP_")}}
 
-def short_class(expr):
-    name = expr.get_class().get_name()
-    return name[len("MaterialExpression"):] if name.startswith("MaterialExpression") else name
+    def prop(expr, name):
+        try:
+            return expr.get_editor_property(name)
+        except Exception:
+            return None
 
-nodes = []
-exprs = L.get_material_function_expressions(base) if is_function else L.get_material_expressions(base)
-for expr in exprs:
-    names = list(L.get_material_expression_input_names(expr))
-    sources = (L.get_inputs_for_material_function_expression(base, expr) if is_function
-               else L.get_inputs_for_material_expression(base, expr))
-    node = {{"id": expr.get_path_name(), "class_name": short_class(expr), "inputs": []}}
-    for index, source in enumerate(sources):
-        node["inputs"].append({{
-            "input_name": names[index] if index < len(names) else str(index),
-            "output_name": L.get_input_node_output_name_for_material_expression(expr, source) if source else "",
-            "source": source.get_path_name() if source else "",
-        }})
-    cls = node["class_name"]
-    if "Parameter" in cls and "Collection" not in cls:
-        node["parameterName"] = str(prop(expr, "parameter_name") or "")
-        node["group"] = str(prop(expr, "group") or "")
-    elif cls == "NamedRerouteUsage":
-        declaration = prop(expr, "declaration")  # Protected in UE 5.8.4; used only if a build exposes it.
-        if declaration:
-            node["declaration"] = declaration.get_path_name()
-    elif cls == "MaterialFunctionCall":
-        function = prop(expr, "material_function")
-        node["function"] = function.get_path_name() if function else ""
-    nodes.append(node)
+    def short_class(expr):
+        name = expr.get_class().get_name()
+        return name[len("MaterialExpression"):] if name.startswith("MaterialExpression") else name
 
-outputs = []
-if not is_function:
-    for wanted in {properties!r}:
-        enum = props.get(re.sub(r"[^a-z0-9]", "", wanted.lower()))
-        source = L.get_material_property_input_node(base, enum) if enum is not None else None
-        if source:
-            outputs.append({{"property": wanted, "source": source.get_path_name(),
-                            "output_name": L.get_material_property_input_node_output_name(base, enum)}})
-print(json.dumps({{"nodes": nodes, "outputs": outputs}}))
+    nodes = []
+    exprs = L.get_material_function_expressions(base) if is_function else L.get_material_expressions(base)
+    for expr in exprs:
+        names = list(L.get_material_expression_input_names(expr))
+        sources = (L.get_inputs_for_material_function_expression(base, expr) if is_function
+                   else L.get_inputs_for_material_expression(base, expr))
+        node = {{"id": expr.get_path_name(), "class_name": short_class(expr), "inputs": []}}
+        for index, source in enumerate(sources):
+            node["inputs"].append({{
+                "input_name": names[index] if index < len(names) else str(index),
+                "output_name": L.get_input_node_output_name_for_material_expression(expr, source) if source else "",
+                "source": source.get_path_name() if source else "",
+            }})
+        cls = node["class_name"]
+        if "Parameter" in cls and "Collection" not in cls:
+            node["parameterName"] = str(prop(expr, "parameter_name") or "")
+            node["group"] = str(prop(expr, "group") or "")
+        elif cls == "NamedRerouteUsage":
+            declaration = prop(expr, "declaration")  # Protected in UE 5.8.4; used only if a build exposes it.
+            if declaration:
+                node["declaration"] = declaration.get_path_name()
+        elif cls == "MaterialFunctionCall":
+            function = prop(expr, "material_function")
+            node["function"] = function.get_path_name() if function else ""
+        nodes.append(node)
+
+    outputs = []
+    if not is_function:
+        for wanted in {properties!r}:
+            enum = props.get(re.sub(r"[^a-z0-9]", "", wanted.lower()))
+            source = L.get_material_property_input_node(base, enum) if enum is not None else None
+            if source:
+                outputs.append({{"property": wanted, "source": source.get_path_name(),
+                                "output_name": L.get_material_property_input_node_output_name(base, enum)}})
+    print(json.dumps({{"nodes": nodes, "outputs": outputs}}))
+
+_codex_material_graph()
+del _codex_material_graph
 """
 
 
@@ -269,12 +275,17 @@ def collect_remote_graph(skill_root: Path, asset_path: str, project: str | None)
 
 STATS_SCRIPT = """
 import json, unreal
-asset = unreal.load_asset({path!r})
-stats = unreal.MaterialEditingLibrary.get_statistics(asset)
-fields = ["num_vertex_shader_instructions", "num_pixel_shader_instructions", "num_samplers",
-          "num_vertex_texture_samples", "num_pixel_texture_samples", "num_virtual_texture_samples",
-          "num_uv_scalars", "num_interpolator_scalars"]
-print(json.dumps({{name: getattr(stats, name) for name in fields if hasattr(stats, name)}}))
+
+def _codex_material_stats():
+    asset = unreal.load_asset({path!r})
+    stats = unreal.MaterialEditingLibrary.get_statistics(asset)
+    fields = ["num_vertex_shader_instructions", "num_pixel_shader_instructions", "num_samplers",
+              "num_vertex_texture_samples", "num_pixel_texture_samples", "num_virtual_texture_samples",
+              "num_uv_scalars", "num_interpolator_scalars"]
+    print(json.dumps({{name: getattr(stats, name) for name in fields if hasattr(stats, name)}}))
+
+_codex_material_stats()
+del _codex_material_stats
 """
 
 

@@ -11,7 +11,7 @@ When importing or wiring atlases in UE, follow the [shared UE conventions](../un
 editor connections only, MCP first, and Chinese annotations on UE modules you
 author or change. Local-only atlas generation needs no UE annotations.
 
-Atlas generation, FFmpeg extraction, alpha QA, packing, and manifests run locally and do not need an Unreal editor plugin. When importing or wiring the atlas into UE 5.8+, follow the sibling `unreal-engine-mcp` official MCP policy: discover TextureTools.import_file, ObjectTools properties, MaterialTools/MaterialInstanceTools, AssetTools, and NiagaraToolsets, then use direct MCP. Read ProgrammaticToolset's environment before batching. The older Niagara `flipbook_ue_pipeline.py` called retired UnrealBridge APIs and is disabled pending an MCP port. File readiness alone is not live material/Niagara binding proof.
+Atlas generation, FFmpeg extraction, alpha QA, packing, and manifests run locally and do not need an Unreal editor plugin. When importing or wiring the atlas into UE 5.8+, follow the sibling `unreal-engine-mcp` official MCP policy: discover TextureTools.import_file, ObjectTools properties, MaterialTools/MaterialInstanceTools, AssetTools, and NiagaraToolsets, then use direct MCP. Read ProgrammaticToolset's environment before batching. The MCP route is: `unreal-material-artist`'s `texture_import_fix.py` for the atlas import settings, its `material_toolset_builder.py recipe fire_flipbook --execute` (or an MI batch) for the SubUV material, NiagaraToolset_System for the renderer hookup, and `niagara-vfx-artist`'s `live_asset_verify.py` for the route check. File readiness alone is not live material/Niagara binding proof.
 
 Use this skill when the user wants a flipbook atlas, not just a single concept image.
 

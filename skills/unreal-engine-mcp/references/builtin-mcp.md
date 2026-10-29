@@ -50,8 +50,8 @@ Use `--args-file <utf8-json-file>` for complex call arguments on PowerShell. The
 over the `scripts/ue_mcp` package: `protocol` (messages, errors), `client`
 (HTTP session, discovery, schema cache, session reuse), `schema` (brief
 views), `editor` (which editor serves an endpoint), `batch` (ordered steps with
-readback), `remote` (Python Remote Execution), `legacy_bridge` (old
-`BridgeClient`), `skill_api` (what sibling skills import through their `mcp.py`
+readback), `remote` (Python Remote Execution), `capture` (EditorAppToolset
+images, `scripts/capture.py`), `skill_api` (what sibling skills import through their `mcp.py`
 shims) and `cli`. `scripts/live_smoke.py` checks every tool read-only against a
 running editor, and `scripts/record_fixtures.py` re-records the material and
 Niagara contract-test fixtures (`--check` only reports drift). Python 3.10+.

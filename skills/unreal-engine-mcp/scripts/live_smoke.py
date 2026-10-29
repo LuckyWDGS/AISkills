@@ -37,6 +37,9 @@ TOOLS = {
     "capture": _HERE / "capture.py",
     "material_audit": SKILLS / "unreal-material-artist" / "tools" / "material_audit.py",
     "material_domain_audit": SKILLS / "unreal-material-artist" / "tools" / "material_domain_audit.py",
+    "texture_import_audit": SKILLS / "unreal-material-artist" / "tools" / "texture_import_audit.py",
+    "shader_permutation_report": SKILLS / "unreal-material-artist" / "tools" / "shader_permutation_report.py",
+    "live_asset_verify": SKILLS / "niagara-vfx-artist" / "tools" / "live_asset_verify.py",
     "material_instance_batch": SKILLS / "unreal-material-artist" / "tools" / "material_instance_batch.py",
     "niagara_audit": SKILLS / "niagara-vfx-artist" / "tools" / "niagara_audit.py",
 }
@@ -46,6 +49,7 @@ DEFAULTS = {
     "instance": "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray",
     "niagara": "/Game/LevelPrototyping/Interactable/JumpPad/Assets/NS_JumpPad",
     "blueprint": "/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter",
+    "texture": "/Game/Characters/Mannequins/Textures/Manny/T_Manny_01_BN",
 }
 
 
@@ -170,6 +174,33 @@ class Smoke:
         expect(contract["domain"] and contract["blend_mode"] and contract["shading_models"], f"empty contract {contract}")
         return f"{contract['domain']} / {contract['blend_mode']} / {','.join(contract['shading_models'])}"
 
+    def texture(self) -> str:
+        out_file = self.work / "texture.json"
+        code, out = run_tool("texture_import_audit", self.args.texture, "--role", "normal", "--out", str(out_file))
+        expect(code == 0, out[-400:])
+        row = load(out_file)["textures"][0]
+        expect(row["found"] and row["width"] > 0 and row["compression_settings"], f"empty texture row {row}")
+        return f"{row['width']}x{row['height']} {row['compression_settings']} sRGB={row['srgb']}"
+
+    def permutations(self) -> str:
+        out_file = self.work / "permutations.json"
+        folder = self.args.material.rsplit("/", 1)[0]
+        code, out = run_tool("shader_permutation_report", "--path-prefix", folder, "--out", str(out_file))
+        expect(code == 0, out[-400:])
+        summary = load(out_file)["summary"]
+        return f"{summary['groups']} group(s), {summary['bases']} base(s)"
+
+    def live_verify(self) -> str:
+        out_file = self.work / "live-verify.json"
+        code, out = run_tool("live_asset_verify", "--texture-asset-path", self.args.texture, "--material-path",
+                             self.args.material, "--renderer-path", self.args.niagara, "--source-policy", "ue-only",
+                             "--out", str(out_file))
+        expect(code == 0, out[-400:])
+        report = load(out_file)
+        expect(report["texture_asset_exists"] and report["material_exists"] and report["renderer_exists"],
+               "texture, material or renderer not found")
+        return f"renderer materials: {report['renderer_material_path'][:80]}"
+
     def capture(self) -> str:
         camera = lambda: unwrap_result(self.client.call_resolved_tool("EditorAppToolset", "GetCameraTransform", {}))
         before = camera()
@@ -221,6 +252,9 @@ class Smoke:
         if a.full:
             self.check("material_audit (MCP graph)", [a.material], lambda: self.material("mcp"))
         self.check("material_domain_audit", [a.material], self.domain)
+        self.check("texture_import_audit", [a.texture], self.texture)
+        self.check("shader_permutation_report", [a.material], self.permutations)
+        self.check("live_asset_verify", [a.texture, a.material, a.niagara], self.live_verify)
         self.check("capture (thumbnail + posed viewport)", [a.material], self.capture)
         self.check("material_instance_batch (plan only)", [a.material, a.instance], self.instance_plan)
         self.check("inspect_blueprint", [a.blueprint], self.blueprint)

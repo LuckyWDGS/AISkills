@@ -62,22 +62,17 @@ The JSON file must match the live schema. `--mcp-url` or UNREAL_MCP_URL selects
 the editor endpoint. Reports record actual transport and resolved toolset. Tool
 errors produce a failed report and nonzero exit code, without retry.
 
-UnrealBridge (custom plugin + TCP) is retired. Older pipelines still construct
-`BridgeClient`, which now runs over Epic's Python Remote Execution.
-Their editor-connected modes call retired `UnrealBridge*Library` APIs and now
-fail fast: `graph_refactor_apply`, `material_asset_library register-material`,
-`material_domain_rebuilder`, `material_function_linter`, `material_preview`
-`render` / `sweep`,
-`material_toolset_builder build` / `recipe --execute`, `runtime_param_trace`,
-`shader_permutation_report`, `texture_import_audit`, and `texture_import_fix`.
-Their offline planning/report modes still work. Perform the live step with MCP
-tools, save the result JSON, and feed it into the local report code. Each is
-pending a port to MCP. `scripts/retired_tools.json` lists each unported tool with the MCP route to use instead;
-running one prints that route immediately. `material_audit` and `material_domain_audit` (reads), `material_preview capture`
-(EditorAppToolset capture) and `material_instance_batch` (write) are ported and
-are the reference patterns; follow
-[porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
-for the remaining writers.
+UnrealBridge (custom plugin + TCP) is retired and no tool here constructs a plugin
+client any more. Every editor-connected tool reads or writes through Epic MCP:
+`material_audit`, `material_domain_audit`, `texture_import_audit`,
+`material_function_linter`, `shader_permutation_report` and `runtime_param_trace`
+(ProgrammaticToolset reads), `material_preview capture` (EditorAppToolset),
+`material_instance_batch` and `texture_import_fix` (plan, then `builtin_mcp`
+batch with readbacks), and `material_toolset_builder build` (a create script for
+the expressions, then a batch for properties and wiring).
+`graph_refactor_apply`, `preview_matrix` and `preview_environment_executor` only
+plan; see [porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
+for the pattern if one of them gets an MCP executor.
 
 For an operation no MCP tool covers, use a stock `unreal.*` API through
 `../unreal-engine-mcp/scripts/python_remote.py`. Record the uncovered operation,

@@ -1,119 +1,85 @@
+"""Safely report and remove stale local VFX artifacts and Codex temp UE actors/assets.
+
+UE reads and deletes go through Epic's built-in MCP: ``SceneTools.find_actors`` for
+tagged preview actors, ``AssetTools.find_assets`` for temp assets (classified
+locally), and a ``builtin_mcp`` batch for removal with an ``exists`` readback.
+"""
+
 from __future__ import annotations
 
 import argparse
-import textwrap
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, load_json, resolve_root_context, save_json, utc_now_iso
+from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
 
 
-def ue_temp_asset_report_script(roots: list[str]) -> str:
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
-
-        EAL = unreal.EditorAssetLibrary
-        ROOTS = {roots!r}
-        rows = []
-
-        def classify(pkg):
-            leaf = pkg.rsplit("/", 1)[-1]
-            if pkg.startswith("/Game/CodexTemp/MaterialPreview/NS_CodexPreview_"):
-                return {{"reason": "codex-preview-niagara-asset", "safe_delete": True}}
-            if pkg.startswith("/Game/CodexTemp/") and "/Niagara/" in pkg:
-                smoke_tokens = ("Smoke", "DryRun", "Pipeline", "Promote", "ApprovalGate")
-                manual_tokens = ("Quarantine", "RendererTest", "TorchFlame_Codex", "SubUV_Test")
-                if any(token in pkg or token in leaf for token in smoke_tokens):
-                    return {{"reason": "codex-smoke-niagara-asset", "safe_delete": True}}
-                if any(token in pkg or token in leaf for token in manual_tokens):
-                    return {{"reason": "manual-review-codex-niagara-experiment", "safe_delete": False}}
-            if pkg.startswith("/Game/VFX/") and "/Niagara/" in pkg and "Smoke" in leaf:
-                return {{"reason": "promoted-smoke-niagara-asset", "safe_delete": True}}
-            return None
-
-        for root in ROOTS:
-            try:
-                assets = EAL.list_assets(root, True, False)
-            except Exception:
-                assets = []
-            for asset in assets:
-                pkg = str(asset).split(".", 1)[0]
-                info = classify(pkg)
-                if info:
-                    rows.append({{
-                        "type": "ue-asset",
-                        "asset_path": pkg,
-                        "reason": info["reason"],
-                        "safe_delete": bool(info["safe_delete"]),
-                    }})
-
-        print(json.dumps(sorted(rows, key=lambda item: item.get("asset_path", "")), ensure_ascii=False))
-        """
-    ).strip()
+PREVIEW_ACTOR_TAG = "CodexVFXPreviewTemp"
 
 
-def ue_delete_asset_script(asset_path: str) -> str:
-    return textwrap.dedent(
-        f"""
-        import json
-        import unreal
+def classify_ue_asset(package: str) -> dict[str, Any] | None:
+    """Cleanup policy for a UE package path; None leaves it alone."""
+    leaf = package.rsplit("/", 1)[-1]
+    if package.startswith("/Game/CodexTemp/MaterialPreview/NS_CodexPreview_"):
+        return {"reason": "codex-preview-niagara-asset", "safe_delete": True}
+    if package.startswith("/Game/CodexTemp/") and "/Niagara/" in package:
+        smoke_tokens = ("Smoke", "DryRun", "Pipeline", "Promote", "ApprovalGate")
+        manual_tokens = ("Quarantine", "RendererTest", "TorchFlame_Codex", "SubUV_Test")
+        if any(token in package or token in leaf for token in smoke_tokens):
+            return {"reason": "codex-smoke-niagara-asset", "safe_delete": True}
+        if any(token in package or token in leaf for token in manual_tokens):
+            return {"reason": "manual-review-codex-niagara-experiment", "safe_delete": False}
+    if package.startswith("/Game/VFX/") and "/Niagara/" in package and "Smoke" in leaf:
+        return {"reason": "promoted-smoke-niagara-asset", "safe_delete": True}
+    return None
 
-        EAL = unreal.EditorAssetLibrary
-        TR = unreal.UnrealBridgeToolsetRegistryLibrary
-        asset_path = {asset_path!r}
-        object_path = asset_path + "." + asset_path.rsplit("/", 1)[-1]
-        asset_editor = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
-        result = {{
-            "asset_path": asset_path,
-            "success": False,
-            "editor_closed": False,
-            "delete_error": "",
-            "delete_method": "AssetTools.delete",
-        }}
-        try:
-            asset = unreal.load_asset(asset_path)
-            if asset is not None:
-                try:
-                    asset_editor.close_all_editors_for_asset(asset)
-                    result["editor_closed"] = True
-                except Exception:
-                    pass
-            try:
-                unreal.SystemLibrary.collect_garbage()
-            except Exception:
-                pass
-            tool = TR.execute_qualified_tool(
-                'toolset_registry.toolsets.core.asset.AssetTools.delete',
-                json.dumps({{'path': object_path}}, ensure_ascii=False),
-                True,
-            )
-            output = None
-            if tool.json_output:
-                try:
-                    output = json.loads(tool.json_output)
-                except Exception:
-                    output = tool.json_output
-            result["tool_success"] = bool(tool.success)
-            result["tool_output"] = output
-            result["success"] = bool(tool.success) and bool((output or {{}}).get("returnValue", False))
-            result["exists_after"] = bool(EAL.does_asset_exist(object_path))
-            if result["exists_after"]:
-                result["success"] = False
-            if not result["success"]:
-                result["delete_error"] = tool.error or f"AssetTools.delete returned {{output!r}}"
-        except Exception as exc:
-            result["delete_error"] = str(exc)
-        asset = None
-        try:
-            unreal.SystemLibrary.collect_garbage()
-        except Exception:
-            pass
-        print(json.dumps(result, ensure_ascii=False))
-        """
-    ).strip()
+
+def scan_ue(client: Any, module: Any, *, actors: bool, asset_roots: list[str]) -> list[dict[str, Any]]:
+    def call(toolset: str, tool: str, args: dict[str, Any]) -> Any:
+        return module.unwrap_result(client.call_resolved_tool(toolset, tool, args))
+
+    rows: list[dict[str, Any]] = []
+    if actors:
+        found = call("SceneTools", "find_actors", {"name": "", "tag": PREVIEW_ACTOR_TAG, "collision_channels": [],
+                                                   "root": None, "actor_type": None, "bounds": None})
+        for actor in found or []:
+            ref = actor.get("refPath", "") if isinstance(actor, dict) else str(actor)
+            rows.append({"type": "ue-actor", "actor_name": ref.rsplit(".", 1)[-1], "actor_ref": ref,
+                         "reason": PREVIEW_ACTOR_TAG, "safe_delete": True})
+    for root in asset_roots:
+        if not call("AssetTools", "exists", {"path": root}):
+            continue
+        for path in call("AssetTools", "find_assets", {"folder_path": root, "name": "", "asset_type": None,
+                                                       "recursive": True, "tags": None}) or []:
+            package = str(path).split(".", 1)[0]
+            info = classify_ue_asset(package)
+            if info:
+                rows.append({"type": "ue-asset", "asset_path": package, **info})
+    return sorted(rows, key=lambda item: item.get("asset_path") or item.get("actor_ref", ""))
+
+
+def candidate_label(candidate: dict[str, Any]) -> str:
+    if candidate["type"] == "ue-actor":
+        return f"remove actor {candidate.get('actor_name')}"
+    return f"delete {candidate.get('asset_path')}"
+
+
+def build_delete_steps(candidates: list[dict[str, Any]], *, actors: bool, assets: bool) -> list[dict[str, Any]]:
+    """Batch steps for the safe UE candidates the flags allow. Pure."""
+    steps: list[dict[str, Any]] = []
+    for candidate in candidates:
+        if not candidate.get("safe_delete"):
+            continue
+        if candidate["type"] == "ue-actor" and actors and candidate.get("actor_ref"):
+            steps.append({"label": candidate_label(candidate), "toolset": "SceneTools",
+                          "tool": "remove_from_scene", "args": {"actor": {"refPath": candidate["actor_ref"]}}})
+        elif candidate["type"] == "ue-asset" and assets:
+            steps.append({"label": candidate_label(candidate), "toolset": "AssetTools", "tool": "delete",
+                          "args": {"path": candidate["asset_path"]},
+                          "readback": {"toolset": "AssetTools", "tool": "exists", "args": {"path": candidate["asset_path"]}},
+                          "expect": False})
+    return [{**step, "_line": index} for index, step in enumerate(steps, start=1)]
 
 
 def latest_delivery_index(ctx, effect: str) -> dict[str, Any]:
@@ -190,33 +156,13 @@ def report_command(args: argparse.Namespace) -> int:
                             "safe_delete": True,
                         }
                     )
-    if (args.scan_ue or args.scan_ue_assets) and args.project:
-        client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-        client.ping()
-        if args.scan_ue:
-            actors = client.exec_json(
-                """
-import json
-import unreal
-LV = unreal.UnrealBridgeLevelLibrary
-print(json.dumps([str(item) for item in list(LV.find_actors_by_tag("CodexVFXPreviewTemp"))], ensure_ascii=False))
-            )
-            """.strip()
-            )
-            for actor_name in actors:
-                candidates.append(
-                    {
-                        "type": "ue-actor",
-                        "actor_name": actor_name,
-                        "reason": "CodexVFXPreviewTemp",
-                        "safe_delete": True,
-                    }
-                )
-        if args.scan_ue_assets:
-            roots = args.ue_asset_root or ["/Game/CodexTemp"]
-            assets = client.exec_json(ue_temp_asset_report_script(roots))
-            for row in assets:
-                candidates.append(row)
+    if args.scan_ue or args.scan_ue_assets:
+        client = connect(ctx.skill_root, url=args.mcp_url, timeout=args.timeout, project=args.project)
+        try:
+            candidates += scan_ue(client, builtin_mcp(ctx.skill_root), actors=args.scan_ue,
+                                  asset_roots=(args.ue_asset_root or ["/Game/CodexTemp"]) if args.scan_ue_assets else [])
+        finally:
+            client.close()
     report = {
         "version": 1,
         "generated_at": utc_now_iso(),
@@ -237,43 +183,34 @@ def apply_command(args: argparse.Namespace) -> int:
         raise SystemExit(f"Cleanup report not found: {args.report}")
     removed: list[dict[str, Any]] = []
     failed: list[dict[str, Any]] = []
-    client = None
     for candidate in report["candidates"]:
-        if not candidate.get("safe_delete"):
-            continue
-        if candidate["type"] == "file":
+        if candidate.get("safe_delete") and candidate["type"] == "file":
             path = Path(candidate["path"]).resolve()
             if ctx.vfx_root.resolve() not in path.parents:
                 continue
             if path.exists():
                 path.unlink()
                 removed.append(candidate)
-        elif candidate["type"] == "ue-actor" and args.delete_ue_temp_actors and args.project:
-            if client is None:
-                client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-                client.ping()
-            client.exec_json(
-                f"""
-import json
-import unreal
-ok = unreal.UnrealBridgeLevelLibrary.destroy_actor({candidate['actor_name']!r})
-print(json.dumps({{"success": bool(ok)}}, ensure_ascii=False))
-                """.strip()
-            )
-            removed.append(candidate)
-        elif candidate["type"] == "ue-asset" and args.delete_ue_temp_assets and args.project:
-            if client is None:
-                client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-                client.ping()
-            result = client.exec_json(ue_delete_asset_script(candidate["asset_path"]))
-            if result.get("success"):
-                removed.append({**candidate, "delete_result": result})
-            else:
-                failed.append({**candidate, "delete_result": result})
+    steps = build_delete_steps(report["candidates"], actors=args.delete_ue_temp_actors, assets=args.delete_ue_temp_assets)
+    batch = None
+    if steps:
+        module = builtin_mcp(ctx.skill_root)
+        client = connect(ctx.skill_root, url=args.mcp_url, timeout=args.timeout, project=args.project)
+        try:
+            batch = module.run_batch(client, steps, continue_on_error=True)
+        finally:
+            client.close()
+        by_label = {row.get("label"): row for row in batch.get("results", [])}
+        for candidate in report["candidates"]:
+            row = by_label.get(candidate_label(candidate)) if candidate["type"] != "file" else None
+            if row is not None:
+                (removed if row.get("status") == "ok" else failed).append({**candidate, "delete_result": row})
+        failed += [{"type": "batch", "problem": problem} for problem in batch.get("problems") or []]
     result = {
         "applied_at": utc_now_iso(),
         "removed": removed,
         "failed": failed,
+        "transport": "epic-mcp batch" if batch else "local",
     }
     out_path = Path(args.out) if args.out else Path(args.report).with_name("cleanup-apply.json")
     save_json(out_path, result)
@@ -293,7 +230,7 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--scan-ue-assets", action="store_true")
     report.add_argument("--ue-asset-root", action="append", default=[])
     report.add_argument("--project")
-    report.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    report.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     report.add_argument("--timeout", type=int, default=120)
     report.set_defaults(func=report_command)
 
@@ -301,7 +238,7 @@ def build_parser() -> argparse.ArgumentParser:
     apply.add_argument("report")
     apply.add_argument("--out")
     apply.add_argument("--project")
-    apply.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    apply.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     apply.add_argument("--timeout", type=int, default=120)
     apply.add_argument("--delete-ue-temp-actors", action="store_true")
     apply.add_argument("--delete-ue-temp-assets", action="store_true")

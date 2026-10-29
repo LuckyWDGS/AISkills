@@ -181,37 +181,26 @@ def make_preview_command(args: argparse.Namespace, material_path: str, cell: dic
         if args.markdown_previews:
             command.append("--markdown-previews")
         return command
+    # Camera, lighting, resolution and time stay cell intent: MCP capture has no such axes.
+    carrier = str(cell["carrier"])
     command = [
         sys.executable,
         str(preview_tool_path()),
-        "render",
+        "capture",
         material_path,
         "--root",
         str(args.root),
+        "--route",
+        "thumbnail" if carrier == "mesh" else "viewport",
         "--carrier",
-        str(cell["carrier"]),
-        "--lighting",
-        str(cell["lighting"]),
-        "--resolution",
-        str(cell["resolution"]),
-        "--yaw",
-        str(cell["yaw"]),
-        "--pitch",
-        str(cell["pitch"]),
-        "--distance",
-        str(cell["distance"]),
-        "--sim-time",
-        str(cell["time"]),
+        carrier,
+        "--effect",
+        str(cell["preview_effect"]),
     ]
     if args.project:
         command.extend(["--project", args.project])
-    if args.endpoint:
-        command.extend(["--endpoint", args.endpoint])
     if args.timeout:
         command.extend(["--timeout", str(args.timeout)])
-    command.extend(["--effect", str(cell["preview_effect"])])
-    if args.with_complexity:
-        command.append("--with-complexity")
     if args.markdown_previews:
         command.append("--markdown")
     return command
@@ -463,6 +452,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.execute:
+        parser.error("--execute drove the retired UnrealBridge render harness (camera, lighting, background and exposure axes), which Epic MCP does not expose. Stage each context in the level, capture it with material_preview.py capture --route viewport --pose ..., and pass the reports on with --preview-report.")
     return args.func(args)
 
 

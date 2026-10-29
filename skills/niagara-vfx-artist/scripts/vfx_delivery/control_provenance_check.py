@@ -4,10 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
-from .bridge import BridgeClient
 from .control_common import load_control_schema, resolve_root
 from .core import default_report_path, normalize_cli_global_args, save_json, utc_now_iso, write_text
-from .effect_control_schema import build_system_user_variables_script, load_json_file
+from .effect_control_schema import load_json_file, user_variables_summary
 
 
 def command_check(args: argparse.Namespace) -> int:
@@ -16,10 +15,13 @@ def command_check(args: argparse.Namespace) -> int:
     effect = str(schema.get("effect_name") or "Effect")
     material_package = load_json_file(args.material_delivery_package)
     live_summary = {}
-    if args.system_path and (args.project or args.endpoint):
-        client = BridgeClient(ctx.skill_root, project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-        client.ping()
-        live_summary = client.exec_json(build_system_user_variables_script(args.system_path), no_preflight=True)
+    niagara_report = load_json_file(args.niagara_audit) if args.niagara_audit else None
+    if niagara_report is None and args.system_path and (args.live or args.project):
+        from .niagara_audit import audit
+
+        niagara_report = audit(ctx.skill_root, args.system_path, timeout=args.timeout)
+    if niagara_report:
+        live_summary = user_variables_summary(niagara_report)
     live_names = {str(item.get("name") or "") for item in live_summary.get("variables") or []}
     package_params = {str(item.get("name") or "") for item in material_package.get("parameters") or [] if isinstance(item, dict)}
     rows = []
@@ -77,8 +79,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--schema", required=True)
     parser.add_argument("--system-path", default="")
     parser.add_argument("--material-delivery-package", default="")
+    parser.add_argument("--niagara-audit", default="", help="niagara_audit.py report to read user variables from")
+    parser.add_argument("--live", action="store_true", help="Read --system-path user variables live through Epic MCP")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

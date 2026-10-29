@@ -3,7 +3,7 @@
 Modules: ``protocol`` (messages, errors), ``client`` (HTTP session, discovery,
 schema cache, session reuse), ``schema`` (brief views), ``editor`` (which
 editor serves an endpoint), ``batch`` (ordered steps with readback), ``remote``
-(Epic Python Remote Execution), ``legacy_bridge`` (old BridgeClient interface),
+(Epic Python Remote Execution), ``capture`` (EditorAppToolset images),
 ``skill_api`` (what sibling skills import), ``cli`` (``builtin_mcp.py``).
 """
 

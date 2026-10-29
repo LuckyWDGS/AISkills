@@ -116,7 +116,7 @@ Apply a reviewed graph refactor plan to a duplicated candidate material:
 
 ```powershell
 python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --markdown
-python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --execute --project <Project> --carrier sprite --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --carrier sprite --markdown
 ```
 
 Validate an edited contract:
@@ -238,7 +238,7 @@ python tools/material_toolset_builder.py recipe fire_flipbook --effect WingEcho 
 python tools/material_toolset_builder.py refactor-plan --graph-diff-report D:/reports/graph-diff-refactor.json --markdown
 ```
 
-The recipe path emits a route, parameters, texture requirements, preview/audit plan, and executable `material-builder-spec.json`. On `--execute`, route usage flags are applied through a whitelisted `MaterialUsage` enum setter, not direct `bUsedWith*` property writes. Sprite/ribbon recipes route `DynamicParameter.Param1` and `Param2` through default-zero emissive/opacity boost controls so contract evidence is live without changing the default look. The refactor path is plan-only by default and turns graph-diff causes into one-at-a-time operations with guardrails and validation commands.
+The recipe path emits a route, parameters, texture requirements, preview/audit plan, and executable `material-builder-spec.json`. On `--execute`, the builder creates the material through Epic MCP and sets each route usage flag on its matching `bUsedWith*` property (an unknown flag fails the build instead of being skipped) before recompiling. Sprite/ribbon recipes route `DynamicParameter.Param1` and `Param2` through default-zero emissive/opacity boost controls so contract evidence is live without changing the default look. The refactor path is plan-only by default and turns graph-diff causes into one-at-a-time operations with guardrails and validation commands.
 
 ## Tooling Roadmap
 
@@ -269,20 +269,13 @@ Do not pretend editor texture tools replace local texture import audit/fix, gene
 
 ## Recovery To Formalization Flow
 
-Auto-rebuilt legal materials are no longer only preview-side recovery assets. The intended flow is now:
-
-1. `material_preview.py` or `material_domain_rebuilder.py` detects an invalid render contract.
-2. Rebuild into legal `DeferredDecal` or `PostProcess`.
-3. Register the rebuilt material into `material_asset_library` as a `candidates` entry.
-4. Keep the preview report attached to the candidate record.
-5. Use `material_asset_library.py auto-promote` or `promote` after self-review.
-6. On approval, emit a delivery-facing report so the rebuilt-material result is visible at the workflow/report layer, not only inside the catalog.
-
-Typical commands:
+When a material's render contract is wrong for its domain (a surface graph used as a
+decal or post process), rebuild it as a new material with `material_toolset_builder.py`
+(`decal_stain` or a custom builder spec), capture it with `material_preview.py capture`,
+then register and promote it:
 
 ```powershell
-python tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project <Project> --markdown
-python tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier post_process --register-rebuilt-candidate --project <Project> --width 320 --height 180 --markdown
+python tools/material_asset_library.py register-material /Game/Materials/M_Foo_Decal --stage candidates --category decal --role decal-material --project <Project>
 python tools/material_asset_library.py auto-promote <asset-id> --self-review approved --report-path D:/path/to/material-preview.json --apply
 ```
 

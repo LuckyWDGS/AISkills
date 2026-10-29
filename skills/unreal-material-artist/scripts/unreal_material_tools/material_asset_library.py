@@ -7,7 +7,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .bridge import BridgeClient
 from .core import default_report_path, load_json, resolve_root_context, save_json, slugify, utc_now_iso, write_text
 from .texture_asset_report import analyze_texture, image_info, is_power_of_two, parse_grid, render_markdown as render_texture_report_markdown
 
@@ -947,22 +946,24 @@ def command_register_material(args: argparse.Namespace) -> int:
     stage = normalize_stage(args.stage)
     category = normalize_category(args.category)
     role = args.role.strip().lower()
-    client = BridgeClient(skill_root(), project=args.project, endpoint=args.endpoint, timeout_seconds=args.timeout)
-    client.ping()
-    script = (
-        "import json\n"
-        "import unreal\n"
-        f"info = unreal.UnrealBridgeMaterialLibrary.get_material_info({args.material_path!r})\n"
-        "print(json.dumps({\n"
-        "  'found': info.found,\n"
-        "  'path': info.path,\n"
-        "  'material_domain': info.material_domain,\n"
-        "  'blend_mode': info.blend_mode,\n"
-        "  'shading_models': list(info.shading_models),\n"
-        "  'num_expressions': info.num_expressions,\n"
-        "}, ensure_ascii=False))\n"
-    )
-    material_info = client.exec_json(script)
+    if args.audit_report:
+        audit = json.loads(Path(args.audit_report).read_text(encoding="utf-8"))
+        if audit.get("tool") != "material_audit":
+            raise SystemExit(f"{args.audit_report}: expected a material_audit report, got `{audit.get('tool')}`.")
+    else:
+        from .material_audit import audit as run_audit
+
+        audit = run_audit(skill_root(), args.material_path, timeout=args.timeout, project=args.project,
+                          shader_stats=False, graph_source=args.graph_source)
+    info = audit["material_info"]
+    material_info = {
+        "found": bool(info.get("found", True)),
+        "path": info.get("path", ""),
+        "material_domain": info.get("material_domain", ""),
+        "blend_mode": info.get("blend_mode", ""),
+        "shading_models": list(info.get("shading_models") or []),
+        "num_expressions": info.get("num_expressions"),
+    }
     if not material_info.get("found"):
         raise SystemExit(f"Material asset not found in Unreal: {args.material_path}")
     record = upsert_material_record(
@@ -1030,8 +1031,9 @@ def build_parser() -> argparse.ArgumentParser:
     register_material.add_argument("--source-kind", default="rebuilt")
     register_material.add_argument("--source-material-path")
     register_material.add_argument("--report-path", action="append")
+    register_material.add_argument("--audit-report", help="Existing material_audit.py report instead of a live MCP read")
+    register_material.add_argument("--graph-source", choices=("mcp", "remote"), default="mcp")
     register_material.add_argument("--project")
-    register_material.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     register_material.add_argument("--timeout", type=int, default=180)
     register_material.set_defaults(func=command_register_material)
 

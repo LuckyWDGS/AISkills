@@ -177,7 +177,7 @@ Minimum material-side validation:
 - `material_audit.py`: no compile errors, expected outputs, sampler/instruction counts, no stale MI overrides.
 - `material_domain_audit.py`: `Surface + Additive + Unlit`, expected usage flags.
 - `texture_asset_report.py` or `texture_import_audit.py`: packed mask role, `sRGB=false`, compression and dimensions.
-- `material_preview.py render --carrier ribbon`: ribbon-carrier readability.
+- `material_preview.py capture --route viewport --carrier ribbon`: ribbon-carrier readability on a placed ribbon.
 - `preview_readability_score.py`: when the preview may be invisible or too bright.
 - `platform_scalability_planner.py`: once delivery evidence exists.
 

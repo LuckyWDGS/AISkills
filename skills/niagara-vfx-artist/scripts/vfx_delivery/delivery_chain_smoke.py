@@ -8,6 +8,7 @@ from typing import Any
 from . import delivery_dashboard, delivery_finalize, delivery_package, live_asset_verify, niagara_audit
 from .core import default_report_path, normalize_cli_global_args_no_subcommand, resolve_root_context, save_json, utc_now_iso, write_text
 from .delivery_package import check_delivery_payload, find_latest_delivery_index, load_delivery_payload
+from .mcp import DEFAULT_MCP_URL
 
 
 def run_step(name: str, fn, args: argparse.Namespace, *, allow_failure: bool = False) -> dict[str, Any]:
@@ -49,7 +50,7 @@ def command(args: argparse.Namespace) -> int:
                         system_path=system_path,
                         root=args.root,
                         project=args.project,
-                        endpoint=args.endpoint,
+                        mcp_url=args.mcp_url,
                         timeout=args.timeout,
                         out="",
                         markdown=True,
@@ -66,7 +67,7 @@ def command(args: argparse.Namespace) -> int:
                     root=args.root,
                     effect=args.effect,
                     project=args.project,
-                    endpoint=args.endpoint,
+                    mcp_url=args.mcp_url,
                     timeout=args.timeout,
                     local_file=args.local_file,
                     source_policy=args.source_policy,
@@ -136,7 +137,7 @@ def command(args: argparse.Namespace) -> int:
                     dry_run_promote=args.dry_run_promote,
                     save_promoted_assets=args.save_promoted_assets,
                     project=args.project,
-                    endpoint=args.endpoint,
+                    mcp_url=args.mcp_url,
                     timeout=args.timeout,
                 ),
             )
@@ -180,7 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--material-path", default="")
     parser.add_argument("--renderer-path", default="")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
+    parser.add_argument("--mcp-url", default=DEFAULT_MCP_URL)
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--skip-audit", action="store_true")
     parser.add_argument("--allow-blocked-ue", action="store_true")

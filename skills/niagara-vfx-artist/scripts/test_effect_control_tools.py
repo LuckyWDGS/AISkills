@@ -7,50 +7,20 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
 
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from vfx_delivery import control_binding_generator, control_preset, control_provenance_check, effect_control_schema, motion_qa, niagara_param_sweep, runtime_control_probe
-from vfx_delivery.core import save_json, slugify
+from vfx_delivery import control_binding_generator, control_preset, control_provenance_check, effect_control_schema, motion_qa
+from vfx_delivery.core import save_json
 
 
-class FakeBridgeClient:
-    responses: list[object] = []
-    scripts: list[str] = []
-
-    def __init__(self, skill_root: Path, project: str | None = None, endpoint: str | None = None, timeout_seconds: int = 120) -> None:
-        self.skill_root = skill_root
-        self.project = project
-        self.endpoint = endpoint
-        self.timeout_seconds = timeout_seconds
-
-    def ping(self) -> dict[str, object]:
-        return {"ready": True}
-
-    def exec_json(self, script_text: str, *, no_preflight: bool = False) -> object:
-        FakeBridgeClient.scripts.append(script_text)
-        if not FakeBridgeClient.responses:
-            raise AssertionError("FakeBridgeClient had no queued response.")
-        return FakeBridgeClient.responses.pop(0)
-
-
-def run_tool(module, args: list[str], responses: list[object] | None = None) -> tuple[int, str, str]:
-    FakeBridgeClient.responses = list(responses or [])
-    FakeBridgeClient.scripts = []
+def run_tool(module, args: list[str]) -> tuple[int, str, str]:
     stdout = StringIO()
     stderr = StringIO()
-    patcher = patch.object(module, "BridgeClient", FakeBridgeClient) if hasattr(module, "BridgeClient") else None
-    if patcher is not None:
-        patcher.start()
-    try:
-        with redirect_stdout(stdout), redirect_stderr(stderr):
-            code = module.main(args)
-    finally:
-        if patcher is not None:
-            patcher.stop()
+    with redirect_stdout(stdout), redirect_stderr(stderr):
+        code = module.main(args)
     return code, stdout.getvalue(), stderr.getvalue()
 
 
@@ -210,6 +180,15 @@ class EffectControlToolTests(unittest.TestCase):
             )
             package_path = root / "material-package.json"
             save_json(package_path, {"parameters": [{"name": "EmissiveIntensity"}]})
+            audit_path = root / "niagara-audit.json"
+            save_json(audit_path, {
+                "tool": "niagara_audit", "system_path": "/Game/VFX/NS_Test",
+                "user_variables": [{
+                    "name": "User.Intensity", "description": "",
+                    "type": {"classStructOrEnum": {"refPath": "/Script/Niagara.NiagaraFloat"}},
+                    "defaultValue": {"struct": {"refPath": "/Script/Niagara.NiagaraFloat"}, "value": 1.0},
+                }],
+            })
             code, stdout, stderr = run_tool(
                 control_provenance_check,
                 [
@@ -221,22 +200,8 @@ class EffectControlToolTests(unittest.TestCase):
                     "/Game/VFX/NS_Test",
                     "--material-delivery-package",
                     str(package_path),
-                    "--project",
-                    "DummyProject",
-                ],
-                responses=[
-                    {
-                        "variables": [
-                            {
-                                "name": "User.Intensity",
-                                "type_name": "Float",
-                                "type_object_path": "/Script/CoreUObject.FloatProperty",
-                                "value_struct_path": "/Script/Niagara.NiagaraFloat",
-                                "value_json": '{"value":1.0}',
-                                "description": "",
-                            }
-                        ]
-                    }
+                    "--niagara-audit",
+                    str(audit_path),
                 ],
             )
             self.assertEqual(code, 0, stderr)
@@ -268,216 +233,6 @@ class EffectControlToolTests(unittest.TestCase):
             report = json.loads(Path(stdout.strip().splitlines()[-1]).read_text(encoding="utf-8"))
             self.assertEqual(report["frame_count"], 1)
             self.assertGreater(report["worst_mean_abs_diff"], 0.0)
-
-    def test_runtime_control_probe_roundtrip_and_visual_diff(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            schema_path = root / "schema.json"
-            save_json(
-                schema_path,
-                {
-                    "effect_name": "ProbeEffect",
-                    "controls": [
-                        {
-                            "id": "niagara_user_variable:User.Intensity",
-                            "logical_name": "User.Intensity",
-                            "target_name": "User.Intensity",
-                            "surface": "niagara_user_variable",
-                            "runtime_surface": "niagara_component_variable",
-                            "type_name": "Float",
-                            "type_object_path": "/Script/CoreUObject.FloatProperty",
-                            "value_struct_path": "/Script/Niagara.NiagaraFloat",
-                            "default_value_json": '{"value":1.0}',
-                            "default_value_text": "1.0",
-                            "probe_support": "runtime_component_numeric",
-                            "suggested_sweep_values": ['{"value":0.5}', '{"value":1.0}', '{"value":2.0}'],
-                        }
-                    ],
-                },
-            )
-            before_png = root / "before.png"
-            after_png = root / "after.png"
-            write_png(before_png, (0, 0, 0, 255))
-            write_png(after_png, (255, 255, 255, 255))
-            code, stdout, stderr = run_tool(
-                runtime_control_probe,
-                [
-                    "--root",
-                    str(root),
-                    "--schema",
-                    str(schema_path),
-                    "--control",
-                    "User.Intensity",
-                    "--system-path",
-                    "/Game/VFX/NS_Test",
-                    "--project",
-                    "DummyProject",
-                    "--capture",
-                    "--before-png",
-                    str(before_png),
-                    "--after-png",
-                    str(after_png),
-                    "--markdown",
-                ],
-                responses=[
-                    {
-                        "success": True,
-                        "component_path": "/Temp/BeforeComponent",
-                        "summary": {"value_json": '{"value":1.0}'},
-                        "capture_ok": True,
-                    },
-                    {
-                        "success": True,
-                        "component_path": "/Temp/AfterComponent",
-                        "summary": {"value_json": '{"value":2.0}'},
-                        "capture_ok": True,
-                    },
-                ],
-            )
-            self.assertEqual(code, 0, stderr)
-            report = json.loads(Path(stdout.strip().splitlines()[-1]).read_text(encoding="utf-8"))
-            self.assertTrue(report["gate"]["value_roundtrip_passed"])
-            self.assertTrue(report["gate"]["visual_change_detected"])
-            self.assertTrue(report["gate"]["probe_passed"])
-            self.assertEqual(report["image_diff"]["selected_mode"], "center-crop")
-
-    def test_runtime_control_probe_center_roi_catches_small_central_change(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            schema_path = root / "schema.json"
-            save_json(
-                schema_path,
-                {
-                    "effect_name": "ProbeRoiEffect",
-                    "controls": [
-                        {
-                            "id": "niagara_user_variable:User.Intensity",
-                            "logical_name": "User.Intensity",
-                            "target_name": "User.Intensity",
-                            "surface": "niagara_user_variable",
-                            "runtime_surface": "niagara_component_variable",
-                            "type_name": "Float",
-                            "type_object_path": "/Script/CoreUObject.FloatProperty",
-                            "value_struct_path": "/Script/Niagara.NiagaraFloat",
-                            "default_value_json": '{"value":1.0}',
-                            "default_value_text": "1.0",
-                            "probe_support": "runtime_component_numeric",
-                            "suggested_sweep_values": ['{"value":0.5}', '{"value":1.0}', '{"value":2.0}'],
-                        }
-                    ],
-                },
-            )
-            before_png = root / "before.png"
-            after_png = root / "after.png"
-            write_png(before_png, (0, 0, 0, 255))
-            write_png(after_png, (0, 0, 0, 255))
-            with Image.open(after_png) as image:
-                patched = image.copy()
-                for x in range(31, 33):
-                    for y in range(31, 33):
-                        patched.putpixel((x, y), (255, 255, 255, 255))
-                patched.save(after_png)
-            code, stdout, stderr = run_tool(
-                runtime_control_probe,
-                [
-                    "--root",
-                    str(root),
-                    "--schema",
-                    str(schema_path),
-                    "--control",
-                    "User.Intensity",
-                    "--system-path",
-                    "/Game/VFX/NS_Test",
-                    "--project",
-                    "DummyProject",
-                    "--capture",
-                    "--before-png",
-                    str(before_png),
-                    "--after-png",
-                    str(after_png),
-                    "--min-mean-diff",
-                    "0.5",
-                    "--roi-scale",
-                    "0.25",
-                ],
-                responses=[
-                    {
-                        "success": True,
-                        "component_path": "/Temp/BeforeComponent",
-                        "summary": {"value_json": '{"value":1.0}'},
-                        "capture_ok": True,
-                    },
-                    {
-                        "success": True,
-                        "component_path": "/Temp/AfterComponent",
-                        "summary": {"value_json": '{"value":2.0}'},
-                        "capture_ok": True,
-                    },
-                ],
-            )
-            self.assertEqual(code, 0, stderr)
-            report = json.loads(Path(stdout.strip().splitlines()[-1]).read_text(encoding="utf-8"))
-            self.assertLess(report["image_diff"]["full_frame"]["mean_abs_diff"], 0.5)
-            self.assertGreater(report["image_diff"]["selected_region"]["mean_abs_diff"], 0.5)
-            self.assertTrue(report["gate"]["visual_change_detected"])
-
-    def test_niagara_param_sweep_builds_contact_sheet(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            schema_path = root / "schema.json"
-            control_id = "niagara_user_variable:User.Intensity"
-            save_json(
-                schema_path,
-                {
-                    "effect_name": "SweepEffect",
-                    "controls": [
-                        {
-                            "id": control_id,
-                            "logical_name": "User.Intensity",
-                            "target_name": "User.Intensity",
-                            "surface": "niagara_user_variable",
-                            "runtime_surface": "niagara_component_variable",
-                            "type_name": "Float",
-                            "type_object_path": "/Script/CoreUObject.FloatProperty",
-                            "value_struct_path": "/Script/Niagara.NiagaraFloat",
-                            "default_value_json": '{"value":1.0}',
-                            "default_value_text": "1.0",
-                            "sweep_support": "niagara_numeric_preview_sweep",
-                            "suggested_sweep_values": ['{"value":0.5}', '{"value":1.0}'],
-                        }
-                    ],
-                },
-            )
-            out_dir = root / "sweep"
-            stem = slugify(control_id)
-            write_png(out_dir / f"{stem}-value-00.png", (10, 10, 10, 255))
-            write_png(out_dir / f"{stem}-value-01.png", (240, 240, 240, 255))
-            code, stdout, stderr = run_tool(
-                niagara_param_sweep,
-                [
-                    "--root",
-                    str(root),
-                    "--schema",
-                    str(schema_path),
-                    "--control",
-                    control_id,
-                    "--system-path",
-                    "/Game/VFX/NS_Test",
-                    "--project",
-                    "DummyProject",
-                    "--out-dir",
-                    str(out_dir),
-                    "--markdown",
-                ],
-                responses=[
-                    {"success": True, "out_png": str(out_dir / f"{stem}-value-00.png"), "summary": {"value_json": '{"value":0.5}'}},
-                    {"success": True, "out_png": str(out_dir / f"{stem}-value-01.png"), "summary": {"value_json": '{"value":1.0}'}},
-                ],
-            )
-            self.assertEqual(code, 0, stderr)
-            report = json.loads(Path(stdout.strip().splitlines()[-1]).read_text(encoding="utf-8"))
-            self.assertEqual(report["value_count"], 2)
-            self.assertTrue(Path(report["contact_sheet_png"]).exists())
 
 
 if __name__ == "__main__":

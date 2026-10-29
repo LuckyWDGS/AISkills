@@ -123,19 +123,8 @@ python tools/material_asset_library.py register-material /Game/Materials/M_Foo_D
 python tools/material_asset_library.py register-material /Game/Materials/M_Foo_PostProcess --stage candidates --category post_process --role post-process-material --project <Project>
 ```
 
-For auto-rebuilt legal materials, use the direct rebuild path:
-
-```powershell
-python tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike DeferredDecal --register-candidate --project <Project> --markdown
-python tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike PostProcess --register-candidate --project <Project> --markdown
-```
-
-Or let preview recovery rebuild and register in one pass:
-
-```powershell
-python tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project <Project> --markdown
-python tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier post_process --register-rebuilt-candidate --project <Project> --width 320 --height 180 --markdown
-```
+`register-material` reads the material through `material_audit` (MCP); pass
+`--audit-report` to reuse an existing report instead of another editor read.
 
 ## Promote Or Reject
 

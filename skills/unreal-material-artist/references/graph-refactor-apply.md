@@ -1,6 +1,6 @@
 # Graph Refactor Apply
 
-> **Editor execution disabled:** this pipeline's live mode called retired UnrealBridge APIs and now fails fast. Use MCP tools for the live step (see [official-toolsets-vs-local.md](official-toolsets-vs-local.md)); offline modes are unaffected.
+> **Plan only:** the UnrealBridge executor behind `--execute` was removed. The report's `mcp_route` lists the AssetTools duplicates and MaterialTools edits to run as a `builtin_mcp.py batch`, and `validation_plan` the audit, capture and regression commands.
 
 ## Use This When
 
@@ -42,7 +42,7 @@ The report includes:
 Execute only after reviewing the dry-run report:
 
 ```powershell
-python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --execute --project <Project> --carrier sprite --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --carrier sprite --markdown
 ```
 
 The tool duplicates:
@@ -74,7 +74,7 @@ Execute mode writes:
 - before `material_domain_audit.py`
 - after `material_audit.py --include-raw-graph`
 - after `material_domain_audit.py`
-- after `material_preview.py render`
+- after `material_preview.py capture`
 - `material_regression.py compare` when a baseline exists or `--baseline` is provided
 
 Gate fields:
