@@ -223,7 +223,7 @@ class SessionReuseTests(unittest.TestCase):
             first = self.client(base.url, folder).open()
             first._owner = {"known": True, "project": "OldProject", "uproject": "X/OldProject.uproject"}
             first.close()
-            with patch("builtin_mcp.endpoint_owner", return_value={"known": True, "project": "MCPSI", "uproject": "X/MCPSI.uproject"}):
+            with patch("ue_mcp.client.endpoint_owner", return_value={"known": True, "project": "MCPSI", "uproject": "X/MCPSI.uproject"}):
                 resumed = self.client(base.url, folder, expected_project="MCPSI").open()
             self.assertEqual(resumed.editor_owner()["project"], "MCPSI")
             self.assertEqual(self.count(calls, "initialize"), 2)
@@ -279,6 +279,13 @@ class BatchTests(unittest.TestCase):
         self.assertFalse(_expectation_met(0.4, 0.5))
         self.assertFalse(_expectation_met(True, 1))
         self.assertFalse(_expectation_met([1], [1, 2]))
+
+    def test_json_string_results_and_ref_forms(self):
+        from builtin_mcp import _expectation_met, unwrap_result
+        wrapped = {"content": [{"type": "text", "text": json.dumps({"returnValue": '{"parent":{"refPath":"/Game/M.M"}}'})}]}
+        self.assertEqual(unwrap_result(wrapped), {"parent": {"refPath": "/Game/M.M"}})
+        self.assertTrue(_expectation_met({"parent": {"refPath": "/Game/M.M"}}, {"parent": "/Game/M.M"}))
+        self.assertFalse(_expectation_met({"refPath": "/Game/A.A"}, "/Game/B.B"))
 
     def test_dry_run_sends_nothing(self):
         client = FakeBatchClient()

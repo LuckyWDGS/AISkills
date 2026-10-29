@@ -121,8 +121,9 @@ class FakeClient:
         wire(a, b)
         self.nodes = [a, b]
 
-    def initialize(self):
-        return {"protocolVersion": "test"}
+    def open(self):
+        self.initialize_result = {"protocolVersion": "test"}
+        return self
 
     def describe_toolset(self, name):
         return {"name": name, "tools": []}

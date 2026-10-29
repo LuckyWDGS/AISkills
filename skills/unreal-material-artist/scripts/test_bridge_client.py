@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from unreal_material_tools import bridge
+from ue_mcp import legacy_bridge as legacy
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +24,7 @@ class ParseJsonTests(unittest.TestCase):
 class ClientTests(unittest.TestCase):
     def test_retired_library_fails_before_contacting_editor(self):
         remote = MagicMock()
-        with patch.object(bridge, "_load_python_remote", return_value=remote):
+        with patch.object(legacy, "_load_python_remote", return_value=remote):
             client = bridge.BridgeClient(SKILL_ROOT, project="P")
             with self.assertRaisesRegex(bridge.BridgeError, "UnrealBridgeMaterialLibrary"):
                 client.exec_python("unreal.UnrealBridgeMaterialLibrary.get_material_graph('/Game/M')")
@@ -37,7 +38,7 @@ class ClientTests(unittest.TestCase):
         remote = MagicMock()
         remote.run_python.return_value = {"success": True, "output": []}
         remote.stdout_of.side_effect = lambda result, kinds=("Info",): '{"ok": true}' if kinds == ("Info",) else ""
-        with patch.object(bridge, "_load_python_remote", return_value=remote):
+        with patch.object(legacy, "_load_python_remote", return_value=remote):
             result = bridge.BridgeClient(SKILL_ROOT, project="P").exec_json("print('{}')")
         self.assertEqual(result, {"ok": True})
         remote.run_python.assert_called_once_with("print('{}')", project="P")

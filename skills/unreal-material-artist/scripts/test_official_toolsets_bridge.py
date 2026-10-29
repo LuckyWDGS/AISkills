@@ -1,8 +1,10 @@
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "unreal-engine-mcp" / "scripts"))
 from test_builtin_mcp import server
@@ -10,6 +12,14 @@ from unreal_material_tools import official_toolsets_bridge as cli
 
 
 class DirectMcpTests(unittest.TestCase):
+    def setUp(self):
+        # connect() keeps schema/session state; keep it out of the user's real state dir.
+        state = tempfile.TemporaryDirectory()
+        self.addCleanup(state.cleanup)
+        env = patch.dict(os.environ, {"UE_MCP_CACHE_DIR": state.name})
+        env.start()
+        self.addCleanup(env.stop)
+
     def run_call(self, url, root):
         report = Path(root) / "report.json"
         args = cli.build_parser().parse_args([

@@ -10,7 +10,12 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from builtin_mcp import DEFAULT_PROTOCOL, DEFAULT_URL, McpError, UnrealMcpClient, _decode_text_value
+import os
+
+from builtin_mcp import (
+    DEFAULT_PROTOCOL, DEFAULT_URL, McpError, UnrealMcpClient, _decode_text_value, default_cache_dir,
+    default_session_dir,
+)
 
 
 INPUT, OUTPUT = "EGPD_Input", "EGPD_Output"
@@ -289,7 +294,7 @@ def capture(client: UnrealMcpClient, blueprint: str, out: Path, *, batch_size: i
               "started_at_utc": datetime.now(timezone.utc).isoformat(), "coverage": COVERAGE}
     reader, analysis = ReadOnlyCapture(client, out), None
     try:
-        result["server"] = client.initialize()
+        result["server"] = client.open().initialize_result or {}
         schemas = {}
         for name in ("EditorAppToolset", "AssetTools", "BlueprintTools"):
             schemas[name] = client.describe_toolset(name)
@@ -332,9 +337,16 @@ def main() -> int:
     parser.add_argument("--batch-size", type=int, default=100)
     parser.add_argument("--verify-snapshot", action="store_true", help="Reread and compare graph/default/link data")
     parser.add_argument("--exec-type", action="append", default=[], help="Additional locale-specific execution type ID")
+    parser.add_argument("--expect-project", default=os.environ.get("UE_MCP_PROJECT"),
+                        help="Refuse unless the endpoint is served by this project; env UE_MCP_PROJECT")
+    parser.add_argument("--new-session", action="store_true", help="Do not resume or keep a saved MCP session")
     args = parser.parse_args()
+    client = UnrealMcpClient(
+        args.url, args.protocol, args.timeout, cache_dir=default_cache_dir(),
+        session_dir=None if args.new_session else default_session_dir(), expected_project=args.expect_project,
+    )
     try:
-        code = capture(UnrealMcpClient(args.url, args.protocol, args.timeout), args.blueprint, args.out,
+        code = capture(client, args.blueprint, args.out,
                        batch_size=args.batch_size, verify_snapshot=args.verify_snapshot,
                        exec_types=EXEC_TYPES | set(args.exec_type))
     except (ValueError, OSError) as exc:

@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .mcp import builtin_mcp
+from .mcp import builtin_mcp, connect
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
 
 
@@ -38,9 +38,8 @@ def _qualify_tool_name(tool: str) -> str:
 def call_official(skill_root: Path, qualified_tool: str, payload: dict[str, Any], url: str, timeout: int) -> dict[str, Any]:
     """Call Epic directly. No plugin discovery, bootstrap, or automatic retry."""
     module = builtin_mcp(skill_root)
-    client = module.UnrealMcpClient(url, module.DEFAULT_PROTOCOL, timeout)
+    client = connect(skill_root, url=url, timeout=timeout)
     try:
-        client.initialize()
         toolset, _, tool = qualified_tool.rpartition(".")
         resolved = client.resolve_toolset(toolset)
         result = client.call_resolved_tool(resolved, tool, payload)
