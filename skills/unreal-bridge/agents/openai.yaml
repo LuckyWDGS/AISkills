@@ -1,6 +1,0 @@
-interface:
-  display_name: "Unreal Bridge"
-  short_description: "Official UE MCP first; plugin only for proven gaps"
-  icon_small: "./assets/unreal-bridge-small.png"
-  icon_large: "./assets/unreal-bridge.png"
-  default_prompt: "Use $unreal-bridge through official UE MCP first, and use the custom plugin only when live official discovery proves a capability gap."
