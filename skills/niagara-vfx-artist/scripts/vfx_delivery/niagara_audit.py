@@ -36,6 +36,9 @@ EMITTER_PROPS = [
 ]
 
 
+# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+SCHEMA_VERSION = "niagara_audit/2"
+
 COVERAGE_GAPS = [
     "Data-interface values (e.g. ParticleRead EmitterBinding) are StackInputData_Unsupported in GetEmitterInputValues; "
     "attribute-reader roles come from module names only, and data_interface_bindings stays empty.",
@@ -266,16 +269,23 @@ def collect_diagnostics(skill_root: Path, system_path: str, url: str, timeout: f
     return rows
 
 
-def audit(skill_root: Path, system_path: str, *, url: str = DEFAULT_MCP_URL, timeout: float = 180,
-          diagnostics: bool = False, diagnostics_timeout: float = 30) -> dict[str, Any]:
-    path = object_path(system_path)
-    raw = run_tool_script(skill_root, build_collect_script(path), url=url, timeout=timeout)
-    report = summarize(to_payload(path, raw))
+def build_report(system_path: str, raw: dict[str, Any]) -> dict[str, Any]:
+    """The audit report from collected data; pure, so recorded fixtures can drive it offline."""
+    report = summarize(to_payload(object_path(system_path), raw))
     report["system_path"] = system_path
+    report["schema_version"] = SCHEMA_VERSION
     report["system_dependencies"] = {key: [_ref(item) for item in value] for key, value in raw["dependencies"].items()}
     report["user_variables"] = raw["summary"].get("userVariables", [])
     report["transport"] = "epic-mcp ProgrammaticToolset"
     report["coverage_gaps"] = COVERAGE_GAPS
+    return report
+
+
+def audit(skill_root: Path, system_path: str, *, url: str = DEFAULT_MCP_URL, timeout: float = 180,
+          diagnostics: bool = False, diagnostics_timeout: float = 30) -> dict[str, Any]:
+    path = object_path(system_path)
+    raw = run_tool_script(skill_root, build_collect_script(path), url=url, timeout=timeout)
+    report = build_report(system_path, raw)
     if diagnostics:
         report["diagnostics"] = collect_diagnostics(skill_root, path, url, diagnostics_timeout)
     return report

@@ -1,0 +1,526 @@
+{
+ "source": {
+  "engine": "5.8.4",
+  "project": "MCPSI",
+  "captured": "2026-10-29"
+ },
+ "system_path": "/Game/LevelPrototyping/Interactable/JumpPad/Assets/NS_JumpPad",
+ "raw": {
+  "summary": {
+   "systemName": "NS_JumpPad",
+   "userVariables": [
+    {
+     "defaultValue": {
+      "struct": {
+       "refPath": "/Script/CoreUObject.LinearColor"
+      },
+      "value": {
+       "r": 0.125,
+       "g": 0.4305257797241211,
+       "b": 1,
+       "a": 2
+      }
+     },
+     "description": "",
+     "name": "User.Color",
+     "type": {
+      "classStructOrEnum": {
+       "refPath": "/Script/CoreUObject.LinearColor"
+      }
+     }
+    }
+   ],
+   "emitters": [
+    {
+     "emitterName": "Glow_Base",
+     "bEnabled": true,
+     "simTarget": "CPUSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      }
+     ]
+    },
+    {
+     "emitterName": "Bands",
+     "bEnabled": true,
+     "simTarget": "CPUSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      }
+     ]
+    },
+    {
+     "emitterName": "Spores",
+     "bEnabled": true,
+     "simTarget": "GPUComputeSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      }
+     ]
+    }
+   ]
+  },
+  "system_data": "{\"TemplateAssetDescription\":\"\",\"PreviewMoviePath\":{\"refPath\":\"\"},\"bBakeOutRapidIteration\":false,\"bBakeOutRapidIterationOnCook\":true,\"bCompressAttributes\":false,\"bTrimAttributes\":false,\"bTrimAttributesOnCook\":true,\"bIgnoreParticleReadsForAttributeTrim\":false,\"bDisableDebugSwitches\":false,\"bDisableDebugSwitchesOnCook\":true,\"bSupportLargeWorldCoordinates\":true,\"bOverrideCastShadow\":false,\"bOverrideReceivesDecals\":false,\"bOverrideRenderCustomDepth\":false,\"bOverrideCustomDepthStencilValue\":false,\"bOverrideCustomDepthStencilWriteMask\":false,\"bOverrideTranslucencySortPriority\":false,\"bOverrideTranslucencySortDistanceOffset\":false,\"bCastShadow\":false,\"bReceivesDecals\":false,\"bRenderCustomDepth\":false,\"bInitialOwnerVelocityFromActor\":true,\"LargeWorldCoordinateTileUpdateMode\":null,\"CustomDepthStencilWriteMask\":\"ERSM_Default\",\"CustomDepthStencilValue\":0,\"TranslucencySortPriority\":0,\"TranslucencySortDistanceOffset\":0,\"bDumpDebugSystemInfo\":false,\"bDumpDebugEmitterInfo\":false,\"bRequireCurrentFrameData\":true,\"bOverrideScalabilitySettings\":false,\"bFixedBounds\":false,\"EffectType\":\"None\",\"bOverrideAllowCullingForLocalPlayers\":false,\"bAllowCullingForLocalPlayersOverride\":false,\"SystemScalabilityOverrides\":{\"overrides\":[]},\"Platforms\":{\"deviceProfileStates\":[],\"cVarConditions\":[],\"qualityLevelMask\":-1},\"ParameterCollectionOverrides\":[],\"FixedBounds\":{\"min\":{\"x\":-100,\"y\":-100,\"z\":-100},\"max\":{\"x\":100,\"y\":100,\"z\":100},\"isValid\":true},\"bUseInitialStreamingBounds\":false,\"InitialStreamingBounds\":{\"min\":{\"x\":-100,\"y\":-100,\"z\":-100},\"max\":{\"x\":100,\"y\":100,\"z\":100},\"isValid\":true},\"bDeterminism\":false,\"bFixedTickDelta\":false,\"RandomSeed\":0,\"WarmupTime\":0,\"WarmupTickCount\":0,\"WarmupTickDelta\":0.066666670143604279,\"FixedTickDeltaTime\":0.016669999808073044,\"bAllowSystemStateFastPath\":true,\"MaxPoolSize\":32,\"PoolPrimeSize\":0}",
+  "dependencies": {
+   "usedRenderers": [
+    {
+     "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+    },
+    {
+     "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+    }
+   ],
+   "usedDataInterfaces": [
+    {
+     "refPath": "/Script/Niagara.NiagaraDataInterfaceCurve"
+    }
+   ],
+   "usedModules": [
+    {
+     "refPath": "/Niagara/Modules/Emitter/EmitterState.EmitterState"
+    },
+    {
+     "refPath": "/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous"
+    },
+    {
+     "refPath": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle"
+    },
+    {
+     "refPath": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState"
+    },
+    {
+     "refPath": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate"
+    },
+    {
+     "refPath": "/Niagara/Modules/Update/Size/ScaleMeshSize.ScaleMeshSize"
+    },
+    {
+     "refPath": "/Niagara/Modules/Update/Forces/GravityForce.GravityForce"
+    },
+    {
+     "refPath": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+    },
+    {
+     "refPath": "/Niagara/Modules/Update/Color/ScaleColor.ScaleColor"
+    },
+    {
+     "refPath": "/Niagara/Modules/Spawn/Location/V2/ShapeLocation.ShapeLocation"
+    },
+    {
+     "refPath": "/Niagara/Modules/System/SystemState.SystemState"
+    }
+   ],
+   "usedDynamicInputs": [
+    {
+     "refPath": "/Niagara/DynamicInputs/TypeConversions/MakeVector.MakeVector"
+    },
+    {
+     "refPath": "/Niagara/DynamicInputs/ValueFromCurve/FloatFromCurve.FloatFromCurve"
+    }
+   ]
+  },
+  "emitters": [
+   {
+    "summary": {
+     "emitterName": "Glow_Base",
+     "bEnabled": true,
+     "simTarget": "CPUSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      }
+     ]
+    },
+    "data": "{\r\n\t\"Name\": \"Glow_Base\",\r\n\t\"bIsEnabled\": true,\r\n\t\"Id\": \"9B65A5D9-4EA1-0E2C-CC66-04889C1A23AD\",\r\n\t\"IdName\": \"9B65A5D94EA10E2CCC6604889C1A23AD\",\r\n\t\"bLocalSpace\": false,\r\n\t\"bDeterminism\": false,\r\n\t\"RandomSeed\": 0,\r\n\t\"InterpolatedSpawnMode\": \"Interpolation\",\r\n\t\"SimTarget\": \"CPUSim\",\r\n\t\"Importance\": \"Normal\",\r\n\t\"CalculateBoundsMode\": \"Dynamic\",\r\n\t\"FixedBounds\":\r\n\t{\r\n\t\t\"min\":\r\n\t\t{\r\n\t\t\t\"x\": -100,\r\n\t\t\t\"y\": -100,\r\n\t\t\t\"z\": -100\r\n\t\t},\r\n\t\t\"max\":\r\n\t\t{\r\n\t\t\t\"x\": 100,\r\n\t\t\t\"y\": 100,\r\n\t\t\t\"z\": 100\r\n\t\t},\r\n\t\t\"isValid\": true\r\n\t},\r\n\t\"bRequiresPersistentIDs\": false,\r\n\t\"Platforms\":\r\n\t{\r\n\t\t\"deviceProfileStates\": [],\r\n\t\t\"cVarConditions\": [],\r\n\t\t\"qualityLevelMask\": 31\r\n\t},\r\n\t\"ScalabilityOverrides\":\r\n\t{\r\n\t\t\"overrides\": []\r\n\t},\r\n\t\"MaxGPUParticlesSpawnPerFrame\": 0,\r\n\t\"AllocationMode\": \"AutomaticEstimate\",\r\n\t\"PreAllocationCount\": 0,\r\n\t\"EmitterDependencies\": [],\r\n\t\"AttributesToPreserve\": [],\r\n\t\"AddEmitterDefaultViewState\": \"Default\",\r\n\t\"SimStageExecutionLoopEditorData\": []\r\n}",
+    "topology": {
+     "emitterName": "Glow_Base",
+     "bEnabled": true,
+     "simTarget": "CPUSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      }
+     ],
+     "emitterSpawnScript": {
+      "scriptName": "EmitterSpawnScript",
+      "modules": []
+     },
+     "emitterUpdateScript": {
+      "scriptName": "EmitterUpdateScript",
+      "modules": [
+       {
+        "moduleName": "EmitterState",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Emitter/EmitterState.EmitterState"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "SpawnBurst_Instantaneous",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "particleSpawnScript": {
+      "scriptName": "ParticleSpawnScript",
+      "modules": [
+       {
+        "moduleName": "InitializeParticle",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "particleUpdateScript": {
+      "scriptName": "ParticleUpdateScript",
+      "modules": [
+       {
+        "moduleName": "ParticleState",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "renderers": [
+      {
+       "rendererIndex": 0,
+       "rendererClass": {
+        "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+       }
+      },
+      {
+       "rendererIndex": 1,
+       "rendererClass": {
+        "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+       }
+      }
+     ]
+    },
+    "renderers": [
+     {
+      "index": 0,
+      "class": {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      "data": "{\"Material\":{\"refPath\":\"/Niagara/DefaultAssets/DefaultSpriteMaterial.DefaultSpriteMaterial\"},\"MaterialUserParamBinding\":{\"parameter\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":2}}},\"SourceMode\":\"Particles\",\"Alignment\":\"Automatic\",\"FacingMode\":\"Automatic\",\"SortMode\":\"None\",\"MacroUVRadius\":0,\"PivotInUVSpace\":{\"x\":0.5,\"y\":0.5},\"SubImageSize\":{\"x\":1,\"y\":1},\"bSubImageBlend\":false,\"bRemoveHMDRollInVR\":false,\"bSortOnlyWhenTranslucent\":true,\"bEnableCameraDistanceCulling\":false,\"bCastShadows\":true,\"bIncludeInHitProxy\":true,\"SortPrecision\":\"Default\",\"GpuTranslucentLatency\":\"ProjectDefault\",\"PixelCoverageMode\":\"Automatic\",\"PixelCoverageBlend\":1,\"MinFacingCameraBlendDistance\":0,\"MaxFacingCameraBlendDistance\":0,\"MinCameraDistance\":0,\"MaxCameraDistance\":1000,\"RendererVisibility\":0,\"PositionBinding\":{\"rootName\":\"Position\",\"paramMapVariable\":{\"name\":\"Particles.Position\",\"typeDefHandle\":{\"registeredTypeIndex\":107}},\"dataSetName\":\"Position\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Position\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ColorBinding\":{\"rootName\":\"Color\",\"paramMapVariable\":{\"name\":\"Particles.Color\",\"typeDefHandle\":{\"registeredTypeIndex\":106}},\"dataSetName\":\"Color\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Color\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"VelocityBinding\":{\"rootName\":\"Velocity\",\"paramMapVariable\":{\"name\":\"Particles.Velocity\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Velocity\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Velocity\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteRotationBinding\":{\"rootName\":\"SpriteRotation\",\"paramMapVariable\":{\"name\":\"Particles.SpriteRotation\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SpriteRotation\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteRotation\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteSizeBinding\":{\"rootName\":\"SpriteSize\",\"paramMapVariable\":{\"name\":\"Particles.SpriteSize\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"SpriteSize\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteSize\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteFacingBinding\":{\"rootName\":\"SpriteFacing\",\"paramMapVariable\":{\"name\":\"Particles.SpriteFacing\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"SpriteFacing\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteFacing\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteAlignmentBinding\":{\"rootName\":\"SpriteAlignment\",\"paramMapVariable\":{\"name\":\"Particles.SpriteAlignment\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"SpriteAlignment\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteAlignment\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SubImageIndexBinding\":{\"rootName\":\"SubImageIndex\",\"paramMapVariable\":{\"name\":\"Particles.SubImageIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SubImageIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SubImageIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterialBinding\":{\"rootName\":\"DynamicMaterialParameter\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial1Binding\":{\"rootName\":\"DynamicMaterialParameter1\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter1\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter1\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter1\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial2Binding\":{\"rootName\":\"DynamicMaterialParameter2\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter2\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter2\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter2\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial3Binding\":{\"rootName\":\"DynamicMaterialParameter3\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter3\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter3\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter3\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CameraOffsetBinding\":{\"rootName\":\"CameraOffset\",\"paramMapVariable\":{\"name\":\"Particles.CameraOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"CameraOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.CameraOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"UVScaleBinding\":{\"rootName\":\"UVScale\",\"paramMapVariable\":{\"name\":\"Particles.UVScale\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"UVScale\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.UVScale\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"PivotOffsetBinding\":{\"rootName\":\"PivotOffset\",\"paramMapVariable\":{\"name\":\"Particles.PivotOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"PivotOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.PivotOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialRandomBinding\":{\"rootName\":\"MaterialRandom\",\"paramMapVariable\":{\"name\":\"Particles.MaterialRandom\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"MaterialRandom\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MaterialRandom\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CustomSortingBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"NormalizedAgeBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"RendererVisibilityTagBinding\":{\"rootName\":\"VisibilityTag\",\"paramMapVariable\":{\"name\":\"Particles.VisibilityTag\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"VisibilityTag\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.VisibilityTag\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialParameters\":{\"attributeBindings\":[],\"scalarParameters\":[],\"vectorParameters\":[],\"textureParameters\":[],\"staticBoolParameters\":[]},\"bUseMaterialCutoutTexture\":false,\"bCutoutIgnoreSubUV\":false,\"CutoutTexture\":\"None\",\"BoundingMode\":\"BVC_EightVertices\",\"OpacitySourceMode\":\"OSM_Alpha\",\"AlphaThreshold\":0.10000000149011612,\"Platforms\":{\"deviceProfileStates\":[],\"cVarConditions\":[],\"qualityLevelMask\":-1},\"SortOrderHint\":0,\"MotionVectorSetting\":\"AutoDetect\",\"bIsEnabled\":false,\"bAllowInCullProxies\":true,\"RendererEnabledBinding\":{\"rootName\":\"None\",\"paramMapVariable\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":102}},\"dataSetName\":\"None\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"None\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true}}",
+      "mesh_materials": {}
+     },
+     {
+      "index": 1,
+      "class": {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      },
+      "data": "{\"Meshes\":[{\"meshParameterBinding\":{\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}}},\"lODMode\":\"LODLevel\",\"lODLevelBinding\":{\"defaultValue\":[0,0,0,0],\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}}},\"lODBiasBinding\":{\"defaultValue\":[0,0,0,0],\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}}},\"lODLevel\":0,\"lODBias\":0,\"lODDistanceFactor\":1,\"bUseLODRange\":false,\"lODRange\":{\"x\":0,\"y\":8},\"mesh\":{\"refPath\":\"/Game/LevelPrototyping/Interactable/JumpPad/Assets/Meshes/SM_CircularGlow.SM_CircularGlow\"},\"scale\":{\"x\":1,\"y\":1,\"z\":1},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":0},\"pivotOffset\":{\"x\":0,\"y\":0,\"z\":0},\"pivotOffsetSpace\":\"Mesh\"}],\"MeshesBinding\":{\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}}},\"SourceMode\":\"Particles\",\"SortMode\":\"None\",\"SortPrecision\":\"Default\",\"GpuTranslucentLatency\":\"ProjectDefault\",\"bOverrideMaterials\":false,\"bSortOnlyWhenTranslucent\":true,\"bSubImageBlend\":true,\"bEnableFrustumCulling\":false,\"bEnableCameraDistanceCulling\":false,\"bEnableMeshFlipbook\":false,\"bLockedAxisEnable\":false,\"bCastShadows\":true,\"bIncludeInHitProxy\":true,\"OverrideMaterials\":[],\"SubImageSize\":{\"x\":1,\"y\":1},\"LockedAxis\":{\"x\":0,\"y\":0,\"z\":1},\"MeshBoundsScale\":{\"x\":1,\"y\":1,\"z\":1},\"FacingMode\":\"Default\",\"LockedAxisSpace\":\"Simulation\",\"MinCameraDistance\":0,\"MaxCameraDistance\":1000,\"RendererVisibility\":0,\"PositionBinding\":{\"rootName\":\"Position\",\"paramMapVariable\":{\"name\":\"Particles.Position\",\"typeDefHandle\":{\"registeredTypeIndex\":107}},\"dataSetName\":\"Position\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Position\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ColorBinding\":{\"rootName\":\"Color\",\"paramMapVariable\":{\"name\":\"Particles.Color\",\"typeDefHandle\":{\"registeredTypeIndex\":106}},\"dataSetName\":\"Color\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Color\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"VelocityBinding\":{\"rootName\":\"Velocity\",\"paramMapVariable\":{\"name\":\"Particles.Velocity\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Velocity\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Velocity\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MeshOrientationBinding\":{\"rootName\":\"MeshOrientation\",\"paramMapVariable\":{\"name\":\"Particles.MeshOrientation\",\"typeDefHandle\":{\"registeredTypeIndex\":108}},\"dataSetName\":\"MeshOrientation\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MeshOrientation\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ScaleBinding\":{\"rootName\":\"Scale\",\"paramMapVariable\":{\"name\":\"Particles.Scale\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Scale\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Scale\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SubImageIndexBinding\":{\"rootName\":\"SubImageIndex\",\"paramMapVariable\":{\"name\":\"Particles.SubImageIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SubImageIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SubImageIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterialBinding\":{\"rootName\":\"DynamicMaterialParameter\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial1Binding\":{\"rootName\":\"DynamicMaterialParameter1\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter1\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter1\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter1\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial2Binding\":{\"rootName\":\"DynamicMaterialParameter2\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter2\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter2\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter2\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial3Binding\":{\"rootName\":\"DynamicMaterialParameter3\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter3\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter3\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter3\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialRandomBinding\":{\"rootName\":\"MaterialRandom\",\"paramMapVariable\":{\"name\":\"Particles.MaterialRandom\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"MaterialRandom\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MaterialRandom\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CustomSortingBinding\":{\"rootName\":\"Age\",\"paramMapVariable\":{\"name\":\"Particles.Age\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"Age\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Age\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"NormalizedAgeBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CameraOffsetBinding\":{\"rootName\":\"CameraOffset\",\"paramMapVariable\":{\"name\":\"Particles.CameraOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"CameraOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.CameraOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"RendererVisibilityTagBinding\":{\"rootName\":\"VisibilityTag\",\"paramMapVariable\":{\"name\":\"Particles.VisibilityTag\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"VisibilityTag\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.VisibilityTag\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MeshIndexBinding\":{\"rootName\":\"MeshIndex\",\"paramMapVariable\":{\"name\":\"Particles.MeshIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"MeshIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MeshIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialParameters\":{\"attributeBindings\":[],\"scalarParameters\":[],\"vectorParameters\":[],\"textureParameters\":[],\"staticBoolParameters\":[]},\"FirstFlipbookFrame\":\"None\",\"FlipbookSuffixFormat\":\"_{frame_number}\",\"FlipbookSuffixNumDigits\":1,\"NumFlipbookFrames\":1,\"Platforms\":{\"deviceProfileStates\":[],\"cVarConditions\":[],\"qualityLevelMask\":-1},\"SortOrderHint\":0,\"MotionVectorSetting\":\"AutoDetect\",\"bIsEnabled\":true,\"bAllowInCullProxies\":true,\"RendererEnabledBinding\":{\"rootName\":\"None\",\"paramMapVariable\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":102}},\"dataSetName\":\"None\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"None\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true}}",
+      "mesh_materials": {
+       "/Game/LevelPrototyping/Interactable/JumpPad/Assets/Meshes/SM_CircularGlow.SM_CircularGlow": [
+        {
+         "refPath": "/Game/LevelPrototyping/Interactable/JumpPad/Assets/Materials/M_GradientGlow.M_GradientGlow"
+        }
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "summary": {
+     "emitterName": "Bands",
+     "bEnabled": true,
+     "simTarget": "CPUSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      }
+     ]
+    },
+    "data": "{\r\n\t\"Name\": \"Bands\",\r\n\t\"bIsEnabled\": true,\r\n\t\"Id\": \"B79343FB-4221-746C-86BA-7D9F2AAE1E9B\",\r\n\t\"IdName\": \"B79343FB4221746C86BA7D9F2AAE1E9B\",\r\n\t\"bLocalSpace\": false,\r\n\t\"bDeterminism\": false,\r\n\t\"RandomSeed\": 0,\r\n\t\"InterpolatedSpawnMode\": \"Interpolation\",\r\n\t\"SimTarget\": \"CPUSim\",\r\n\t\"Importance\": \"Normal\",\r\n\t\"CalculateBoundsMode\": \"Dynamic\",\r\n\t\"FixedBounds\":\r\n\t{\r\n\t\t\"min\":\r\n\t\t{\r\n\t\t\t\"x\": -100,\r\n\t\t\t\"y\": -100,\r\n\t\t\t\"z\": -100\r\n\t\t},\r\n\t\t\"max\":\r\n\t\t{\r\n\t\t\t\"x\": 100,\r\n\t\t\t\"y\": 100,\r\n\t\t\t\"z\": 100\r\n\t\t},\r\n\t\t\"isValid\": true\r\n\t},\r\n\t\"bRequiresPersistentIDs\": false,\r\n\t\"Platforms\":\r\n\t{\r\n\t\t\"deviceProfileStates\": [],\r\n\t\t\"cVarConditions\": [],\r\n\t\t\"qualityLevelMask\": 31\r\n\t},\r\n\t\"ScalabilityOverrides\":\r\n\t{\r\n\t\t\"overrides\": []\r\n\t},\r\n\t\"MaxGPUParticlesSpawnPerFrame\": 0,\r\n\t\"AllocationMode\": \"AutomaticEstimate\",\r\n\t\"PreAllocationCount\": 0,\r\n\t\"EmitterDependencies\": [],\r\n\t\"AttributesToPreserve\": [],\r\n\t\"AddEmitterDefaultViewState\": \"Default\",\r\n\t\"SimStageExecutionLoopEditorData\": []\r\n}",
+    "topology": {
+     "emitterName": "Bands",
+     "bEnabled": true,
+     "simTarget": "CPUSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      }
+     ],
+     "emitterSpawnScript": {
+      "scriptName": "EmitterSpawnScript",
+      "modules": []
+     },
+     "emitterUpdateScript": {
+      "scriptName": "EmitterUpdateScript",
+      "modules": [
+       {
+        "moduleName": "EmitterState",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Emitter/EmitterState.EmitterState"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "SpawnRate",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "particleSpawnScript": {
+      "scriptName": "ParticleSpawnScript",
+      "modules": [
+       {
+        "moduleName": "InitializeParticle",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "particleUpdateScript": {
+      "scriptName": "ParticleUpdateScript",
+      "modules": [
+       {
+        "moduleName": "ParticleState",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "ScaleMeshSize",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Size/ScaleMeshSize.ScaleMeshSize"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "GravityForce",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Forces/GravityForce.GravityForce"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "SolveForcesAndVelocity",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "ScaleColor",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Color/ScaleColor.ScaleColor"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "renderers": [
+      {
+       "rendererIndex": 0,
+       "rendererClass": {
+        "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+       }
+      },
+      {
+       "rendererIndex": 1,
+       "rendererClass": {
+        "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+       }
+      }
+     ]
+    },
+    "renderers": [
+     {
+      "index": 0,
+      "class": {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      "data": "{\"Material\":{\"refPath\":\"/Niagara/DefaultAssets/DefaultSpriteMaterial.DefaultSpriteMaterial\"},\"MaterialUserParamBinding\":{\"parameter\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":2}}},\"SourceMode\":\"Particles\",\"Alignment\":\"Automatic\",\"FacingMode\":\"Automatic\",\"SortMode\":\"None\",\"MacroUVRadius\":0,\"PivotInUVSpace\":{\"x\":0.5,\"y\":0.5},\"SubImageSize\":{\"x\":1,\"y\":1},\"bSubImageBlend\":false,\"bRemoveHMDRollInVR\":false,\"bSortOnlyWhenTranslucent\":true,\"bEnableCameraDistanceCulling\":false,\"bCastShadows\":true,\"bIncludeInHitProxy\":true,\"SortPrecision\":\"Default\",\"GpuTranslucentLatency\":\"ProjectDefault\",\"PixelCoverageMode\":\"Automatic\",\"PixelCoverageBlend\":1,\"MinFacingCameraBlendDistance\":0,\"MaxFacingCameraBlendDistance\":0,\"MinCameraDistance\":0,\"MaxCameraDistance\":1000,\"RendererVisibility\":0,\"PositionBinding\":{\"rootName\":\"Position\",\"paramMapVariable\":{\"name\":\"Particles.Position\",\"typeDefHandle\":{\"registeredTypeIndex\":107}},\"dataSetName\":\"Position\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Position\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ColorBinding\":{\"rootName\":\"Color\",\"paramMapVariable\":{\"name\":\"Particles.Color\",\"typeDefHandle\":{\"registeredTypeIndex\":106}},\"dataSetName\":\"Color\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Color\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"VelocityBinding\":{\"rootName\":\"Velocity\",\"paramMapVariable\":{\"name\":\"Particles.Velocity\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Velocity\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Velocity\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteRotationBinding\":{\"rootName\":\"SpriteRotation\",\"paramMapVariable\":{\"name\":\"Particles.SpriteRotation\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SpriteRotation\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteRotation\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteSizeBinding\":{\"rootName\":\"SpriteSize\",\"paramMapVariable\":{\"name\":\"Particles.SpriteSize\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"SpriteSize\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteSize\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteFacingBinding\":{\"rootName\":\"SpriteFacing\",\"paramMapVariable\":{\"name\":\"Particles.SpriteFacing\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"SpriteFacing\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteFacing\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteAlignmentBinding\":{\"rootName\":\"SpriteAlignment\",\"paramMapVariable\":{\"name\":\"Particles.SpriteAlignment\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"SpriteAlignment\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteAlignment\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SubImageIndexBinding\":{\"rootName\":\"SubImageIndex\",\"paramMapVariable\":{\"name\":\"Particles.SubImageIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SubImageIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SubImageIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterialBinding\":{\"rootName\":\"DynamicMaterialParameter\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial1Binding\":{\"rootName\":\"DynamicMaterialParameter1\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter1\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter1\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter1\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial2Binding\":{\"rootName\":\"DynamicMaterialParameter2\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter2\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter2\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter2\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial3Binding\":{\"rootName\":\"DynamicMaterialParameter3\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter3\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter3\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter3\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CameraOffsetBinding\":{\"rootName\":\"CameraOffset\",\"paramMapVariable\":{\"name\":\"Particles.CameraOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"CameraOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.CameraOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"UVScaleBinding\":{\"rootName\":\"UVScale\",\"paramMapVariable\":{\"name\":\"Particles.UVScale\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"UVScale\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.UVScale\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"PivotOffsetBinding\":{\"rootName\":\"PivotOffset\",\"paramMapVariable\":{\"name\":\"Particles.PivotOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"PivotOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.PivotOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialRandomBinding\":{\"rootName\":\"MaterialRandom\",\"paramMapVariable\":{\"name\":\"Particles.MaterialRandom\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"MaterialRandom\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MaterialRandom\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CustomSortingBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"NormalizedAgeBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"RendererVisibilityTagBinding\":{\"rootName\":\"VisibilityTag\",\"paramMapVariable\":{\"name\":\"Particles.VisibilityTag\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"VisibilityTag\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.VisibilityTag\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialParameters\":{\"attributeBindings\":[],\"scalarParameters\":[],\"vectorParameters\":[],\"textureParameters\":[],\"staticBoolParameters\":[]},\"bUseMaterialCutoutTexture\":false,\"bCutoutIgnoreSubUV\":false,\"CutoutTexture\":\"None\",\"BoundingMode\":\"BVC_EightVertices\",\"OpacitySourceMode\":\"OSM_Alpha\",\"AlphaThreshold\":0.10000000149011612,\"Platforms\":{\"deviceProfileStates\":[],\"cVarConditions\":[],\"qualityLevelMask\":-1},\"SortOrderHint\":0,\"MotionVectorSetting\":\"AutoDetect\",\"bIsEnabled\":false,\"bAllowInCullProxies\":true,\"RendererEnabledBinding\":{\"rootName\":\"None\",\"paramMapVariable\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":102}},\"dataSetName\":\"None\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"None\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true}}",
+      "mesh_materials": {}
+     },
+     {
+      "index": 1,
+      "class": {
+       "refPath": "/Script/Niagara.NiagaraMeshRendererProperties"
+      },
+      "data": "{\"Meshes\":[{\"meshParameterBinding\":{\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}}},\"lODMode\":\"LODLevel\",\"lODLevelBinding\":{\"defaultValue\":[0,0,0,0],\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}}},\"lODBiasBinding\":{\"defaultValue\":[0,0,0,0],\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":110}}},\"lODLevel\":0,\"lODBias\":0,\"lODDistanceFactor\":1,\"bUseLODRange\":false,\"lODRange\":{\"x\":0,\"y\":8},\"mesh\":{\"refPath\":\"/Game/LevelPrototyping/Interactable/JumpPad/Assets/Meshes/SM_CircularBand.SM_CircularBand\"},\"scale\":{\"x\":1,\"y\":1,\"z\":1},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":0},\"pivotOffset\":{\"x\":0,\"y\":0,\"z\":0},\"pivotOffsetSpace\":\"Mesh\"}],\"MeshesBinding\":{\"resolvedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"aliasedParameter\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}}},\"SourceMode\":\"Particles\",\"SortMode\":\"None\",\"SortPrecision\":\"Default\",\"GpuTranslucentLatency\":\"ProjectDefault\",\"bOverrideMaterials\":false,\"bSortOnlyWhenTranslucent\":true,\"bSubImageBlend\":true,\"bEnableFrustumCulling\":false,\"bEnableCameraDistanceCulling\":false,\"bEnableMeshFlipbook\":false,\"bLockedAxisEnable\":false,\"bCastShadows\":true,\"bIncludeInHitProxy\":true,\"OverrideMaterials\":[],\"SubImageSize\":{\"x\":1,\"y\":1},\"LockedAxis\":{\"x\":0,\"y\":0,\"z\":1},\"MeshBoundsScale\":{\"x\":1,\"y\":1,\"z\":1},\"FacingMode\":\"Default\",\"LockedAxisSpace\":\"Simulation\",\"MinCameraDistance\":0,\"MaxCameraDistance\":1000,\"RendererVisibility\":0,\"PositionBinding\":{\"rootName\":\"Position\",\"paramMapVariable\":{\"name\":\"Particles.Position\",\"typeDefHandle\":{\"registeredTypeIndex\":107}},\"dataSetName\":\"Position\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Position\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ColorBinding\":{\"rootName\":\"Color\",\"paramMapVariable\":{\"name\":\"Particles.Color\",\"typeDefHandle\":{\"registeredTypeIndex\":106}},\"dataSetName\":\"Color\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Color\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"VelocityBinding\":{\"rootName\":\"Velocity\",\"paramMapVariable\":{\"name\":\"Particles.Velocity\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Velocity\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Velocity\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MeshOrientationBinding\":{\"rootName\":\"MeshOrientation\",\"paramMapVariable\":{\"name\":\"Particles.MeshOrientation\",\"typeDefHandle\":{\"registeredTypeIndex\":108}},\"dataSetName\":\"MeshOrientation\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MeshOrientation\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ScaleBinding\":{\"rootName\":\"Scale\",\"paramMapVariable\":{\"name\":\"Particles.Scale\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Scale\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Scale\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SubImageIndexBinding\":{\"rootName\":\"SubImageIndex\",\"paramMapVariable\":{\"name\":\"Particles.SubImageIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SubImageIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SubImageIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterialBinding\":{\"rootName\":\"DynamicMaterialParameter\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial1Binding\":{\"rootName\":\"DynamicMaterialParameter1\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter1\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter1\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter1\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial2Binding\":{\"rootName\":\"DynamicMaterialParameter2\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter2\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter2\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter2\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial3Binding\":{\"rootName\":\"DynamicMaterialParameter3\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter3\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter3\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter3\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialRandomBinding\":{\"rootName\":\"MaterialRandom\",\"paramMapVariable\":{\"name\":\"Particles.MaterialRandom\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"MaterialRandom\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MaterialRandom\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CustomSortingBinding\":{\"rootName\":\"Age\",\"paramMapVariable\":{\"name\":\"Particles.Age\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"Age\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Age\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"NormalizedAgeBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CameraOffsetBinding\":{\"rootName\":\"CameraOffset\",\"paramMapVariable\":{\"name\":\"Particles.CameraOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"CameraOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.CameraOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"RendererVisibilityTagBinding\":{\"rootName\":\"VisibilityTag\",\"paramMapVariable\":{\"name\":\"Particles.VisibilityTag\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"VisibilityTag\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.VisibilityTag\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MeshIndexBinding\":{\"rootName\":\"MeshIndex\",\"paramMapVariable\":{\"name\":\"Particles.MeshIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"MeshIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MeshIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialParameters\":{\"attributeBindings\":[],\"scalarParameters\":[],\"vectorParameters\":[],\"textureParameters\":[],\"staticBoolParameters\":[]},\"FirstFlipbookFrame\":\"None\",\"FlipbookSuffixFormat\":\"_{frame_number}\",\"FlipbookSuffixNumDigits\":1,\"NumFlipbookFrames\":1,\"Platforms\":{\"deviceProfileStates\":[],\"cVarConditions\":[],\"qualityLevelMask\":-1},\"SortOrderHint\":0,\"MotionVectorSetting\":\"AutoDetect\",\"bIsEnabled\":true,\"bAllowInCullProxies\":true,\"RendererEnabledBinding\":{\"rootName\":\"None\",\"paramMapVariable\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":102}},\"dataSetName\":\"None\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"None\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true}}",
+      "mesh_materials": {
+       "/Game/LevelPrototyping/Interactable/JumpPad/Assets/Meshes/SM_CircularBand.SM_CircularBand": [
+        {
+         "refPath": "/Game/LevelPrototyping/Interactable/JumpPad/Assets/Materials/M_SimpleGlow.M_SimpleGlow"
+        }
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "summary": {
+     "emitterName": "Spores",
+     "bEnabled": true,
+     "simTarget": "GPUComputeSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      }
+     ]
+    },
+    "data": "{\r\n\t\"Name\": \"Spores\",\r\n\t\"bIsEnabled\": true,\r\n\t\"Id\": \"8CDAD0F8-4D18-360D-077B-55B094EB98D3\",\r\n\t\"IdName\": \"8CDAD0F84D18360D077B55B094EB98D3\",\r\n\t\"bLocalSpace\": false,\r\n\t\"bDeterminism\": false,\r\n\t\"RandomSeed\": 0,\r\n\t\"InterpolatedSpawnMode\": \"Interpolation\",\r\n\t\"SimTarget\": \"GPUComputeSim\",\r\n\t\"Importance\": \"Normal\",\r\n\t\"CalculateBoundsMode\": \"Fixed\",\r\n\t\"FixedBounds\":\r\n\t{\r\n\t\t\"min\":\r\n\t\t{\r\n\t\t\t\"x\": -100,\r\n\t\t\t\"y\": -100,\r\n\t\t\t\"z\": -100\r\n\t\t},\r\n\t\t\"max\":\r\n\t\t{\r\n\t\t\t\"x\": 100,\r\n\t\t\t\"y\": 100,\r\n\t\t\t\"z\": 100\r\n\t\t},\r\n\t\t\"isValid\": true\r\n\t},\r\n\t\"bRequiresPersistentIDs\": false,\r\n\t\"Platforms\":\r\n\t{\r\n\t\t\"deviceProfileStates\": [],\r\n\t\t\"cVarConditions\": [],\r\n\t\t\"qualityLevelMask\": 31\r\n\t},\r\n\t\"ScalabilityOverrides\":\r\n\t{\r\n\t\t\"overrides\": []\r\n\t},\r\n\t\"MaxGPUParticlesSpawnPerFrame\": 0,\r\n\t\"AllocationMode\": \"AutomaticEstimate\",\r\n\t\"PreAllocationCount\": 0,\r\n\t\"EmitterDependencies\": [],\r\n\t\"AttributesToPreserve\": [],\r\n\t\"AddEmitterDefaultViewState\": \"Default\",\r\n\t\"SimStageExecutionLoopEditorData\": []\r\n}",
+    "topology": {
+     "emitterName": "Spores",
+     "bEnabled": true,
+     "simTarget": "GPUComputeSim",
+     "rendererClasses": [
+      {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      }
+     ],
+     "emitterSpawnScript": {
+      "scriptName": "EmitterSpawnScript",
+      "modules": []
+     },
+     "emitterUpdateScript": {
+      "scriptName": "EmitterUpdateScript",
+      "modules": [
+       {
+        "moduleName": "EmitterState",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Emitter/EmitterState.EmitterState"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "SpawnRate",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Emitter/SpawnRate.SpawnRate"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "particleSpawnScript": {
+      "scriptName": "ParticleSpawnScript",
+      "modules": [
+       {
+        "moduleName": "InitializeParticle",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "ShapeLocation",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Spawn/Location/V2/ShapeLocation.ShapeLocation"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "particleUpdateScript": {
+      "scriptName": "ParticleUpdateScript",
+      "modules": [
+       {
+        "moduleName": "ParticleState",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "GravityForce",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Forces/GravityForce.GravityForce"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "SolveForcesAndVelocity",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Solvers/SolveForcesAndVelocity.SolveForcesAndVelocity"
+        },
+        "bIsSetParametersModule": false
+       },
+       {
+        "moduleName": "ScaleColor",
+        "enabled": true,
+        "moduleScript": {
+         "refPath": "/Niagara/Modules/Update/Color/ScaleColor.ScaleColor"
+        },
+        "bIsSetParametersModule": false
+       }
+      ]
+     },
+     "renderers": [
+      {
+       "rendererIndex": 0,
+       "rendererClass": {
+        "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+       }
+      }
+     ]
+    },
+    "renderers": [
+     {
+      "index": 0,
+      "class": {
+       "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+      },
+      "data": "{\"Material\":{\"refPath\":\"/Niagara/DefaultAssets/DefaultSpriteMaterial.DefaultSpriteMaterial\"},\"MaterialUserParamBinding\":{\"parameter\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":2}}},\"SourceMode\":\"Particles\",\"Alignment\":\"Automatic\",\"FacingMode\":\"Automatic\",\"SortMode\":\"None\",\"MacroUVRadius\":0,\"PivotInUVSpace\":{\"x\":0.5,\"y\":0.5},\"SubImageSize\":{\"x\":1,\"y\":1},\"bSubImageBlend\":false,\"bRemoveHMDRollInVR\":false,\"bSortOnlyWhenTranslucent\":true,\"bEnableCameraDistanceCulling\":false,\"bCastShadows\":true,\"bIncludeInHitProxy\":true,\"SortPrecision\":\"Default\",\"GpuTranslucentLatency\":\"ProjectDefault\",\"PixelCoverageMode\":\"Automatic\",\"PixelCoverageBlend\":1,\"MinFacingCameraBlendDistance\":0,\"MaxFacingCameraBlendDistance\":0,\"MinCameraDistance\":0,\"MaxCameraDistance\":1000,\"RendererVisibility\":0,\"PositionBinding\":{\"rootName\":\"Position\",\"paramMapVariable\":{\"name\":\"Particles.Position\",\"typeDefHandle\":{\"registeredTypeIndex\":107}},\"dataSetName\":\"Position\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Position\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"ColorBinding\":{\"rootName\":\"Color\",\"paramMapVariable\":{\"name\":\"Particles.Color\",\"typeDefHandle\":{\"registeredTypeIndex\":106}},\"dataSetName\":\"Color\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Color\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"VelocityBinding\":{\"rootName\":\"Velocity\",\"paramMapVariable\":{\"name\":\"Particles.Velocity\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"Velocity\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.Velocity\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteRotationBinding\":{\"rootName\":\"SpriteRotation\",\"paramMapVariable\":{\"name\":\"Particles.SpriteRotation\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SpriteRotation\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteRotation\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteSizeBinding\":{\"rootName\":\"SpriteSize\",\"paramMapVariable\":{\"name\":\"Particles.SpriteSize\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"SpriteSize\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteSize\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteFacingBinding\":{\"rootName\":\"SpriteFacing\",\"paramMapVariable\":{\"name\":\"Particles.SpriteFacing\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"SpriteFacing\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteFacing\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SpriteAlignmentBinding\":{\"rootName\":\"SpriteAlignment\",\"paramMapVariable\":{\"name\":\"Particles.SpriteAlignment\",\"typeDefHandle\":{\"registeredTypeIndex\":104}},\"dataSetName\":\"SpriteAlignment\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SpriteAlignment\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"SubImageIndexBinding\":{\"rootName\":\"SubImageIndex\",\"paramMapVariable\":{\"name\":\"Particles.SubImageIndex\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"SubImageIndex\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.SubImageIndex\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterialBinding\":{\"rootName\":\"DynamicMaterialParameter\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial1Binding\":{\"rootName\":\"DynamicMaterialParameter1\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter1\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter1\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter1\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial2Binding\":{\"rootName\":\"DynamicMaterialParameter2\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter2\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter2\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter2\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"DynamicMaterial3Binding\":{\"rootName\":\"DynamicMaterialParameter3\",\"paramMapVariable\":{\"name\":\"Particles.DynamicMaterialParameter3\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"dataSetName\":\"DynamicMaterialParameter3\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.DynamicMaterialParameter3\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CameraOffsetBinding\":{\"rootName\":\"CameraOffset\",\"paramMapVariable\":{\"name\":\"Particles.CameraOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"CameraOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.CameraOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"UVScaleBinding\":{\"rootName\":\"UVScale\",\"paramMapVariable\":{\"name\":\"Particles.UVScale\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"UVScale\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.UVScale\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"PivotOffsetBinding\":{\"rootName\":\"PivotOffset\",\"paramMapVariable\":{\"name\":\"Particles.PivotOffset\",\"typeDefHandle\":{\"registeredTypeIndex\":103}},\"dataSetName\":\"PivotOffset\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.PivotOffset\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialRandomBinding\":{\"rootName\":\"MaterialRandom\",\"paramMapVariable\":{\"name\":\"Particles.MaterialRandom\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"MaterialRandom\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.MaterialRandom\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"CustomSortingBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"NormalizedAgeBinding\":{\"rootName\":\"NormalizedAge\",\"paramMapVariable\":{\"name\":\"Particles.NormalizedAge\",\"typeDefHandle\":{\"registeredTypeIndex\":99}},\"dataSetName\":\"NormalizedAge\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.NormalizedAge\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"RendererVisibilityTagBinding\":{\"rootName\":\"VisibilityTag\",\"paramMapVariable\":{\"name\":\"Particles.VisibilityTag\",\"typeDefHandle\":{\"registeredTypeIndex\":101}},\"dataSetName\":\"VisibilityTag\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"Particles.VisibilityTag\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true},\"MaterialParameters\":{\"attributeBindings\":[],\"scalarParameters\":[],\"vectorParameters\":[],\"textureParameters\":[],\"staticBoolParameters\":[]},\"bUseMaterialCutoutTexture\":false,\"bCutoutIgnoreSubUV\":false,\"CutoutTexture\":\"None\",\"BoundingMode\":\"BVC_EightVertices\",\"OpacitySourceMode\":\"OSM_Alpha\",\"AlphaThreshold\":0.10000000149011612,\"Platforms\":{\"deviceProfileStates\":[],\"cVarConditions\":[],\"qualityLevelMask\":-1},\"SortOrderHint\":0,\"MotionVectorSetting\":\"AutoDetect\",\"bIsEnabled\":true,\"bAllowInCullProxies\":true,\"RendererEnabledBinding\":{\"rootName\":\"None\",\"paramMapVariable\":{\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":102}},\"dataSetName\":\"None\",\"boundVariable\":{\"varData\":[],\"name\":\"None\",\"typeDefHandle\":{\"registeredTypeIndex\":105}},\"cachedDisplayName\":\"None\",\"bindingSourceMode\":\"ImplicitFromSource\",\"bBindingExistsOnSource\":false,\"bIsCachedParticleValue\":true}}",
+      "mesh_materials": {}
+     }
+    ]
+   }
+  ]
+ }
+}

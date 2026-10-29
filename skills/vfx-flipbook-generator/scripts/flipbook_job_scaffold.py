@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from flipbook_route_advisor import Advice, build_advice, parse_grid
+
+if sys.version_info < (3, 10):  # dataclass(slots=True), str.removesuffix
+    raise SystemExit(f"The UE skills need Python 3.10 or newer; {sys.executable} is {sys.version.split()[0]}.")
 
 
 EFFECT_ALIASES: dict[str, tuple[str, ...]] = {
@@ -251,11 +255,11 @@ def build_job_spec(request_text: str, grid: tuple[int, int], duration: float, so
     }
     atlas_name = f"{slug}.png".replace("--", "-")
     batch_plan_command = (
-        f'python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_plan.py "{job_root / "job-spec.json"}" '
+        f'python scripts/flipbook_batch_plan.py "{job_root / "job-spec.json"}" '
         f'--effect "{effect}"'
     )
     packing_command = (
-        f'python D:/Skills/skills/vfx-flipbook-generator/scripts/frame_atlas_packer.py "{output_paths["curated_frames"]}" '
+        f'python scripts/frame_atlas_packer.py "{output_paths["curated_frames"]}" '
         f'--grid {grid[0]}x{grid[1]} --cell-size {packing_cell[0]}x{packing_cell[1]} --fit contain '
         f'--background transparent --atlas-size-mode pad-to-power-of-two --out-dir "{output_paths["atlas"]}" '
         f'--atlas-name "{atlas_name}" --effect "{slug}"'

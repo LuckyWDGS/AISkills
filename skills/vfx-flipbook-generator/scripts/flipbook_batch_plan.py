@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+if sys.version_info < (3, 10):  # dataclass(slots=True), str.removesuffix
+    raise SystemExit(f"The UE skills need Python 3.10 or newer; {sys.executable} is {sys.version.split()[0]}.")
 
 
 PHASE_WEIGHTS: dict[str, tuple[float, ...]] = {
