@@ -1,2 +1,5 @@
 # Local Codex session continuity memory
 .codex/session/
+
+# FFmpeg binaries are installed per machine, not committed (see SKILL.md)
+tools/ffmpeg/
