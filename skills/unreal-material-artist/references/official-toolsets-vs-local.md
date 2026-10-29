@@ -72,7 +72,8 @@ fail fast: `graph_refactor_apply`, `material_asset_library register-material`,
 `shader_permutation_report`, `texture_import_audit`, and `texture_import_fix`.
 Their offline planning/report modes still work. Perform the live step with MCP
 tools, save the result JSON, and feed it into the local report code. Each is
-pending a port to MCP. `material_audit` (read) and `material_instance_batch` (write) are ported and
+pending a port to MCP. `scripts/retired_tools.json` lists each unported tool with the MCP route to use instead;
+running one prints that route immediately. `material_audit` (read) and `material_instance_batch` (write) are ported and
 are the reference patterns; follow
 [porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
 for the remaining writers.

@@ -947,7 +947,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--baseline", help="Optional material_regression baseline path.")
     parser.add_argument("--execute", action="store_true", help="Actually duplicate/apply in UE. Without this, only writes a review plan.")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

@@ -237,7 +237,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dry-run-promote", action="store_true")
     parser.add_argument("--save-promoted-assets", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.set_defaults(func=command)
     return parser

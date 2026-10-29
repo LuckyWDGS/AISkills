@@ -210,7 +210,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--control", required=True)
     parser.add_argument("--system-path", required=True)
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--value-json", action="append", default=[])
     parser.add_argument("--sim-time", type=float, default=1.0)

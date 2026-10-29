@@ -279,7 +279,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--waive-exposures", action="store_true")
     parser.add_argument("--waive-parameter-tiers", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument("--strict", action="store_true")

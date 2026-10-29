@@ -744,7 +744,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("material_path")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")

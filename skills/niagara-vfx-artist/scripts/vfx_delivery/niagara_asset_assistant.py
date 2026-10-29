@@ -1807,7 +1807,7 @@ def build_parser() -> argparse.ArgumentParser:
     apply_plan = subparsers.add_parser("apply-plan")
     apply_plan.add_argument("--plan", required=True)
     apply_plan.add_argument("--project", default="")
-    apply_plan.add_argument("--endpoint")
+    apply_plan.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     apply_plan.add_argument("--timeout", type=int, default=240)
     apply_plan.add_argument("--script-out")
     apply_plan.add_argument("--out")
@@ -1843,7 +1843,7 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("system_path")
     inspect.add_argument("--effect", default="")
     inspect.add_argument("--project")
-    inspect.add_argument("--endpoint")
+    inspect.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     inspect.add_argument("--timeout", type=int, default=180)
     inspect.add_argument("--out")
     inspect.set_defaults(func=inspect_system_command)

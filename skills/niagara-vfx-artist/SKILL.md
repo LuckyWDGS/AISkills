@@ -22,6 +22,8 @@ readiness, report that specific boundary rather than repeatedly sending writes.
 
 The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired. `niagara_audit` and `niagara_material_integration_probe` read through MCP. The editor-connected modes of `niagara_asset_assistant` apply, `niagara_param_sweep`, `runtime_control_probe`, `live_asset_verify`, `controlled_preview`, `effect_control_schema` live reads, `asset_cleanup` execute, `ue_write_helpers`, and `flipbook_ue_pipeline` call retired `UnrealBridge*Library` APIs and fail fast until ported to MCP; their offline plan/report modes still work. Do the live step with MCP tools and feed the resulting JSON into the local reports. `ue_smoke`, `delivery_finalize --promote-assets` and `control_provenance_check` use only stock `unreal.*` and run over Epic Python Remote Execution. See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
 
+*(not ported)*: the tool only works against the editor and still needs an MCP port. *(live step not ported)*: its offline modes work, but the editor step needs a port. Running a live step prints the MCP route to use instead (from `scripts/retired_tools.json`).
+
 ## Overview
 
 Use this skill as the VFX Lead for Unreal Engine Niagara effect design, implementation, critique, integration, and optimization. It owns the effect-level direction: visual intent, gameplay readability, reference decomposition, layer structure, carrier choices, systems, emitters, renderers, events, modules, simulation targets, bounds, culling, preview, integration, and final effect delivery.
@@ -100,14 +102,14 @@ Use these when relevant:
 - `tools/integration_plan.py` for notify/socket/owner/user-parameter hookup planning.
 - `tools/niagara_audit.py` for system/emitter/renderer readback.
 - `tools/niagara_material_integration_probe.py` for checking a real Niagara System against material-side contract/delivery/preview evidence.
-- `tools/niagara_asset_assistant.py` for template-based Niagara creation or repair plans.
-- `tools/controlled_preview.py` for deterministic preview captures.
+- `tools/niagara_asset_assistant.py` *(live step not ported)* for template-based Niagara creation or repair plans.
+- `tools/controlled_preview.py` *(live step not ported)* for deterministic preview captures.
 - `tools/effect_preview_approval.py` for final effect preview approval records that can gate promotion after visual review.
 - `tools/visual_diff_qa.py` and `tools/design_compare_checklist.py` for visual comparison.
 - `tools/gap_diagnosis.py` and `tools/parameter_tuning_log.py` for intentional tuning.
 - `tools/flipbook_builder.py` for video-to-SubUV flipbook recommendation and atlas generation.
-- `tools/flipbook_ue_pipeline.py` for one-click atlas import, texture fix, SubUV material creation, optional sprite preview, and optional first-pass Niagara hookup/verification.
-- `tools/delivery_package.py`, `tools/delivery_dashboard.py`, `tools/delivery_finalize.py`, `tools/ue_smoke.py`, `tools/learning_loop.py`, and `tools/asset_cleanup.py` for closeout.
+- `tools/flipbook_ue_pipeline.py` *(not ported)* for one-click atlas import, texture fix, SubUV material creation, optional sprite preview, and optional first-pass Niagara hookup/verification.
+- `tools/delivery_package.py`, `tools/delivery_dashboard.py`, `tools/delivery_finalize.py`, `tools/ue_smoke.py`, `tools/learning_loop.py`, and `tools/asset_cleanup.py` *(not ported)* for closeout.
 
 For an official material graph read with saved evidence, use:
 
@@ -134,7 +136,7 @@ python ../unreal-material-artist/tools/official_toolsets_bridge.py material:get_
 - If the silhouette is right but color, alpha, UV flow, edge softness, or shader detail is wrong, hand the material side to `unreal-material-artist`.
 - Generated flipbook/SubUV atlas PNGs must be power-of-two on both axes by default. If a generated atlas is non-power-of-two, immediately rebuild or resize it to the nearest valid power-of-two dimensions per axis, such as raw `2160x4090` -> final `2048x4096`, and keep the raw dimensions recorded in the manifest.
 - When `tools/delivery_package.py` is given `--final-material` paths, expect it to consume approved material delivery reports from the sibling `material-delivery` session tree. A final material is stronger when Niagara delivery can prove both the Niagara-side effect package and the material-side approved delivery report.
-- For final delivery, prefer `delivery_package.py --require-ready` or `delivery_package.py check --index <delivery-index.json> --require-ready`; `niagara_asset_assistant.py apply-plan --apply --verify` can also enforce an existing ready package through `--delivery-index`, `--delivery-manifest`, `--delivery-effect`, or `--require-delivery-ready`.
+- For final delivery, prefer `delivery_package.py --require-ready` or `delivery_package.py check --index <delivery-index.json> --require-ready`; `niagara_asset_assistant.py apply-plan --apply --verify` *(live step not ported)* can also enforce an existing ready package through `--delivery-index`, `--delivery-manifest`, `--delivery-effect`, or `--require-delivery-ready`.
 - For write-side Niagara work, prefer official MCP edits followed by official structural/compile/issue readback and local delivery reports. `niagara_asset_assistant.py apply-plan --apply` is disabled (retired UnrealBridge APIs) pending an MCP port.
 - Approved previews only prove readiness when they match the current anchor revision and the current final system/material route. Old approvals become historical evidence, not current delivery proof.
 - Use Niagara structural contract flags or `--effect-type-contract` when a package has non-negotiable structure, for example requiring Ribbon renderers, material binding, Attribute Reader data flow, FixedBounds, and no test/debug emitters.

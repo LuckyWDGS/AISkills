@@ -293,7 +293,7 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--scan-ue-assets", action="store_true")
     report.add_argument("--ue-asset-root", action="append", default=[])
     report.add_argument("--project")
-    report.add_argument("--endpoint")
+    report.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     report.add_argument("--timeout", type=int, default=120)
     report.set_defaults(func=report_command)
 
@@ -301,7 +301,7 @@ def build_parser() -> argparse.ArgumentParser:
     apply.add_argument("report")
     apply.add_argument("--out")
     apply.add_argument("--project")
-    apply.add_argument("--endpoint")
+    apply.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     apply.add_argument("--timeout", type=int, default=120)
     apply.add_argument("--delete-ue-temp-actors", action="store_true")
     apply.add_argument("--delete-ue-temp-assets", action="store_true")

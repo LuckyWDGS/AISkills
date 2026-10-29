@@ -180,7 +180,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
     parser.add_argument("--effect", default="")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     subparsers = parser.add_subparsers(dest="command", required=True)
 

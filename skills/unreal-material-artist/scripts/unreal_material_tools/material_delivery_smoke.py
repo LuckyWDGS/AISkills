@@ -1528,7 +1528,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--with-complexity", action="store_true")
     parser.add_argument("--markdown-previews", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--execute", action="store_true", help="Run live UE-dependent steps instead of only planning them.")
     parser.add_argument("--resume-cache", action="store_true", help="Reuse matching step reports from smoke_resume_cache.py when commands and inputs have not changed.")

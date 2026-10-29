@@ -1,6 +1,6 @@
 ---
 name: unreal-material-artist
-description: Use when Codex needs a UE Material/Shader Specialist for material graph design, authoring, reading, review, optimization, debugging, texture strategy, import audits/fixes, Custom HLSL, Material Instances, Material Functions, Material Layers, Material Attributes, Substrate, shader complexity, sampler/instruction budgets, preview/regression baselines, delivery packages, acceptance gates, or official/editor material-tool bridge work. Trigger for Unreal material domains, blend modes, shading models, VFX/Niagara renderer materials, fire/flame/ember/smoke/heat-haze/lava/energy materials, landscape/foliage/character/environment/UI/post-process/decal/light-function/volume/RVT materials, specialized shading models, texture-vs-procedural tradeoffs, material function linting, shader permutation reports, and material asset audits.
+description: Use when Codex needs a UE Material/Shader Specialist for material graph design, authoring, reading, review, optimization, debugging, texture strategy, import audits/fixes, Custom HLSL, Material Instances, Material Functions, Material Layers, Material Attributes, Substrate, shader complexity, sampler/instruction budgets, preview/regression baselines, delivery packages, acceptance gates, or MCP-driven material editing and audits. Trigger for Unreal material domains, blend modes, shading models, VFX/Niagara renderer materials, fire/flame/ember/smoke/heat-haze/lava/energy materials, landscape/foliage/character/environment/UI/post-process/decal/light-function/volume/RVT materials, specialized shading models, texture-vs-procedural tradeoffs, material function linting, shader permutation reports, and material asset audits.
 ---
 
 # Unreal Material Artist
@@ -31,6 +31,8 @@ Default team model:
 - For full Niagara VFX tasks, accept the material contract from Niagara, implement or review only the material route, then return required material inputs, carrier assumptions, and performance risks so Niagara can wire, preview, and tune the whole effect.
 - Do not override Niagara carrier or timing decisions unless the material route proves them technically impossible or unnecessarily expensive; report that tradeoff back as a recommendation.
 - Do not treat live Niagara system reads, Niagara parameter writes, renderer-binding hookup, emitter graph inspection, rapid-iteration ownership tracing, or real-system semantic plumbing as this skill's core responsibility. Those belong to `niagara-vfx-artist`.
+
+*(not ported)*: the tool only works against the editor and still needs an MCP port. *(live step not ported)*: its offline modes work, but the editor step needs a port. Running a live step prints the MCP route to use instead (from `scripts/retired_tools.json`).
 
 ## Core Workflow
 
@@ -64,7 +66,7 @@ Default team model:
    When the user names or provides a texture asset as the visual source, preserve that texture identity. Procedural math may reveal, mask, rotate, recolor, feather, or remap the texture, but must not replace the named texture with a procedurally drawn lookalike unless the user approves that substitution.
 
 6. Search the reusable asset library before generating.
-   Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search`. Reuse `approved` assets first only when they pass the material contract and reference-fidelity gate. In reference-driven or custom work, library assets are candidates, not authority: reject generic/simple matches that would change the intended style, scale, pattern language, color, motion, alpha shape, or material identity. Only generate a new texture when the library does not already have a suitable reviewed asset.
+   Use [references/material-asset-library.md](references/material-asset-library.md) and `tools/material_asset_library.py search` *(live step not ported)*. Reuse `approved` assets first only when they pass the material contract and reference-fidelity gate. In reference-driven or custom work, library assets are candidates, not authority: reject generic/simple matches that would change the intended style, scale, pattern language, color, motion, alpha shape, or material identity. Only generate a new texture when the library does not already have a suitable reviewed asset.
 
 7. Build the material route.
    Prefer clear graph nodes for ordinary math and engine-tracked texture samples. Use Custom HLSL only when it meaningfully improves fidelity, reduces graph complexity, or implements math that nodes cannot express cleanly.
@@ -79,13 +81,13 @@ Default team model:
    For foliage or vegetation cards, missing leaf diffuse/alpha or a believable leaf-card carrier is an asset gap to resolve, not just a visual caveat: search the `foliage` library category first; if no approved asset fits, use `cm-imagegen` from the user's reference image when available, QA with `--role foliage`, import/audit/fix settings, then preview on a masked two-sided card.
 
 9. Audit and self-review.
-   Use official structural checks first, then controlled previews or in-level captures through official scene/editor tools where exposed. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the evidence model. Treat performance findings as evidence and triage, not automatic permission to lower the look. `tools/material_preview.py` remains a legacy bridge executor for specific uncovered preview needs; do not make it a prerequisite for normal material work. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
-   For master-material or MI-family cleanup, also use Unreal's Material Analyzer when the editor is available, and use `tools/shader_permutation_report.py` or `tools/permutation_budget_guard.py` when static switches/static masks are the risk.
+   Use official structural checks first, then controlled previews or in-level captures through official scene/editor tools where exposed. Read [references/material-audit-workflow.md](references/material-audit-workflow.md) for the evidence model. Treat performance findings as evidence and triage, not automatic permission to lower the look. `tools/material_preview.py` *(live step not ported)* remains a legacy bridge executor for specific uncovered preview needs; do not make it a prerequisite for normal material work. Treat any sprite/ribbon preview here as a material-side carrier harness, not as ownership of a production Niagara system.
+   For master-material or MI-family cleanup, also use Unreal's Material Analyzer when the editor is available, and use `tools/shader_permutation_report.py` *(not ported)* or `tools/permutation_budget_guard.py` when static switches/static masks are the risk.
    When one preview is too narrow, use [references/preview-matrix.md](references/preview-matrix.md) and `tools/preview_matrix.py` to plan or execute a matrix across background intent, exposure intent, distance, angle, time, parameter tier, quality, lighting, and carrier.
    For Additive/Translucent/Ribbon/Decal routes, use [references/translucency-sorting-probe.md](references/translucency-sorting-probe.md) and `tools/translucency_sorting_probe.py` to check material-side DepthFade/SoftParticle evidence plus optional Niagara sorting/bounds proof. Keep real Niagara System/Emitter/Renderer proof in `niagara-vfx-artist`.
 
 10. Check domain, blend, shading model, and render contract for non-standard materials.
-   For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Read supported domain properties through official ObjectTools; reserve the legacy `tools/material_domain_audit.py` executor for a demonstrated audit gap.
+   For UI, post process, decal, light function, volume, RVT, Substrate, layered materials, water, glass, skin, hair, cloth, foliage, or other specialized materials, read [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md), [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md), and [references/specialized-shading-models.md](references/specialized-shading-models.md) as needed. Read supported domain properties through official ObjectTools; reserve the legacy `tools/material_domain_audit.py` *(not ported)* executor for a demonstrated audit gap.
    For custom or complex water, also read [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md) before authoring. A water material needs a concrete route, node plan, texture roles, carrier preview, and water-specific audit; do not stop at naming the shading model.
    For fire, flame, burning, ember, smoke, heat-haze, lava, magma, plasma, or energy-flame materials, read [references/fire-energy-material-playbook.md](references/fire-energy-material-playbook.md) before authoring. A fire-family material needs a concrete route, carrier, texture plan, node graph, motion plan, preview, and audit; do not stop at `Additive + Unlit + Emissive`.
 
@@ -107,15 +109,15 @@ Default team model:
    When a preview technically succeeds but might still be visually empty or unreadable, use [references/preview-readability-score.md](references/preview-readability-score.md) and `tools/preview_readability_score.py` to quantify visibility, alpha coverage, center energy, background contrast, and edge readability. Treat screenshot success alone as insufficient proof for VFX materials.
 
 16. Lock accepted previews and guard against drift.
-   After a preview is visually accepted, use [references/material-regression.md](references/material-regression.md) and `tools/material_regression.py` to lock the accepted `material_preview.py` result as a baseline. After optimization, texture swaps, parameter tuning, graph refactors, or rebuilds, compare the new preview against that baseline before calling the change safe.
+   After a preview is visually accepted, use [references/material-regression.md](references/material-regression.md) and `tools/material_regression.py` to lock the accepted `material_preview.py` *(live step not ported)* result as a baseline. After optimization, texture swaps, parameter tuning, graph refactors, or rebuilds, compare the new preview against that baseline before calling the change safe.
    When one baseline is no longer enough because tiers, carriers, or preview environments have multiplied, use [references/regression-baseline-set.md](references/regression-baseline-set.md) and `tools/regression_baseline_set.py` to manage and resolve the right accepted baseline for each context.
 
 17. Explain failed regressions before refactoring.
-   When a regression comparison fails, use [references/graph-diff-refactor.md](references/graph-diff-refactor.md) and `tools/graph_diff_refactor.py` with before/after `material_audit.py` reports, optional `material_domain_audit.py` reports, and the regression report. Diagnose route, output-chain, parameter, node, finding, and budget changes before patching or accepting a new baseline.
+   When a regression comparison fails, use [references/graph-diff-refactor.md](references/graph-diff-refactor.md) and `tools/graph_diff_refactor.py` with before/after `material_audit.py` reports, optional `material_domain_audit.py` *(not ported)* reports, and the regression report. Diagnose route, output-chain, parameter, node, finding, and budget changes before patching or accepting a new baseline.
 
 18. Turn parameter schemas into executable MI tiers.
    When the parameter contract exists and the next step is wider preview or gameplay-safe tuning, use [references/material-variant-runner.md](references/material-variant-runner.md) and `tools/material_variant_runner.py` to generate `default`, `low`, `high`, `extreme`, and `gameplay-safe` material-instance tiers, plus `material_instance_batch.py` specs and preview-matrix command scaffolds.
-   When static switches also matter, follow with [references/static-switch-variant-expander.md](references/static-switch-variant-expander.md) and `tools/static_switch_variant_expander.py` so the chain covers permutation space instead of only dynamic parameters. Then use [references/permutation-budget-guard.md](references/permutation-budget-guard.md), `tools/permutation_budget_guard.py`, and `tools/shader_permutation_report.py` before that switch space becomes a shader-permutation liability.
+   When static switches also matter, follow with [references/static-switch-variant-expander.md](references/static-switch-variant-expander.md) and `tools/static_switch_variant_expander.py` so the chain covers permutation space instead of only dynamic parameters. Then use [references/permutation-budget-guard.md](references/permutation-budget-guard.md), `tools/permutation_budget_guard.py`, and `tools/shader_permutation_report.py` *(not ported)* before that switch space becomes a shader-permutation liability.
 
 19. Upgrade preview intent axes into a real harness plan.
    When `preview_matrix.py` still treats background, exposure, or parameter tiers as intent-only, use [references/preview-scene-harness-upgrade.md](references/preview-scene-harness-upgrade.md) and `tools/preview_scene_harness_upgrade.py` to map those axes to concrete harness capabilities, variant MIs, and executable commands.
@@ -131,13 +133,13 @@ Default team model:
    When multiple material, texture, regression, graph-diff, graph-refactor-apply, or permutation reports have accumulated, use [references/project-material-health.md](references/project-material-health.md) and `tools/project_material_health.py` to build heatlists for risky materials, texture sets, failed regressions, unsafe refactor candidates, parameter collisions, static-switch pressure, and suspicious master-material candidates.
 
 23. Map material-function dependencies before large-scale cleanup.
-   When the project has many Material Functions or master-material dependencies, use [references/material-function-dependency-map.md](references/material-function-dependency-map.md), `tools/material_function_dependency_map.py`, and `tools/material_function_linter.py` to identify function reuse hotspots, large/switch-heavy functions, duplicate names, missing inputs/outputs, preview-default issues, and likely cleanup targets.
+   When the project has many Material Functions or master-material dependencies, use [references/material-function-dependency-map.md](references/material-function-dependency-map.md), `tools/material_function_dependency_map.py`, and `tools/material_function_linter.py` *(not ported)* to identify function reuse hotspots, large/switch-heavy functions, duplicate names, missing inputs/outputs, preview-default issues, and likely cleanup targets.
 
 24. Use recipe builder or refactor planner for repeatable graph work.
-   When a known recipe fits, use [references/material-toolset-builder.md](references/material-toolset-builder.md) and `tools/material_toolset_builder.py recipe` to generate the route, parameters, textures, and validation plan offline. Execute covered steps with official MCP, preserving the recipe's render contract and usage flags. The builder's `build` / `recipe --execute` paths remain legacy bridge executors and are reserved for demonstrated gaps. Use `refactor-plan` to turn graph-diff findings into a guarded patch plan before mutation.
+   When a known recipe fits, use [references/material-toolset-builder.md](references/material-toolset-builder.md) and `tools/material_toolset_builder.py recipe` *(live step not ported)* to generate the route, parameters, textures, and validation plan offline. Execute covered steps with official MCP, preserving the recipe's render contract and usage flags. The builder's `build` / `recipe --execute` paths remain legacy bridge executors and are reserved for demonstrated gaps. Use `refactor-plan` to turn graph-diff findings into a guarded patch plan before mutation.
 
 25. Apply graph refactors only through a reviewable candidate flow.
-   Use [references/graph-refactor-apply.md](references/graph-refactor-apply.md) and `tools/graph_refactor_apply.py` for a dry-run candidate plan. Execute covered duplicate/edit/save steps through official MCP. Its legacy `--execute` path is a fallback; retain the backup/candidate, whitelisted edits, before/after readback, and applicable preview/regression evidence regardless of transport.
+   Use [references/graph-refactor-apply.md](references/graph-refactor-apply.md) and `tools/graph_refactor_apply.py` *(live step not ported)* for a dry-run candidate plan. Execute covered duplicate/edit/save steps through official MCP. Its legacy `--execute` path is a fallback; retain the backup/candidate, whitelisted edits, before/after readback, and applicable preview/regression evidence regardless of transport.
 
 26. Approve material reuse through a hard acceptance gate.
    When a material is intended to become final reusable evidence for Niagara, gameplay, or another downstream package, use [references/material-acceptance-gate.md](references/material-acceptance-gate.md) and `tools/material_acceptance_gate.py`. This gate reads the delivery package and linked evidence, requires contract, preview, audit, domain audit, regression, texture-set, budget, usage-flag, and parameter-table proof, then writes a Niagara-consumable report with `delivery_summary.approved_for_reuse=true` only when the material side is actually ready.
@@ -211,8 +213,8 @@ Detailed command examples live in the reference files. Use this as the compact e
 |---|---|
 | Turn a reference or tutorial into a material work order | `tools/reference_to_material_plan.py` |
 | Write or validate a Niagara-to-material contract | `tools/material_contract.py` |
-| Build recipe packages or guarded graph plans | `tools/material_toolset_builder.py` |
-| Apply a reviewed refactor to a duplicated candidate | `tools/graph_refactor_apply.py` |
+| Build recipe packages or guarded graph plans | `tools/material_toolset_builder.py` *(live step not ported)* |
+| Apply a reviewed refactor to a duplicated candidate | `tools/graph_refactor_apply.py` *(live step not ported)* |
 | Gather delivery evidence | `tools/delivery_packager.py` |
 | Approve delivery or stock reuse | `tools/material_acceptance_gate.py`, `tools/material_acceptance_gate_v2.py`, `tools/library_promotion_gate.py` |
 | Lock or compare accepted previews | `tools/material_regression.py`, `tools/regression_baseline_set.py` |
@@ -222,13 +224,13 @@ Detailed command examples live in the reference files. Use this as the compact e
 | Need | Tool |
 |---|---|
 | Parameter schema / MI handoff | `tools/material_parameter_schema.py`, `tools/material_instance_batch.py` |
-| Graph and render-contract audit | `tools/material_audit.py`, `tools/material_domain_audit.py` |
+| Graph and render-contract audit | `tools/material_audit.py`, `tools/material_domain_audit.py` *(not ported)* |
 | Translucency/additive/ribbon sorting evidence | `tools/translucency_sorting_probe.py` |
-| Texture file, set, import, and provenance checks | `tools/texture_asset_report.py`, `tools/texture_set_pipeline.py`, `tools/texture_import_audit.py`, `tools/texture_import_fix.py`, `tools/material_source_provenance.py` |
-| Carrier previews and matrices | `tools/material_preview.py`, `tools/preview_matrix.py`, `tools/preview_readability_score.py` |
-| Runtime parameter source tracing | `tools/runtime_param_trace.py` |
+| Texture file, set, import, and provenance checks | `tools/texture_asset_report.py`, `tools/texture_set_pipeline.py`, `tools/texture_import_audit.py` *(not ported)*, `tools/texture_import_fix.py` *(not ported)*, `tools/material_source_provenance.py` |
+| Carrier previews and matrices | `tools/material_preview.py` *(live step not ported)*, `tools/preview_matrix.py`, `tools/preview_readability_score.py` |
+| Runtime parameter source tracing | `tools/runtime_param_trace.py` *(not ported)* |
 | Channel packing and flipbook cleanup | `tools/channel_packer.py`, `tools/flipbook_normalizer.py` |
-| Reusable asset search, registration, and promotion | `tools/material_asset_library.py` |
+| Reusable asset search, registration, and promotion | `tools/material_asset_library.py` *(live step not ported)* |
 
 Approved material assets now also emit a higher-level delivery report under `<project>/.codex/session/material-delivery/deliveries/`, so rebuilt-material approval is visible in the workflow output and not only as a catalog state change.
 

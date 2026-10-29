@@ -449,7 +449,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prefer-environment-executor", action="store_true", help="Plan environment-adjusted preview commands even during dry-run.")
     parser.add_argument("--disable-environment-executor", action="store_true", help="Force legacy material_preview.py execution even when background/exposure axes exist.")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--with-complexity", action="store_true")
     parser.add_argument("--markdown-previews", action="store_true", help="Also ask each material_preview.py execution to write Markdown.")

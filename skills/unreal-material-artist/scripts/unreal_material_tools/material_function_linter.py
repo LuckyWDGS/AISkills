@@ -132,7 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Lint Unreal material functions for common TA/system issues.")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--path-prefix", default="")
     parser.add_argument("--max-results", type=int, default=50)

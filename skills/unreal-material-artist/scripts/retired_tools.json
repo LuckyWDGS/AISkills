@@ -1,0 +1,47 @@
+{
+  "_about": "Tools whose live (editor) step used the retired UnrealBridge plugin and is not yet ported to MCP. BridgeClient refuses them before any network call. Remove an entry when the tool is ported; see ../unreal-engine-mcp/references/porting-legacy-writers.md.",
+  "graph_refactor_apply": {
+    "instead": "turn the refactor plan into a builtin_mcp.py batch plan (MaterialTools.add_expression / connect_expressions / delete_expression, each with a get_expression_inputs readback)",
+    "offline": "planning without --execute"
+  },
+  "material_asset_library": {
+    "instead": "audit the material with material_audit.py and register it from that report",
+    "offline": "search, register, promote, auto-promote and status (only register-material reads the editor)"
+  },
+  "material_domain_audit": {
+    "instead": "material_audit.py (domain, blend mode, shading model, usage flags, output wiring, shader statistics)",
+    "offline": "none"
+  },
+  "material_domain_rebuilder": {
+    "instead": "a builtin_mcp.py batch plan with MaterialTools.create_material / add_expression / connect_* and readbacks",
+    "offline": "none"
+  },
+  "material_function_linter": {
+    "instead": "material_audit.py on the MaterialFunction (graph, dead nodes, FunctionOutput chains)",
+    "offline": "none"
+  },
+  "material_preview": {
+    "instead": "EditorAppToolset.CaptureAssetImage (thumbnail) or material_instance_batch.py --preview",
+    "offline": "subcommands that do not render, such as list"
+  },
+  "material_toolset_builder": {
+    "instead": "run the generated spec as a builtin_mcp.py batch plan (MaterialTools.create_material / add_expression / connect_*)",
+    "offline": "list-recipes, and recipe / refactor-plan without --execute"
+  },
+  "runtime_param_trace": {
+    "instead": "material_audit.py parameters plus niagara_audit.py user variables and renderer bindings",
+    "offline": "none"
+  },
+  "shader_permutation_report": {
+    "instead": "material_audit.py shader statistics per material instance variant",
+    "offline": "none"
+  },
+  "texture_import_audit": {
+    "instead": "ObjectTools.list_properties then get_properties on the texture (compression, sRGB, LOD group, mip settings)",
+    "offline": "none"
+  },
+  "texture_import_fix": {
+    "instead": "a builtin_mcp.py batch plan of ObjectTools.set_properties with get_properties readbacks, then AssetTools.save_assets",
+    "offline": "none"
+  }
+}

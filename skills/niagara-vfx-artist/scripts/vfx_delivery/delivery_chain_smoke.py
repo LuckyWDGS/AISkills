@@ -180,7 +180,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--material-path", default="")
     parser.add_argument("--renderer-path", default="")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--skip-audit", action="store_true")
     parser.add_argument("--allow-blocked-ue", action="store_true")

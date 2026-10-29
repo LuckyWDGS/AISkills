@@ -2088,7 +2088,7 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument("material_path")
     render.add_argument("--root", default="auto")
     render.add_argument("--project")
-    render.add_argument("--endpoint")
+    render.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     render.add_argument("--timeout", type=int, default=180)
     render.add_argument("--effect")
     render.add_argument("--mesh", default="shaderball")
@@ -2127,7 +2127,7 @@ def build_parser() -> argparse.ArgumentParser:
     transient_list = transient_sub.add_parser("list", help="List known transient preview objects from the local registry.")
     transient_list.add_argument("--root", default="auto")
     transient_list.add_argument("--project")
-    transient_list.add_argument("--endpoint")
+    transient_list.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     transient_list.add_argument("--timeout", type=int, default=180)
     transient_list.add_argument("--carrier")
     transient_list.add_argument("--template-system")
@@ -2138,7 +2138,7 @@ def build_parser() -> argparse.ArgumentParser:
     transient_recycle = transient_sub.add_parser("recycle", help="Reset one or more transient preview objects back to their template state.")
     transient_recycle.add_argument("--root", default="auto")
     transient_recycle.add_argument("--project")
-    transient_recycle.add_argument("--endpoint")
+    transient_recycle.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     transient_recycle.add_argument("--timeout", type=int, default=180)
     transient_recycle.add_argument("--carrier")
     transient_recycle.add_argument("--template-system")
@@ -2150,7 +2150,7 @@ def build_parser() -> argparse.ArgumentParser:
     transient_recycle_all = transient_sub.add_parser("recycle-all", help="Reset every registered transient preview object back to its template state.")
     transient_recycle_all.add_argument("--root", default="auto")
     transient_recycle_all.add_argument("--project")
-    transient_recycle_all.add_argument("--endpoint")
+    transient_recycle_all.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     transient_recycle_all.add_argument("--timeout", type=int, default=180)
     transient_recycle_all.add_argument("--out")
     transient_recycle_all.add_argument("--markdown", action="store_true")
@@ -2159,7 +2159,7 @@ def build_parser() -> argparse.ArgumentParser:
     transient_prune = transient_sub.add_parser("prune", help="Remove stale transient preview registry entries whose live objects no longer exist.")
     transient_prune.add_argument("--root", default="auto")
     transient_prune.add_argument("--project")
-    transient_prune.add_argument("--endpoint")
+    transient_prune.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     transient_prune.add_argument("--timeout", type=int, default=180)
     transient_prune.add_argument("--apply", action="store_true")
     transient_prune.add_argument("--out")
@@ -2172,7 +2172,7 @@ def build_parser() -> argparse.ArgumentParser:
     sweep.add_argument("--value", action="append")
     sweep.add_argument("--root", default="auto")
     sweep.add_argument("--project")
-    sweep.add_argument("--endpoint")
+    sweep.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     sweep.add_argument("--timeout", type=int, default=180)
     sweep.add_argument("--effect")
     sweep.add_argument("--mesh", default="shaderball")

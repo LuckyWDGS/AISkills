@@ -1453,7 +1453,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--grid", required=True, help="SubUV grid, e.g. 8x8 or 16x16.")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--effect", default="")
     parser.add_argument("--texture-asset-path", default="")

@@ -1,0 +1,39 @@
+{
+  "_about": "Tools whose live (editor) step used the retired UnrealBridge plugin and is not yet ported to MCP. BridgeClient refuses them before any network call. Remove an entry when the tool is ported; see ../unreal-engine-mcp/references/porting-legacy-writers.md.",
+  "asset_cleanup": {
+    "instead": "AssetTools.get_referencers, then a reviewed builtin_mcp.py batch plan of AssetTools.delete with AssetTools.exists readbacks",
+    "offline": "none"
+  },
+  "controlled_preview": {
+    "instead": "EditorAppToolset.CaptureViewport or CaptureAssetImage",
+    "offline": "preset, set, show and export-md"
+  },
+  "effect_control_schema": {
+    "instead": "NiagaraToolset_System.GetSystemSummary / GetUserVariables (or niagara_audit.py user_variables)",
+    "offline": "show and export-md"
+  },
+  "flipbook_ue_pipeline": {
+    "instead": "build the atlas with vfx-flipbook-generator, then a builtin_mcp.py batch plan: TextureTools.import_file, MaterialInstanceTools set_* and NiagaraToolset_System.SetRendererData, each with a readback",
+    "offline": "none"
+  },
+  "live_asset_verify": {
+    "instead": "niagara_audit.py (renderer materials) plus ObjectTools.get_properties on the texture and material",
+    "offline": "none"
+  },
+  "niagara_asset_assistant": {
+    "instead": "apply the generated plan with NiagaraToolset_System tools through builtin_mcp.py batch, then niagara_audit.py",
+    "offline": "plan-template, new-plan, repair-plan, render-script and export-md"
+  },
+  "niagara_param_sweep": {
+    "instead": "NiagaraToolset_System.SetStackInputData or AddUserVariables per step, with EditorAppToolset.CaptureViewport",
+    "offline": "none"
+  },
+  "runtime_control_probe": {
+    "instead": "NiagaraToolset_System.GetUserVariables / GetEmitterInputValues",
+    "offline": "none"
+  },
+  "ue_write_helpers": {
+    "instead": "ObjectTools.set_properties or NiagaraToolset_System Set*Data through a builtin_mcp.py batch plan",
+    "offline": "none"
+  }
+}

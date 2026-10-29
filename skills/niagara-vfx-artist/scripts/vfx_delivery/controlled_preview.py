@@ -515,7 +515,7 @@ def build_parser() -> argparse.ArgumentParser:
     material = subparsers.add_parser("material")
     material.add_argument("material_path")
     material.add_argument("--project")
-    material.add_argument("--endpoint")
+    material.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     material.add_argument("--timeout", type=int, default=180)
     material.add_argument("--out")
     material.add_argument("--mesh", default="plane")
@@ -529,7 +529,7 @@ def build_parser() -> argparse.ArgumentParser:
     actor = subparsers.add_parser("actor")
     actor.add_argument("actor_name")
     actor.add_argument("--project")
-    actor.add_argument("--endpoint")
+    actor.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     actor.add_argument("--timeout", type=int, default=180)
     actor.add_argument("--out")
     actor.add_argument("--yaw", type=float, default=45.0)
@@ -542,7 +542,7 @@ def build_parser() -> argparse.ArgumentParser:
     niagara = subparsers.add_parser("niagara")
     niagara.add_argument("system_path")
     niagara.add_argument("--project")
-    niagara.add_argument("--endpoint")
+    niagara.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     niagara.add_argument("--timeout", type=int, default=240)
     niagara.add_argument("--out")
     niagara.add_argument("--yaw", type=float, default=45.0)

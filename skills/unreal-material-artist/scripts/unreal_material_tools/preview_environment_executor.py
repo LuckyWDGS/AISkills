@@ -243,7 +243,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sim-time", type=float, default=1.0)
     parser.add_argument("--with-complexity", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--markdown-previews", action="store_true", help="Also ask material_preview.py to emit Markdown.")

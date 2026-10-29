@@ -386,7 +386,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--reuse-existing", action="store_true")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--effect")
     parser.add_argument("--register-candidate", action="store_true")

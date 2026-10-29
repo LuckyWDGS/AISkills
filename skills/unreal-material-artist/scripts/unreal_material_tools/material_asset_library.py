@@ -1031,7 +1031,7 @@ def build_parser() -> argparse.ArgumentParser:
     register_material.add_argument("--source-material-path")
     register_material.add_argument("--report-path", action="append")
     register_material.add_argument("--project")
-    register_material.add_argument("--endpoint")
+    register_material.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     register_material.add_argument("--timeout", type=int, default=180)
     register_material.set_defaults(func=command_register_material)
 

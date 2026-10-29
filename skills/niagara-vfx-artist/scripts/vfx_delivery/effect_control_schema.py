@@ -357,7 +357,7 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--material-contract", default="")
     generate.add_argument("--extra-control", action="append", default=[])
     generate.add_argument("--project")
-    generate.add_argument("--endpoint")
+    generate.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     generate.add_argument("--timeout", type=int, default=180)
     generate.add_argument("--out")
     generate.add_argument("--note", action="append", default=[])

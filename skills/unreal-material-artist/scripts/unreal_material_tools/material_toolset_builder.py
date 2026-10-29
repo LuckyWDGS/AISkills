@@ -1655,7 +1655,7 @@ def build_parser() -> argparse.ArgumentParser:
     recipe.add_argument("--inline-build-spec", action="store_true")
     recipe.add_argument("--execute", action="store_true", help="Also create the material in UE using the generated builder spec.")
     recipe.add_argument("--project")
-    recipe.add_argument("--endpoint")
+    recipe.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     recipe.add_argument("--timeout", type=int, default=180)
     recipe.add_argument("--markdown", action="store_true")
     recipe.set_defaults(func=command_recipe)
@@ -1683,7 +1683,7 @@ def add_build_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("spec", help="Path to the builder spec JSON.")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint")
+    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--effect")
     parser.add_argument("--out")
