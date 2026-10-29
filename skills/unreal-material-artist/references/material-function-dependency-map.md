@@ -22,7 +22,7 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_function_dependency_map.py --function-linter-report D:/path/to/material-function-linter.json --audit-report D:/path/to/material-audit.json --markdown
+python tools/material_function_dependency_map.py --function-linter-report D:/path/to/material-function-linter.json --audit-report D:/path/to/material-audit.json --markdown
 ```
 
 ## Output

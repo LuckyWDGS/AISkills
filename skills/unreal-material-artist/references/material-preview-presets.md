@@ -44,7 +44,7 @@ For Niagara-oriented preview presets it now also scans preview-harness facts:
 Stored at:
 
 ```text
-D:/Skills/skills/unreal-material-artist/assets/material-preview-presets.json
+assets/material-preview-presets.json
 ```
 
 ## Current Niagara-Oriented Presets
@@ -74,7 +74,7 @@ When the user asks for:
 You can override with:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/MI_Foo --carrier sprite --preset niagara_sprite_subuv_4x4 --project UnrealAI --markdown
+python tools/material_preview.py render /Game/Materials/MI_Foo --carrier sprite --preset niagara_sprite_subuv_4x4 --project <Project> --markdown
 ```
 
 ## Current Meaning Of The Preview

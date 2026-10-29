@@ -21,11 +21,11 @@
 ## Typical Commands
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/preview_readability_score.py --preview-report D:/path/to/material-preview.json --require-readable --markdown
+python tools/preview_readability_score.py --preview-report D:/path/to/material-preview.json --require-readable --markdown
 ```
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/preview_readability_score.py --preview-matrix-report D:/path/to/preview-matrix.json --markdown
+python tools/preview_readability_score.py --preview-matrix-report D:/path/to/preview-matrix.json --markdown
 ```
 
 ## Output

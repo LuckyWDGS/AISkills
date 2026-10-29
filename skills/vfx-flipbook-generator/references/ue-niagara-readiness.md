@@ -137,7 +137,7 @@ Before calling an atlas final for Unreal, produce or verify:
 Run the readiness gate whenever an atlas is intended for UE:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
+python scripts/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
 The report statuses mean:
@@ -151,7 +151,7 @@ The report statuses mean:
 When several generated outputs exist beside each other, use the catalog tool to make selection and handoff less error-prone:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
+python scripts/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
 ```
 
 The catalog groups manifest-backed assets, pairs RGB preview atlases with alpha support outputs, imports existing readiness reports, and marks assets as `recommended`, `usable`, `conditional`, `blocked`, or `needs-review`. It also repeats the practical UE defaults that matter most for VFX delivery:

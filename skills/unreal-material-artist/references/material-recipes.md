@@ -13,7 +13,7 @@
 如果任务需要把配方直接变成结构化施工包或可执行 MaterialTools spec，优先使用：
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe <recipe> --effect <Effect> --layer <Layer> --markdown
+python tools/material_toolset_builder.py recipe <recipe> --effect <Effect> --layer <Layer> --markdown
 ```
 
 详细规则见 `references/material-toolset-builder.md`。配方 references 负责解释视觉和节点经验，`material_toolset_builder.py recipe` 负责把常见路线固化成参数表、贴图需求、预览/审计计划和 builder spec。

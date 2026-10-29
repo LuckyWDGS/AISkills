@@ -18,13 +18,13 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_acceptance_gate_v2.py --package D:/path/to/material-delivery-package.json --require-ready --markdown
+python tools/material_acceptance_gate_v2.py --package D:/path/to/material-delivery-package.json --require-ready --markdown
 ```
 
 如果你已经先跑过 v1，也可以直接喂已有 acceptance report：
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_acceptance_gate_v2.py --acceptance-report D:/path/to/delivery.json --parameter-schema-report D:/path/to/material-parameter-schema.json --source-provenance-report D:/path/to/material-source-provenance.json --translucency-sorting-report D:/path/to/translucency-sorting-probe.json --preview-matrix-report D:/path/to/preview-matrix.json --preview-readability-report D:/path/to/preview-readability-score.json --require-ready --markdown
+python tools/material_acceptance_gate_v2.py --acceptance-report D:/path/to/delivery.json --parameter-schema-report D:/path/to/material-parameter-schema.json --source-provenance-report D:/path/to/material-source-provenance.json --translucency-sorting-report D:/path/to/translucency-sorting-probe.json --preview-matrix-report D:/path/to/preview-matrix.json --preview-readability-report D:/path/to/preview-readability-score.json --require-ready --markdown
 ```
 
 ## Required v2 Evidence

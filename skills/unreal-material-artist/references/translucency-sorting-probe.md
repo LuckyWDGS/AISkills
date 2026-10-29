@@ -15,13 +15,13 @@ It does not own real Niagara renderer setup. If sorting remains unproven, the ne
 ## Typical Commands
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/translucency_sorting_probe.py --package D:/reports/material-delivery-package.json --markdown
+python tools/translucency_sorting_probe.py --package D:/reports/material-delivery-package.json --markdown
 ```
 
 Require real sorting/bounds proof before passing:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/translucency_sorting_probe.py --package D:/reports/material-delivery-package.json --material-integration-probe D:/reports/niagara-material-integration-probe.json --require-proven --markdown
+python tools/translucency_sorting_probe.py --package D:/reports/material-delivery-package.json --material-integration-probe D:/reports/niagara-material-integration-probe.json --require-proven --markdown
 ```
 
 ## Checks

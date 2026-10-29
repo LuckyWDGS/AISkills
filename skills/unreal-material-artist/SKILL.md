@@ -7,20 +7,10 @@ description: Use when Codex needs a UE Material/Shader Specialist for material g
 
 ## Editor transport
 
-For this user, keep editor work on background connections: do not focus, move,
-minimize, maximize or resize UE windows or send console keystrokes. For a verified
-MCP gap, check [Epic Python Remote Execution](../unreal-engine-mcp/references/official-python-remote.md)
-for that one operation. Use the shared [developer workflow](../unreal-engine-mcp/references/developer-workflow.md)
-for safe scoped edits and [source/diagnostic workflow](../unreal-engine-mcp/references/debugging-and-source-navigation.md)
-when locating the binding, shader/tool implementation or cause of failure.
-
-For this user's new or modified material modules, add Chinese comment frames,
-Chinese parameter groups/descriptions where supported, and stable searchable
-module IDs. Follow the shared
-[Chinese annotation convention](../unreal-engine-mcp/references/blueprint-programming-mcp.md#chinese-module-annotations)
-with material-appropriate editor tools. Preserve existing parameter identifiers
-and bindings; textual labels do not require runtime Gameplay Tags. Read-only
-audits should not insert comments into untouched assets.
+Follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background editor connections only, MCP first with
+Python Remote Execution for a verified gap, and Chinese annotations on new or
+modified material modules (comment frames, Chinese parameter groups and
+descriptions, stable module IDs; existing parameter identifiers unchanged).
 
 On UE 5.8+, use Epic's MCP directly through the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`. Discover the active schema before calling MaterialTools, MaterialInstanceTools, ObjectTools, TextureTools, AssetTools, or ProgrammaticToolset. They are Epic engine plugins in 5.8.4; old `toolset_registry.toolsets.core.*` module names are historical and must not be hard-coded.
 
@@ -269,176 +259,14 @@ Editor/toolset note:
 
 ## Reference Map
 
-- [references/material-audit-workflow.md](references/material-audit-workflow.md)
-  Use for review, cleanup, live-graph readback, stale override detection, and acceptance criteria.
+Read only what the task needs. [references/index.md](references/index.md) says when to use each one.
 
-- [references/material-contract-and-tooling.md](references/material-contract-and-tooling.md)
-  Use for Niagara-to-material handoffs, delivery contracts, tool selection, and the material specialist capability roadmap.
-
-- [references/niagara-ribbon-flame-trail.md](references/niagara-ribbon-flame-trail.md)
-  Use for additive fire/flame/energy Niagara Ribbon trail material routes, packed R/G/B mask conventions, Chinese artist parameters, Android fallback assumptions, and MI handoff checklists.
-
-- [references/reference-to-material-plan.md](references/reference-to-material-plan.md)
-  Use when a reference image, tutorial screenshot, case study, or visual target needs to become a structured material route, texture plan, parameter table, preview plan, audit checklist, and optional material contract seed.
-
-- [references/delivery-packager.md](references/delivery-packager.md)
-  Use when material work needs one handoff bundle that gathers plan, contract, texture QA, preview, audit, risk notes, missing evidence, and next actions.
-
-- [references/material-acceptance-gate.md](references/material-acceptance-gate.md)
-  Use when a delivery package needs to become a hard approved material delivery report with `delivery_summary.approved_for_reuse=true` for downstream reuse or Niagara delivery gating.
-
-- [references/material-acceptance-gate-v2.md](references/material-acceptance-gate-v2.md)
-  Use when stronger stock-grade reuse approval should require parameter schema, provenance, preview matrix, readability, and translucent sorting evidence as hard gates.
-
-- [references/material-delivery-smoke.md](references/material-delivery-smoke.md)
-  Use when the existing material-side tools should be run as one end-to-end smoke chain instead of being orchestrated by hand.
-
-- [references/material-parameter-schema.md](references/material-parameter-schema.md)
-  Use when material parameters need explicit units, ranges, defaults, runtime owners, write owners, artist tunability, and regression participation before MI, Blueprint, Niagara, or delivery handoff.
-
-- [references/material-regression.md](references/material-regression.md)
-  Use after a material preview has been accepted and later edits need to be checked for visual drift, brightness changes, alpha/coverage changes, centroid shifts, or complexity preview changes.
-
-- [references/regression-baseline-set.md](references/regression-baseline-set.md)
-  Use when one regression baseline has turned into many and the right baseline now depends on tier, carrier, background, exposure, or quality context.
-
-- [references/graph-diff-refactor.md](references/graph-diff-refactor.md)
-  Use when regression fails or a graph/parameter refactor needs explanation from before/after material audits, domain audits, and optional regression evidence.
-
-- [references/graph-refactor-apply.md](references/graph-refactor-apply.md)
-  Use when a graph-diff refactor plan should become a duplicated candidate material with backup, transaction evidence, before/after audits, preview, regression, and rollback guidance.
-
-- [references/texture-set-pipeline.md](references/texture-set-pipeline.md)
-  Use when BaseColor, Normal, RMA/ORM/MRA, Opacity, and Emissive must be checked as one material texture set, when import-fix batch specs are needed, or when separate Roughness/Metallic/AO maps should be packed.
-
-- [references/material-source-provenance.md](references/material-source-provenance.md)
-  Use when texture source, generation prompt, original file, import settings, repair history, packed-channel inputs, license, or reuse eligibility must be preserved.
-
-- [references/preview-matrix.md](references/preview-matrix.md)
-  Use when one material preview is too narrow and evidence should cover background intent, exposure intent, distance, angle, time, parameter tier, quality, lighting, or carrier variations.
-
-- [references/preview-readability-score.md](references/preview-readability-score.md)
-  Use when a preview technically captured but may still be visually empty, low-contrast, off-center, or otherwise unreadable.
-
-- [references/preview-scene-harness-upgrade.md](references/preview-scene-harness-upgrade.md)
-  Use when preview-matrix axes such as background, exposure, or parameter tier need a concrete executable harness plan instead of remaining intent-only.
-
-- [references/preview-environment-executor.md](references/preview-environment-executor.md)
-  Use when those environment axes are ready to execute for real instead of only being planned.
-
-- [references/translucency-sorting-probe.md](references/translucency-sorting-probe.md)
-  Use for Additive/Translucent/Ribbon/Decal material sorting, DepthFade, SoftParticle, bounds, custom sorting, and overdraw-risk evidence; real Niagara system proof remains Niagara-owned.
-
-- [references/material-variant-runner.md](references/material-variant-runner.md)
-  Use when a material parameter schema should generate default/low/high/extreme/gameplay-safe MI tiers and batch specs for preview/regression.
-
-- [references/static-switch-variant-expander.md](references/static-switch-variant-expander.md)
-  Use when static switches need to be crossed with dynamic tiers so preview and smoke coverage includes real permutation space.
-
-- [references/permutation-budget-guard.md](references/permutation-budget-guard.md)
-  Use when single-material static-switch pressure should be judged before it becomes a project-wide shader-permutation problem.
-
-- [references/shader-cost-attribution.md](references/shader-cost-attribution.md)
-  Use when optimization needs a heuristic breakdown of which graph feature buckets are likely driving shader cost.
-
-- [references/platform-scalability-planner.md](references/platform-scalability-planner.md)
-  Use when existing material evidence should become PC/Android/low-end downgrade guidance and fallback MI planning.
-
-- [references/smoke-resume-cache.md](references/smoke-resume-cache.md)
-  Use when repeated material-delivery smoke reruns should skip unchanged steps instead of recomputing the whole chain.
-
-- [references/project-material-health.md](references/project-material-health.md)
-  Use when accumulated evidence should become project-level heatlists for risky materials, texture sets, regressions, graph diffs, parameter names, permutations, or suspicious master-material candidates.
-
-- [references/material-function-dependency-map.md](references/material-function-dependency-map.md)
-  Use when Material Function dependencies, reuse hotspots, duplicate names, or oversized function governance need a project-level map.
-
-- [references/material-toolset-builder.md](references/material-toolset-builder.md)
-  Use when a known material route should become a repeatable recipe package and executable builder spec, or when graph-diff evidence should become a narrow guarded refactor plan.
-
-- [references/tech-art-material-systems.md](references/tech-art-material-systems.md)
-  Use when the task is really about technical-art material systems: master/function layering, runtime ownership, MPC vs MID vs Niagara, and project-wide material architecture.
-
-- [references/material-domain-and-rendering-contracts.md](references/material-domain-and-rendering-contracts.md)
-  Use when auditing `Material Domain`, `Blend Mode`, output pins, post process, UI, decal, light-function, volume, RVT, WPO/PDO, or whether a material is in the wrong render path.
-
-- [references/material-case-study-playbook.md](references/material-case-study-playbook.md)
-  Use when learning from online material examples, matching a reference material, creating UE reproductions, comparing audit/preview results to the source, and promoting reusable lessons.
-
-- [references/substrate-and-material-layers.md](references/substrate-and-material-layers.md)
-  Use for Substrate, Material Layers, Material Attributes, layered master materials, layer masks, BSDF layering, and layer-stack cost review.
-
-- [references/specialized-shading-models.md](references/specialized-shading-models.md)
-  Use for Hair, Cloth, Eye, Clear Coat, Subsurface, TwoSidedFoliage, Single Layer Water, Thin Translucent, FromMaterialExpression, or other non-DefaultLit shading decisions.
-
-- [references/complex-water-material-playbook.md](references/complex-water-material-playbook.md)
-  Use for concrete water material authoring: Single Layer Water, stylized water, glass/transparent liquid, depth color, foam, caustics, normals, flow maps, WPO waves, texture generation, preview gates, and water-specific audit.
-
-- [references/fire-energy-material-playbook.md](references/fire-energy-material-playbook.md)
-  Use for concrete fire-family material authoring: flame, torch, campfire, ember, smoke material, burning/dissolve edge, heat haze, lava, magma, plasma, energy flame, additive/unlit emissive routes, flipbook/SubUV texture strategy, generated fire masks, carrier preview gates, and overdraw/shader-complexity audit.
-
-- [references/complex-master-material-playbook.md](references/complex-master-material-playbook.md)
-  Use when designing or reviewing a large multi-feature master material for characters, environments, overlays, wetness, wear, detail systems, or heavy runtime control.
-
-- [references/domain-landscape-foliage.md](references/domain-landscape-foliage.md)
-  Use for landscape, foliage, RVT, masked overdraw, wind/WPO, and large-screen-coverage terrain/vegetation material decisions.
-
-- [references/domain-character-environment.md](references/domain-character-environment.md)
-  Use for character, armor, cloth, prop, and environment material domain decisions, especially runtime ownership and reuse strategy.
-
-- [references/material-preview-presets.md](references/material-preview-presets.md)
-  Use when the task depends on carrier-specific preview intent, especially Niagara sprite/ribbon presets, SubUV preview assumptions, decal preview, or post-process preview behavior.
-
-- [references/material-asset-library.md](references/material-asset-library.md)
-  Use when the task may reuse generic texture building blocks, when new generated assets should be categorized and promoted into a library, or when failed generated assets should be kept out of the approved reuse pool.
-
-- [references/library-promotion-gate.md](references/library-promotion-gate.md)
-  Use when a fully evidenced material candidate should be judged for promotion into approved reusable library stock.
-
-- [references/texture-vs-compute.md](references/texture-vs-compute.md)
-  Use when deciding whether to bake detail into textures, compute it procedurally, use flipbooks/atlases, or simplify for platform cost.
-
-- [references/material-node-map.md](references/material-node-map.md)
-  Use for a compact map of major UE material node families, HLSL guidance, and how to read graph intent.
-
-- [references/material-recipes.md](references/material-recipes.md)
-  Use as the compact router for reusable VFX/surface material recipes; then load one of the narrower recipe references below.
-
-- [references/material-recipes-naming-and-mobile.md](references/material-recipes-naming-and-mobile.md)
-  Use for material parameter naming, Niagara/MI binding-name readability, and PC/Android/low-end simplification rules.
-
-- [references/material-recipes-vfx-shield-explosion-smoke.md](references/material-recipes-vfx-shield-explosion-smoke.md)
-  Use for shield, explosion core, energy ball, smoke, and fog material recipe patterns.
-
-- [references/material-recipes-trails-shockwaves-dissolve-water-fire.md](references/material-recipes-trails-shockwaves-dissolve-water-fire.md)
-  Use for trails, flow materials, shockwaves, dissolve edges, procedural noise, water starter routes, and additive fire-mask recipes.
-
-- [references/master-material-architecture.md](references/master-material-architecture.md)
-  Use when designing a project-wide master material system, parameter boundaries, instances, and fallback variants.
-
-- [references/texture-strategy-and-ai-prompts.md](references/texture-strategy-and-ai-prompts.md)
-  Use as the compact router for texture strategy references.
-
-- [references/texture-strategy-selection-and-rules.md](references/texture-strategy-selection-and-rules.md)
-  Use when deciding whether a material needs a single texture, Flipbook/SubUV, sprite atlas, flow map, mask, generated texture plan, UE/Niagara hookup, or global generation rules.
-
-- [references/texture-prompts-vfx.md](references/texture-prompts-vfx.md)
-  Use for fire, ember, smoke, lightning, and related VFX texture prompt templates.
-
-- [references/texture-domain-foliage-water.md](references/texture-domain-foliage-water.md)
-  Use for leaf diffuse/alpha, foliage card, and custom water texture policy where the reference image or domain identity controls the texture strategy.
-
-- [references/texture-prompt-framework.md](references/texture-prompt-framework.md)
-  Use when generating texture prompts or deciding whether a texture is appropriate for `cm-imagegen`.
-
-- [references/generated-texture-qa.md](references/generated-texture-qa.md)
-  Use when generating, accepting, rejecting, or importing AI-created textures, masks, atlases, flipbooks, ramps, flow maps, normals, or packed data.
-
-- [references/official-toolsets-vs-local.md](references/official-toolsets-vs-local.md)
-  Use for direct Epic MCP material/texture/MI operations, legacy-tool boundaries, and demonstrated fallback gaps.
-
-- [references/official-doc-notes.md](references/official-doc-notes.md)
-  Use when you need the source-backed principles behind UE material inputs, expression nodes, Custom HLSL, and performance view modes.
+- **Plan and contract:** [reference-to-material-plan](references/reference-to-material-plan.md), [material-contract-and-tooling](references/material-contract-and-tooling.md), [material-parameter-schema](references/material-parameter-schema.md), [material-domain-and-rendering-contracts](references/material-domain-and-rendering-contracts.md), [master-material-architecture](references/master-material-architecture.md), [tech-art-material-systems](references/tech-art-material-systems.md), [platform-scalability-planner](references/platform-scalability-planner.md), [permutation-budget-guard](references/permutation-budget-guard.md), [static-switch-variant-expander](references/static-switch-variant-expander.md), [material-variant-runner](references/material-variant-runner.md)
+- **Recipes, domains and shading:** [material-recipes](references/material-recipes.md), [material-recipes-trails-shockwaves-dissolve-water-fire](references/material-recipes-trails-shockwaves-dissolve-water-fire.md), [material-recipes-vfx-shield-explosion-smoke](references/material-recipes-vfx-shield-explosion-smoke.md), [material-recipes-naming-and-mobile](references/material-recipes-naming-and-mobile.md), [fire-energy-material-playbook](references/fire-energy-material-playbook.md), [complex-master-material-playbook](references/complex-master-material-playbook.md), [complex-water-material-playbook](references/complex-water-material-playbook.md), [material-case-study-playbook](references/material-case-study-playbook.md), [niagara-ribbon-flame-trail](references/niagara-ribbon-flame-trail.md), [domain-character-environment](references/domain-character-environment.md), [domain-landscape-foliage](references/domain-landscape-foliage.md), [specialized-shading-models](references/specialized-shading-models.md), [substrate-and-material-layers](references/substrate-and-material-layers.md), [material-node-map](references/material-node-map.md), [material-function-dependency-map](references/material-function-dependency-map.md)
+- **Textures and assets:** [texture-strategy-and-ai-prompts](references/texture-strategy-and-ai-prompts.md), [texture-strategy-selection-and-rules](references/texture-strategy-selection-and-rules.md), [texture-vs-compute](references/texture-vs-compute.md), [texture-prompt-framework](references/texture-prompt-framework.md), [texture-prompts-vfx](references/texture-prompts-vfx.md), [texture-domain-foliage-water](references/texture-domain-foliage-water.md), [texture-set-pipeline](references/texture-set-pipeline.md), [generated-texture-qa](references/generated-texture-qa.md), [material-source-provenance](references/material-source-provenance.md), [material-asset-library](references/material-asset-library.md), [library-promotion-gate](references/library-promotion-gate.md)
+- **Preview, regression and cost:** [preview-matrix](references/preview-matrix.md), [preview-readability-score](references/preview-readability-score.md), [preview-scene-harness-upgrade](references/preview-scene-harness-upgrade.md), [preview-environment-executor](references/preview-environment-executor.md), [material-preview-presets](references/material-preview-presets.md), [translucency-sorting-probe](references/translucency-sorting-probe.md), [ribbon-trail-seam-debugging](references/ribbon-trail-seam-debugging.md), [material-regression](references/material-regression.md), [regression-baseline-set](references/regression-baseline-set.md), [shader-cost-attribution](references/shader-cost-attribution.md)
+- **Audit, refactor and editor tools:** [material-audit-workflow](references/material-audit-workflow.md), [graph-diff-refactor](references/graph-diff-refactor.md), [graph-refactor-apply](references/graph-refactor-apply.md), [project-material-health](references/project-material-health.md), [material-toolset-builder](references/material-toolset-builder.md), [official-toolsets-vs-local](references/official-toolsets-vs-local.md), [official-doc-notes](references/official-doc-notes.md)
+- **Delivery and gates:** [delivery-packager](references/delivery-packager.md), [material-acceptance-gate](references/material-acceptance-gate.md), [material-acceptance-gate-v2](references/material-acceptance-gate-v2.md), [material-delivery-smoke](references/material-delivery-smoke.md), [smoke-resume-cache](references/smoke-resume-cache.md)
 
 ## Collaboration With Niagara VFX Artist
 

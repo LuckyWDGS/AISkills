@@ -22,5 +22,5 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/preview_environment_executor.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background busy --exposure high --execute --project UnrealAI --endpoint 127.0.0.1:57404 --markdown
+python tools/preview_environment_executor.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background busy --exposure high --execute --project <Project> --markdown
 ```

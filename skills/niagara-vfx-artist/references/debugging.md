@@ -407,7 +407,7 @@
 - `references/platform-optimization.md`
   用于确定性能预算和平台约束
 
-- `D:/Skills/skills/unreal-material-artist/references/material-recipes.md`
+- `../unreal-material-artist/references/material-recipes.md`
   用于在定位到材质问题后交给 `unreal-material-artist` 替换或审查成熟配方
 
 - `references/core.md`

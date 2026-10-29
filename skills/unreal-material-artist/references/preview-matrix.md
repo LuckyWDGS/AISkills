@@ -19,13 +19,13 @@ By default it writes a dry-run plan with per-cell commands. With `--execute`, it
 Plan a small matrix:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/preview_matrix.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background black,busy --angle "0,0;45,10" --quality low,medium --markdown
+python tools/preview_matrix.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background black,busy --angle "0,0;45,10" --quality low,medium --markdown
 ```
 
 Execute against UnrealBridge:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/preview_matrix.py --package D:/reports/material-delivery-package.json --background black,neutral,busy --distance 0,2,5 --time 0.25,1.0 --quality low,high --execute --project UnrealAI --endpoint 127.0.0.1:57404 --markdown
+python tools/preview_matrix.py --package D:/reports/material-delivery-package.json --background black,neutral,busy --distance 0,2,5 --time 0.25,1.0 --quality low,high --execute --project <Project> --markdown
 ```
 
 ## Axes

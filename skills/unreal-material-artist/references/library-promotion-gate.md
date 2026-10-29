@@ -20,7 +20,7 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/library_promotion_gate.py --asset-id abc123 --report-path D:/path/to/delivery-v2.json --report-path D:/path/to/material-parameter-schema.json --report-path D:/path/to/material-source-provenance.json --report-path D:/path/to/preview-matrix.json --report-path D:/path/to/preview-readability-score.json --require-ready --markdown
+python tools/library_promotion_gate.py --asset-id abc123 --report-path D:/path/to/delivery-v2.json --report-path D:/path/to/material-parameter-schema.json --report-path D:/path/to/material-source-provenance.json --report-path D:/path/to/preview-matrix.json --report-path D:/path/to/preview-readability-score.json --require-ready --markdown
 ```
 
 ## Optional Apply
@@ -28,7 +28,7 @@ python D:/Skills/skills/unreal-material-artist/tools/library_promotion_gate.py -
 如果已经有 library record，并且证据全通过，可以：
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/library_promotion_gate.py --asset-id abc123 --report-path ... --apply --require-ready
+python tools/library_promotion_gate.py --asset-id abc123 --report-path ... --apply --require-ready
 ```
 
 它只会把现有 catalog record 升到 `approved`，不会替你自动注册一个不存在的候选资产。

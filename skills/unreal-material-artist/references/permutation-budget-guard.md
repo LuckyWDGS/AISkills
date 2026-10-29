@@ -20,5 +20,5 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/permutation_budget_guard.py --switch-expander-report D:/path/to/static-switch-variant-expander.json --platform android --platform pc --markdown
+python tools/permutation_budget_guard.py --switch-expander-report D:/path/to/static-switch-variant-expander.json --platform android --platform pc --markdown
 ```

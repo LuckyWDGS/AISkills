@@ -30,7 +30,7 @@ Default route:
 Preferred scaffold command:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe fire_ribbon_additive --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
+python tools/material_toolset_builder.py recipe fire_ribbon_additive --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
 ```
 
 The recipe builds a first-pass packed-mask additive material scaffold with raw U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`, Time-driven main/noise panners, B-channel distortion, centered raw-V width falloff, `ParticleColor`, `DynamicParameter.Param1/Param2`, and `EmissiveColor` / `Opacity` outputs. Treat the generated spec as offline graph scaffolding: run live UE pin-name smoke, texture import QA, carrier preview, and Android one-sample fallback review before delivery.
@@ -38,7 +38,7 @@ The recipe builds a first-pass packed-mask additive material scaffold with raw U
 Android / low-tier fallback command:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe fire_ribbon_additive_android --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
+python tools/material_toolset_builder.py recipe fire_ribbon_additive_android --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
 ```
 
 The fallback recipe keeps the same ribbon UV contract and artist-facing control names where practical, but uses one `Texture_Mask` sample, no secondary noise/distortion sample, and lower brightness defaults. Use it for Android or low-end variants after the full route has established the visual target, or when the task explicitly prioritizes low-tier cost from the start.

@@ -37,4 +37,4 @@
 - `parameter_tuning_log.py`
 
 Each CLI bootstraps the shared implementation from `scripts/vfx_delivery/`.
-Material auditing now lives in `D:/Skills/skills/unreal-material-artist/tools/material_audit.py`.
+Material auditing now lives in `../unreal-material-artist/tools/material_audit.py`.

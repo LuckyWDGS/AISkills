@@ -78,6 +78,10 @@ roles come from module names and `data_interface_bindings` stays empty; the
 report lists this under `coverage_gaps`. `niagara_material_integration_probe`
 reads renderer bindings from the audit's renderer data instead of the plugin.
 
+Port the remaining writers (for example `niagara_asset_assistant` apply) with
+[porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md):
+live facts, a pure plan, then `builtin_mcp.py batch` with readbacks.
+
 Possible fallback candidates include specialized particle event-handler
 construction, private-property diagnostics, live control/provenance probes,
 and exact legacy preview features. These are candidates, not permanent gaps:

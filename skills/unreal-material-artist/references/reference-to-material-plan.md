@@ -15,13 +15,13 @@ The first version is intentionally heuristic. It uses the target text, filenames
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/reference_to_material_plan.py new --effect WingEcho --layer RibbonTrail --reference D:/Refs/wing_echo.png --cache-reference --target "blue energy ribbon trail with sharp bright core and smoky edge falloff" --profile energy --carrier ribbon --observation "center line is cyan-white, edge fades into soft blue smoke" --must-match "bright core,blue falloff,broken edge alpha" --emit-contract --markdown
+python tools/reference_to_material_plan.py new --effect WingEcho --layer RibbonTrail --reference D:/Refs/wing_echo.png --cache-reference --target "blue energy ribbon trail with sharp bright core and smoky edge falloff" --profile energy --carrier ribbon --observation "center line is cyan-white, edge fades into soft blue smoke" --must-match "bright core,blue falloff,broken edge alpha" --emit-contract --markdown
 ```
 
 Validate an existing plan:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/reference_to_material_plan.py validate D:/path/to/reference-to-material-plan.json --markdown
+python tools/reference_to_material_plan.py validate D:/path/to/reference-to-material-plan.json --markdown
 ```
 
 ## Output Contract

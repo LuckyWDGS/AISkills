@@ -26,14 +26,14 @@ This tool is intentionally offline and report-first. It does not mutate UE asset
 Minimum:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_audit.py /Game/Materials/M_WingEcho --project UnrealAI --markdown
+python tools/material_audit.py /Game/Materials/M_WingEcho --project <Project> --markdown
 ```
 
 Best for exact graph diffs:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_audit.py /Game/Materials/M_WingEcho --project UnrealAI --include-raw-graph --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_domain_audit.py /Game/Materials/M_WingEcho --project UnrealAI --markdown
+python tools/material_audit.py /Game/Materials/M_WingEcho --project <Project> --include-raw-graph --markdown
+python tools/material_domain_audit.py /Game/Materials/M_WingEcho --project <Project> --markdown
 ```
 
 `--include-raw-graph` enables GUID-level node, node-property, connection, and output-connection comparisons. Without it, the tool still compares route, parameters, budgets, output chains, dead nodes, and class-count evidence when domain audits are supplied.
@@ -41,7 +41,7 @@ python D:/Skills/skills/unreal-material-artist/tools/material_domain_audit.py /G
 ## Diff After A Failed Regression
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --before-domain-audit D:/reports/before/material-domain-audit.json --after-domain-audit D:/reports/after/material-domain-audit.json --regression-report D:/reports/material-regression-comparison.json --effect WingEcho --layer RibbonTrail --label optimize-pass-01 --markdown
+python tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --before-domain-audit D:/reports/before/material-domain-audit.json --after-domain-audit D:/reports/after/material-domain-audit.json --regression-report D:/reports/material-regression-comparison.json --effect WingEcho --layer RibbonTrail --label optimize-pass-01 --markdown
 ```
 
 The report is written under:
@@ -55,7 +55,7 @@ When `--markdown` is set, a sidecar `.md` summary is written next to the JSON.
 Use `--strict` when the command should return non-zero if the diff requires review:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --regression-report D:/reports/material-regression-comparison.json --strict --markdown
+python tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --regression-report D:/reports/material-regression-comparison.json --strict --markdown
 ```
 
 ## Report Meaning

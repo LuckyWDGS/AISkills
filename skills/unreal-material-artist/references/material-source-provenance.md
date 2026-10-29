@@ -23,13 +23,13 @@ It is read-only and does not import or edit textures.
 ## Typical Commands
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_source_provenance.py --package D:/reports/material-delivery-package.json --texture-set-report D:/reports/texture-set-pipeline.json --import-audit-report D:/reports/texture-import-audit.json --source-manifest D:/reports/source-manifest.json --markdown
+python tools/material_source_provenance.py --package D:/reports/material-delivery-package.json --texture-set-report D:/reports/texture-set-pipeline.json --import-audit-report D:/reports/texture-import-audit.json --source-manifest D:/reports/source-manifest.json --markdown
 ```
 
 Require complete provenance before reuse:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_source_provenance.py --source-manifest D:/reports/source-manifest.json --texture-set-report D:/reports/texture-set-pipeline.json --import-audit-report D:/reports/texture-import-audit.json --require-complete --require-license --markdown
+python tools/material_source_provenance.py --source-manifest D:/reports/source-manifest.json --texture-set-report D:/reports/texture-set-pipeline.json --import-audit-report D:/reports/texture-import-audit.json --require-complete --require-license --markdown
 ```
 
 ## Source Manifest Shape

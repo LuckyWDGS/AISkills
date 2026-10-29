@@ -40,7 +40,7 @@ The tool is report-first and safe by default. It only writes a packed image when
 ## Audit A Folder
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --scan D:/Textures/WingEcho --packed-convention ORM --emit-import-fix-spec --markdown
+python tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --scan D:/Textures/WingEcho --packed-convention ORM --emit-import-fix-spec --markdown
 ```
 
 The report writes to:
@@ -54,7 +54,7 @@ When `--markdown` is set, a sidecar `.md` summary is written next to the JSON.
 ## Audit Explicit Files
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --normal D:/Textures/T_WingEcho_Normal.png --rma D:/Textures/T_WingEcho_ORM.png --opacity D:/Textures/T_WingEcho_Opacity.png --emissive D:/Textures/T_WingEcho_Emissive.png --packed-convention ORM --markdown
+python tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --normal D:/Textures/T_WingEcho_Normal.png --rma D:/Textures/T_WingEcho_ORM.png --opacity D:/Textures/T_WingEcho_Opacity.png --emissive D:/Textures/T_WingEcho_Emissive.png --packed-convention ORM --markdown
 ```
 
 Use `--require-opacity` or `--require-emissive` when those slots are mandatory for the material route. Use `--no-require-normal` or `--no-require-rma` for unlit/VFX routes where those inputs are intentionally absent.
@@ -66,7 +66,7 @@ For Niagara-facing VFX texture sets, use `--profile vfx-unlit`. That profile kee
 If imported UE asset paths are known, add them to the audit:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --base-color-asset /Game/Textures/T_WingEcho_BaseColor --normal D:/Textures/T_WingEcho_Normal.png --normal-asset /Game/Textures/T_WingEcho_Normal --rma D:/Textures/T_WingEcho_ORM.png --rma-asset /Game/Textures/T_WingEcho_ORM --emit-import-fix-spec --markdown
+python tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --base-color-asset /Game/Textures/T_WingEcho_BaseColor --normal D:/Textures/T_WingEcho_Normal.png --normal-asset /Game/Textures/T_WingEcho_Normal --rma D:/Textures/T_WingEcho_ORM.png --rma-asset /Game/Textures/T_WingEcho_ORM --emit-import-fix-spec --markdown
 ```
 
 This writes:
@@ -78,8 +78,8 @@ texture-import-fix-batch-spec.json
 Run it through the existing fixer:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_import_fix.py --batch-spec D:/path/to/texture-import-fix-batch-spec.json --project UnrealAI --markdown
-python D:/Skills/skills/unreal-material-artist/tools/texture_import_fix.py --batch-spec D:/path/to/texture-import-fix-batch-spec.json --project UnrealAI --apply --markdown
+python tools/texture_import_fix.py --batch-spec D:/path/to/texture-import-fix-batch-spec.json --project <Project> --markdown
+python tools/texture_import_fix.py --batch-spec D:/path/to/texture-import-fix-batch-spec.json --project <Project> --apply --markdown
 ```
 
 ## Merge UE Import Audit Evidence
@@ -87,7 +87,7 @@ python D:/Skills/skills/unreal-material-artist/tools/texture_import_fix.py --bat
 When you already have `texture_import_audit.py` reports, pass them in:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --scan D:/Textures/WingEcho --import-audit-report D:/reports/texture-import-audit.json --emit-import-fix-spec --markdown
+python tools/texture_set_pipeline.py audit --scan D:/Textures/WingEcho --import-audit-report D:/reports/texture-import-audit.json --emit-import-fix-spec --markdown
 ```
 
 The pipeline will attach actual imported settings to slots and report sRGB/compression mismatches against each slot's expected role.
@@ -97,13 +97,13 @@ The pipeline will attach actual imported settings to slots and report sRGB/compr
 When RMA/ORM is missing but source channels exist:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --normal D:/Textures/T_WingEcho_Normal.png --roughness D:/Textures/T_WingEcho_Roughness.png --metallic D:/Textures/T_WingEcho_Metallic.png --ao D:/Textures/T_WingEcho_AO.png --pack-rma-out D:/Textures/T_WingEcho_RMA.png --packed-convention RMA --markdown
+python tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --normal D:/Textures/T_WingEcho_Normal.png --roughness D:/Textures/T_WingEcho_Roughness.png --metallic D:/Textures/T_WingEcho_Metallic.png --ao D:/Textures/T_WingEcho_AO.png --pack-rma-out D:/Textures/T_WingEcho_RMA.png --packed-convention RMA --markdown
 ```
 
 Add opacity into alpha when the material can consume it from the packed texture:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --roughness D:/Textures/Roughness.png --metallic D:/Textures/Metallic.png --ao D:/Textures/AO.png --opacity D:/Textures/Opacity.png --pack-rma-out D:/Textures/T_WingEcho_RMAO.png --pack-opacity-alpha --packed-convention RMA --markdown
+python tools/texture_set_pipeline.py audit --roughness D:/Textures/Roughness.png --metallic D:/Textures/Metallic.png --ao D:/Textures/AO.png --opacity D:/Textures/Opacity.png --pack-rma-out D:/Textures/T_WingEcho_RMAO.png --pack-opacity-alpha --packed-convention RMA --markdown
 ```
 
 Conventions:
@@ -142,7 +142,7 @@ Record the convention in the material parameter name or material contract. Many 
 Run:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --spec D:/Textures/wingecho-texture-set.json --packed-convention ORM --emit-import-fix-spec --markdown
+python tools/texture_set_pipeline.py audit --spec D:/Textures/wingecho-texture-set.json --packed-convention ORM --emit-import-fix-spec --markdown
 ```
 
 ## Gate Meaning

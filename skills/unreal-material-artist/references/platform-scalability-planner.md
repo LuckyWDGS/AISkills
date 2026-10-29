@@ -40,7 +40,7 @@ Record mobile-specific material risks:
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/platform_scalability_planner.py --package D:/path/to/material-delivery-package.json --platform pc,android,low_end --markdown
+python tools/platform_scalability_planner.py --package D:/path/to/material-delivery-package.json --platform pc,android,low_end --markdown
 ```
 
 ## Output

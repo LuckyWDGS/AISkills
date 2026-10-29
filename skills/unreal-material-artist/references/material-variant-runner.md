@@ -16,7 +16,7 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_variant_runner.py --parameter-schema D:/path/to/material-parameter-schema.json --parent-path /Game/Materials/M_WingEcho_Master --markdown
+python tools/material_variant_runner.py --parameter-schema D:/path/to/material-parameter-schema.json --parent-path /Game/Materials/M_WingEcho_Master --markdown
 ```
 
 ## Current Scope

@@ -24,13 +24,13 @@ It reads existing package, contract, material audit, and runtime trace evidence.
 ## Typical Commands
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_parameter_schema.py --package D:/reports/material-delivery-package.json --audit-report D:/reports/material-audit.json --runtime-trace-report D:/reports/runtime-param-trace.json --markdown
+python tools/material_parameter_schema.py --package D:/reports/material-delivery-package.json --audit-report D:/reports/material-audit.json --runtime-trace-report D:/reports/runtime-param-trace.json --markdown
 ```
 
 Block until the contract is explicit:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_parameter_schema.py --contract D:/reports/material-contract.json --audit-report D:/reports/material-audit.json --require-complete --markdown
+python tools/material_parameter_schema.py --contract D:/reports/material-contract.json --audit-report D:/reports/material-audit.json --require-complete --markdown
 ```
 
 ## What Counts As Complete

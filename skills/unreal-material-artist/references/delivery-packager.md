@@ -41,7 +41,7 @@ The packager does not create the material or rerun audits. It records the eviden
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/delivery_packager.py build --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/material-preview.json --audit-report D:/path/to/material-audit.json --audit-report D:/path/to/material-domain-audit.json --texture-report D:/path/to/texture-asset-report.json --material-path /Game/Materials/M_WingEcho_RibbonTrail --markdown
+python tools/delivery_packager.py build --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/material-preview.json --audit-report D:/path/to/material-audit.json --audit-report D:/path/to/material-domain-audit.json --texture-report D:/path/to/texture-asset-report.json --material-path /Game/Materials/M_WingEcho_RibbonTrail --markdown
 ```
 
 If `--plan` and `--contract` are omitted, the tool looks for the default paths created by `reference_to_material_plan.py --emit-contract`:
@@ -54,13 +54,13 @@ material-delivery/contracts/<effect-layer>/material-contract.json
 Validate an existing package:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/delivery_packager.py validate D:/path/to/material-delivery-package.json --markdown
+python tools/delivery_packager.py validate D:/path/to/material-delivery-package.json --markdown
 ```
 
 Use `--strict` when the package should fail the command if it is not ready:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/delivery_packager.py build --effect WingEcho --layer RibbonTrail --strict --markdown
+python tools/delivery_packager.py build --effect WingEcho --layer RibbonTrail --strict --markdown
 ```
 
 ## Evidence Gate
@@ -113,13 +113,13 @@ Important JSON fields:
 After a package contains an accepted preview report, lock that preview for later drift checks:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py baseline --package D:/path/to/material-delivery-package.json --label accepted-v001 --markdown
+python tools/material_regression.py baseline --package D:/path/to/material-delivery-package.json --label accepted-v001 --markdown
 ```
 
 Run regression after material edits:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py compare --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/new-material-preview.json --strict --markdown
+python tools/material_regression.py compare --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/new-material-preview.json --strict --markdown
 ```
 
 ## Acceptance Gate
@@ -127,7 +127,7 @@ python D:/Skills/skills/unreal-material-artist/tools/material_regression.py comp
 When the package, regression comparison, texture set, audit, budgets, usage flags, and parameter table are complete, approve material-side reuse with:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_acceptance_gate.py --package D:/path/to/material-delivery-package.json --require-ready --markdown
+python tools/material_acceptance_gate.py --package D:/path/to/material-delivery-package.json --require-ready --markdown
 ```
 
 This writes the downstream-facing report under:

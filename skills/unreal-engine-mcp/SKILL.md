@@ -5,16 +5,16 @@ description: Drive a running Unreal Engine 5.8+ editor through Epic's built-in M
 
 # Unreal Engine MCP
 
-Use Epic's built-in MCP server (UE 5.8+) as the editor interface. For an
+Use Epic's built-in MCP server (UE 5.8+) as the editor interface. The scripts need Python 3.10+. For an
 operation MCP does not cover, use public `unreal.*` APIs through Epic's
 [Python Remote Execution](references/official-python-remote.md). There is no
 custom plugin or TCP bridge: UnrealBridge is retired and must not be installed,
 started or suggested.
 
-For this user, keep editor automation in background connections. Do not move,
-minimize, maximize, resize or focus UE windows, or use mouse/keyboard input to
-send Python through an editor console, unless the user explicitly requests that
-UI operation. Do not silently resume UI automation after a failure.
+Follow the [shared UE conventions](references/shared-conventions.md): background
+editor connections only (no window focus/move/resize, console keystrokes or UI
+automation unless the user asks for that UI operation, and never as a fallback),
+and Chinese annotations on modules you author or change.
 
 For implementation or repair, read [developer workflow](references/developer-workflow.md).
 For code lookup, errors or crashes, read [debugging and source navigation](references/debugging-and-source-navigation.md).
@@ -37,7 +37,10 @@ Every individual operation goes through the first route that covers it:
 
 If neither covers the operation, report the gap (operation, toolsets checked,
 engine version) instead of patching engine files or writing a plugin. Fewer
-round trips alone never justify leaving MCP.
+round trips alone never justify leaving MCP, with one opt-in exception the user
+chose: read-only bulk graph extraction where MCP needs one call per node
+(`material_audit.py --graph-source remote`, 34 s → 5 s on a 104-node graph,
+verified node-for-node identical). Writes always stay on MCP.
 
 Discovery rules:
 
@@ -64,13 +67,18 @@ python scripts/builtin_mcp.py call get_current_level --toolset SceneTools --args
 python scripts/builtin_mcp.py run-script <session>/reads.py   # ProgrammaticToolset, def run() -> dict
 python scripts/builtin_mcp.py batch <session>/steps.jsonl --dry-run   # validate, then run without --dry-run
 python scripts/python_remote.py --project <ProjectName> exec --file <session>/probe.py
+python scripts/builtin_mcp.py --out <session>/niagara-schema.json describe-tool NiagaraToolset_System GetEmitterData
+python scripts/live_smoke.py --project <ProjectName>   # read-only end-to-end check of every tool (~30 s)
+python scripts/record_fixtures.py --project <ProjectName> --check   # after an engine upgrade: contract fixtures still match?
 ```
 
 Toolset names may be given as the unique class suffix (`SceneTools`); the client
 resolves it against the live inventory. Use `--args-file` for non-trivial JSON
 on PowerShell. The CLI keeps its MCP session between runs, so a repeated `call`
 costs ~0.3 s instead of ~2 s; `--new-session` opts out. In Git Bash set
-`MSYS_NO_PATHCONV=1`, or `/Game/...` arguments are rewritten to filesystem paths.
+`MSYS_NO_PATHCONV=1`, or `/Game/...` arguments are rewritten to filesystem paths. On Windows, write
+large or CJK output with the global `--out <file>` (UTF-8) instead of piping it, or set `PYTHONUTF8=1`
+for any Python that reads the pipe; a GBK console reader garbles UTF-8 text.
 
 Choose the multi-step route by what failure must look like:
 
@@ -189,14 +197,11 @@ the returned result and LogsToolset; use a bounded PIE/Simulate check when runti
 behavior changed. Use meaningful function/variable names and keep functions
 focused. Do not replay a DSL dump until its completeness is verified.
 
-For this user's authored modules, add a **Chinese module comment frame and
-searchable textual labels** before delivery. Give the module a stable ID, a
-Chinese purpose, and the relevant entry/parameters; add Chinese notes on
-non-obvious nodes, timing and conditions. Reuse the module's ID when extending
-it. Follow [module annotations](references/blueprint-programming-mcp.md#chinese-module-annotations)
-for naming, categories and official-editor routes. This also applies to new or
-modified animation, state-machine, material and Niagara modules. Inspection-only
-tasks do not authorize inserting annotations into untouched assets.
+Before delivery, annotate authored Blueprint modules per the
+[shared conventions](references/shared-conventions.md#chinese-module-annotations):
+a Chinese comment frame with a stable module ID, purpose and entry/parameters,
+reusing the ID when extending the module. Naming, categories and editor routes:
+[module annotations](references/blueprint-programming-mcp.md#chinese-module-annotations).
 
 ## Change and recovery boundaries
 
@@ -222,6 +227,8 @@ state which were actually completed.
 | Read logic and actual pin connections | [Graph inspection](references/blueprint-graph-inspection.md) |
 | Animation Blueprint, state machines and AI | [Animation and AI](references/animation-state-machines-mcp.md) |
 | Official background Python for an MCP gap | [Epic Python Remote Execution](references/official-python-remote.md) |
+| Porting a legacy UnrealBridge writer (plan → batch) | [Porting legacy writers](references/porting-legacy-writers.md) |
+| Rules shared by all four UE skills | [Shared conventions](references/shared-conventions.md) |
 | MCP protocol, startup and discovery | [Built-in MCP](references/builtin-mcp.md) |
 | Version/source audit and historical boundaries | [UE 5.8.4 audit](references/ue-5.8.4-audit.md) |
 | Stock UE Python snippets for a Remote Execution gap | [Actors](references/ue-python-actors.md), [Assets](references/ue-python-assets.md), [Materials](references/ue-python-materials.md) |

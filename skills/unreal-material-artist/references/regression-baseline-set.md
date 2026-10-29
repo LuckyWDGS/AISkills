@@ -17,5 +17,5 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/regression_baseline_set.py resolve --effect WingEcho --layer RibbonTrail --parameter-tier gameplay-safe --carrier ribbon --background busy --exposure high --require-match --markdown
+python tools/regression_baseline_set.py resolve --effect WingEcho --layer RibbonTrail --parameter-tier gameplay-safe --carrier ribbon --background busy --exposure high --require-match --markdown
 ```

@@ -42,7 +42,7 @@ The default posture is safe: `recipe` and `refactor-plan` write evidence and spe
 ## List Recipes
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py list-recipes
+python tools/material_toolset_builder.py list-recipes
 ```
 
 Built-in recipes:
@@ -59,19 +59,19 @@ Built-in recipes:
 ## Generate A Recipe Package
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe fire_flipbook --effect WingEcho --layer FlameSprite --folder-path /Game/Materials/VFX --markdown
+python tools/material_toolset_builder.py recipe fire_flipbook --effect WingEcho --layer FlameSprite --folder-path /Game/Materials/VFX --markdown
 ```
 
 For a Niagara Ribbon additive flame trail scaffold:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe fire_ribbon_additive --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
+python tools/material_toolset_builder.py recipe fire_ribbon_additive --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
 ```
 
 For the Android / low-tier one-sample fallback:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe fire_ribbon_additive_android --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
+python tools/material_toolset_builder.py recipe fire_ribbon_additive_android --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
 ```
 
 Default outputs:
@@ -96,13 +96,13 @@ Use `--inline-build-spec` only when you want the executable spec duplicated insi
 Review the generated `material-builder-spec.json` first, then run either:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py build D:/path/material-builder-spec.json --project UnrealAI --endpoint 127.0.0.1:43815 --markdown
+python tools/material_toolset_builder.py build D:/path/material-builder-spec.json --project <Project> --markdown
 ```
 
 or:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py recipe energy_ribbon --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --execute --project UnrealAI --endpoint 127.0.0.1:43815 --markdown
+python tools/material_toolset_builder.py recipe energy_ribbon --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --execute --project <Project> --markdown
 ```
 
 When a builder spec includes `route`, the tool uses the route-aware local material create path so domain, blend, shading model, and two-sided intent are created with the material. For legacy specs without `route`, it preserves the older official `MaterialTools.create` path.
@@ -116,7 +116,7 @@ Sprite/ribbon VFX recipes include explicit `ParticleColor` and `DynamicParameter
 ## Generate A Refactor Plan From Graph Diff
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py refactor-plan --graph-diff-report D:/reports/graph-diff-refactor.json --markdown
+python tools/material_toolset_builder.py refactor-plan --graph-diff-report D:/reports/graph-diff-refactor.json --markdown
 ```
 
 Default outputs:
@@ -135,7 +135,7 @@ Graph-diff categories map to guarded operations:
 You can also request explicit operations:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_toolset_builder.py refactor-plan --material-path /Game/Materials/M_Foo --operation add-fresnel-layer --operation add-depth-fade --effect Foo --layer Surface --markdown
+python tools/material_toolset_builder.py refactor-plan --material-path /Game/Materials/M_Foo --operation add-fresnel-layer --operation add-depth-fade --effect Foo --layer Surface --markdown
 ```
 
 Supported explicit operations:
@@ -160,13 +160,13 @@ Supported explicit operations:
 Dry run first:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --markdown
 ```
 
 Then execute against a duplicated candidate:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --execute --project UnrealAI --endpoint 127.0.0.1:43815 --carrier sprite --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --execute --project <Project> --carrier sprite --markdown
 ```
 
 The apply tool leaves the original material untouched, creates backup/candidate duplicates, applies only whitelisted operations, and collects before/after audit, preview, and regression evidence when a baseline exists.
@@ -176,10 +176,10 @@ The apply tool leaves the original material untouched, creates backup/candidate 
 After a recipe build or a refactor patch:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_audit.py /Game/Materials/M_Foo --include-raw-graph --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_domain_audit.py /Game/Materials/M_Foo --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_Foo --with-complexity --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py compare --effect Foo --layer Surface --preview-report D:/path/new-preview.json --strict --markdown
+python tools/material_audit.py /Game/Materials/M_Foo --include-raw-graph --markdown
+python tools/material_domain_audit.py /Game/Materials/M_Foo --markdown
+python tools/material_preview.py render /Game/Materials/M_Foo --with-complexity --markdown
+python tools/material_regression.py compare --effect Foo --layer Surface --preview-report D:/path/new-preview.json --strict --markdown
 ```
 
 Then package the result with `delivery_packager.py` and rerun `project_material_health.py` when project-level triage matters.

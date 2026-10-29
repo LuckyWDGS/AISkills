@@ -45,7 +45,7 @@ It ranks:
 ## Basic Scan
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/project_material_health.py scan --markdown
+python tools/project_material_health.py scan --markdown
 ```
 
 Default output:
@@ -61,13 +61,13 @@ With `--markdown`, a sidecar `.md` summary is written next to the JSON.
 Use this when evidence is split across projects, worktrees, or copied report folders:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/project_material_health.py scan --report-root D:/ProjectA/.codex/session/material-delivery --report-root D:/ProjectB/.codex/session/material-delivery --markdown
+python tools/project_material_health.py scan --report-root D:/ProjectA/.codex/session/material-delivery --report-root D:/ProjectB/.codex/session/material-delivery --markdown
 ```
 
 You can also pass a single JSON report file:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/project_material_health.py scan --report-root D:/reports/material-audit.json --markdown
+python tools/project_material_health.py scan --report-root D:/reports/material-audit.json --markdown
 ```
 
 ## Budgets And Gates
@@ -82,7 +82,7 @@ Default budgets:
 Use stricter budgets for mobile or project-specific performance targets:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/project_material_health.py scan --instruction-budget 120 --sampler-budget 6 --texture-max-dimension 1024 --high-risk-score 60 --strict --markdown
+python tools/project_material_health.py scan --instruction-budget 120 --sampler-budget 6 --texture-max-dimension 1024 --high-risk-score 60 --strict --markdown
 ```
 
 `--strict` returns non-zero when the project health gate fails. The gate fails when there are high-risk materials, high-risk textures, high-risk texture sets, failed regressions, or invalid report files.
@@ -92,20 +92,20 @@ python D:/Skills/skills/unreal-material-artist/tools/project_material_health.py 
 For a meaningful project report, collect these first:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_audit.py /Game/Materials/M_Foo --project UnrealAI --include-raw-graph --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_domain_audit.py /Game/Materials/M_Foo --project UnrealAI --markdown
-python D:/Skills/skills/unreal-material-artist/tools/texture_set_pipeline.py audit --scan D:/Textures/Foo --emit-import-fix-spec --markdown
-python D:/Skills/skills/unreal-material-artist/tools/texture_import_audit.py /Game/Textures/T_Foo_BaseColor /Game/Textures/T_Foo_Normal --project UnrealAI --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py compare --effect Foo --layer Surface --preview-report D:/reports/new-preview.json --markdown
-python D:/Skills/skills/unreal-material-artist/tools/graph_diff_refactor.py diff --before-audit D:/reports/before-audit.json --after-audit D:/reports/after-audit.json --regression-report D:/reports/material-regression-comparison.json --markdown
-python D:/Skills/skills/unreal-material-artist/tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --execute --project UnrealAI --endpoint 127.0.0.1:57404 --carrier sprite --markdown
-python D:/Skills/skills/unreal-material-artist/tools/shader_permutation_report.py --path-prefix /Game --project UnrealAI --markdown
+python tools/material_audit.py /Game/Materials/M_Foo --project <Project> --include-raw-graph --markdown
+python tools/material_domain_audit.py /Game/Materials/M_Foo --project <Project> --markdown
+python tools/texture_set_pipeline.py audit --scan D:/Textures/Foo --emit-import-fix-spec --markdown
+python tools/texture_import_audit.py /Game/Textures/T_Foo_BaseColor /Game/Textures/T_Foo_Normal --project <Project> --markdown
+python tools/material_regression.py compare --effect Foo --layer Surface --preview-report D:/reports/new-preview.json --markdown
+python tools/graph_diff_refactor.py diff --before-audit D:/reports/before-audit.json --after-audit D:/reports/after-audit.json --regression-report D:/reports/material-regression-comparison.json --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --execute --project <Project> --carrier sprite --markdown
+python tools/shader_permutation_report.py --path-prefix /Game --project <Project> --markdown
 ```
 
 Then run:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/project_material_health.py scan --markdown
+python tools/project_material_health.py scan --markdown
 ```
 
 ## Reading The Report

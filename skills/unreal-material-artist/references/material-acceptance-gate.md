@@ -27,13 +27,13 @@ Niagara `delivery_package.py` can consume this report because it emits:
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_acceptance_gate.py --package D:/path/to/material-delivery-package.json --require-ready --markdown
+python tools/material_acceptance_gate.py --package D:/path/to/material-delivery-package.json --require-ready --markdown
 ```
 
 Pass extra reports when they were not included in the package:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_acceptance_gate.py --package D:/path/to/material-delivery-package.json --regression-report D:/path/to/material-regression-comparison.json --texture-set-report D:/path/to/texture-set-pipeline.json --require-ready --markdown
+python tools/material_acceptance_gate.py --package D:/path/to/material-delivery-package.json --regression-report D:/path/to/material-regression-comparison.json --texture-set-report D:/path/to/texture-set-pipeline.json --require-ready --markdown
 ```
 
 ## Hard Gate

@@ -2,7 +2,7 @@
 
 ## T_Case_FireTongueMask.png
 
-- Path: `D:\Skills\skills\unreal-material-artist\assets\library\candidates\mask\T_Case_FireTongueMask.png`
+- Path: `assets/library/candidates/mask/T_Case_FireTongueMask.png`
 - Role: `mask`
 - Format: `PNG`
 - Size: `1024x1024`

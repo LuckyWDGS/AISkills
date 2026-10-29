@@ -4,7 +4,7 @@
 
 这份文档现在只作为纹理策略路由入口。按任务读取更窄的 reference，避免为了一个 prompt 或领域规则加载整本手册。
 
-当需要实际出图时，默认加载并使用 `C:/Users/QY/.codex/skills/cm-imagegen/SKILL.md`。本 skill 的 texture references 负责决定纹理策略、prompt 内容、QA 与 UE 接入，cm-imagegen 负责生成与迭代图片。
+当需要实际出图时，默认加载并使用 `../../cm-imagegen/SKILL.md`。本 skill 的 texture references 负责决定纹理策略、prompt 内容、QA 与 UE 接入，cm-imagegen 负责生成与迭代图片。
 
 如果已有设计图、参考图、已批准概念图或上一张选定输出，必须先缓存到本地，再把它作为 reference image 传入 cm-imagegen，用来锁定风格、结构、色彩和材质语言。
 

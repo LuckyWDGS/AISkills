@@ -5,22 +5,12 @@ description: Use when the user needs Unreal Engine Niagara VFX help or complete 
 
 # Niagara VFX Artist
 
-For this user's new or modified UE modules, add Chinese module comments,
-descriptions and stable searchable labels/IDs using the domain's supported
-comment or stack metadata. Follow the shared
-[Chinese annotation convention](../unreal-engine-mcp/references/blueprint-programming-mcp.md#chinese-module-annotations).
-Use clear Chinese emitter/module display descriptions where supported while
-preserving existing parameter namespaces and bindings. Read-only audits should
-not insert annotations into untouched assets.
-
 ## Editor transport
 
-For this user, keep editor work on background connections: do not focus, move,
-minimize, maximize or resize UE windows or send console keystrokes. For a verified
-MCP gap, check [Epic Python Remote Execution](../unreal-engine-mcp/references/official-python-remote.md)
-for that one operation. Use the shared [developer workflow](../unreal-engine-mcp/references/developer-workflow.md)
-for scoped changes and [source/diagnostic workflow](../unreal-engine-mcp/references/debugging-and-source-navigation.md)
-to trace the gameplay/animation/renderer binding and failure cause.
+Follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background editor connections only, MCP first with
+Python Remote Execution for a verified gap, and Chinese emitter/module display
+descriptions with stable IDs on new or modified Niagara modules (existing
+parameter namespaces and bindings unchanged).
 
 Use Epic's MCP as the editor control path on UE 5.8+, following the sibling `unreal-engine-mcp` skill. Discover Niagara System/Assets/Component/Blueprint/Info toolsets and their schemas live. Use official system/emitter summaries, topology, renderer/stack data, module/user-variable editing, compile state, and stack issues before considering a custom plugin. Read ProgrammaticToolset's execution environment before batching official tools.
 
@@ -128,6 +118,9 @@ python ../unreal-material-artist/tools/official_toolsets_bridge.py material:get_
 ## Niagara Validation Rules
 
 - Do not trust editor UI screenshots as the source of truth for Niagara structure.
+- Before tuning a visual mismatch, classify the likely owner layer: reference, texture, material, Niagara, renderer, integration, preview, performance, or unknown.
+- Never use reflection or export-text writes to bypass editor semantics when an official route is missing; report the gap instead.
+- Keep runtime previews, audits, tuning logs and gap diagnoses under `.codex/session/vfx-delivery/`; do not commit them, generated previews, caches or one-off experiments unless explicitly promoted.
 - Inspect emitter handles, renderer types, material bindings, event handlers, sim target, bounds, and source/receiver responsibilities before tuning.
 - Own the real Niagara parameter truth: if a material expects `ParticleColor`, `DynamicParameter`, `SubImageIndex`, `RibbonWidth`, or custom attributes, Niagara must verify who writes them, where they are bound, and whether the live system is feeding the expected values.
 - When a material contract exists, prove the real System/Emitter/Renderer binding, SubUV/SubImage, ParticleColor, DynamicParameter, RibbonWidth, sorting and bounds route through official structural queries. `niagara_material_integration_probe.py` is a legacy fallback for an uncovered part of that proof. Material-side preview evidence is not real-system integration proof; preserve equivalent report fields where supported and do not fabricate a legacy gate pass.
@@ -157,78 +150,14 @@ When a reference image exists, cache it and use it as an anchor. Do not generate
 
 ## Reference Map
 
-Read only the files that matter for the current request:
+Read only what the task needs. [references/index.md](references/index.md) says when to use each one. Ignore [README.md](README.md) for normal task execution.
 
-- [references/core.md](references/core.md)
-  Use for the main interaction pattern, design principles, Niagara basics, and implementation framing.
-
-- [references/niagara-fundamentals.md](references/niagara-fundamentals.md)
-  Use for Systems, Emitters, renderer families, emitter count inference, and translating visual targets into Niagara layers.
-
-- [references/niagara-operations-and-workflows.md](references/niagara-operations-and-workflows.md)
-  Use for templates, user parameters, scratch pad usage, renderers, animation notifies, and practical Niagara workflows.
-
-- [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md)
-  Use for official MCP coverage, supported references/topology, legacy script boundaries, and remaining fallback decisions.
-
-- [references/common-effect-patterns.md](references/common-effect-patterns.md)
-  Use for common effects such as explosions, shields, trails, hits, sigils, fire, smoke, projectiles, beams, and portals.
-
-- [references/implementation-presets.md](references/implementation-presets.md)
-  Use for practical starting presets, emitter breakdowns, module order, renderer choices, and first-pass ranges.
-
-- [references/reference-analysis-output-spec.md](references/reference-analysis-output-spec.md)
-  Use when the user provides a reference image, video, or design sheet and wants a full implementation package.
-
-- [references/effect-layer-production-gate.md](references/effect-layer-production-gate.md)
-  Use when a complex design sheet needs a stricter path from reference to UE-ready layer preview.
-
-- [references/reference-deconstruction-patterns.md](references/reference-deconstruction-patterns.md)
-  Use for deeper reference/video deconstruction and deciding whether a layer is Niagara-driven, material-driven, mesh-driven, flipbook-driven, or fluid-driven.
-
-- [references/fluids-and-flowmaps.md](references/fluids-and-flowmaps.md)
-  Use for fluid-like effects and deciding between Niagara Fluids, flow-map style material support, or baked flipbooks.
-
-- [references/fluids-recipes.md](references/fluids-recipes.md)
-  Use for concrete fluid-style effect recipes.
-
-- [references/fluids-parameters.md](references/fluids-parameters.md)
-  Use for Niagara Fluids parameter tuning.
-
-- [references/fluids-troubleshooting.md](references/fluids-troubleshooting.md)
-  Use when a fluid sim looks loose, blocky, blurry, weak, or too expensive.
-
-- [references/fluids-production-pipeline.md](references/fluids-production-pipeline.md)
-  Use for end-to-end fluid production decisions and baking workflows.
-
-- [references/non-fluid-effects-playbook.md](references/non-fluid-effects-playbook.md)
-  Use for hits, slashes, projectiles, beams, shields, sigils, portals, buffs, sparks, and related gameplay readability.
-
-- [references/platform-optimization.md](references/platform-optimization.md)
-  Use for Niagara scalability, particle budgets, bounds, culling, platform quality levels, and PC/Android tradeoffs. For material-specific cost, use `unreal-material-artist`.
-
-- [references/debugging.md](references/debugging.md)
-  Use for troubleshooting visibility, timing, sorting, renderer, integration, platform, and performance problems in Niagara effects.
-
-- [references/ribbon-actor-trail-debugging.md](references/ribbon-actor-trail-debugging.md)
-  Use when an Actor-attached Niagara Ribbon / Location Event trail shows white source orbs, folded cards, vertical sheets, wrinkles, hard seams, or large-motion discontinuity artifacts.
-
-- [references/review-checklist.md](references/review-checklist.md)
-  Use when the user wants to review or critique an existing Niagara effect.
-
-- [references/asset-planning-checklist.md](references/asset-planning-checklist.md)
-  Use when moving from design into production naming, systems, emitters, instances, textures, and low-end planning. Delegate material details to `unreal-material-artist`.
-
-- [references/validation-and-qa.md](references/validation-and-qa.md)
-  Use for final acceptance checks including distance, background, stress, hookup, platform readiness, and delivery criteria.
-
-- [references/engine-integration-checklist.md](references/engine-integration-checklist.md)
-  Use for animation notifies, Blueprints, GAS, Sequencer, user parameters, effect types, scalability, and platform switching.
-
-- [references/tool-suite.md](references/tool-suite.md)
-  Use when the request is about the closed-loop production tools and their CLI workflow.
-
-Ignore [README.md](README.md) for normal task execution.
+- **Intake and art direction:** [core](references/core.md), [request-intake-template](references/request-intake-template.md), [reference-deconstruction-patterns](references/reference-deconstruction-patterns.md), [reference-analysis-output-spec](references/reference-analysis-output-spec.md), [idea-to-prompt-fastloop](references/idea-to-prompt-fastloop.md), [vfx-direction-bible-template](references/vfx-direction-bible-template.md), [art-direction-patterns](references/art-direction-patterns.md), [aesthetics-and-readability-strategy](references/aesthetics-and-readability-strategy.md), [style-consistency-guide](references/style-consistency-guide.md), [feasibility-and-fidelity-guide](references/feasibility-and-fidelity-guide.md), [implementation-confidence-template](references/implementation-confidence-template.md), [model-turnaround-and-asset-gen-guide](references/model-turnaround-and-asset-gen-guide.md)
+- **Building Niagara:** [niagara-fundamentals](references/niagara-fundamentals.md), [niagara-operations-and-workflows](references/niagara-operations-and-workflows.md), [common-effect-patterns](references/common-effect-patterns.md), [non-fluid-effects-playbook](references/non-fluid-effects-playbook.md), [implementation-presets](references/implementation-presets.md), [advanced-techniques](references/advanced-techniques.md), [system-integration-patterns](references/system-integration-patterns.md), [engine-integration-checklist](references/engine-integration-checklist.md), [examples](references/examples.md), [case-studies](references/case-studies.md), [quick-reference](references/quick-reference.md)
+- **Fluids:** [fluids-and-flowmaps](references/fluids-and-flowmaps.md), [fluids-parameters](references/fluids-parameters.md), [fluids-production-pipeline](references/fluids-production-pipeline.md), [fluids-recipes](references/fluids-recipes.md), [fluids-troubleshooting](references/fluids-troubleshooting.md)
+- **Production and delivery:** [production-workflow-map](references/production-workflow-map.md), [end-to-end-vfx-delivery-map](references/end-to-end-vfx-delivery-map.md), [effect-layer-production-gate](references/effect-layer-production-gate.md), [asset-planning-checklist](references/asset-planning-checklist.md), [project-bootstrap-checklist](references/project-bootstrap-checklist.md), [review-checklist](references/review-checklist.md), [validation-and-qa](references/validation-and-qa.md), [self-training-and-iteration-loop](references/self-training-and-iteration-loop.md)
+- **Debugging and performance:** [debugging](references/debugging.md), [common-failure-cases](references/common-failure-cases.md), [ribbon-actor-trail-debugging](references/ribbon-actor-trail-debugging.md), [platform-optimization](references/platform-optimization.md), [mobile-checklist](references/mobile-checklist.md)
+- **Tools and editor:** [tool-suite](references/tool-suite.md), [niagara-toolsets-vs-unrealbridge](references/niagara-toolsets-vs-unrealbridge.md), [capability-gap-map](references/capability-gap-map.md), [tooling-and-automation-ideas](references/tooling-and-automation-ideas.md)
 
 ## Output Expectations
 

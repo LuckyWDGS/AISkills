@@ -17,7 +17,7 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/static_switch_variant_expander.py --parameter-schema D:/path/to/material-parameter-schema.json --parent-path /Game/Materials/M_WingEcho_Master --tiers default,gameplay-safe --max-permutations 8 --markdown
+python tools/static_switch_variant_expander.py --parameter-schema D:/path/to/material-parameter-schema.json --parent-path /Game/Materials/M_WingEcho_Master --tiers default,gameplay-safe --max-permutations 8 --markdown
 ```
 
 ## Notes

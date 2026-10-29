@@ -39,6 +39,12 @@ python scripts/python_remote.py nodes
 python scripts/python_remote.py --project MyGame exec --file <session>/probe.py
 ```
 
+The bundled client fixes two transport problems in Epic's module: it loads
+`remote_execution.py` from the editor that runs the requested project (newest
+engine otherwise), and it reads whole messages. Epic's UE 5.3 copy reads one
+8 KB `recv` and the 5.8 copy stops at the first short read, so results larger
+than ~8 KB arrived truncated ("Remote party failed to send a valid response").
+
 The JSON result is Epic's `command_result` (`success`, `result`, `output` lines)
 plus the selected node. From Python, call `python_remote.run_python(script,
 project=...)`. The equivalent direct use of Epic's module is:

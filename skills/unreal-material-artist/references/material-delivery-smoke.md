@@ -28,13 +28,13 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_delivery_smoke.py --package D:/path/to/material-delivery-package.json --parameter-schema-report D:/path/to/material-parameter-schema.json --source-provenance-report D:/path/to/material-source-provenance.json --translucency-sorting-report D:/path/to/translucency-sorting-probe.json --markdown
+python tools/material_delivery_smoke.py --package D:/path/to/material-delivery-package.json --parameter-schema-report D:/path/to/material-parameter-schema.json --source-provenance-report D:/path/to/material-source-provenance.json --translucency-sorting-report D:/path/to/translucency-sorting-probe.json --markdown
 ```
 
 执行 live smoke：
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_delivery_smoke.py --package D:/path/to/material-delivery-package.json --parameter-schema-report D:/path/to/material-parameter-schema.json --source-provenance-report D:/path/to/material-source-provenance.json --translucency-sorting-report D:/path/to/translucency-sorting-probe.json --execute --project UnrealAI --endpoint 127.0.0.1:57404 --markdown
+python tools/material_delivery_smoke.py --package D:/path/to/material-delivery-package.json --parameter-schema-report D:/path/to/material-parameter-schema.json --source-provenance-report D:/path/to/material-source-provenance.json --translucency-sorting-report D:/path/to/translucency-sorting-probe.json --execute --project <Project> --markdown
 ```
 
 ## Default Behavior

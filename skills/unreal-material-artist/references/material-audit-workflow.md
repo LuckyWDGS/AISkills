@@ -57,13 +57,17 @@ parameters, instance chain and usage flags come from one ProgrammaticToolset
 script; output-pin wiring from direct `MaterialTools.get_property_input` calls.
 Shader statistics are an MCP gap and use `MaterialEditingLibrary.get_statistics`
 over Epic Python Remote Execution (`--project` selects the editor). A 100-node
-graph takes about 40 seconds because each editor tool call costs ~0.25 s.
+graph takes about 35 seconds because each editor tool call costs ~0.25 s.
+`--graph-source remote` reads the same graph in one Remote Execution call
+(~5 s total); it was verified node-, wire- and output-identical to the MCP
+route on UE 5.8.4. It is read-only and opt-in; the default stays MCP.
 
 Optional:
 
 ```powershell
 --include-raw-graph        # needed for graph_diff_refactor node/edge diffs
 --no-shader-stats          # skip Remote Execution
+--graph-source remote      # opt-in: read the graph with stock MaterialEditingLibrary over Remote Execution
 --mcp-url http://127.0.0.1:8000/mcp
 --out C:/path/material-audit.json
 ```

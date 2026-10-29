@@ -46,6 +46,8 @@ python scripts/builtin_mcp.py --expect-project <项目名> call <工具名> --to
 python scripts/builtin_mcp.py batch <步骤.jsonl> --dry-run   # 先校验，再去掉 --dry-run 执行
 ```
 
+脚本需要 Python 3.10 及以上（仅用标准库）。`scripts/live_smoke.py` 只读地端到端检查全部工具；升级引擎后用 `scripts/record_fixtures.py --check` 检查契约测试样例是否仍然一致。
+
 命令行会在两次运行之间保留 MCP 会话，重复调用约 0.3 秒（新会话约 2 秒），`--new-session` 可关闭。读多个数据用 `run-script`（编辑器内一次执行，任一步失败则整批失败）；写操作或需要逐步确认的步骤用 `batch`（逐步执行、遇错即停、可读回校验）。
 
 只读导出某个蓝图（将路径替换为目标资产）：

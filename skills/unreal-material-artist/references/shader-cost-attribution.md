@@ -24,7 +24,7 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/shader_cost_attribution.py --audit-report D:/path/to/material-audit.json --markdown
+python tools/shader_cost_attribution.py --audit-report D:/path/to/material-audit.json --markdown
 ```
 
 ## Output

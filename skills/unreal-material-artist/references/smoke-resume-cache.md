@@ -19,6 +19,6 @@
 ## Typical Commands
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/smoke_resume_cache.py inspect --effect WingEcho --markdown
-python D:/Skills/skills/unreal-material-artist/tools/smoke_resume_cache.py prune --effect WingEcho --apply --markdown
+python tools/smoke_resume_cache.py inspect --effect WingEcho --markdown
+python tools/smoke_resume_cache.py prune --effect WingEcho --apply --markdown
 ```

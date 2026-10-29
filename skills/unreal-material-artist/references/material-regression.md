@@ -35,13 +35,13 @@ It reports:
 From a preview report:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py baseline --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/material-preview.json --label accepted-v001 --markdown
+python tools/material_regression.py baseline --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/material-preview.json --label accepted-v001 --markdown
 ```
 
 From a delivery package that already contains preview evidence:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py baseline --package D:/path/to/material-delivery-package.json --label accepted-v001 --markdown
+python tools/material_regression.py baseline --package D:/path/to/material-delivery-package.json --label accepted-v001 --markdown
 ```
 
 The baseline is written to:
@@ -61,13 +61,13 @@ Baseline images are copied under:
 Using the default baseline for an effect/layer:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py compare --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/new-material-preview.json --strict --markdown
+python tools/material_regression.py compare --effect WingEcho --layer RibbonTrail --preview-report D:/path/to/new-material-preview.json --strict --markdown
 ```
 
 Using an explicit baseline:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_regression.py compare --baseline D:/path/to/material-regression-baseline.json --preview-report D:/path/to/new-material-preview.json --strict --markdown
+python tools/material_regression.py compare --baseline D:/path/to/material-regression-baseline.json --preview-report D:/path/to/new-material-preview.json --strict --markdown
 ```
 
 The comparison writes JSON/Markdown plus diff images under:
@@ -81,7 +81,7 @@ The comparison writes JSON/Markdown plus diff images under:
 When a comparison fails, pair the regression report with before/after audit reports:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --before-domain-audit D:/reports/before/material-domain-audit.json --after-domain-audit D:/reports/after/material-domain-audit.json --regression-report D:/reports/material-regression-comparison.json --effect WingEcho --layer RibbonTrail --label optimize-pass-01 --markdown
+python tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --before-domain-audit D:/reports/before/material-domain-audit.json --after-domain-audit D:/reports/after/material-domain-audit.json --regression-report D:/reports/material-regression-comparison.json --effect WingEcho --layer RibbonTrail --label optimize-pass-01 --markdown
 ```
 
 This produces a likely-cause list for route, output-chain, parameter, graph, finding, and budget changes. Rerun `material_audit.py` with `--include-raw-graph` on both revisions when exact node and connection provenance matters.

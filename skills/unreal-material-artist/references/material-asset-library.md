@@ -64,7 +64,7 @@ If no approved asset passes this gate, use `cm-imagegen` with the reference imag
 Skill-local root:
 
 ```text
-D:/Skills/skills/unreal-material-artist/assets/library/
+assets/library/
 ```
 
 Stages:
@@ -94,7 +94,7 @@ Categories:
 Search the approved pool:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py search --category distortion --role sprite --tag flow --power-of-two --markdown
+python tools/material_asset_library.py search --category distortion --role sprite --tag flow --power-of-two --markdown
 ```
 
 If the search returns a good fit, reuse it before generating a new one.
@@ -102,7 +102,7 @@ If the search returns a good fit, reuse it before generating a new one.
 For leaf cards or vegetation cutouts:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py search --category foliage --role leaf-card --tag alpha --power-of-two --markdown
+python tools/material_asset_library.py search --category foliage --role leaf-card --tag alpha --power-of-two --markdown
 ```
 
 ## Register A Candidate
@@ -110,8 +110,8 @@ python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py s
 Register a generated or external file into the library:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py register D:/Temp/new_noise.png --stage candidates --category noise --role surface --tags seamless,organic,mask --qa-status candidate --source-kind generated
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py register D:/Temp/leaf_card.png --stage candidates --category foliage --role leaf-card --tags alpha,two-sided,masked --qa-status candidate --source-kind generated --audit-role foliage
+python tools/material_asset_library.py register D:/Temp/new_noise.png --stage candidates --category noise --role surface --tags seamless,organic,mask --qa-status candidate --source-kind generated
+python tools/material_asset_library.py register D:/Temp/leaf_card.png --stage candidates --category foliage --role leaf-card --tags alpha,two-sided,masked --qa-status candidate --source-kind generated --audit-role foliage
 ```
 
 This stores the asset under the skill-local library, indexes it, and records searchable metadata.
@@ -119,22 +119,22 @@ This stores the asset under the skill-local library, indexes it, and records sea
 Register a UE material asset directly into the reusable library:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py register-material /Game/Materials/M_Foo_Decal --stage candidates --category decal --role decal-material --project UnrealAI --endpoint 127.0.0.1:8628
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py register-material /Game/Materials/M_Foo_PostProcess --stage candidates --category post_process --role post-process-material --project UnrealAI --endpoint 127.0.0.1:8628
+python tools/material_asset_library.py register-material /Game/Materials/M_Foo_Decal --stage candidates --category decal --role decal-material --project <Project>
+python tools/material_asset_library.py register-material /Game/Materials/M_Foo_PostProcess --stage candidates --category post_process --role post-process-material --project <Project>
 ```
 
 For auto-rebuilt legal materials, use the direct rebuild path:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike DeferredDecal --register-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike PostProcess --register-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
+python tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike DeferredDecal --register-candidate --project <Project> --markdown
+python tools/material_domain_rebuilder.py /Game/Materials/M_SurfaceLike PostProcess --register-candidate --project <Project> --markdown
 ```
 
 Or let preview recovery rebuild and register in one pass:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --markdown
-python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier post_process --register-rebuilt-candidate --project UnrealAI --endpoint 127.0.0.1:8628 --width 320 --height 180 --markdown
+python tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier decal --register-rebuilt-candidate --project <Project> --markdown
+python tools/material_preview.py render /Game/Materials/M_SurfaceLike --carrier post_process --register-rebuilt-candidate --project <Project> --width 320 --height 180 --markdown
 ```
 
 ## Promote Or Reject
@@ -142,13 +142,13 @@ python D:/Skills/skills/unreal-material-artist/tools/material_preview.py render 
 When a candidate proves reusable:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py promote <asset-id> --stage approved --qa-status approved
+python tools/material_asset_library.py promote <asset-id> --stage approved --qa-status approved
 ```
 
 Or gate it through report-backed self-review:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py auto-promote <asset-id> --self-review approved --report-path D:/path/to/material-preview.json --apply
+python tools/material_asset_library.py auto-promote <asset-id> --self-review approved --report-path D:/path/to/material-preview.json --apply
 ```
 
 When a material asset reaches `approved`, the library now also writes a higher-level delivery report under the session material-delivery folder. That report summarizes:
@@ -164,7 +164,7 @@ This means rebuilt-material approval is no longer only visible inside the catalo
 When it turns out misleading or poor:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/material_asset_library.py promote <asset-id> --stage rejected --qa-status rejected
+python tools/material_asset_library.py promote <asset-id> --stage rejected --qa-status rejected
 ```
 
 ## Review Standard

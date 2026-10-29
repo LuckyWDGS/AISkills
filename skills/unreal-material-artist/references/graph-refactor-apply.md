@@ -24,7 +24,7 @@
 Dry run is the default and writes a review plan:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --markdown
 ```
 
 The report includes:
@@ -42,7 +42,7 @@ The report includes:
 Execute only after reviewing the dry-run report:
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --execute --project UnrealAI --endpoint 127.0.0.1:57404 --carrier sprite --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --execute --project <Project> --carrier sprite --markdown
 ```
 
 The tool duplicates:

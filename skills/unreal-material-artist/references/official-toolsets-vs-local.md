@@ -67,13 +67,15 @@ UnrealBridge (custom plugin + TCP) is retired. Older pipelines still construct
 Their editor-connected modes call retired `UnrealBridge*Library` APIs and now
 fail fast: `graph_refactor_apply`, `material_asset_library register-material`,
 `material_domain_audit`, `material_domain_rebuilder`,
-`material_function_linter`, `material_instance_batch`, `material_preview`,
+`material_function_linter`, `material_preview`,
 `material_toolset_builder build` / `recipe --execute`, `runtime_param_trace`,
 `shader_permutation_report`, `texture_import_audit`, and `texture_import_fix`.
 Their offline planning/report modes still work. Perform the live step with MCP
 tools, save the result JSON, and feed it into the local report code. Each is
-pending a port to MCP. `material_audit` is already ported: it reads
-through MCP and is the reference pattern for porting the rest.
+pending a port to MCP. `material_audit` (read) and `material_instance_batch` (write) are ported and
+are the reference patterns; follow
+[porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
+for the remaining writers.
 
 For an operation no MCP tool covers, use a stock `unreal.*` API through
 `../unreal-engine-mcp/scripts/python_remote.py`. Record the uncovered operation,

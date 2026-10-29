@@ -17,7 +17,7 @@
 ## Typical Command
 
 ```powershell
-python D:/Skills/skills/unreal-material-artist/tools/preview_scene_harness_upgrade.py --preview-matrix-report D:/path/to/preview-matrix.json --variant-report D:/path/to/material-variant-runner.json --background-map black=/Game/Preview/BG_Black --background-map busy=D:/Refs/busy_bg.png --exposure-map 0=0 --exposure-map high=1 --markdown
+python tools/preview_scene_harness_upgrade.py --preview-matrix-report D:/path/to/preview-matrix.json --variant-report D:/path/to/material-variant-runner.json --background-map black=/Game/Preview/BG_Black --background-map busy=D:/Refs/busy_bg.png --exposure-map 0=0 --exposure-map high=1 --markdown
 ```
 
 ## Output

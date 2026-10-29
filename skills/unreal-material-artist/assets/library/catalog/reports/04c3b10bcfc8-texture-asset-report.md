@@ -2,7 +2,7 @@
 
 ## T_Case_WaterRippleHeight.png
 
-- Path: `D:\Skills\skills\unreal-material-artist\assets\library\candidates\distortion\T_Case_WaterRippleHeight.png`
+- Path: `assets/library/candidates/distortion/T_Case_WaterRippleHeight.png`
 - Role: `noise`
 - Format: `PNG`
 - Size: `1024x1024`

@@ -2,7 +2,7 @@
 
 ## T_Case_TileableNoiseMask.png
 
-- Path: `D:\Skills\skills\unreal-material-artist\assets\library\candidates\noise\T_Case_TileableNoiseMask.png`
+- Path: `assets/library/candidates/noise/T_Case_TileableNoiseMask.png`
 - Role: `noise`
 - Format: `PNG`
 - Size: `1024x1024`

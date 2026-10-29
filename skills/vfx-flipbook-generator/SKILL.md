@@ -7,18 +7,9 @@ description: Plan, generate, extend, repair, and pack VFX flipbook atlases for s
 
 ## Unreal handoff
 
-When connecting to UE for this user, use background connections and preserve UE
-window state; do not send console keystrokes or focus/resize/minimize the editor.
-For a verified MCP gap, check [Epic Python Remote Execution](../unreal-engine-mcp/references/official-python-remote.md)
-for that one operation. For import/binding changes and failure diagnosis, use the
-shared [developer workflow](../unreal-engine-mcp/references/developer-workflow.md)
-and [source/diagnostic workflow](../unreal-engine-mcp/references/debugging-and-source-navigation.md).
-
-When authoring or changing UE material/Niagara modules for this user, include
-Chinese module comments, descriptions and stable searchable module IDs; follow
-the shared [Chinese annotation convention](../unreal-engine-mcp/references/blueprint-programming-mcp.md#chinese-module-annotations).
-Preserve existing parameter bindings. Local-only atlas generation does not
-require adding or modifying UE annotations.
+When importing or wiring atlases in UE, follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background
+editor connections only, MCP first, and Chinese annotations on UE modules you
+author or change. Local-only atlas generation needs no UE annotations.
 
 Atlas generation, FFmpeg extraction, alpha QA, packing, and manifests run locally and do not need an Unreal editor plugin. When importing or wiring the atlas into UE 5.8+, follow the sibling `unreal-engine-mcp` official MCP policy: discover TextureTools.import_file, ObjectTools properties, MaterialTools/MaterialInstanceTools, AssetTools, and NiagaraToolsets, then use direct MCP. Read ProgrammaticToolset's environment before batching. The older Niagara `flipbook_ue_pipeline.py` called retired UnrealBridge APIs and is disabled pending an MCP port. File readiness alone is not live material/Niagara binding proof.
 
@@ -65,7 +56,8 @@ python scripts/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-durat
    - `direct-extract`
      - Use when source sample pressure is healthy enough for the requested grid.
      - Prefer `tools/flipbook_builder.py`.
-     - The tool auto-discovers local FFmpeg binaries under `tools/ffmpeg` before falling back to system `PATH`.
+     - Scripts need Python 3.10+. The tool auto-discovers local FFmpeg binaries under `tools/ffmpeg` (not committed; install per machine) before falling back to system `PATH`,
+       then the `imageio-ffmpeg` package. On a new machine run `winget install Gyan.FFmpeg` or unpack a Windows build into `tools/ffmpeg/<build>/bin`.
      - Keep `--fit contain` unless you explicitly want cropping. `contain` scales the full source frame into the cell and pads as needed; `cover` crops to fill.
    - `hybrid`
      - Use when the source has some good motion but not enough clean temporal coverage.

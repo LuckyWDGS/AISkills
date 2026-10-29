@@ -214,7 +214,7 @@ Purpose:
 Key commands:
 
 ```powershell
-python tools/niagara_material_integration_probe.py --system-path /Game/VFX/WingEcho/NS_WingEcho --material-delivery-package D:/reports/material-delivery-package.json --project C:/UnrealEngineProject/UnrealAI --endpoint 127.0.0.1:57404 --markdown
+python tools/niagara_material_integration_probe.py --system-path /Game/VFX/WingEcho/NS_WingEcho --material-delivery-package D:/reports/material-delivery-package.json --project <Project> --markdown
 python tools/niagara_material_integration_probe.py --niagara-audit .codex/session/vfx-delivery/audits/niagara/WingEcho/niagara-audit.json --material-contract D:/reports/material-contract.json --material-path /Game/VFX/WingEcho/MI_Ribbon --carrier ribbon --markdown
 ```
 
@@ -270,7 +270,7 @@ Offline regression:
 - `scripts/test_delivery_package.py` covers ready, missing anchor, missing preview, preview/final-asset binding, material integration probe missing/failing/pass, unapproved material, failed live verify, Niagara audit warnings, Niagara structural contract pass/fail, visual QA pass/fail, `ue-only` source policy behavior, package CLI write flow, `--require-ready`, `check --manifest/--index`, dashboard HTML, dashboard consumption, finalize consumption, and dry-run UE promote mapping
 
 UE smoke:
-- 2026-05-18 verified `live_asset_verify.py --source-policy ue-only` against live UE 5.8 project `C:/UnrealEngineProject/UnrealAI`
+- 2026-05-18 verified `live_asset_verify.py --source-policy ue-only` against live UE 5.8 project `<ProjectDir>`
 - Smoke report: `.codex/session/vfx-delivery/live-asset-verify/ue-only-smoke/live-asset-verify.json`
 - Result: `verification_passed=true` with no local source file, because the UE texture asset, material texture parameter, and renderer material chain all resolved
 - `tools/ue_smoke.py` is the optional automated smoke entry. If UE is unavailable it writes a `status=blocked` report and returns success unless `--require-ue` is set; if a texture/material/renderer route is supplied, it runs the same live asset route check with `--source-policy ue-only` by default.
@@ -305,7 +305,9 @@ Workflow notes:
 - `--start` and `--end` are shared by `recommend` and `build`; when omitted the tool uses the full video.
 - time arguments accept seconds (`1.25`), `MM:SS` (`00:03.500`), or `HH:MM:SS` (`00:00:03.500`).
 - auto grid recommendation is based on the selected clip duration, not always the full source video.
-- atlas output defaults to `--atlas-size-mode nearest-power-of-two`, snapping each axis independently to the closest power of two. Use `--atlas-size-mode raw` only for debugging or comparison.
+- atlas output defaults to `--atlas-size-mode pad-to-power-of-two`, padding each axis up to a power of two without rescaling cell content; `nearest-power-of-two` snaps instead, and `raw` is for debugging or comparison.
+- without `--atlas-name` the atlas is named `T_<Descriptor>_<Grid>_VFX.png` (for example `T_DustFall_12x12_VFX.png`).
+- this tool re-exports the `vfx-flipbook-generator` skill's builder; change it and its tests there.
 - the manifest records both the final atlas size and raw pre-snap size through `atlas.raw_width`, `atlas.raw_height`, `atlas.size_mode`, `atlas.power_of_two`, and `atlas.snapped_from`.
 - default output is `.codex/session/vfx-delivery/flipbooks/<effect>/<run-id>/`.
 - the atlas uses row-major order: frame 0 at top-left, then left-to-right, top-to-bottom.
@@ -326,11 +328,11 @@ Purpose:
 Key command:
 
 ```powershell
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project C:\UnrealEngineProject\UnrealAI --endpoint 127.0.0.1:56233 --preview --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project C:\UnrealEngineProject\UnrealAI --endpoint 127.0.0.1:56233 --preview --niagara-hookup --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project C:\UnrealEngineProject\UnrealAI --endpoint 127.0.0.1:56233 --preview --niagara-hookup --effect-preview --approval-create-pending --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project C:\UnrealEngineProject\UnrealAI --endpoint 127.0.0.1:56233 --preview --niagara-hookup --promote --promote-policy vfx-effect --promote-group CodexSmoke --promote-effect-name Dust36 --promote-mode duplicate --markdown
-python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project C:\UnrealEngineProject\UnrealAI --endpoint 127.0.0.1:56233 --preview --niagara-hookup --promote --promote-policy studio-project-family-effect --promote-studio OpenAI --promote-project-name UnrealAI --promote-effect-family Dust --promote-effect-name Dust36 --promote-mode duplicate --markdown
+python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --markdown
+python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --markdown
+python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --effect-preview --approval-create-pending --markdown
+python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --promote --promote-policy vfx-effect --promote-group CodexSmoke --promote-effect-name Dust36 --promote-mode duplicate --markdown
+python tools/flipbook_ue_pipeline.py D:\atlas\flipbook_atlas.png --grid 8x8 --effect Dust36 --project <Project> --preview --niagara-hookup --promote --promote-policy studio-project-family-effect --promote-studio OpenAI --promote-project-name UnrealAI --promote-effect-family Dust --promote-effect-name Dust36 --promote-mode duplicate --markdown
 ```
 
 Workflow notes:
@@ -510,4 +512,4 @@ That order matches the closed loop:
 
 reference anchor -> acceptance gate -> visible evidence -> carrier-aware preview -> preview approval -> plan -> integration -> Niagara audit -> material integration probe -> mutation plan -> write-side implementation -> diff QA -> design compare -> gap diagnosis -> tuning -> delivery -> chain smoke -> dashboard/finalize/smoke -> learning -> cleanup.
 
-Material graph auditing moved to `D:/Skills/skills/unreal-material-artist/tools/material_audit.py`; use it before Niagara tuning when renderer materials are part of the risk.
+Material graph auditing moved to `../unreal-material-artist/tools/material_audit.py`; use it before Niagara tuning when renderer materials are part of the risk.

@@ -91,9 +91,9 @@ Common examples:
 
 Local direct-extract tool:
 
-- `python D:/Skills/skills/vfx-flipbook-generator/tools/flipbook_builder.py recommend D:/clip.mov`
-- `python D:/Skills/skills/vfx-flipbook-generator/tools/flipbook_builder.py build D:/clip.mov --grid 12x12 --fit contain --atlas-size-mode pad-to-power-of-two`
-- the tool looks for `ffmpeg.exe` and `ffprobe.exe` under `D:/Skills/skills/vfx-flipbook-generator/tools/ffmpeg` before checking system `PATH`
+- `python tools/flipbook_builder.py recommend D:/clip.mov`
+- `python tools/flipbook_builder.py build D:/clip.mov --grid 12x12 --fit contain --atlas-size-mode pad-to-power-of-two`
+- the tool looks for `ffmpeg.exe` and `ffprobe.exe` under `tools/ffmpeg` (a per-machine install, ignored by git) before checking system `PATH`
 - `contain` preserves the entire frame and pads when aspect ratios differ; `cover` crops to fill the cell and should only be used intentionally
 
 ## 5. Full-Generated Route
@@ -133,7 +133,7 @@ Note: a `10x10` grid cannot divide `1024x1024`, `2048x2048`, or `4096x4096` into
 Recommended planning step after `flipbook_job_scaffold.py`:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_plan.py D:/path/to/job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
+python scripts/flipbook_batch_plan.py D:/path/to/job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
 ```
 
 This writes:
@@ -147,9 +147,9 @@ This writes:
 Recommended execution step after `flipbook_batch_plan.py`:
 
 ```powershell
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_runner.py status D:/path/to/frame-plan.json
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_runner.py run D:/path/to/frame-plan.json
-python D:/Skills/skills/vfx-flipbook-generator/scripts/flipbook_batch_runner.py approve-anchor D:/path/to/frame-plan.json --phase 1
+python scripts/flipbook_batch_runner.py status D:/path/to/frame-plan.json
+python scripts/flipbook_batch_runner.py run D:/path/to/frame-plan.json
+python scripts/flipbook_batch_runner.py approve-anchor D:/path/to/frame-plan.json --phase 1
 ```
 
 Runner behavior:
