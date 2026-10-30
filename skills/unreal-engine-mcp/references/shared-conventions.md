@@ -31,6 +31,19 @@ domain-specific details.
   acceptance, and [debugging and source navigation](debugging-and-source-navigation.md)
   to trace bindings, implementations and failure causes.
 
+## Evidence and logs
+
+- Verify behavior with state and logs: read runtime values (ObjectTools, audits,
+  sampled positions/velocities) and log lines, and report the numbers. Gameplay
+  Blueprints carry a log path from the start
+  ([Blueprint delivery standards](blueprint-delivery-standards.md#3-logging-is-part-of-the-implementation)).
+- Capture a screenshot only to answer a named visual question, look at it, and
+  report the answer. Material and VFX look reviews are visual questions; a logic
+  change is not. Never capture the graph editor or an unrelated editor view as
+  evidence, and do not retry a failing capture route in a loop.
+- Debug drawing and on-screen prints are development aids, never delivered
+  presentation.
+
 ## Chinese module annotations
 
 - New or modified modules get Chinese comment frames or descriptions, a stable
@@ -42,4 +55,9 @@ domain-specific details.
   labels never require runtime Gameplay Tags.
 - Read-only audits and local-only work (for example atlas generation) never
   insert annotations into untouched assets.
-- Details and naming: [Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations).
+- Blueprint functions get a Chinese function frame (purpose, inputs, outputs,
+  side effects, caller); variables get Chinese category paths. Function
+  descriptions and variable tooltips have no write route in tested 5.8.4, so the
+  handoff includes a description table instead.
+- Details and naming: [Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations)
+  and [Blueprint delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules).

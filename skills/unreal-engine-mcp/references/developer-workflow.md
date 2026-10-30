@@ -94,6 +94,11 @@ Keep logs that the user explicitly requested as part of the feature.
 
 ## Validate the changed contract
 
+For gameplay Blueprints, the delivery bar is in
+[Blueprint delivery standards](blueprint-delivery-standards.md): feature brief,
+production presentation, log path, readable layout, Chinese explanations, and
+state/log evidence instead of screenshots, finished by `scripts/blueprint_lint.py --strict`.
+
 Choose checks according to the change and existing project policy:
 
 | Change | Relevant evidence |

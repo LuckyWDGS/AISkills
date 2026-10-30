@@ -76,9 +76,16 @@ Blueprints, animation/state graphs, materials and Niagara as appropriate:
   Chinese comments to non-obvious nodes rather than restating every wire.
   For independent Sequence branches, explain cumulative delay versus waiting
   for the preceding branch, and document intentionally unused pins.
-- Give new functions/variables/components clear names and Chinese categories
-  and tooltips/descriptions where supported. Keep project/API identifiers stable;
-  do not rename existing references just to translate them.
+- Give new functions/variables/components clear names and Chinese categories.
+  Every authored function graph gets a Chinese function frame around its entry
+  (purpose, inputs, outputs, side effects, caller). Details-panel function
+  descriptions and variable tooltips have no write route in tested 5.8.4 (MCP
+  BlueprintTools/ObjectTools and editor Python checked), so list them in a
+  handoff description table. Keep project/API identifiers stable; do not rename
+  existing references just to translate them.
+- Keep frame titles on one line (about 40 characters) and the explanation in the
+  frame's details text; frames must not overlap or share members. A long wrapped
+  title is how two frame headers end up drawn on top of each other.
 - Use a consistent comment color by role within the project and leave enough
   padding for legible labels and bubble text. Group only this module's nodes;
   do not sweep unrelated branches into the frame or reorganize the entire asset.
@@ -112,7 +119,12 @@ membership before saving. This is annotation support, not general node-property
 write coverage.
 
 Read-only inspections should report existing annotations and gaps without
-adding comments, saving or clearing dirty flags.
+adding comments, saving or clearing dirty flags. `scripts/blueprint_lint.py`
+reads frames (`BlueprintGraphEditor.list_comment_nodes`,
+`BlueprintEditorLibrary.get_comment_text` / `get_nodes_in_comment`) and reports
+missing function/module frames, overlaps and long titles. Comment nodes are not
+`K2Node`s, so `get_node_pos` / `get_node_size` reject them; their extent comes from
+their member nodes.
 
 ### Chinese-editor DSL limitation observed in 5.8.4
 

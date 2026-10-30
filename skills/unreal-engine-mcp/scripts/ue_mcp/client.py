@@ -116,7 +116,9 @@ class UnrealMcpClient:
         if self.session_id:
             command.extend(["--header", f"Mcp-Session-Id: {self.session_id}"])
             command.extend(["--header", f"Mcp-Protocol-Version: {self.protocol}"])
-        command.extend(["--data-binary", json.dumps(payload, ensure_ascii=False)])
+        # ASCII-only JSON: Windows re-encodes command-line arguments with the ANSI code page (GBK on a
+        # Chinese system), which turned every non-ASCII argument (Chinese categories, comments) into "?".
+        command.extend(["--data-binary", json.dumps(payload, ensure_ascii=True)])
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         lines: queue.Queue[bytes | None] = queue.Queue()
 

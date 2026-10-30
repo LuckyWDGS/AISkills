@@ -22,7 +22,9 @@ For programmer tasks, start with [Blueprint programming](references/blueprint-pr
 [logic and connection inspection](references/blueprint-graph-inspection.md), or
 [animation and state machines](references/animation-state-machines-mcp.md).
 `scripts/inspect_blueprint.py` captures existing nodes/pins and verifies both ends
-of each wire without authoring, compiling or saving the asset.
+of each wire without authoring, compiling or saving the asset;
+`scripts/blueprint_lint.py` builds on it to check layout, debug leftovers, logging
+and Chinese annotations read-only.
 
 ## Transport routing
 
@@ -184,6 +186,22 @@ Read [references/blueprint-programming-mcp.md](references/blueprint-programming-
 for official graph inspection, component/default edits, batching, compile/log
 verification, and the observed Chinese-editor DSL limitation.
 
+For a gameplay feature, follow [Blueprint delivery standards](references/blueprint-delivery-standards.md):
+
+1. Write a feature brief (player-facing result, states, systems, tuning surface,
+   edge cases, verification plan) and show it before wiring.
+2. Deliver production presentation, never debug drawing: a spline/Niagara
+   trajectory with its own material, real Chaos physics with physical materials.
+   Route visuals through `unreal-material-artist` / `niagara-vfx-artist`.
+3. Build the `bDebugLog` + `DebugLog` log path first and log state transitions
+   and failure branches; diagnose from `LogsToolset.GetLogEntries` before guessing.
+4. Lay graphs out left to right, one getter per consumer, no overlaps or
+   backward exec wires.
+5. Explain every function, module and variable group in Chinese.
+6. Verify behavior with runtime state and log numbers; screenshot only to
+   answer a named visual question.
+7. Finish with `scripts/blueprint_lint.py --strict`.
+
 For Animation Blueprints, animation state machines, BlendSpaces, Montages,
 StateTree and Behavior Trees, read
 [references/animation-state-machines-mcp.md](references/animation-state-machines-mcp.md).
@@ -231,6 +249,7 @@ state which were actually completed.
 | Scoped implementation, safe edits and acceptance | [Developer workflow](references/developer-workflow.md) |
 | Find code, diagnose logs/runtime/crashes | [Debugging and source navigation](references/debugging-and-source-navigation.md) |
 | Blueprint programming and Chinese annotations | [Blueprint programming](references/blueprint-programming-mcp.md) |
+| Gameplay feature delivery: design, presentation, logs, layout, Chinese explanations, lint | [Blueprint delivery standards](references/blueprint-delivery-standards.md) |
 | Read logic and actual pin connections | [Graph inspection](references/blueprint-graph-inspection.md) |
 | Animation Blueprint, state machines and AI | [Animation and AI](references/animation-state-machines-mcp.md) |
 | Official background Python for an MCP gap | [Epic Python Remote Execution](references/official-python-remote.md) |
