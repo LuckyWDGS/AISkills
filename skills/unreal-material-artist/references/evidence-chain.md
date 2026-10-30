@@ -25,12 +25,14 @@ Reports write under `<project>/.codex/session/material-delivery/`.
   background contrast, edge readability). Screenshot success alone is not proof for VFX.
 - When one preview is too narrow, plan a matrix across background, exposure, distance,
   angle, time, parameter tier, quality, lighting and carrier with
-  [preview-matrix.md](preview-matrix.md) / `tools/preview_matrix.py`. It plans one capture
-  per cell; stage each context and capture it.
+  [preview-matrix.md](preview-matrix.md) / `tools/preview_matrix.py`. `--execute` captures
+  the cells MCP can drive (carrier, parameter-tier instances as thumbnails, orbit angle and
+  distance around `--focus`); cells on other axes stay `pending_staging` until you stage them
+  and pass `--cell-report`.
 - To turn background, exposure or tier intent into concrete harness steps and variant
   MIs: [preview-scene-harness-upgrade.md](preview-scene-harness-upgrade.md) /
   `tools/preview_scene_harness_upgrade.py`, then
-  [preview-environment-executor.md](preview-environment-executor.md) (plans the staged capture).
+  [preview-environment-executor.md](preview-environment-executor.md) (captures a staged environment; passes only with `--staged`).
 - Translucent, additive, ribbon and decal routes: check DepthFade/SoftParticle evidence
   and optional sorting/bounds proof with
   [translucency-sorting-probe.md](translucency-sorting-probe.md) /
@@ -96,9 +98,9 @@ Reports write under `<project>/.codex/session/material-delivery/`.
   textures at their defaults with a warning.
 - Refactors: `refactor-plan` turns graph-diff findings into a guarded patch plan;
   [graph-refactor-apply.md](graph-refactor-apply.md) / `tools/graph_refactor_apply.py`
-  plans the candidate (its `mcp_route` lists the AssetTools duplicate and MaterialTools
-  edits to run as a `builtin_mcp.py batch`). Keep the backup/candidate, whitelisted
-  edits, before/after readback and preview/regression evidence.
+  duplicates the target to a backup and a candidate and, with `--execute`, applies the
+  whitelisted edits to the candidate only, reads each one back, saves on full success and
+  runs the audit/capture/regression validation. Keep the backup/candidate and that evidence.
 
 ## Reuse gates
 
@@ -116,9 +118,9 @@ Reports write under `<project>/.codex/session/material-delivery/`.
 
 To run the existing evidence as one chain, use
 [material-delivery-smoke.md](material-delivery-smoke.md) / `tools/material_delivery_smoke.py`.
-`--execute` runs the MCP steps (variant instances through `material_instance_batch`);
-preview tiers stay planned until each is staged and captured, so readability and
-regression wait on that evidence instead of passing. Pair reruns with
+`--execute` runs the MCP steps: variant instances through `material_instance_batch`, then
+each tier's preview matrix captures its instance, so readability, regression and the gates
+run on that evidence. Cells needing manual staging keep the smoke at `risk`, not `pass`. Pair reruns with
 [smoke-resume-cache.md](smoke-resume-cache.md) / `tools/smoke_resume_cache.py`.
 
 ## Preview route and editor notes

@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "unreal-engine-mcp" / "scripts"))
 from test_builtin_mcp import server
-from unreal_material_tools import official_toolsets_bridge as cli
+from unreal_material_tools import official_tool_call as cli
 
 
 class DirectMcpTests(unittest.TestCase):

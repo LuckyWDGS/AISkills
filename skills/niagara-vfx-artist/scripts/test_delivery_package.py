@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -8,12 +7,13 @@ from io import StringIO
 import json
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
 from vfx_delivery.core import save_json
 from vfx_delivery.delivery_package import build_delivery_health, live_asset_report_passed, main
 from vfx_delivery.delivery_dashboard import main as dashboard_main
 from vfx_delivery.delivery_finalize import main as finalize_main
+
+
+BOUNDS = {"min": {"x": -100, "y": -100, "z": -100}, "max": {"x": 100, "y": 100, "z": 100}}
 
 
 def acceptance(anchor_path: Path | None) -> dict:
@@ -141,9 +141,7 @@ def audit_report(
     return {
         "tool": "niagara_audit",
         "system_path": system_path,
-        "system_properties": {
-            "FixedBounds": {"text": "(Min=(X=-100,Y=-100,Z=-100),Max=(X=100,Y=100,Z=100))" if bounds else ""},
-        },
+        "system": {"fixed_bounds": BOUNDS if bounds else None},
         "warnings": warnings or [],
         "emitters": [
             {
@@ -157,7 +155,7 @@ def audit_report(
                     "data_interface_bindings": [{"node_name": "ReadSource"}] if data_flow else [],
                     "data_interface_classes": ["ParticleRead"] if data_flow else [],
                     "function_names": ["SampleParticlesFromOtherEmitter"] if data_flow else [],
-                    "fixed_bounds": "",
+                    "fixed_bounds": None,
                 },
             }
         ],
@@ -168,9 +166,7 @@ def attribute_reader_trail_audit_report(system_path: str) -> dict:
     return {
         "tool": "niagara_audit",
         "system_path": system_path,
-        "system_properties": {
-            "FixedBounds": {"text": "(Min=(X=-100,Y=-100,Z=-100),Max=(X=100,Y=100,Z=100))"},
-        },
+        "system": {"fixed_bounds": BOUNDS},
         "warnings": [],
         "emitters": [
             {
@@ -186,7 +182,7 @@ def attribute_reader_trail_audit_report(system_path: str) -> dict:
                     "data_interface_bindings": [],
                     "data_interface_classes": [],
                     "function_names": ["SpawnBurst_Instantaneous"],
-                    "fixed_bounds": "",
+                    "fixed_bounds": None,
                 },
             },
             {
@@ -209,7 +205,7 @@ def attribute_reader_trail_audit_report(system_path: str) -> dict:
                     ],
                     "data_interface_classes": ["/Script/Niagara.NiagaraDataInterfaceParticleRead"],
                     "function_names": ["SpawnParticlesFromOtherEmitter", "SampleParticlesFromOtherEmitter"],
-                    "fixed_bounds": "",
+                    "fixed_bounds": None,
                 },
             },
         ],

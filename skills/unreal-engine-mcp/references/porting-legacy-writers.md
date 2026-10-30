@@ -74,10 +74,12 @@ spec ──► collect_facts (live, read-only) ──► build_plan (pure) ─�
 
 ## Status
 
-Every UnrealBridge-era tool is now ported, plan-only, or removed, and the
-`BridgeClient` shim and retired-tool registry are gone. Writers that still only
-plan and could gain an MCP executor this way: `niagara_asset_assistant` (Niagara
-mutation plans) and `graph_refactor_apply` (material refactors on a candidate).
+Every UnrealBridge-era tool is now ported or removed, and the `BridgeClient`
+shim and retired-tool registry are gone. Executors that run plans operation by
+operation with per-write readback (when a step needs the result of the one before,
+such as a renderer index from AddRenderer): `niagara_asset_assistant apply`
+(Niagara mutation plans) and `graph_refactor_apply --execute` (material refactors
+on a duplicated candidate).
 
 ## CLI conventions
 

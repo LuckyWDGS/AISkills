@@ -260,9 +260,9 @@ Use [official-toolsets-vs-local.md](official-toolsets-vs-local.md) for the sourc
 Use the MCP wrapper directly when you need a confirmed editor toolset call with saved evidence:
 
 ```powershell
-python tools/official_toolsets_bridge.py asset:duplicate --input D:/payloads/duplicate.json --markdown
-python tools/official_toolsets_bridge.py material_instance:set_scalar_parameter --input D:/payloads/set-radius.json --markdown
-python tools/official_toolsets_bridge.py material:create --input D:/payloads/create-material.json --markdown
+python tools/official_tool_call.py asset:duplicate --input D:/payloads/duplicate.json --markdown
+python tools/official_tool_call.py material_instance:set_scalar_parameter --input D:/payloads/set-radius.json --markdown
+python tools/official_tool_call.py material:create --input D:/payloads/create-material.json --markdown
 ```
 
 Do not pretend editor texture tools replace local texture import audit/fix, generated-texture QA, or flipbook/packing helpers unless the active editor route has been smoke-tested.

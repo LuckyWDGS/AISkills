@@ -267,7 +267,7 @@ def write_plan_files(
     generated_frames_dir = Path(spec["output_paths"]["generated_frames"])
     generated_frames_dir.mkdir(parents=True, exist_ok=True)
     size = f'{spec["generation_canvas"]["width"]}x{spec["generation_canvas"]["height"]}'
-    runner_script_path = Path(__file__).resolve().with_name("flipbook_batch_runner.py")
+    runner_script_path = Path(__file__).resolve().parents[2] / "tools" / "flipbook_batch_runner.py"
     frame_plan_path = job_root / frame_plan_name
 
     plan_payload = {

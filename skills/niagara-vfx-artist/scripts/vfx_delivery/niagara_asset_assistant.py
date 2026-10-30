@@ -74,10 +74,6 @@ def plan_path(ctx, effect: str, stem: str = "mutation-plan") -> Path:
     return default_report_path(ctx, "ue-mutation-plans", effect, stem, ".json")
 
 
-def script_path(ctx, effect: str, stem: str = "apply-niagara-plan") -> Path:
-    return default_report_path(ctx, "ue-mutation-plans", effect, stem, ".py")
-
-
 def result_path(ctx, effect: str, stem: str = "apply-result") -> Path:
     return default_report_path(ctx, "ue-mutation-plans", effect, stem, ".json")
 
@@ -199,7 +195,7 @@ def render_plan_markdown(plan: dict[str, Any]) -> str:
         "",
         f"- Mode: `{plan.get('mode', '')}`",
         f"- Target system: `{plan.get('target_system', '')}`",
-        f"- Project: `{plan.get('project', '') or 'default bridge project'}`",
+        f"- Project: `{plan.get('project', '') or 'any (MCP endpoint default)'}`",
         f"- Dry-run default: `{plan.get('safety', {}).get('dry_run_default', True)}`",
         "",
         "## Operations",
@@ -263,8 +259,12 @@ def append_template_layer_ops(
                     "reason": f"Bind layer material to matching Niagara renderer for {layer_name}.",
                 }
             )
-    if material_paths:
-        plan["operations"].append({"op": "save_assets", "asset_paths": [plan["target_system"], *material_paths]})
+    plan.setdefault("_written_assets", []).extend(material_paths)
+
+
+def append_save(plan: dict[str, Any], extra_assets: list[str]) -> None:
+    if plan["operations"]:
+        plan["operations"].append({"op": "save_assets", "asset_paths": [plan["target_system"], *extra_assets]})
 
 
 def plan_template_command(args: argparse.Namespace) -> int:
@@ -305,6 +305,7 @@ def plan_template_command(args: argparse.Namespace) -> int:
     )
     if not layers:
         plan["warnings"].append("No asset-plan layers found; generated only template/system operations.")
+    append_save(plan, plan.pop("_written_assets", []))
     out = Path(args.out) if args.out else plan_path(ctx, args.effect)
     save_plan(out, plan)
     if args.markdown:
@@ -314,76 +315,67 @@ def plan_template_command(args: argparse.Namespace) -> int:
 
 
 def repair_plan_command(args: argparse.Namespace) -> int:
+    """Infer repairs from a niagara_audit/3 report: per-renderer material bindings and missing receiver ribbons."""
     ctx = resolve_root_context(args.root)
     audit = json.loads(Path(args.audit).read_text(encoding="utf-8"))
     target_system = args.target_system or audit.get("system_path", "")
     effect = args.effect or slugify(target_system)
     plan = make_plan(effect, "repair-existing", target_system, args.project or "", args.notes)
-    if args.fixed_bounds and any("FixedBounds" in item for item in audit.get("warnings", [])):
+    if args.fixed_bounds and not (audit.get("system") or {}).get("fixed_bounds"):
         plan["operations"].append({"op": "set_niagara_system_props", "system_path": target_system, "fixed_bounds": args.fixed_bounds})
     parent_map = renderer_parent_map(args.material_by_renderer)
     for emitter in audit.get("emitters", []):
-        parsed = emitter.get("parsed", {})
-        renderers = parsed.get("renderer_classes", [])
-        materials = parsed.get("renderer_materials", [])
-        if materials:
-            continue
-        renderer_text = emitter.get("properties", {}).get("RendererProperties", {}).get("text", "")
-        has_any_renderer = bool(renderers or renderer_text.strip())
-        if not has_any_renderer:
-            role = str(emitter.get("role", "")).lower()
-            if role in {"receiver", "trail-receiver"}:
-                material = args.default_material or pick_parent_for_renderers(renderers, "", parent_map)
+        name = emitter.get("name", "")
+        renderers = emitter.get("renderers") or (emitter.get("parsed") or {}).get("renderers") or []
+        if not renderers:
+            roles = set(emitter.get("roles") or [emitter.get("role", "")])
+            if roles & {"receiver", "trail-receiver"}:
+                material = args.default_material or pick_parent_for_renderers(["RibbonRendererProperties"], "", parent_map)
                 if material:
                     plan["operations"].append(
                         {
                             "op": "add_ribbon_renderer",
                             "system_path": target_system,
-                            "emitter_name": emitter.get("name", ""),
-                            "emitter_path": emitter.get("emitter_path", ""),
+                            "emitter_name": name,
                             "material_path": material,
-                            "renderer_name": args.renderer_name,
                             "facing_mode": args.facing_mode,
                             "max_num_ribbons": args.max_num_ribbons,
                             "width_segmentation_count": args.width_segmentation_count,
                             "curve_tension": args.curve_tension,
-                            "reason": f"Create missing Ribbon Renderer on receiver emitter {emitter.get('name', '')}.",
+                            "reason": f"Create missing Ribbon Renderer on receiver emitter {name}.",
                         }
                     )
                     continue
+                plan["warnings"].append(f"Skipped receiver `{name}` with no renderer because no material was supplied.")
+                continue
+            plan["warnings"].append(f"Skipped emitter `{name}`: it has no renderer to bind a material to.")
+            continue
+        for renderer in renderers:
+            if renderer.get("material_paths") or renderer.get("material_path"):
+                continue
+            class_name = str(renderer.get("class_name") or "").removeprefix("Niagara")
+            material = pick_parent_for_renderers([class_name], args.default_material, parent_map)
+            if not material:
                 plan["warnings"].append(
-                    f"Skipped receiver `{emitter.get('name', '')}` with empty RendererProperties because no material was supplied."
+                    f"Skipped `{name}` renderer {renderer.get('renderer_index')} ({class_name or 'unknown'}): no default material was supplied."
                 )
                 continue
-            plan["warnings"].append(
-                f"Skipped emitter `{emitter.get('name', '')}` because RendererProperties is empty; material binding repair needs an existing renderer slot."
+            plan["operations"].append(
+                {
+                    "op": "patch_renderer_material",
+                    "system_path": target_system,
+                    "emitter_name": name,
+                    "renderer_index": renderer.get("renderer_index"),
+                    "renderer_class_contains": [class_name] if class_name else [],
+                    "material_path": material,
+                    "replace_all": False,
+                    "allow_noop": False,
+                    "reason": f"Bind the missing material on {name} renderer {renderer.get('renderer_index')}.",
+                }
             )
-            continue
-        if not renderer_text.strip() and renderers:
-            plan["warnings"].append(
-                f"Emitter `{emitter.get('name', '')}` has versioned renderers `{', '.join(renderers)}`; material patching for existing versioned renderer slots is not automatic yet."
-            )
-            continue
-        material = pick_parent_for_renderers(renderers, args.default_material, parent_map)
-        if not material:
-            plan["warnings"].append(
-                f"Skipped emitter `{emitter.get('name', '')}` because no default material was supplied for renderers `{', '.join(renderers) or 'unknown'}`."
-            )
-            continue
-        plan["operations"].append(
-            {
-                "op": "patch_renderer_material",
-                "system_path": target_system,
-                "emitter_path": emitter.get("emitter_path", ""),
-                "renderer_class_contains": renderers,
-                "material_path": material,
-                "replace_all": False,
-                "allow_noop": False,
-                "reason": f"Repair missing renderer material on emitter {emitter.get('name', '')}.",
-            }
-        )
     if not plan["operations"]:
         plan["warnings"].append("No automatic repairs were inferred from the audit and supplied defaults.")
+    append_save(plan, [])
     out = Path(args.out) if args.out else plan_path(ctx, effect, "repair-plan")
     save_plan(out, plan)
     if args.markdown:
@@ -418,6 +410,22 @@ def inspect_system_command(args: argparse.Namespace) -> int:
     save_json(out, report)
     print(out)
     return 0
+
+
+def apply_command(args: argparse.Namespace) -> int:
+    """Run a mutation plan through Epic MCP; dry run unless --execute."""
+    from .mcp import connect
+    from .niagara_plan_apply import apply_plan
+
+    ctx = resolve_root_context(args.root)
+    plan = load_plan(args.plan)
+    report = apply_plan(plan, execute=args.execute, allow_pie=args.allow_pie,
+                        connect=lambda: connect(ctx.skill_root, timeout=args.timeout, project=args.project or plan.get("project") or None))
+    report["plan_path"] = str(Path(args.plan).resolve())
+    out = Path(args.out) if args.out else result_path(ctx, plan.get("effect_name") or "plan")
+    save_json(out, report)
+    print(out)
+    return 0 if report["status"] in ("planned", "applied") else 1
 
 
 def export_md_command(args: argparse.Namespace) -> int:
@@ -459,7 +467,6 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("--default-material", default="")
     repair.add_argument("--material-by-renderer", action="append", default=[], help="Renderer=/Game/Path/MI_Fix")
     repair.add_argument("--fixed-bounds", default="")
-    repair.add_argument("--renderer-name", default="CodexRibbonRenderer")
     repair.add_argument("--facing-mode", default="Screen")
     repair.add_argument("--max-num-ribbons", default="")
     repair.add_argument("--width-segmentation-count", default="1")
@@ -489,6 +496,15 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("--out")
     inspect.set_defaults(func=inspect_system_command)
 
+    apply = subparsers.add_parser("apply", help="Apply a mutation plan through Epic MCP (dry run unless --execute).")
+    apply.add_argument("--plan", required=True)
+    apply.add_argument("--execute", action="store_true", help="Make the changes; saves only when every operation succeeded.")
+    apply.add_argument("--allow-pie", action="store_true")
+    apply.add_argument("--project", default="")
+    apply.add_argument("--timeout", type=int, default=180)
+    apply.add_argument("--out")
+    apply.set_defaults(func=apply_command)
+
     export_md = subparsers.add_parser("export-md")
     export_md.add_argument("--plan", required=True)
     export_md.add_argument("--out")
@@ -500,7 +516,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     argv = normalize_cli_global_args(
         argv,
-        known_subcommands={"plan-template", "repair-plan", "new-plan", "inspect-system", "export-md"},
+        known_subcommands={"plan-template", "repair-plan", "new-plan", "inspect-system", "apply", "export-md"},
         global_opts_with_value={"--root"},
     )
     parser = build_parser()

@@ -114,11 +114,8 @@ def fixed_bounds_present(rows: list[dict[str, Any]], blob: str) -> bool:
     if has_any(blob, "fixedbounds", "fixed bounds"):
         return True
     for row in niagara_audit_rows(rows):
-        system_props = (row.get("payload") or {}).get("system_properties")
-        if isinstance(system_props, dict):
-            text = str(((system_props.get("FixedBounds") or {}).get("text")) if isinstance(system_props.get("FixedBounds"), dict) else "")
-            if text.strip():
-                return True
+        if ((row.get("payload") or {}).get("system") or {}).get("fixed_bounds"):
+            return True
     return False
 
 

@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
+from vfx_delivery.niagara_plan_apply import apply_plan
 from vfx_delivery import (
     asset_plan, delivery_chain_smoke, design_compare, gap_diagnosis, integration_plan, layer_evidence, learning_loop,
     niagara_asset_assistant, niagara_audit, reference_acceptance, reference_cache, tuning_log, ue_smoke, visual_diff_qa,
@@ -171,28 +172,34 @@ class ReferenceChainTests(unittest.TestCase):
 
 
 class RepairPlanTests(unittest.TestCase):
-    def test_repair_plan_patches_only_emitters_it_can_fix(self) -> None:
+    def test_repair_plan_reads_the_structured_audit(self) -> None:
+        sprite = {"renderer_index": 0, "class_name": "NiagaraSpriteRendererProperties", "material_paths": []}
+        bound = {"renderer_index": 1, "class_name": "NiagaraMeshRendererProperties", "material_paths": ["/Game/M_Mesh.M_Mesh"]}
         with tempfile.TemporaryDirectory() as tmp:
             audit = Path(tmp, "audit.json")
             audit.write_text(json.dumps({
+                "schema_version": "niagara_audit/3",
                 "system_path": "/Game/VFX/NS_Fire",
-                "warnings": ["FixedBounds missing"],
+                "system": {"fixed_bounds": None},
                 "emitters": [
-                    {"name": "Sparks", "emitter_path": "Sparks",
-                     "parsed": {"renderer_classes": ["NiagaraSpriteRendererProperties"], "renderer_materials": []},
-                     "properties": {"RendererProperties": {"text": "(SpriteRenderer)"}}},
-                    {"name": "Trail", "emitter_path": "Trail", "role": "receiver", "parsed": {}, "properties": {}},
-                    {"name": "Done", "parsed": {"renderer_classes": ["X"], "renderer_materials": ["/Game/M"]}},
+                    {"name": "Sparks", "role": "generic", "renderers": [sprite, bound]},
+                    {"name": "Trail", "role": "trail-receiver", "roles": ["trail-receiver"], "renderers": []},
+                    {"name": "Unused", "role": "generic", "renderers": []},
                 ],
             }), encoding="utf-8")
             code, printed = run_tool(niagara_asset_assistant, ["--root", tmp, "repair-plan", "--audit", str(audit),
                                                                 "--default-material", "/Game/VFX/MI_Fix",
                                                                 "--fixed-bounds=-1,-1,-1,1,1,1"])
             plan = json.loads(Path(printed).read_text(encoding="utf-8"))
+            dry = apply_plan(plan, execute=False)
         self.assertEqual(code, 0)
         self.assertEqual([op["op"] for op in plan["operations"]],
-                         ["set_niagara_system_props", "patch_renderer_material", "add_ribbon_renderer"])
-        self.assertEqual(plan["operations"][1]["material_path"], "/Game/VFX/MI_Fix")
+                         ["set_niagara_system_props", "patch_renderer_material", "add_ribbon_renderer", "save_assets"])
+        patch_op = plan["operations"][1]
+        self.assertEqual((patch_op["emitter_name"], patch_op["renderer_index"], patch_op["material_path"]),
+                         ("Sparks", 0, "/Game/VFX/MI_Fix"))
+        self.assertTrue(any("Unused" in warning for warning in plan["warnings"]))
+        self.assertEqual(dry["status"], "planned")  # every repair has an MCP route
 
 
 class FakeClient:

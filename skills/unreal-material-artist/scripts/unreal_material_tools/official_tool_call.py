@@ -94,7 +94,7 @@ def command(args: argparse.Namespace) -> int:
         raw = {"success": False, "error": str(exc), "transport": "epic-mcp-http"}
 
     report = {
-        "tool": "official_toolsets_bridge",
+        "tool": "official_tool_call",
         "qualified_tool": qualified_tool,
         "success": raw["success"],
         "error": raw["error"],

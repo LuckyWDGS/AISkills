@@ -133,7 +133,7 @@ Note: a `10x10` grid cannot divide `1024x1024`, `2048x2048`, or `4096x4096` into
 Recommended planning step after `flipbook_job_scaffold.py`:
 
 ```powershell
-python scripts/flipbook_batch_plan.py D:/path/to/job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
+python tools/flipbook_batch_plan.py D:/path/to/job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
 ```
 
 This writes:
@@ -147,9 +147,9 @@ This writes:
 Recommended execution step after `flipbook_batch_plan.py`:
 
 ```powershell
-python scripts/flipbook_batch_runner.py status D:/path/to/frame-plan.json
-python scripts/flipbook_batch_runner.py run D:/path/to/frame-plan.json
-python scripts/flipbook_batch_runner.py approve-anchor D:/path/to/frame-plan.json --phase 1
+python tools/flipbook_batch_runner.py status D:/path/to/frame-plan.json
+python tools/flipbook_batch_runner.py run D:/path/to/frame-plan.json
+python tools/flipbook_batch_runner.py approve-anchor D:/path/to/frame-plan.json --phase 1
 ```
 
 Runner behavior:
@@ -205,7 +205,7 @@ Typical state ladders:
 - Exact cell size reported when the grid divides the atlas
 - Blank/unused cells excluded from Niagara end-frame playback unless they are intentional fade or hold cells
 - Edge contact checked so important alpha/luma is not clipped or bleeding into adjacent cells
-- Run `scripts/ue_flipbook_readiness.py` for Unreal-bound atlases
+- Run `tools/ue_flipbook_readiness.py` for Unreal-bound atlases
 
 ## 7. Unreal Handoff
 

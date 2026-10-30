@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import uuid
 from pathlib import Path
@@ -61,8 +62,31 @@ def skill_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def library_root() -> Path:
+def seed_root() -> Path:
+    """Starter assets shipped with the skill; read-only, copied into the library on first use."""
     return skill_root() / "assets" / "library"
+
+
+def library_root() -> Path:
+    """The writable library: $UE_MATERIAL_LIBRARY, else $CODEX_HOME/material-library, else ~/.codex/material-library.
+
+    It lives outside the skill so searches, registrations and promotions never write into the skill checkout.
+    """
+    explicit = os.environ.get("UE_MATERIAL_LIBRARY")
+    if explicit:
+        return Path(explicit).expanduser()
+    codex_home = os.environ.get("CODEX_HOME")
+    return (Path(codex_home).expanduser() if codex_home else Path.home() / ".codex") / "material-library"
+
+
+def library_path(text: str) -> Path:
+    """Resolve a catalog path; relative paths are relative to the library root."""
+    path = Path(text).expanduser()
+    return path if path.is_absolute() else library_root() / path
+
+
+def library_relpath(path: Path) -> str:
+    return path.resolve().relative_to(library_root().resolve()).as_posix()
 
 
 def catalog_file() -> Path:
@@ -92,16 +116,33 @@ def ensure_library_layout() -> None:
     for stage in STAGES:
         (root / stage).mkdir(parents=True, exist_ok=True)
     if not catalog_file().exists():
-        save_json(
-            catalog_file(),
-            {
-                "version": 1,
-                "updated_utc": utc_now_iso(),
-                "stages": list(STAGES),
-                "categories": list(CATEGORIES),
-                "assets": [],
-            },
-        )
+        seed_library(root)
+
+
+def seed_library(root: Path) -> None:
+    """Start a new library from the shipped seed: copy its files and write fresh texture reports."""
+    seed_catalog = load_json(seed_root() / "catalog" / "material-asset-catalog.json", {"assets": []})
+    assets = []
+    for record in seed_catalog.get("assets") or []:
+        relpath = str(record.get("library_relpath") or "")
+        source = seed_root() / relpath
+        if not relpath or not source.is_file():
+            continue
+        dest = root / relpath
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, dest)
+        report = write_library_texture_report(record["id"], dest, record.get("audit_role") or "sprite", record.get("grid"))
+        assets.append({**record, "report_paths": [library_relpath(Path(report))], "seeded_from_skill": True})
+    save_json(
+        catalog_file(),
+        {
+            "version": 1,
+            "updated_utc": utc_now_iso(),
+            "stages": list(STAGES),
+            "categories": list(CATEGORIES),
+            "assets": assets,
+        },
+    )
 
 
 def load_catalog() -> dict[str, Any]:
@@ -227,7 +268,7 @@ def build_record(
         "role": role,
         "source_kind": source_kind,
         "original_source": original_source,
-        "library_relpath": str(stored_path.relative_to(skill_root())).replace("\\", "/"),
+        "library_relpath": library_relpath(stored_path),
         "file_name": stored_path.name,
         "tags": tags,
         "notes": notes,
@@ -291,7 +332,7 @@ def build_material_record(
 
 
 def stage_abs_path(record: dict[str, Any]) -> Path:
-    return skill_root() / record["library_relpath"]
+    return library_path(record["library_relpath"])
 
 
 def move_record_asset(record: dict[str, Any], new_stage: str, new_category: str) -> None:
@@ -306,7 +347,7 @@ def move_record_asset(record: dict[str, Any], new_stage: str, new_category: str)
         shutil.move(str(old_abs), new_abs)
     record["stage"] = new_stage
     record["category"] = new_category
-    record["library_relpath"] = str(new_abs.relative_to(skill_root())).replace("\\", "/")
+    record["library_relpath"] = library_relpath(new_abs)
 
 
 def summarize_texture_asset_report(path: Path) -> dict[str, Any]:
@@ -351,7 +392,7 @@ def summarize_texture_import_audit(path: Path) -> dict[str, Any]:
 
 
 def load_gate_summary(path_text: str) -> dict[str, Any]:
-    path = Path(path_text).expanduser().resolve()
+    path = library_path(path_text).resolve()
     if not path.exists():
         raise SystemExit(f"Review report does not exist: {path}")
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -481,7 +522,7 @@ def render_search_markdown(records: list[dict[str, Any]]) -> str:
 
 
 def _load_report_payload(path_text: str) -> dict[str, Any] | None:
-    path = Path(path_text).expanduser().resolve()
+    path = library_path(path_text).resolve()
     if not path.exists():
         return None
     try:
@@ -773,7 +814,7 @@ def command_register(args: argparse.Namespace) -> int:
 
     info = image_info(dest)
     asset_id = uuid.uuid4().hex[:12]
-    library_report = write_library_texture_report(asset_id, dest, audit_role, args.grid)
+    library_report = library_relpath(Path(write_library_texture_report(asset_id, dest, audit_role, args.grid)))
     record = build_record(
         asset_id=asset_id,
         stage=stage,

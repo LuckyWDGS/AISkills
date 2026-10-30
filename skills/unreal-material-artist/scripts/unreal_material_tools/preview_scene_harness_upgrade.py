@@ -127,8 +127,6 @@ def preview_tool_command(args: argparse.Namespace, material_path: str, axes: dic
     ]
     if args.project:
         command.extend(["--project", args.project])
-    if args.endpoint:
-        command.extend(["--endpoint", args.endpoint])
     return command
 
 
@@ -279,7 +277,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--waive-exposures", action="store_true")
     parser.add_argument("--waive-parameter-tiers", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument("--strict", action="store_true")

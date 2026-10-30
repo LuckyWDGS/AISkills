@@ -843,7 +843,7 @@ def build_manual_system_steps(
     reference_mode: str,
     fill_mode: str,
 ) -> list[dict]:
-    runner_script_path = Path(__file__).resolve()
+    runner_script_path = Path(__file__).resolve().parents[2] / "tools" / "flipbook_batch_runner.py"
     phase = find_phase_state(state, phase_number)
     phase_frames = frames_for_phase(plan, phase_number)
     steps: list[dict] = []

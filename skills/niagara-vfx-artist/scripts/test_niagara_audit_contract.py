@@ -28,7 +28,7 @@ class NiagaraReportContractTests(unittest.TestCase):
         self.assertIn("/Script/Niagara.NiagaraDataInterfaceCurve", rep["system_dependencies"]["usedDataInterfaces"])
 
     def test_mesh_renderers_report_mesh_slot_materials(self):
-        glow = self.report["emitters"][0]["versioned_renderer_objects"]
+        glow = self.report["emitters"][0]["renderers"]
         mesh = next(row for row in glow if row["class_name"] == "NiagaraMeshRendererProperties")
         self.assertEqual(mesh["material_source"], "mesh-slots")
         self.assertEqual(mesh["material_paths"], ["/Game/LevelPrototyping/Interactable/JumpPad/Assets/Materials/M_GradientGlow.M_GradientGlow"])

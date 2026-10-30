@@ -43,4 +43,5 @@ UnrealBridge 插件已退役。预览截图用 `../unreal-engine-mcp/scripts/cap
 ```powershell
 python ../unreal-engine-mcp/scripts/run_offline_tests.py
 python ../unreal-engine-mcp/scripts/live_smoke.py --project <ProjectName>
+python ../unreal-engine-mcp/scripts/live_smoke.py --project <ProjectName> --write  # 含写入路径，结束后删除临时目录
 ```

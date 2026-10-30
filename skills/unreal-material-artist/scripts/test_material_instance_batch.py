@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import sys
 import unittest
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from unreal_material_tools import material_instance_batch as mib
 

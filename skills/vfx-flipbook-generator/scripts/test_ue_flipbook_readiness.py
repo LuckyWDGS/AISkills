@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from PIL import Image
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from ue_flipbook_readiness import build_report
+from vfx_flipbook.ue_flipbook_readiness import build_report
 
 
 class UEFlipbookReadinessTests(unittest.TestCase):

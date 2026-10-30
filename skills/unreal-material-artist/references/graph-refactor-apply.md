@@ -1,6 +1,10 @@
 # Graph Refactor Apply
 
-> **Plan only:** the UnrealBridge executor behind `--execute` was removed. The report's `mcp_route` lists the AssetTools duplicates and MaterialTools edits to run as a `builtin_mcp.py batch`, and `validation_plan` the audit, capture and regression commands.
+Dry run (the default) writes the review plan. `--execute` duplicates the target into a
+backup and a candidate through AssetTools, applies the executable operations to the
+candidate with MaterialTools / ObjectTools (every connection and property is read back),
+recompiles, saves both copies only when every operation succeeded, then runs the
+`validation_plan` commands and fills the gate.
 
 ## Use This When
 
@@ -42,8 +46,12 @@ The report includes:
 Execute only after reviewing the dry-run report:
 
 ```powershell
-python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --carrier sprite --markdown
+python tools/graph_refactor_apply.py --refactor-plan D:/reports/material-toolset-refactor-plan.json --carrier sprite --execute --markdown
 ```
+
+An existing candidate or backup path refuses the run (pick new `--candidate-path` /
+`--backup-path`); so does Play-In-Editor. A failed operation stops the rest and leaves the
+candidate unsaved for inspection.
 
 The tool duplicates:
 
@@ -56,10 +64,10 @@ Then it applies only to the candidate.
 
 ## Supported Apply Operations
 
-- `add_fresnel_layer`: adds a default-neutral Fresnel rim branch into `EmissiveColor`.
-- `add_depth_fade`: inserts `DepthFade` into an existing `Opacity` output chain.
+- `add_fresnel_layer`: `Fresnel * V_FresnelColor * S_FresnelIntensity`, added onto the existing `EmissiveColor` source (or connected directly when there is none).
+- `add_depth_fade`: `DepthFade` with `S_DepthFadeDistance` between the existing `Opacity` source and the output; refused on opaque/masked routes.
 - `restore_route_contract`: restores domain, blend, shading model, two-sided, material attributes, and usage flags from graph-diff before-route evidence.
-- `repair_output_chain`: reconnects outputs to before-audit source GUIDs when those GUIDs still exist in the candidate graph.
+- `repair_output_chain`: reconnects each output to its before-audit source expression (matched by expression object name, which a duplicate keeps); a source missing from the candidate stops the run.
 
 Review-only operations in the first version:
 

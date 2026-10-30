@@ -76,7 +76,7 @@ def renderer_props_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
     """Build renderer property evidence from the MCP renderer data the Niagara audit already holds."""
     rows = []
     for emitter in audit.get("emitters") or []:
-        for renderer in emitter.get("versioned_renderer_objects") or []:
+        for renderer in emitter.get("renderers") or []:
             data = renderer.get("renderer_data") if isinstance(renderer, dict) else None
             if not isinstance(data, dict):
                 continue
@@ -94,13 +94,9 @@ def renderer_props_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
 def audit_renderer_paths(audit: dict[str, Any]) -> list[str]:
     paths: list[str] = []
     for emitter in audit.get("emitters") or []:
-        parsed = emitter.get("parsed") or {}
-        for key in ("renderer_objects", "versioned_renderer_objects"):
-            for renderer in parsed.get(key) or emitter.get(key) or []:
-                if isinstance(renderer, dict):
-                    path = str(renderer.get("object_path") or "")
-                    if path:
-                        paths.append(path)
+        for renderer in emitter.get("renderers") or []:
+            if isinstance(renderer, dict) and renderer.get("object_path"):
+                paths.append(str(renderer["object_path"]))
     return sorted(dict.fromkeys(paths))
 
 
@@ -115,9 +111,7 @@ def collect_renderer_evidence(audit: dict[str, Any], live_props: dict[str, Any])
         parsed = emitter.get("parsed") or {}
         classes = [str(item) for item in parsed.get("renderer_classes") or []]
         materials = [object_path(item) for item in parsed.get("renderer_materials") or [] if object_path(item)]
-        renderer_objects = []
-        for key in ("renderer_objects", "versioned_renderer_objects"):
-            renderer_objects.extend(parsed.get(key) or emitter.get(key) or [])
+        renderer_objects = list(emitter.get("renderers") or [])
         if not renderer_objects and (classes or materials):
             rows.append(
                 {
@@ -154,9 +148,7 @@ def collect_renderer_evidence(audit: dict[str, Any], live_props: dict[str, Any])
 
 def collect_system_blob(audit: dict[str, Any], renderer_rows: list[dict[str, Any]]) -> str:
     parts: list[str] = []
-    for prop in (audit.get("system_properties") or {}).values():
-        if isinstance(prop, dict):
-            parts.append(str(prop.get("text") or ""))
+    parts.append(json.dumps(audit.get("system") or {}, ensure_ascii=False, default=str))
     for emitter in audit.get("emitters") or []:
         parsed = emitter.get("parsed") or {}
         parts.extend(str(item) for item in parsed.get("function_names") or [])
@@ -164,9 +156,8 @@ def collect_system_blob(audit: dict[str, Any], renderer_rows: list[dict[str, Any
         for binding in parsed.get("data_interface_bindings") or []:
             if isinstance(binding, dict):
                 parts.extend(str(value) for value in binding.values())
-        for prop in (emitter.get("properties") or {}).values():
-            if isinstance(prop, dict):
-                parts.append(str(prop.get("text") or ""))
+        for key in ("stacks", "event_stacks", "simulation_stages"):
+            parts.append(json.dumps(emitter.get(key) or {}, ensure_ascii=False))
     for row in renderer_rows:
         parts.append(str(row.get("text_blob") or ""))
     return "\n".join(parts)
@@ -275,7 +266,8 @@ def grid_matches(blob: str, grid: str) -> bool:
         f"subimagesize=({x},{y})",
         f"{x}x{y}",
     ]
-    return (patterns[0] in lowered and patterns[1] in lowered) or any(item in lowered for item in patterns[2:])
+    json_form = re.search(rf'"x":\s*{x}(\.0)?', lowered) and re.search(rf'"y":\s*{y}(\.0)?', lowered)  # MCP renderer data
+    return bool(json_form) or (patterns[0] in lowered and patterns[1] in lowered) or any(item in lowered for item in patterns[2:])
 
 
 def renderer_sorting_evidence_present(renderer_rows: list[dict[str, Any]]) -> bool:
@@ -351,7 +343,8 @@ def build_findings(expectations: dict[str, Any], audit: dict[str, Any], renderer
         else:
             add("warning", "sorting_unproven", "Sort/depth risk exists, but live Niagara did not expose sorting evidence.")
 
-    fixed_bounds = str(((audit.get("system_properties") or {}).get("FixedBounds") or {}).get("text") or "")
+    bounds = (audit.get("system") or {}).get("fixed_bounds")
+    fixed_bounds = json.dumps(bounds) if bounds else ""
     if expectations.get("expects_bounds"):
         if fixed_bounds.strip():
             add("ok", "bounds", "System FixedBounds evidence exists.", fixed_bounds)

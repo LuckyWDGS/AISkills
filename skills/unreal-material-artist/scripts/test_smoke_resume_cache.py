@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from unreal_material_tools import smoke_resume_cache
 from unreal_material_tools.core import resolve_root_context, save_json

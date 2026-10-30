@@ -370,14 +370,9 @@ def niagara_audit_has_attribute_reader_flow(report: dict[str, Any]) -> bool:
 
 
 def niagara_audit_has_bounds(report: dict[str, Any]) -> bool:
-    system_bounds = ((report.get("system_properties") or {}).get("FixedBounds") or {}).get("text", "")
-    if str(system_bounds or "").strip():
+    if (report.get("system") or {}).get("fixed_bounds"):
         return True
-    for emitter in report.get("emitters", []) or []:
-        parsed = emitter.get("parsed") or {}
-        if str(parsed.get("fixed_bounds", "") or "").strip():
-            return True
-    return False
+    return any((emitter.get("parsed") or {}).get("fixed_bounds") for emitter in report.get("emitters", []) or [])
 
 
 def niagara_audit_test_emitters(report: dict[str, Any]) -> list[str]:

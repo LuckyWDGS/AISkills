@@ -14,7 +14,7 @@ Python Remote Execution for a verified gap, and Chinese annotations on new or
 modified material modules (comment frames, Chinese parameter groups and
 descriptions, stable module IDs; existing parameter identifiers unchanged).
 
-Use Epic's MCP (UE 5.8+) through the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`, discovering the live schema of MaterialTools, MaterialInstanceTools, ObjectTools, TextureTools, AssetTools and ProgrammaticToolset before calling them. Every editor-connected tool here runs on MCP (plus Remote Execution for shader statistics); `graph_refactor_apply.py`, `preview_matrix.py` and `preview_environment_executor.py` only plan. Local image QA, packing, manifests and reports need no editor. Details: [official-toolsets-vs-local.md](references/official-toolsets-vs-local.md).
+Use Epic's MCP (UE 5.8+) through the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`, discovering the live schema of MaterialTools, MaterialInstanceTools, ObjectTools, TextureTools, AssetTools and ProgrammaticToolset before calling them. Every editor-connected tool here runs on MCP (plus Remote Execution for shader statistics). `preview_matrix.py --execute` captures only the axes MCP can drive and leaves the rest pending manual staging. Local image QA, packing, manifests and reports need no editor. Details: [official-toolsets-vs-local.md](references/official-toolsets-vs-local.md).
 
 ## Role
 
@@ -92,10 +92,10 @@ Commands and options live in each reference. Reports write under `<project>/.cod
 | Work order from a reference or tutorial | `tools/reference_to_material_plan.py` |
 | Niagara-to-material contract; parameter schema | `tools/material_contract.py`, `tools/material_parameter_schema.py` |
 | Graph and render-contract audit | `tools/material_audit.py`, `tools/material_domain_audit.py` |
-| Recipe builds and refactor plans | `tools/material_toolset_builder.py`, `tools/graph_refactor_apply.py` (plan only) |
+| Recipe builds and refactor plans | `tools/material_toolset_builder.py`, `tools/graph_refactor_apply.py` (`--execute` edits a duplicated candidate) |
 | MI families and tiers | `tools/material_instance_batch.py`, `tools/material_variant_runner.py` |
 | Textures: file QA, sets, import settings, provenance, packing | `tools/texture_asset_report.py`, `tools/texture_set_pipeline.py`, `tools/texture_import_audit.py`, `tools/texture_import_fix.py`, `tools/material_source_provenance.py`, `tools/channel_packer.py`, `tools/flipbook_normalizer.py` |
-| Previews and readability | `tools/material_preview.py capture`, `tools/preview_matrix.py` (plan only), `tools/preview_readability_score.py` |
+| Previews and readability | `tools/material_preview.py capture`, `tools/preview_matrix.py` (`--execute` for MCP-drivable cells), `tools/preview_readability_score.py` |
 | Sorting, cost, permutations, runtime sources | `tools/translucency_sorting_probe.py`, `tools/shader_cost_attribution.py`, `tools/shader_permutation_report.py`, `tools/runtime_param_trace.py` |
 | Regression, drift, project triage | `tools/material_regression.py`, `tools/regression_baseline_set.py`, `tools/graph_diff_refactor.py`, `tools/project_material_health.py` |
 | Delivery, gates, library | `tools/delivery_packager.py`, `tools/material_acceptance_gate.py`, `tools/material_acceptance_gate_v2.py`, `tools/library_promotion_gate.py`, `tools/material_asset_library.py` |

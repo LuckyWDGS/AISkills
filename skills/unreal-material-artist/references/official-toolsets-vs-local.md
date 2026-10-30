@@ -50,12 +50,12 @@ Read back after writes and save intended assets.
 
 ## CLI and legacy boundaries
 
-`tools/official_toolsets_bridge.py` retains its filename for compatibility,
-but defaults to direct MCP HTTP:
+`tools/official_tool_call.py` (formerly `official_toolsets_bridge.py`) calls one
+official tool over direct MCP HTTP and saves the result as evidence:
 
 ```powershell
-python tools/official_toolsets_bridge.py material:get_expressions --input args.json --markdown
-python tools/official_toolsets_bridge.py texture:import_file --input import-args.json --markdown
+python tools/official_tool_call.py material:get_expressions --input args.json --markdown
+python tools/official_tool_call.py texture:import_file --input import-args.json --markdown
 ```
 
 The JSON file must match the live schema. `--mcp-url` or UNREAL_MCP_URL selects

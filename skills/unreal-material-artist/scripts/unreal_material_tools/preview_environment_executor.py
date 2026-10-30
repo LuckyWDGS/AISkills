@@ -57,8 +57,8 @@ def resolved_environment(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def build_preview_command(args: argparse.Namespace, environment: dict[str, Any], out: Path | None = None) -> list[str]:
-    """The capture to run once the environment is staged; background/exposure/light rig stay plan intent."""
-    del environment  # Recorded in the plan; MCP capture cannot apply it.
+    """The capture to run once the environment is staged; MCP cannot apply background/exposure/light rig itself."""
+    del environment  # Recorded in the report; the user stages it in the level.
     command = [
         sys.executable,
         str(material_preview_tool()),
@@ -73,6 +73,8 @@ def build_preview_command(args: argparse.Namespace, environment: dict[str, Any],
     ]
     if args.effect:
         command.extend(["--effect", args.effect])
+    if args.pose:
+        command.extend(["--pose", args.pose])
     if out:
         command.extend(["--out", str(out)])
     if args.project:
@@ -93,12 +95,11 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
     environment = resolved_environment(args)
     effect = slugify(args.effect or args.material_path)
     out = Path(args.out) if args.out else default_report_path(ctx, "preview-environments", effect, f"{slugify(args.material_path)}-{args.carrier}-{environment['background']}-{environment['exposure']}", ".json")
-    preview_out = None if args.execute else None
-    preview_command = build_preview_command(args, environment, out=preview_out)
+    preview_command = build_preview_command(args, environment)
     preview_payload: dict[str, Any] | None = None
     preview_report_path = ""
     status = "planned"
-    detail = "Run with --execute to capture a real environment-adjusted preview."
+    detail = "Stage the background, exposure and light rig in the level, then rerun with --execute --staged."
     completed_stdout = ""
     completed_stderr = ""
     exit_code: int | None = None
@@ -115,8 +116,12 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
             except Exception:
                 preview_payload = None
         shaded_ok = bool(((preview_payload or {}).get("outputs") or {}).get("shaded_ok"))
-        status = "pass" if completed.returncode == 0 and shaded_ok else "fail"
-        detail = f"preview_report={preview_report_path or 'missing'} shaded_ok={shaded_ok}."
+        if completed.returncode != 0 or not shaded_ok:
+            status = "fail"
+        else:
+            # The capture only proves this environment when the user staged it first.
+            status = "pass" if args.staged else "captured_unstaged"
+        detail = f"preview_report={preview_report_path or 'missing'} shaded_ok={shaded_ok} staged={args.staged}."
     report = {
         "tool": "preview_environment_executor",
         "version": 1,
@@ -124,7 +129,7 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
         "effect": args.effect or "",
         "material_path": args.material_path,
         "carrier": args.carrier,
-        "environment": environment,
+        "environment": {**environment, "applied_by": "user staging" if args.staged else "not staged"},
         "preview_command": preview_command,
         "preview_command_text": command_text(preview_command),
         "preview_report_path": preview_report_path,
@@ -140,13 +145,19 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
             "passed": status == "pass",
             "preview_report_available": bool(preview_report_path),
         },
-        "next_actions": [
-            "Feed the preview report into preview_matrix.py, preview_readability_score.py, or material_regression.py."
-            if args.execute and preview_report_path
-            else "Rerun with --execute when live UnrealBridge/UE is available."
-        ],
+        "next_actions": [next_action(status, preview_report_path)],
     }
     return report, out
+
+
+def next_action(status: str, preview_report_path: str) -> str:
+    if status == "pass":
+        return "Feed the preview report into preview_matrix.py --cell-report, preview_readability_score.py, or material_regression.py."
+    if status == "captured_unstaged":
+        return "The capture shows whatever the level holds; stage this environment and rerun with --execute --staged."
+    if status == "fail":
+        return f"The capture failed ({preview_report_path or 'no report'}); check the editor connection and the staged carrier."
+    return "Stage the background, exposure and light rig in the level, then rerun with --execute --staged."
 
 
 def render_markdown(report: dict[str, Any]) -> str:
@@ -182,7 +193,7 @@ def command(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Execute material previews against concrete background/exposure/light-rig presets instead of intent-only preview-matrix axes.")
+    parser = argparse.ArgumentParser(description="Plan and capture a material preview in a staged background/exposure/light-rig environment.")
     parser.add_argument("--root", default="auto")
     parser.add_argument("--material-path", required=True)
     parser.add_argument("--effect", default="")
@@ -211,9 +222,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sim-time", type=float, default=1.0)
     parser.add_argument("--with-complexity", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
-    parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--pose", default="", help="Viewport camera pose x,y,z,pitch,yaw,roll for the capture.")
+    parser.add_argument("--execute", action="store_true", help="Capture the current level through Epic MCP.")
+    parser.add_argument("--staged", action="store_true", help="Confirm the background, exposure and light rig are staged in the level.")
     parser.add_argument("--markdown-previews", action="store_true", help="Also ask material_preview.py to emit Markdown.")
     parser.add_argument("--complexity-out", default="")
     parser.add_argument("--out")
@@ -226,8 +238,6 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.execute:
-        parser.error("--execute drove the retired UnrealBridge render harness (camera, lighting, background and exposure axes), which Epic MCP does not expose. Stage each context in the level, capture it with material_preview.py capture --route viewport --pose ..., and pass the reports on with --preview-report.")
     return args.func(args)
 
 

@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flipbook_route_advisor import Advice, build_advice, parse_grid
+from .flipbook_route_advisor import Advice, build_advice, parse_grid
 
 if sys.version_info < (3, 10):  # dataclass(slots=True), str.removesuffix
     raise SystemExit(f"The UE skills need Python 3.10 or newer; {sys.executable} is {sys.version.split()[0]}.")

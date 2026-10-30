@@ -70,24 +70,27 @@ client any more. Ported to Epic MCP: `niagara_audit`, `niagara_material_integrat
 renderer materials), `effect_control_schema` and `control_provenance_check`
 (user variables from `niagara_audit`), `asset_cleanup` and
 `delivery_finalize --promote-assets` (AssetTools / SceneTools batches). Previews use
-`unreal-engine-mcp/scripts/capture.py`. `niagara_asset_assistant` plans only. The
+`unreal-engine-mcp/scripts/capture.py`. `niagara_asset_assistant apply` executes its plans. The
 plugin-only `controlled_preview`, `flipbook_ue_pipeline`, `niagara_param_sweep`,
 `runtime_control_probe` and `ue_write_helpers` were removed.
 
 `niagara_audit.py` is ported: one ProgrammaticToolset script reads the system
 summary/data/dependencies and each emitter's data, topology and renderer data,
-then maps them onto the report shape `delivery_package` and the integration probe
-already consume. Mesh renderers without override materials report the mesh's
+then maps them onto structured fields (`niagara_audit/3`: `system.fixed_bounds`,
+`effect_type`, warmup; per emitter `enabled`, `sim_target`, `stacks`, `event_stacks`,
+`simulation_stages` and `renderers` with class, index, materials and renderer data) that
+`delivery_package`, the integration probe and `repair-plan` read. Version 2 still
+synthesized UnrealBridge export-text `properties`; nothing reads those any more. Mesh renderers without override materials report the mesh's
 material slots (`material_source: mesh-slots`). Data-interface values such as a
 ParticleRead `EmitterBinding` are `StackInputData_Unsupported`, so attribute-reader
 roles come from module names and `data_interface_bindings` stays empty; the
 report lists this under `coverage_gaps`. `niagara_material_integration_probe`
 reads renderer bindings from the audit's renderer data instead of the plugin.
 
-An executor for `niagara_asset_assistant` plans would follow
-[porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md):
-live facts (emitter and renderer `StackItemReference`s from the topology tools), a
-pure plan, then `builtin_mcp.py batch` with readbacks.
+`niagara_asset_assistant apply` is the plan executor: it resolves emitter and renderer
+`StackItemReference`s from the topology tools at run time, writes with
+SetSystemData / AddRenderer / SetRendererData / SetEmitterData / AddEmitter, reads every
+write back, and saves only on full success (see [tool-suite.md](tool-suite.md)).
 
 Possible fallback candidates include specialized particle event-handler
 construction, private-property diagnostics, live control/provenance probes,

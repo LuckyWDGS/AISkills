@@ -53,7 +53,7 @@ views), `editor` (which editor serves an endpoint), `batch` (ordered steps with
 readback), `remote` (Python Remote Execution), `capture` (EditorAppToolset
 images, `scripts/capture.py`), `skill_api` (what sibling skills import through their `mcp.py`
 shims) and `cli`. `scripts/live_smoke.py` checks every tool read-only against a
-running editor, and `scripts/record_fixtures.py` re-records the material and
+running editor (`--write` adds the write paths in a scratch folder it deletes), and `scripts/record_fixtures.py` re-records the material and
 Niagara contract-test fixtures (`--check` only reports drift). Python 3.10+.
 
 ## Schema cache and call cost

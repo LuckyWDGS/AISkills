@@ -173,7 +173,7 @@ Current first-pass tool:
 - Preview approval should eventually integrate side-by-side visual diff automatically at review time.
 - Asset planning should eventually understand project-specific naming conventions and existing reusable masters.
 - Integration planning should eventually read real skeleton/socket/notify context from the target project.
-- `niagara_asset_assistant` plans need an MCP executor (NiagaraToolset_System through `builtin_mcp.py batch`, resolving emitter and renderer `StackItemReference`s from the topology tools), then richer emitter construction, user-parameter authoring, source/event wiring and safe retirement of stale assets.
+- `niagara_asset_assistant apply` executes plans over MCP; next come module-stack operations (AddModule / SetStackInputData routes), user-parameter authoring, source/event wiring and safe retirement of stale assets.
 - Live test result on 2026-05-13: writing `NiagaraSystem.EmitterHandles` via export-text was rejected and round-tripped unchanged. Raw `EmitterHandles` export-text is not a route for emitter authoring; use `AddEmitter` / `RemoveEmitter`.
 - Stack discovery goes through the MCP topology tools; `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters crashed UE 5.7 and stays off the route.
 - Visual diff QA should eventually compare motion clips, not only still frames.
@@ -185,7 +185,7 @@ Current first-pass tool:
 1. Reference acceptance gate
 2. Layer evidence extraction
 3. Preview approval gate
-4. MCP executor for asset-assistant plans
+4. Module-stack and user-parameter operations for asset-assistant plans
 5. Asset plan generator
 6. Integration hookup planner
 7. Visual diff QA

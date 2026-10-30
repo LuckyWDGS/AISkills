@@ -112,12 +112,11 @@ Purpose:
 ### `tools/niagara_asset_assistant.py`
 
 Purpose:
-- generate reviewable Niagara asset mutation plans (it has no executor)
-- plan systems from templates without losing valid emitter graphs
-- plan emitter adds, duplicates, removals and enable toggles inside a system
-- plan material instances for planned layers
-- plan a missing Ribbon Renderer for a receiver emitter when `RendererProperties` is empty
-- plan renderer material repairs when a renderer slot is present
+- write reviewable Niagara mutation plans and apply them through Epic MCP
+- `plan-template`: a system from a template (keeps valid emitter graphs), FixedBounds/warmup/effect type, layer material instances and their renderer bindings
+- `repair-plan`: from a `niagara_audit/3` report, bind a material on every renderer that has none (by emitter and renderer index) and add a Ribbon renderer to receiver emitters that have no renderer
+- `new-plan --op-json ...`: hand-written operations
+- `apply --plan <plan>`: dry run (offline) listing each operation's MCP route; `--execute` runs them in order
 - `inspect-system` reads a live system back through `niagara_audit` (Epic MCP)
 
 Key commands:
@@ -125,15 +124,18 @@ Key commands:
 ```powershell
 python tools/niagara_asset_assistant.py plan-template --effect WingEcho --template-system /Game/VFX/Templates/NS_RibbonTrail_Template --target-system /Game/VFX/WingEcho/NS_WingEcho_Assisted --material-parent /Game/VFX/Masters/MFX_RibbonTrail
 python tools/niagara_asset_assistant.py repair-plan --audit .codex/session/vfx-delivery/audits/niagara/.../niagara-audit.json --default-material /Game/VFX/WingEcho/MI_Ribbon
+python tools/niagara_asset_assistant.py apply --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json
+python tools/niagara_asset_assistant.py apply --plan .codex/session/vfx-delivery/ue-mutation-plans/WingEcho/mutation-plan.json --execute
 python tools/niagara_asset_assistant.py inspect-system /Game/VFX/WingEcho/NS_WingEcho
 ```
 
-Applying a plan:
-- run its operations with NiagaraToolset_System (`CreateNiagaraSystem`, `AddEmitter`, `RemoveEmitter`, `AddRenderer`, `SetRendererData`, `AddModule`, `SetStackInputData`, `ApplyStackIssueFix`) and AssetTools / MaterialInstanceTools through `builtin_mcp.py batch`, with a readback per write and the save on its own line
+`apply --execute` (report `niagara_plan_apply/1` under `ue-mutation-plans/<effect>/apply-result.json`):
+- routes: `duplicate_asset` (AssetTools), `create_material_instance` / `set_mi_params` (MaterialInstanceTools with get_* readback), `set_niagara_system_props` (SetSystemData), `add_emitter_to_system_from_asset` (AddEmitter), `set_emitter_enabled_in_system` (SetEmitterData), `add_ribbon_renderer` (AddRenderer + SetRendererData), `patch_renderer_material` (renderers matched by emitter name/tokens, renderer class and index from GetEmitterTopology), `toolset_get_system_compile_state`, `toolset_get_stack_issues`, `save_assets`
+- every write is read back; reference comparisons ignore UE's casing normalization
+- the first failure stops the plan; later operations and the save are skipped, so nothing is saved
+- deletes (`remove_emitter_from_system`, `toolset_remove_module`), `set_u_property_export` and module-stack operations have no route: a plan containing one is refused before anything runs
+- refused while Play-In-Editor runs unless `--allow-pie`
 - then run `niagara_audit.py` and `delivery_package.py --require-ready`; a write is not complete until the package is ready
-- Material binding repair only patches an existing renderer `Material` slot.
-- Empty receiver `RendererProperties` can be repaired with `AddRenderer`; empty source emitters remain source-only unless a separate implementation plan says otherwise.
-- Do not call `NiagaraPythonEmitter.get_modules()` on template emitters over Remote Execution as a discovery shortcut; it crashed NiagaraEditor on UE 5.7. Read modules through the MCP topology tools.
 
 ### `tools/visual_diff_qa.py`
 

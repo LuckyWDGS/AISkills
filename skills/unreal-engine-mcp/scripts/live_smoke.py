@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Read-only live smoke test of the UE skills' tools against a running UE 5.8+ editor.
+"""Live smoke test of the UE skills' tools against a running UE 5.8+ editor.
 
 Runs each tool through its real command line against template content (or the
 assets you pass), checks key report fields, and fails if any touched asset's
-dirty state changed. Nothing is created, written or saved: material_instance_batch
-runs in plan-only mode and the batch step contains reads only.
+dirty state changed. By default nothing is created, written or saved:
+material_instance_batch runs in plan-only mode and the batch step contains reads only.
+
+--write adds the write paths in a scratch folder (default /Game/CodexTemp/LiveSmokeWrite,
+which must not exist yet): a recipe build, an MI batch, a texture import fix, a graph
+refactor on a candidate and a Niagara plan apply, each read back, then the folder is deleted.
 
     python scripts/live_smoke.py --project MyGame
+    python scripts/live_smoke.py --project MyGame --write
 """
 
 from __future__ import annotations
@@ -42,6 +47,10 @@ TOOLS = {
     "live_asset_verify": SKILLS / "niagara-vfx-artist" / "tools" / "live_asset_verify.py",
     "material_instance_batch": SKILLS / "unreal-material-artist" / "tools" / "material_instance_batch.py",
     "niagara_audit": SKILLS / "niagara-vfx-artist" / "tools" / "niagara_audit.py",
+    "material_toolset_builder": SKILLS / "unreal-material-artist" / "tools" / "material_toolset_builder.py",
+    "texture_import_fix": SKILLS / "unreal-material-artist" / "tools" / "texture_import_fix.py",
+    "graph_refactor_apply": SKILLS / "unreal-material-artist" / "tools" / "graph_refactor_apply.py",
+    "niagara_asset_assistant": SKILLS / "niagara-vfx-artist" / "tools" / "niagara_asset_assistant.py",
 }
 # UE template content (First Person / Level Prototyping); override with flags for other projects.
 DEFAULTS = {
@@ -236,6 +245,132 @@ class Smoke:
         expect(result.get("passed") is True, result.get("error", "capture failed"))
         return "capture passed, dirty unchanged"
 
+    # --- write checks (--write) ----------------------------------------------------------------
+
+    def scratch(self, name: str) -> str:
+        return f"{self.args.scratch_folder.rstrip('/')}/{name}"
+
+    @staticmethod
+    def ref(path: str) -> dict[str, str]:
+        return {"refPath": f"{path}.{path.rsplit('/', 1)[-1]}"}
+
+    def project_args(self) -> list[str]:
+        return ["--project", self.args.project] if self.args.project else []
+
+    def recipe_build(self) -> str:
+        report_file = self.work / "recipe-build.json"
+        code, out = run_tool("material_toolset_builder", "recipe", "dissolve_edge", "--root", str(self.work),
+                             "--folder-path", self.args.scratch_folder, "--asset-name", "M_LiveSmoke", "--execute",
+                             "--build-report-out", str(report_file), *self.project_args())
+        report = load(report_file)
+        expect(code == 0 and report["status"] == "applied", f"{report.get('status')} {report.get('problems')} {out[-300:]}")
+        material = self.scratch("M_LiveSmoke")
+        expect(self.exists(material) and not self.dirty(material), "material missing or left unsaved")
+        return f"{len(report.get('steps', []))} steps applied and saved"
+
+    def instance_write(self) -> str:
+        material, instance = self.scratch("M_LiveSmoke"), self.scratch("MI_LiveSmoke")
+        params = self.call("MaterialInstanceTools", "list_parameters", {"material": self.ref(material)}) or []
+        scalar = next((row["name"] for row in params if str(row.get("type", "")).lower() == "scalar"), "")
+        spec = self.work / "mi-write.json"
+        values = [{"name": scalar, "type": "scalar", "value": 0.37}] if scalar else []
+        spec.write_text(json.dumps({"parent_path": material, "instances": [{"path": instance, "params": values}]}), encoding="utf-8")
+        out_file = self.work / "mi-write-report.json"
+        code, out = run_tool("material_instance_batch", str(spec), "--execute", "--out", str(out_file), *self.project_args())
+        report = load(out_file)
+        expect(code == 0 and report["status"] == "applied", f"{report.get('status')} {report.get('problems')}")
+        if scalar:
+            value = self.call("MaterialInstanceTools", "get_scalar_parameter", {"instance": self.ref(instance), "name": scalar})
+            expect(abs(float(value) - 0.37) < 1e-4, f"{scalar} reads back {value}")
+        return f"MI created, {scalar or 'no scalar parameter'} read back"
+
+    def texture_write(self) -> str:
+        from PIL import Image  # provided by the material skill's requirements
+
+        source = self.work / "T_LiveSmokeMask.png"
+        Image.new("RGBA", (64, 64), (255, 128, 0, 255)).save(source)
+        self.call("TextureTools", "import_file", {"folder_path": self.args.scratch_folder, "asset_name": "T_LiveSmokeMask",
+                                                  "source_file": str(source)})
+        texture = self.scratch("T_LiveSmokeMask")
+        expect(self.exists(texture), "import_file did not create the texture")
+        out_file = self.work / "texture-fix.json"
+        code, out = run_tool("texture_import_fix", texture, "--role", "mask", "--apply", "--root", str(self.work),
+                             "--out", str(out_file), *self.project_args())
+        report = load(out_file)
+        expect(code == 0 and report["status"] in ("applied", "no_changes"), f"{report.get('status')} {report.get('problems')}")
+        props = self.call("ObjectTools", "get_properties", {"instance": self.ref(texture), "properties": ["sRGB"]})
+        expect(props.get("sRGB") is False, f"sRGB reads back {props.get('sRGB')}")
+        return f"{report['status']}, sRGB=false read back"
+
+    def emissive_source(self, material: str) -> str:
+        value = self.call("MaterialTools", "get_property_input", {"material": self.ref(material), "material_property": "MP_EmissiveColor"})
+        expression = (value or {}).get("expression")
+        return str(expression.get("refPath") if isinstance(expression, dict) else expression or "")
+
+    def refactor_write(self) -> str:
+        material = self.scratch("M_LiveSmoke")
+        before = self.emissive_source(material)
+        spec = self.work / "refactor-patch.json"
+        spec.write_text(json.dumps({"target_material": material, "operations": ["add_fresnel_layer"]}), encoding="utf-8")
+        out_file = self.work / "refactor.json"
+        code, out = run_tool("graph_refactor_apply", "--root", str(self.work), "--patch-spec", str(spec), "--execute",
+                             "--candidate-path", self.scratch("M_LiveSmoke_Candidate"),
+                             "--backup-path", self.scratch("M_LiveSmoke_Backup"), "--out", str(out_file),
+                             *self.project_args(), timeout=900)
+        ue = load(out_file).get("ue_apply") or {}
+        operations = ue.get("operations") or []
+        expect(code == 0 and ue.get("saved") and operations and all(row["success"] for row in operations),
+               f"{ue.get('error')} {[row.get('error') for row in operations]}")
+        expect(self.emissive_source(material) == before, "the original material's emissive input changed")
+        expect("Add" in self.emissive_source(self.scratch("M_LiveSmoke_Candidate")).rsplit(":", 1)[-1] or not before,
+               "the candidate emissive input is not the new Fresnel chain")
+        return "candidate patched and saved, original untouched"
+
+    def niagara_write(self) -> str:
+        system = self.scratch("NS_LiveSmoke")
+        summary = self.call("NiagaraToolset_System", "GetSystemSummary", {"system": self.ref(self.args.niagara)})
+        plan = {"tool": "niagara_asset_assistant", "effect_name": "LiveSmoke", "target_system": system, "operations": [
+            {"op": "duplicate_asset", "source": self.args.niagara, "target": system},
+            {"op": "set_niagara_system_props", "system_path": system, "fixed_bounds": "-25,-25,-25,25,25,75", "warmup_tick_count": 1},
+            {"op": "add_ribbon_renderer", "system_path": system, "emitter_name": summary["emitters"][0]["emitterName"],
+             "material_path": "/Niagara/DefaultAssets/DefaultRibbonMaterial", "facing_mode": "Screen"},
+            {"op": "save_assets", "asset_paths": [system]},
+        ]}
+        plan_file, out_file = self.work / "niagara-plan.json", self.work / "niagara-apply.json"
+        plan_file.write_text(json.dumps(plan), encoding="utf-8")
+        code, out = run_tool("niagara_asset_assistant", "--root", str(self.work), "apply", "--plan", str(plan_file),
+                             "--execute", "--out", str(out_file))
+        report = load(out_file)
+        expect(code == 0 and report["status"] == "applied", f"{report['status']} {[row.get('error') for row in report['operations']]}")
+        audit_file = self.work / "niagara-write-audit.json"
+        code, out = run_tool("niagara_audit", system, "--out", str(audit_file))
+        expect(code == 0, out[-400:])
+        audit = load(audit_file)
+        ribbons = [row for emitter in audit["emitters"] for row in emitter["renderers"] if "Ribbon" in row["class_name"]]
+        expect(audit["system"]["fixed_bounds"] and ribbons and ribbons[-1]["material_path"], "the audit does not show the applied edits")
+        return f"{len(report['operations'])} operations applied; audit shows bounds and the ribbon"
+
+    def cleanup(self) -> str:
+        expect(self.call("AssetTools", "delete", {"path": self.args.scratch_folder}), "delete returned false")
+        expect(not self.exists(self.args.scratch_folder), "the scratch folder still exists")
+        return f"{self.args.scratch_folder} deleted"
+
+    def run_writes(self) -> None:
+        a = self.args
+        if self.exists(a.scratch_folder):
+            row = {"check": "write setup", "status": "fail", "seconds": 0,
+                   "detail": f"{a.scratch_folder} already exists; delete it or pass --scratch-folder"}
+            self.results.append(row)
+            print(f"[fail   ] write setup {row['detail']}", flush=True)
+            return
+        self.call("AssetTools", "create_folder", {"path": a.scratch_folder})
+        self.check("material_toolset_builder recipe --execute", [], self.recipe_build)
+        self.check("material_instance_batch --execute", [a.material], self.instance_write)
+        self.check("texture import + texture_import_fix --apply", [], self.texture_write)
+        self.check("graph_refactor_apply --execute", [], self.refactor_write)
+        self.check("niagara_asset_assistant apply --execute", [a.niagara], self.niagara_write)
+        self.check("scratch cleanup", [], self.cleanup)
+
     def run(self) -> int:
         a = self.args
         if self.client.pie_running():
@@ -258,6 +393,8 @@ class Smoke:
         self.check("capture (thumbnail + posed viewport)", [a.material], self.capture)
         self.check("material_instance_batch (plan only)", [a.material, a.instance], self.instance_plan)
         self.check("inspect_blueprint", [a.blueprint], self.blueprint)
+        if a.write:
+            self.run_writes()
         self.client.close()
         failed = [row for row in self.results if row["status"] == "fail"]
         print(f"\n{len(self.results) - len(failed)}/{len(self.results)} checks without failure")
@@ -273,6 +410,8 @@ def main() -> int:
     for key, value in DEFAULTS.items():
         parser.add_argument(f"--{key}", default=value)
     parser.add_argument("--full", action="store_true", help="Also run the slow MCP-route material audit")
+    parser.add_argument("--write", action="store_true", help="Also run the write paths in --scratch-folder, then delete it")
+    parser.add_argument("--scratch-folder", default="/Game/CodexTemp/LiveSmokeWrite")
     parser.add_argument("--out", help="Write per-check results as JSON")
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="ue-live-smoke-") as folder:

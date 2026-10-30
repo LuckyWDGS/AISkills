@@ -280,8 +280,6 @@ def build_preview_matrix_command(
     command.extend(preview_matrix_axis_args(args))
     if args.project:
         command.extend(["--project", args.project])
-    if args.endpoint:
-        command.extend(["--endpoint", args.endpoint])
     if args.timeout:
         command.extend(["--timeout", str(args.timeout)])
     command.extend(markdown_flag(args))
@@ -641,7 +639,7 @@ def evaluate_preview_matrix(returncode: int, payload: dict[str, Any] | None, loa
     status = "pass" if passed else "risk"
     detail = (
         f"Executed {summary.get('executed_cells', 0)}/{summary.get('planned_cells', 0)} preview cells; "
-        f"failed={summary.get('failed_cells', 0)}."
+        f"failed={summary.get('failed_cells', 0)}; pending staging={summary.get('pending_staging_cells', 0)}."
     )
     return status, detail, {"summary": summary, "gate": gate}
 
@@ -1182,10 +1180,23 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
             )
             continue
         command, preview_path = build_preview_matrix_command(args, package_path, effect, tier, variant_label, material_instance_path, run_dir)
-        # preview_matrix only plans: its render harness was retired. Each tier is staged and captured
-        # with material_preview.py capture, then scored and regressed from those reports.
-        steps.append(planned_step(preview_name, command, preview_path,
-                                  "Stage this tier's carrier and capture it with material_preview.py capture."))
+        if not args.execute:
+            steps.append(planned_step(preview_name, command, preview_path,
+                                      "Will capture this tier's MCP-executable cells; other cells need staging."))
+            continue
+        # Each tier captures its own instance; cells on axes MCP cannot drive stay pending_staging.
+        step = execute_step(
+            ctx,
+            effect=effect,
+            name=preview_name,
+            command=[*command, "--execute"],
+            planned_report_path=preview_path,
+            evaluator=evaluate_preview_matrix,
+            use_cache=args.resume_cache,
+        )
+        steps.append(step)
+        if Path(step.get("report_path") or preview_path).exists():
+            matrix_report_paths.append(Path(step.get("report_path") or preview_path))
 
     readability_command, readability_report_path = build_readability_command(args, effect, material_path, matrix_report_paths, run_dir)
     if not args.execute:
@@ -1514,7 +1525,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--with-complexity", action="store_true")
     parser.add_argument("--markdown-previews", action="store_true")
     parser.add_argument("--project")
-    parser.add_argument("--endpoint", help=argparse.SUPPRESS)  # retired TCP bridge
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--execute", action="store_true", help="Run live UE-dependent steps instead of only planning them.")
     parser.add_argument("--resume-cache", action="store_true", help="Reuse matching step reports from smoke_resume_cache.py when commands and inputs have not changed.")

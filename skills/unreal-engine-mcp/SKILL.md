@@ -71,6 +71,7 @@ python scripts/builtin_mcp.py --out <session>/niagara-schema.json describe-tool 
 python scripts/capture.py viewport --pose x,y,z,pitch,yaw,roll --frames 3 --out-dir <session>/captures   # never moves the user's camera
 python scripts/capture.py asset /Game/M/M_X --out-dir <session>/captures   # editor thumbnail
 python scripts/live_smoke.py --project <ProjectName>   # read-only end-to-end check of every tool (~30 s)
+python scripts/live_smoke.py --project <ProjectName> --write   # plus the write paths in /Game/CodexTemp/LiveSmokeWrite, deleted afterwards (~4 min)
 python scripts/record_fixtures.py --project <ProjectName> --check   # after an engine upgrade: contract fixtures still match?
 ```
 

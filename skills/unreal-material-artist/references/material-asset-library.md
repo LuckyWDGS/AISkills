@@ -61,11 +61,20 @@ If no approved asset passes this gate, use `cm-imagegen` with the reference imag
 
 ## Library Layout
 
-Skill-local root:
+The writable library lives outside the skill, so searches, registrations and
+promotions never modify the skill checkout:
 
 ```text
-assets/library/
+$UE_MATERIAL_LIBRARY                      # when set
+$CODEX_HOME/material-library              # else
+~/.codex/material-library                 # default
 ```
+
+The skill ships starter assets in `assets/library/` (a seed catalog plus files).
+The first command run against an empty library copies the seed in and writes fresh
+texture reports; after that the seed is never read or written. Catalog paths
+(`library_relpath`, library `report_paths`) are relative to the library root.
+`status` prints the active root.
 
 Stages:
 

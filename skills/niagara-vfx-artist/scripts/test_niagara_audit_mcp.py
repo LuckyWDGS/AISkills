@@ -53,13 +53,13 @@ class ToPayloadTests(unittest.TestCase):
         self.assertEqual(trail["parsed"]["renderer_materials"], ["/Game/FX/M_Trail.M_Trail"])
 
     def test_mesh_without_override_uses_mesh_slots(self):
-        row = self.emitters["Ring"]["versioned_renderer_objects"][0]
+        row = self.emitters["Ring"]["renderers"][0]
         self.assertEqual(row["material_paths"], ["/Game/FX/M_Ring.M_Ring"])
         self.assertEqual(row["material_source"], "mesh-slots")
 
     def test_warnings(self):
         self.assertIn("Emitter `Ring` is disabled.", self.report["warnings"])
-        self.assertIn("System has ribbon/trail emitters but no FixedBounds export text.", self.report["warnings"])
+        self.assertIn("System has ribbon/trail emitters but no FixedBounds.", self.report["warnings"])
 
     def test_probe_reads_renderer_props_from_audit(self):
         rows = renderer_props_from_audit(self.report)["renderer_properties"]

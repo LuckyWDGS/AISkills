@@ -190,7 +190,7 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
         "generated_utc": utc_now_iso(),
         "effect": effect,
         "mode": "heuristic",
-        "important_note": "UnrealBridge audit data does not expose exact per-node instruction cost here; attribution is a heuristic triage map.",
+        "important_note": "Audit data has no per-node instruction cost; attribution is a heuristic triage map.",
         "attributions": attributions,
         "summary": {
             **counts,

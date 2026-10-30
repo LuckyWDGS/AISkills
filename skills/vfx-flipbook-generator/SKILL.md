@@ -34,7 +34,7 @@ Resolve script paths relative to this skill directory. Sample media/job paths be
    - Run:
 
 ```powershell
-python scripts/flipbook_job_scaffold.py "smoke 12x12 6s"
+python tools/flipbook_job_scaffold.py "smoke 12x12 6s"
 ```
 
    - The scaffold writes:
@@ -47,7 +47,7 @@ python scripts/flipbook_job_scaffold.py "smoke 12x12 6s"
    - Run:
 
 ```powershell
-python scripts/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
+python tools/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
 ```
 
    - Treat the route result as the first decision, not as a hard law.
@@ -106,7 +106,7 @@ python scripts/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-durat
    - For pre-made frame folders, generated anchor families, or hand-curated PNG frames, use:
 
 ```powershell
-python scripts/frame_atlas_packer.py D:/path/to/frames --grid 12x12 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
+python tools/frame_atlas_packer.py D:/path/to/frames --grid 12x12 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
 ```
 
    - Default to power-of-two final atlas output.
@@ -130,13 +130,13 @@ python scripts/frame_atlas_packer.py D:/path/to/frames --grid 12x12 --cell-size 
    - For Unreal-bound atlases, run:
 
 ```powershell
-python scripts/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
+python tools/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
    - When a folder contains multiple generated candidates, build a selection catalog so the user can see recommended, usable, conditional, and blocked variants in one place:
 
 ```powershell
-python scripts/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
+python tools/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
 ```
 
 8. Hand off to the right downstream skill when needed.
@@ -156,51 +156,51 @@ python tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 
 Route decision:
 
 ```powershell
-python scripts/flipbook_route_advisor.py --grid 12x12 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
+python tools/flipbook_route_advisor.py --grid 12x12 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
 ```
 
 Job scaffold from a short request:
 
 ```powershell
-python scripts/flipbook_job_scaffold.py "smoke 12x12 6s" --out-root D:/flipbook-jobs
+python tools/flipbook_job_scaffold.py "smoke 12x12 6s" --out-root D:/flipbook-jobs
 ```
 
 Frame-plan scaffold with default system-imagegen workflow:
 
 ```powershell
-python scripts/flipbook_batch_plan.py D:/flipbook-jobs/smoke-12x12-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
+python tools/flipbook_batch_plan.py D:/flipbook-jobs/smoke-12x12-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
 ```
 
 Phase runner with anchor approval gates:
 
 ```powershell
-python scripts/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
-python scripts/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
-python scripts/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
+python tools/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
+python tools/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
+python tools/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
 ```
 
 Generated-frame packing:
 
 ```powershell
-python scripts/frame_atlas_packer.py D:/frames/smoke_a --grid 10x10 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_10x10.png
+python tools/frame_atlas_packer.py D:/frames/smoke_a --grid 10x10 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_10x10.png
 ```
 
 Unreal/Niagara readiness gate:
 
 ```powershell
-python scripts/ue_flipbook_readiness.py D:/atlas_out/smoke_10x10.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
+python tools/ue_flipbook_readiness.py D:/atlas_out/smoke_10x10.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
 Asset catalog for a candidate folder:
 
 ```powershell
-python scripts/flipbook_asset_catalog.py D:/atlas_out --out D:/atlas_out/atlas-catalog.md --json-out D:/atlas_out/atlas-catalog.json
+python tools/flipbook_asset_catalog.py D:/atlas_out --out D:/atlas_out/atlas-catalog.md --json-out D:/atlas_out/atlas-catalog.json
 ```
 
 Resize a ready atlas/alpha pair to 2K and 4K delivery derivatives:
 
 ```powershell
-python scripts/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres
+python tools/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres
 ```
 
 ## Reference Map
@@ -217,28 +217,28 @@ python scripts/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --al
 - [references/ue-niagara-readiness.md](references/ue-niagara-readiness.md)
   Use before calling an atlas direct Unreal material-ready or Niagara SubUV-ready. Covers dimensions, grid divisibility, alpha/luma route, material contract, Niagara frame range, and common non-smoke/fire/dust flipbook uses.
 
-- [scripts/flipbook_route_advisor.py](scripts/flipbook_route_advisor.py)
+- [tools/flipbook_route_advisor.py](tools/flipbook_route_advisor.py)
   Use to estimate duplicate-frame pressure and select `direct-extract`, `hybrid`, or `full-generated`.
 
-- [scripts/frame_atlas_packer.py](scripts/frame_atlas_packer.py)
+- [tools/frame_atlas_packer.py](tools/frame_atlas_packer.py)
   Use to turn a folder of PNG frames into a power-of-two flipbook atlas plus manifest.
 
-- [scripts/ue_flipbook_readiness.py](scripts/ue_flipbook_readiness.py)
+- [tools/ue_flipbook_readiness.py](tools/ue_flipbook_readiness.py)
   Use to statically check whether an atlas and manifest are ready, conditional, or blocked for direct UE material/Niagara SubUV use.
 
-- [scripts/flipbook_asset_catalog.py](scripts/flipbook_asset_catalog.py)
+- [tools/flipbook_asset_catalog.py](tools/flipbook_asset_catalog.py)
   Use to scan a folder of atlas PNGs, manifests, and readiness reports into a Markdown/JSON selection catalog with RGB/alpha pairing, status summaries, warnings, and UE/Niagara handoff notes.
 
-- [scripts/flipbook_atlas_resizer.py](scripts/flipbook_atlas_resizer.py)
+- [tools/flipbook_atlas_resizer.py](tools/flipbook_atlas_resizer.py)
   Use to make 2K/4K power-of-two derivatives from a ready atlas and optional alpha support PNG, preserving grid divisibility and writing a new manifest. Prefer native 2K/4K generation when available; use resizing as a delivery derivative when the provider only gave a smaller source.
 
-- [scripts/flipbook_job_scaffold.py](scripts/flipbook_job_scaffold.py)
+- [tools/flipbook_job_scaffold.py](tools/flipbook_job_scaffold.py)
   Use to turn a short request into a full working package with route advice, search queries, prompts, folders, and packing templates.
 
-- [scripts/flipbook_batch_plan.py](scripts/flipbook_batch_plan.py)
+- [tools/flipbook_batch_plan.py](tools/flipbook_batch_plan.py)
   Use to turn a scaffolded job into a per-frame prompt plan plus a default system-imagegen workflow and an optional `cm-imagegen` fallback script.
 
-- [scripts/flipbook_batch_runner.py](scripts/flipbook_batch_runner.py)
+- [tools/flipbook_batch_runner.py](tools/flipbook_batch_runner.py)
   Use to coordinate a frame plan one phase at a time, stop for anchor approval, and prefer image-reference edit for phase fill after an anchor is accepted. Its default provider mode is system `imagegen`.
 
 - [tools/flipbook_builder.py](tools/flipbook_builder.py)

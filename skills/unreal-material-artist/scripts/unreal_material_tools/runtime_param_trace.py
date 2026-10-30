@@ -42,7 +42,7 @@ def niagara_sources(niagara: dict[str, Any] | None) -> list[dict[str, Any]]:
              "detail": json.dumps(item.get("defaultValue"), ensure_ascii=False)[:200]}
             for item in niagara.get("user_variables") or []]
     for emitter in niagara.get("emitters") or []:
-        for renderer in (emitter.get("parsed") or {}).get("versioned_renderer_objects") or []:
+        for renderer in (emitter.get("parsed") or {}).get("renderers") or []:
             for key, value in (renderer.get("renderer_data") or {}).items():
                 if "Binding" not in key:
                     continue

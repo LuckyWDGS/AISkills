@@ -87,7 +87,7 @@ class AuditPortTests(unittest.TestCase):
         audit["material_info"]["vector_parameters"].append({"name": "Color", "param_type": "Vector"})
         niagara = {"tool": "niagara_audit", "system_path": "/Game/FX/NS_X",
                    "user_variables": [{"name": "User.Color", "defaultValue": {"value": {"r": 1}}}],
-                   "emitters": [{"name": "Trail", "parsed": {"versioned_renderer_objects": [{
+                   "emitters": [{"name": "Trail", "parsed": {"renderers": [{
                        "class_name": "NiagaraRibbonRendererProperties",
                        "renderer_data": {"MaterialUserParamBinding": {"parameter": {"name": "User.TrailMaterial"}}}}]}}]}
         report = runtime_param_trace.build_report(audit, niagara, [])

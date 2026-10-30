@@ -181,18 +181,18 @@ class GraphRefactorApplyTests(unittest.TestCase):
 class MaterialAssetLibraryTests(unittest.TestCase):
     def test_register_search_promote_round_trip(self):
         with tempfile.TemporaryDirectory() as folder, \
-                patch.object(material_asset_library, "skill_root", return_value=Path(folder)):
+                patch.dict("os.environ", {"UE_MATERIAL_LIBRARY": str(Path(folder, "library"))}):
             noise = solid(Path(folder, "noise.png"), (64, 64), (128, 128, 128, 255))
             code, printed = run(material_asset_library, ["register", str(noise), "--category", "noise",
-                                                         "--role", "breakup", "--tags", "fire,smoke"])
+                                                         "--role", "breakup", "--tags", "codex-test,smoke"])
             self.assertEqual(code, 0)
             record = json.loads(printed)
             self.assertEqual((record["stage"], record["category"]), ("candidates", "noise"))
             self.assertTrue(noise.exists())  # register copies unless --move
 
-            _, printed = run(material_asset_library, ["search", "--stage", "candidates", "--tag", "fire"])
+            _, printed = run(material_asset_library, ["search", "--stage", "candidates", "--tag", "codex-test"])
             self.assertEqual([item["id"] for item in json.loads(printed)["results"]], [record["id"]])
-            _, printed = run(material_asset_library, ["search", "--tag", "fire"])
+            _, printed = run(material_asset_library, ["search", "--tag", "codex-test"])
             self.assertEqual(json.loads(printed)["results"], [])  # search defaults to approved assets
 
             _, printed = run(material_asset_library, ["promote", record["id"], "--stage", "approved",
@@ -202,9 +202,20 @@ class MaterialAssetLibraryTests(unittest.TestCase):
             _, printed = run(material_asset_library, ["status"])
             self.assertEqual(json.loads(printed)["by_stage"]["approved"], 1)
 
+    def test_new_library_starts_from_the_seed(self):
+        with tempfile.TemporaryDirectory() as folder,                 patch.dict("os.environ", {"UE_MATERIAL_LIBRARY": str(Path(folder, "library"))}):
+            _, printed = run(material_asset_library, ["search", "--stage", "candidates"])
+            results = json.loads(printed)["results"]
+            self.assertTrue(results)
+            for record in results:
+                self.assertTrue(material_asset_library.stage_abs_path(record).is_file())
+                self.assertTrue(material_asset_library.library_path(record["report_paths"][0]).is_file())
+            _, printed = run(material_asset_library, ["search"])
+            self.assertEqual(json.loads(printed)["results"], [])  # the seed ships no approved assets
+
     def test_auto_promote_rejects_without_self_review(self):
         with tempfile.TemporaryDirectory() as folder, \
-                patch.object(material_asset_library, "skill_root", return_value=Path(folder)):
+                patch.dict("os.environ", {"UE_MATERIAL_LIBRARY": str(Path(folder, "library"))}):
             mask = solid(Path(folder, "mask.png"), (32, 32), (255, 255, 255, 255))
             _, printed = run(material_asset_library, ["register", str(mask), "--category", "mask", "--role", "edge"])
             asset_id = json.loads(printed)["id"]

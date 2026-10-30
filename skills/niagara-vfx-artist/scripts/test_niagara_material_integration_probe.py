@@ -1,50 +1,48 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from vfx_delivery.core import save_json
 from vfx_delivery.niagara_material_integration_probe import build_findings, build_report
 
 
 def audit_fixture(*, material: str = "/Game/VFX/MI_Flame", bounds: bool = True, rich_bindings: bool = True) -> dict:
-    renderer_text = ""
+    """A niagara_audit/3 report: renderer evidence lives in the MCP renderer data."""
+    renderer_data = {"Material": {"refPath": material}}
     if rich_bindings:
-        renderer_text = (
-            "SubImageSize=(X=8,Y=8) SubImageIndexBinding=Particles.SubImageIndex "
-            "ColorBinding=Particles.Color DynamicMaterialBinding=Particles.DynamicMaterialParameter "
-            "SortMode=ViewDepth"
-        )
+        renderer_data.update({
+            "SubImageSize": {"x": 8, "y": 8},
+            "SubImageIndexBinding": {"boundVariable": "Particles.SubImageIndex"},
+            "ColorBinding": {"boundVariable": "Particles.Color"},
+            "DynamicMaterialBinding": {"boundVariable": "Particles.DynamicMaterialParameter"},
+            "SortMode": "ViewDepth",
+        })
+    renderer = {
+        "emitter_name": "FlameSprite",
+        "renderer_index": 0,
+        "class_name": "NiagaraSpriteRendererProperties",
+        "object_path": "/Game/VFX/NS_Flame.NS_Flame:FlameSprite#renderer0",
+        "material_path": material,
+        "material_paths": [material],
+        "renderer_data": renderer_data,
+    }
     return {
         "tool": "niagara_audit",
+        "schema_version": "niagara_audit/3",
         "system_path": "/Game/VFX/NS_Flame",
-        "system_properties": {
-            "FixedBounds": {"text": "(Min=(X=-100,Y=-100,Z=-100),Max=(X=100,Y=100,Z=100))" if bounds else ""},
-        },
+        "system": {"fixed_bounds": {"min": {"x": -100, "y": -100, "z": -100}, "max": {"x": 100, "y": 100, "z": 100}} if bounds else None},
         "emitters": [
             {
                 "name": "FlameSprite",
-                "properties": {
-                    "RendererProperties": {"text": renderer_text},
-                    "SpawnScriptProps": {"text": "Particles.Color Particles.DynamicMaterialParameter"},
-                    "UpdateScriptProps": {"text": ""},
-                    "EmitterSpawnScriptProps": {"text": ""},
-                    "EmitterUpdateScriptProps": {"text": ""},
-                    "EventHandlerScriptProps": {"text": ""},
-                    "SimulationStages": {"text": ""},
-                    "GraphSource": {"text": ""},
-                    "GPUComputeScript": {"text": ""},
-                },
+                "renderers": [renderer],
+                "stacks": {"particleSpawnScript": ["InitializeParticle"], "particleUpdateScript": []},
                 "parsed": {
                     "renderer_classes": ["SpriteRendererProperties"],
                     "renderer_materials": [material],
-                    "renderer_objects": [],
-                    "versioned_renderer_objects": [],
+                    "renderers": [renderer],
                     "function_names": ["InitializeParticle"],
                     "data_interface_classes": [],
                     "data_interface_bindings": [],

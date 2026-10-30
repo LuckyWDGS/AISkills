@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -9,8 +8,6 @@ from io import StringIO
 from pathlib import Path
 
 from PIL import Image
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from vfx_delivery import control_binding_generator, control_preset, control_provenance_check, effect_control_schema, motion_qa
 from vfx_delivery.core import save_json

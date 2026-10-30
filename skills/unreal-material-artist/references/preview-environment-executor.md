@@ -1,28 +1,25 @@
 # Preview Environment Executor
 
-> **仅规划：** 原先 `--execute` 依赖的 UnrealBridge 渲染 harness 已移除。Epic MCP 没有背景、曝光或灯光档位，`--execute` 会被拒绝；按计划在关卡里布置好环境后，用 `material_preview.py capture` 截图，再把报告交给 readability / regression。
+Epic MCP 不能切换背景、曝光或灯光组。这个工具把环境档位解析成布置计划；你在关卡里布置好之后，
+`--execute` 通过 MCP 截取当前画面。只有同时传 `--staged`（确认环境已按计划布置）时结果才算 `pass`，
+否则状态是 `captured_unstaged`，不会冒充环境证据。
 
 ## Use This When
 
-- `preview_matrix.py` 里已经有 `background / exposure` 轴，但你不想它们只停在 intent。
-- 你要把黑底、灰底、亮背景、杂色背景和曝光档位记录成可执行的布置计划。
+- `preview_matrix.py` 的某个格子因为 `background / exposure / lighting` 轴处于 `pending_staging`。
+- 你要把黑底、灰底、亮背景、杂色背景和曝光档位记录成可执行的布置计划，并留下截图证据。
 
 ## Purpose
 
-`preview_environment_executor.py` 会把环境轴解析成计划，并生成对应的 `material_preview.py capture` 命令。计划里记录：
+报告里记录：
 
-- `background_preset`
-- `exposure_bias`
-- `light_rig`
+- 环境计划：`background_preset`、`exposure_bias`、`light_rig`，以及 `applied_by`（`user staging` / `not staged`）
+- 要运行的 `material_preview.py capture` 命令（可带 `--pose`）
+- `--execute` 时的截图报告；`pass` 的报告可以作为 `preview_matrix.py --cell-report` 交回矩阵
 
-报告里保留：
-
-- 环境计划（背景预设、曝光偏移、灯光组）
-- 布置好环境后要运行的 capture 命令
-- capture 产出的 `material_preview` 报告可直接给 readability / regression 使用
-
-## Typical Command
+## Typical Commands
 
 ```powershell
-python tools/preview_environment_executor.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background busy --exposure high --project <Project> --markdown
+python tools/preview_environment_executor.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background busy --exposure high --markdown
+python tools/preview_environment_executor.py --material-path /Game/Materials/MI_WingEcho --carrier ribbon --background busy --exposure high --pose 0,-300,150,-20,90,0 --execute --staged --markdown
 ```

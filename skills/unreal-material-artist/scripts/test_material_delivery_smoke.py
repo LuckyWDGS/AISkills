@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from unreal_material_tools import material_delivery_smoke
 from unreal_material_tools.core import save_json
@@ -401,7 +398,7 @@ class MaterialDeliverySmokeTests(unittest.TestCase):
             self.assertEqual(by_name["permutation_budget_guard"]["status"], "pass")
             self.assertEqual(by_name["material_instance_batch"]["status"], "planned")
 
-    def test_execute_runs_live_steps_and_plans_captures(self) -> None:
+    def test_execute_runs_the_full_chain(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             package = write_json(root, "package.json", package_payload())
@@ -515,16 +512,15 @@ class MaterialDeliverySmokeTests(unittest.TestCase):
                         "--require-ready",
                     ]
                 )
-            # Live MCP steps run; preview tiers are captured by staging carriers, so they stay planned
-            # and readability scoring waits for that capture evidence instead of passing.
-            self.assertNotEqual(code, 0, stderr)
+            # Each tier's matrix captures over MCP, so readability, regression and the gates all run.
             report = json.loads(Path(stdout.strip()).read_text(encoding="utf-8"))
             statuses = {step["name"]: step["status"] for step in report["steps"]}
+            self.assertEqual(code, 0, json.dumps(statuses, indent=1))
             self.assertEqual(statuses["material_instance_batch"], "pass")
-            self.assertEqual({statuses[name] for name in statuses if name.startswith("preview_matrix:")}, {"planned"})
-            self.assertEqual(report["gate"]["blocked_steps"], ["preview_readability_score"])
-            self.assertFalse(report["gate"]["smoke_passed"])
-            self.assertEqual(report["summary"]["risk_count"], 0)
+            self.assertEqual({statuses[name] for name in statuses if name.startswith("preview_matrix:")}, {"pass"})
+            self.assertEqual(statuses["preview_readability_score"], "pass")
+            self.assertEqual(report["gate"]["blocked_steps"], [])
+            self.assertTrue(report["gate"]["smoke_passed"])
 
     def test_resume_cache_reuses_completed_planning_steps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

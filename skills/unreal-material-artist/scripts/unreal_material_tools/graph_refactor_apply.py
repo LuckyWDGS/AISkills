@@ -440,7 +440,7 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
         "effect": effect,
         "layer": layer,
         "label": label,
-        "execute": False,  # Plan only: the UnrealBridge graph-surgery executor was retired.
+        "execute": bool(args.execute),
         "inputs": resolved["source_paths"],
         "target_material": resolved["target_material"],
         "candidate_path": resolved["candidate_path"],
@@ -464,12 +464,40 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], Path]:
     report["validation_plan"] = validation_commands(args, ctx, resolved["target_material"], object_ref(resolved["candidate_path"]))
     report["mcp_route"] = [
         f"AssetTools.duplicate {resolved['target_material']} -> {resolved['backup_path']} (backup) and -> {resolved['candidate_path']}",
-        "Apply each feasible operation to the candidate with MaterialTools.add_expression / connect_expressions / "
-        "connect_to_output (builtin_mcp.py batch with get_expression_inputs / get_property_input readbacks), then recompile",
+        "Apply each executable operation to the candidate with MaterialTools.add_expression / connect_expressions / "
+        "connect_to_output, reading every wiring back, then recompile and save (all through --execute)",
         "Run validation_plan: audits before/after, a capture of the candidate, and regression against the baseline",
     ]
-    report["gate"] = {"ready_for_acceptance": False, "reason": "plan_only"}
+    if not args.execute:
+        report["gate"] = {"ready_for_acceptance": False, "reason": "plan_only"}
+        return report, out
+    report["ue_apply"] = execute_on_editor(args, payload)
+    if report["ue_apply"].get("saved"):
+        report["validation"] = run_validation(report["validation_plan"], ctx, args, resolved)
+    report["gate"] = evaluate_gate(report)
     return report, out
+
+
+def execute_on_editor(args: argparse.Namespace, payload: dict[str, Any]) -> dict[str, Any]:
+    from .graph_refactor_executor import execute_refactor
+    from .mcp import connect
+
+    client = connect(None, timeout=args.timeout, project=args.project)
+    try:
+        return execute_refactor(client, payload)
+    finally:
+        client.close()
+
+
+def run_validation(plan: dict[str, Any], ctx: Any, args: argparse.Namespace, resolved: dict[str, Any]) -> dict[str, Any]:
+    """Before/after audits, a capture of the candidate, then regression against the baseline when one exists."""
+    validation: dict[str, Any] = {}
+    for name in ("before_audit", "before_domain_audit", "after_audit", "after_domain_audit", "preview"):
+        validation[name] = run_command(plan[name], ctx.project_root)
+    preview_report = validation["preview"].get("report_path") or ""
+    regression = validation_commands(args, ctx, resolved["target_material"], object_ref(resolved["candidate_path"]), preview_report)["regression"]
+    validation["regression"] = run_command(regression, ctx.project_root) if regression else {"skipped": True, "reason": "no baseline"}
+    return validation
 
 
 def render_markdown(report: dict[str, Any]) -> str:
@@ -557,6 +585,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out")
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument("--execute", action="store_true",
+                        help="Duplicate to backup and candidate, apply the executable operations to the candidate, then validate it.")
     parser.set_defaults(func=command)
     return parser
 

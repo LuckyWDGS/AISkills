@@ -12,32 +12,9 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .mcp import DEFAULT_MCP_URL, call_tool, run_tool_script
 
 
-SYSTEM_PROPS = [
-    "EmitterHandles",
-    "EffectType",
-    "FixedBounds",
-    "WarmupTickCount",
-    "WarmupTickDelta",
-    "SystemScalabilityOverrides",
-]
-EMITTER_PROPS = [
-    "SimTarget",
-    "FixedBounds",
-    "RendererProperties",
-    "RendererBindings",
-    "SpawnScriptProps",
-    "UpdateScriptProps",
-    "EmitterSpawnScriptProps",
-    "EmitterUpdateScriptProps",
-    "EventHandlerScriptProps",
-    "SimulationStages",
-    "GraphSource",
-    "GPUComputeScript",
-]
-
-
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
-SCHEMA_VERSION = "niagara_audit/2"
+# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report;
+# version 2 still synthesized its export-text `properties`; version 3 carries structured fields only.
+SCHEMA_VERSION = "niagara_audit/3"
 
 COVERAGE_GAPS = [
     "Data-interface values (e.g. ParticleRead EmitterBinding) are StackInputData_Unsupported in GetEmitterInputValues; "
@@ -45,12 +22,6 @@ COVERAGE_GAPS = [
     "Per-emitter data-interface classes are not exposed; system-wide classes are in system_dependencies.",
 ]
 STANDARD_STACKS = ("emitterSpawnScript", "emitterUpdateScript", "particleSpawnScript", "particleUpdateScript")
-STACK_PROPS = {
-    "particleSpawnScript": "SpawnScriptProps",
-    "particleUpdateScript": "UpdateScriptProps",
-    "emitterSpawnScript": "EmitterSpawnScriptProps",
-    "emitterUpdateScript": "EmitterUpdateScriptProps",
-}
 
 
 def object_path(asset_path: str) -> str:
@@ -139,10 +110,6 @@ def _ref(value: Any) -> str:
     return value if isinstance(value, str) and value != "None" else ""
 
 
-def _prop(text: str) -> dict[str, Any]:
-    return {"success": bool(text), "text": text}
-
-
 def _materials(value: Any, key: str = "") -> list[str]:
     """Asset references found under any *Material* key, ignoring parameter bindings."""
     in_material = "material" in key.lower() and "binding" not in key.lower()
@@ -164,27 +131,31 @@ def _stack_modules(stack: Any) -> list[dict[str, Any]]:
     return [module for item in stacks if isinstance(item, dict) for module in item.get("modules", [])]
 
 
+def _module_names(stack: Any) -> list[str]:
+    return [module.get("moduleName", "") for module in _stack_modules(stack)]
+
+
 def to_payload(system_path: str, raw: dict[str, Any]) -> dict[str, Any]:
-    """Map MCP results onto the raw payload shape that summarize() and downstream reports expect."""
-    system = _json(raw["system_data"])
-    handles = raw["summary"].get("emitters", [])
-    system_props = {
-        "EmitterHandles": _prop(json.dumps(handles, ensure_ascii=False)),
-        "EffectType": _prop("" if system.get("EffectType") in (None, "None") else str(system["EffectType"])),
-        "FixedBounds": _prop(json.dumps(system["FixedBounds"]) if system.get("bFixedBounds") else ""),
-        "WarmupTickCount": _prop(str(system.get("WarmupTickCount", ""))),
-        "WarmupTickDelta": _prop(str(system.get("WarmupTickDelta", ""))),
-        "SystemScalabilityOverrides": _prop(json.dumps(system.get("SystemScalabilityOverrides", {}))),
+    """Map MCP results onto the structured system/emitter shape summarize() reads."""
+    data = _json(raw["system_data"])
+    effect_type = data.get("EffectType")
+    system = {
+        "effect_type": "" if effect_type in (None, "None") else _ref(effect_type) or str(effect_type),
+        "fixed_bounds": data.get("FixedBounds") if data.get("bFixedBounds") else None,
+        "warmup_tick_count": data.get("WarmupTickCount", 0),
+        "warmup_tick_delta": data.get("WarmupTickDelta"),
+        "scalability_overrides": data.get("SystemScalabilityOverrides", {}),
+        "emitter_handles": raw["summary"].get("emitters", []),
     }
     emitters = []
     for index, entry in enumerate(raw["emitters"]):
         summary, topology = entry["summary"], entry["topology"]
-        data = _json(entry["data"])
+        emitter_data = _json(entry["data"])
         name = summary["emitterName"]
         extra = {key: value for key, value in topology.items() if key not in STANDARD_STACKS and _stack_modules(value)}
-        event_stacks = {key: value for key, value in extra.items() if "event" in key.lower()}
-        stage_stacks = {key: value for key, value in extra.items() if key not in event_stacks}
-        renderer_rows = []
+        event_stacks = {key: _module_names(value) for key, value in extra.items() if "event" in key.lower()}
+        stage_stacks = {key: _module_names(value) for key, value in extra.items() if key not in event_stacks}
+        renderers = []
         for renderer in entry["renderers"]:
             class_path = _ref(renderer["class"])
             renderer_data = _json(renderer["data"])
@@ -192,9 +163,10 @@ def to_payload(system_path: str, raw: dict[str, Any]) -> dict[str, Any]:
             mesh_materials = renderer.get("mesh_materials") or {}
             if not materials:
                 materials = sorted(dict.fromkeys(_ref(item) for slots in mesh_materials.values() for item in slots if _ref(item)))
-            renderer_rows.append({
+            renderers.append({
                 "emitter_name": name,
                 "emitter_path": f"{system_path}:{name}",
+                "renderer_index": renderer["index"],
                 "class_path": class_path,
                 "class_name": class_path.rsplit(".", 1)[-1],
                 "object_path": f"{system_path}:{name}#renderer{renderer['index']}",
@@ -207,32 +179,19 @@ def to_payload(system_path: str, raw: dict[str, Any]) -> dict[str, Any]:
             })
         modules = [module for key in STANDARD_STACKS for module in _stack_modules(topology.get(key))]
         modules += [module for value in extra.values() for module in _stack_modules(value)]
-        properties = {
-            "SimTarget": _prop(str(data.get("SimTarget") or summary.get("simTarget") or "")),
-            "FixedBounds": _prop(json.dumps(data["FixedBounds"]) if data.get("CalculateBoundsMode") == "Fixed" else ""),
-            "RendererProperties": _prop(json.dumps([
-                {k: v for k, v in row.items() if k not in ("source", "renderer_data")} for row in renderer_rows
-            ]) if renderer_rows else ""),
-            "RendererBindings": _prop(""),
-            "EventHandlerScriptProps": _prop(json.dumps(event_stacks) if event_stacks else ""),
-            "SimulationStages": _prop(json.dumps(stage_stacks) if stage_stacks else ""),
-            "GraphSource": _prop(""),
-            "GPUComputeScript": _prop(""),
-        }
-        for key, prop in STACK_PROPS.items():
-            names = [module.get("moduleName", "") for module in _stack_modules(topology.get(key))]
-            properties[prop] = _prop(json.dumps(names) if names else "")
         emitters.append({
             "index": index,
             "name": name,
-            "id_name": str(data.get("IdName", "")),
-            "enabled": "True" if summary.get("bEnabled", data.get("bIsEnabled")) else "False",
+            "id_name": str(emitter_data.get("IdName", "")),
+            "enabled": bool(summary.get("bEnabled", emitter_data.get("bIsEnabled", True))),
             "emitter_path": f"{system_path}:{name}",
-            "properties": properties,
-            "renderer_objects": [],
-            "versioned_renderer_objects": renderer_rows,
-            "versioned_graph": {
-                "emitter_name": name,
+            "sim_target": str(emitter_data.get("SimTarget") or summary.get("simTarget") or ""),
+            "fixed_bounds": emitter_data.get("FixedBounds") if emitter_data.get("CalculateBoundsMode") == "Fixed" else None,
+            "stacks": {key: _module_names(topology.get(key)) for key in STANDARD_STACKS},
+            "event_stacks": event_stacks,
+            "simulation_stages": stage_stacks,
+            "renderers": renderers,
+            "graph": {
                 "has_graph_source": bool(modules),
                 "graph_node_count": len(modules),
                 "data_interface_classes": [],
@@ -242,20 +201,13 @@ def to_payload(system_path: str, raw: dict[str, Any]) -> dict[str, Any]:
                     for module in modules
                 ],
                 "input_nodes": [],
-                "output_nodes": [],
                 "event_handlers": [
-                    {"source_event_name": key, "execution_mode": "unknown", "module_count": len(_stack_modules(value))}
-                    for key, value in event_stacks.items()
+                    {"source_event_name": key, "execution_mode": "unknown", "module_count": len(names)}
+                    for key, names in event_stacks.items()
                 ],
             },
         })
-    return {
-        "system_path": system_path,
-        "system_properties": system_props,
-        "versioned_renderers": [row for emitter in emitters for row in emitter["versioned_renderer_objects"]],
-        "versioned_graphs": [emitter["versioned_graph"] for emitter in emitters],
-        "emitters": emitters,
-    }
+    return {"system_path": system_path, "system": system, "emitters": emitters}
 
 
 def collect_diagnostics(skill_root: Path, system_path: str, url: str, timeout: float) -> dict[str, Any]:
@@ -291,30 +243,14 @@ def audit(skill_root: Path, system_path: str, *, url: str = DEFAULT_MCP_URL, tim
     return report
 
 
-def renderer_classes(text: str, renderer_objects: list[dict[str, Any]] | None = None) -> list[str]:
-    classes = re.findall(r"Niagara([A-Za-z0-9_]+RendererProperties)", text)
-    for item in renderer_objects or []:
-        class_name = item.get("class_name", "")
-        if class_name.startswith("Niagara"):
-            class_name = class_name[len("Niagara") :]
-        if class_name:
-            classes.append(class_name)
-    return sorted(dict.fromkeys(classes))
+def renderer_classes(renderers: list[dict[str, Any]]) -> list[str]:
+    """Renderer class names without the Niagara prefix, e.g. RibbonRendererProperties."""
+    names = (str(item.get("class_name") or "") for item in renderers)
+    return sorted(dict.fromkeys(name.removeprefix("Niagara") for name in names if name))
 
 
-def material_paths(text: str) -> list[str]:
-    return sorted(dict.fromkeys(re.findall(r"/(?:Game|Engine)/[^'\",)]+", text or "")))
-
-
-def renderer_material_paths(renderer_objects: list[dict[str, Any]]) -> list[str]:
-    paths: list[str] = []
-    for item in renderer_objects:
-        material = item.get("material", {})
-        if material.get("success"):
-            paths.extend(material_paths(material.get("text", "")))
-        if item.get("material_path"):
-            paths.append(str(item["material_path"]))
-    return sorted(dict.fromkeys(paths))
+def renderer_material_paths(renderers: list[dict[str, Any]]) -> list[str]:
+    return sorted(dict.fromkeys(path for item in renderers for path in item.get("material_paths") or [item.get("material_path")] if path))
 
 
 def text_digest(text: str) -> str:
@@ -328,19 +264,10 @@ def classify_role_traits(emitter: dict[str, Any]) -> dict[str, list[str]]:
     function_names = " ".join(emitter["parsed"].get("function_names", [])).lower()
     data_interface_classes = " ".join(emitter["parsed"].get("data_interface_classes", [])).lower()
     data_interface_bindings = emitter["parsed"].get("data_interface_bindings", [])
-    renderer_text = emitter["properties"]["RendererProperties"]["text"]
-    event_text = emitter["properties"]["EventHandlerScriptProps"]["text"]
-    module_blob = " ".join(
-        emitter["properties"][key]["text"]
-        for key in ("SpawnScriptProps", "UpdateScriptProps", "EmitterSpawnScriptProps", "EmitterUpdateScriptProps")
-    ).lower()
 
     roles: list[str] = []
     capabilities: list[str] = []
     if any("Ribbon" in item for item in renderers):
-        roles.append("trail-receiver")
-        capabilities.append("ribbon-renderer")
-    if "ribbon" in renderer_text.lower() or "trail" in renderer_text.lower():
         roles.append("trail-receiver")
         capabilities.append("ribbon-renderer")
     if any("Sprite" in item for item in renderers):
@@ -355,7 +282,7 @@ def classify_role_traits(emitter: dict[str, Any]) -> dict[str, list[str]]:
     ):
         roles.append("attribute-reader-receiver")
         capabilities.extend(["attribute-reader", "inter-emitter-data-flow"])
-    if "event" in event_text.lower() or has_events:
+    if has_events:
         roles.append("receiver")
         capabilities.append("event-receiver")
     if any(token in name for token in ("source", "leader", "seed", "driver", "upstream")):
@@ -384,15 +311,6 @@ def primary_role_from_roles(roles: list[str]) -> str:
 
 def emitter_has_role(emitter: dict[str, Any], role: str) -> bool:
     return role == emitter.get("role") or role in (emitter.get("roles") or [])
-
-
-def parse_event_handlers(text: str) -> str:
-    if not text:
-        return "none"
-    hits = re.findall(r"SourceEmitter(?:Name|ID)?=([^,\)]+)", text)
-    if hits:
-        return ", ".join(hit.strip('"') for hit in hits)
-    return "present"
 
 
 def graph_event_summary(graph: dict[str, Any] | None) -> str:
@@ -445,47 +363,38 @@ def summarize(payload: dict[str, Any]) -> dict[str, Any]:
     emitters: list[dict[str, Any]] = []
     warnings: list[str] = []
     evidence: list[dict[str, Any]] = []
-    system_bounds = payload["system_properties"]["FixedBounds"]["text"]
+    system = payload["system"]
     system_path = str(payload.get("system_path", "") or "")
     system_path_lower = system_path.lower()
     emitter_names = {item.get("name", "") for item in payload["emitters"]}
     attribute_reader_sources: set[str] = set()
     for emitter in payload["emitters"]:
-        graph = emitter.get("versioned_graph") or {}
-        for binding in graph_data_interface_bindings(graph):
-            text = binding.get("emitter_binding", "")
-            match = re.search(r'EmitterName="([^"]+)"', text)
+        for binding in graph_data_interface_bindings(emitter.get("graph")):
+            match = re.search(r'EmitterName="([^"]+)"', binding.get("emitter_binding", ""))
             if match:
                 attribute_reader_sources.add(match.group(1))
     for emitter in payload["emitters"]:
-        renderer_text = emitter["properties"]["RendererProperties"]["text"]
-        renderer_objects = emitter.get("renderer_objects", [])
-        versioned_renderer_objects = emitter.get("versioned_renderer_objects", [])
-        all_renderer_objects = [*renderer_objects, *versioned_renderer_objects]
-        event_text = emitter["properties"]["EventHandlerScriptProps"]["text"]
-        graph = emitter.get("versioned_graph") or {}
+        renderers = emitter.get("renderers") or []
+        graph = emitter.get("graph") or {}
         function_names = graph_function_names(graph)
         data_interface_bindings = graph_data_interface_bindings(graph)
-        module_text = " ".join(
-            emitter["properties"][key]["text"]
-            for key in ("SpawnScriptProps", "UpdateScriptProps", "EmitterSpawnScriptProps", "EmitterUpdateScriptProps", "SimulationStages", "GraphSource", "GPUComputeScript")
-        )
+        modules = {"stacks": emitter.get("stacks"), "stages": emitter.get("simulation_stages")}
+        renderer_evidence = [{k: v for k, v in row.items() if k != "renderer_data"} for row in renderers]
         parsed = {
-            "renderer_classes": renderer_classes(renderer_text, all_renderer_objects),
-            "renderer_materials": renderer_material_paths(all_renderer_objects),
-            "renderer_objects": renderer_objects,
-            "versioned_renderer_objects": versioned_renderer_objects,
-            "event_handler_summary": graph_event_summary(graph) if graph else parse_event_handlers(event_text),
+            "renderer_classes": renderer_classes(renderers),
+            "renderer_materials": renderer_material_paths(renderers),
+            "renderers": renderers,
+            "event_handler_summary": graph_event_summary(graph),
             "has_graph_source": bool(graph.get("has_graph_source")),
             "graph_node_count": graph.get("graph_node_count", 0),
             "function_names": function_names,
             "data_interface_classes": graph_data_interface_classes(graph),
             "data_interface_bindings": data_interface_bindings,
-            "sim_target": emitter["properties"]["SimTarget"]["text"],
-            "fixed_bounds": emitter["properties"]["FixedBounds"]["text"],
-            "renderer_digest": text_digest(renderer_text + repr(versioned_renderer_objects)),
-            "module_digest": text_digest(module_text + repr(function_names)),
-            "event_digest": text_digest(event_text + repr(graph.get("event_handlers", []))),
+            "sim_target": emitter.get("sim_target", ""),
+            "fixed_bounds": emitter.get("fixed_bounds"),
+            "renderer_digest": text_digest(json.dumps(renderer_evidence, sort_keys=True, default=str)),
+            "module_digest": text_digest(json.dumps(modules, sort_keys=True) + repr(function_names)),
+            "event_digest": text_digest(json.dumps(emitter.get("event_stacks") or {}, sort_keys=True)),
         }
         emitter["parsed"] = parsed
         traits = classify_role_traits(emitter)
@@ -507,17 +416,16 @@ def summarize(payload: dict[str, Any]) -> dict[str, Any]:
                 "renderer_digest": parsed["renderer_digest"],
                 "module_digest": parsed["module_digest"],
                 "event_digest": parsed["event_digest"],
-                "has_renderer_text": bool(renderer_text.strip()),
-                "has_versioned_renderers": bool(versioned_renderer_objects),
-                "has_module_text": bool(module_text.strip()),
+                "renderer_count": len(renderers),
+                "module_count": sum(len(names) for names in (emitter.get("stacks") or {}).values()),
                 "has_graph_source": parsed["has_graph_source"],
                 "graph_node_count": parsed["graph_node_count"],
                 "function_names": function_names,
                 "data_interface_bindings": data_interface_bindings,
-                "has_event_text": bool(event_text.strip()),
+                "event_stack_count": len(emitter.get("event_stacks") or {}),
             }
         )
-        if emitter["enabled"] == "False":
+        if not emitter.get("enabled", True):
             warnings.append(f"Emitter `{emitter['name']}` is disabled.")
         if (emitter_has_role(emitter, "trail-receiver") or emitter_has_role(emitter, "receiver")) and not parsed["renderer_classes"]:
             warnings.append(f"Emitter `{emitter['name']}` looks like a receiver but has no renderer.")
@@ -535,14 +443,13 @@ def summarize(payload: dict[str, Any]) -> dict[str, Any]:
                     f"System `{system_path}` is named like a ribbon/trail asset, but receiver emitter `{emitter['name']}` has no Ribbon renderer in the live route."
                 )
         for binding in data_interface_bindings:
-            text = binding.get("emitter_binding", "")
-            match = re.search(r'EmitterName="([^"]+)"', text)
+            match = re.search(r'EmitterName="([^"]+)"', binding.get("emitter_binding", ""))
             if match and match.group(1) not in emitter_names:
                 warnings.append(
                     f"Emitter `{emitter['name']}` has data interface `{binding.get('node_title')}` bound to missing emitter `{match.group(1)}`."
                 )
-    if not system_bounds and any(emitter_has_role(entry, "trail-receiver") for entry in emitters):
-        warnings.append("System has ribbon/trail emitters but no FixedBounds export text.")
+    if not system.get("fixed_bounds") and any(emitter_has_role(entry, "trail-receiver") for entry in emitters):
+        warnings.append("System has ribbon/trail emitters but no FixedBounds.")
     if "/game/vfx/" in system_path_lower and any(token in system_path_lower for token in ("codex", "test", "temp")):
         warnings.append(
             f"System `{system_path}` looks like a temporary/test asset but lives under a production VFX folder; quarantine or remove it after readback instead of leaving it as a candidate implementation asset."
@@ -550,7 +457,7 @@ def summarize(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "tool": "niagara_audit",
         "system_path": payload["system_path"],
-        "system_properties": payload["system_properties"],
+        "system": system,
         "emitters": emitters,
         "evidence": evidence,
         "warnings": warnings,
@@ -561,9 +468,9 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines = [
         f"# Niagara Audit: {report['system_path']}",
         "",
-        f"- EffectType: `{report['system_properties']['EffectType']['text'] or 'unset'}`",
-        f"- FixedBounds: `{report['system_properties']['FixedBounds']['text'] or 'unset'}`",
-        f"- WarmupTickCount: `{report['system_properties']['WarmupTickCount']['text'] or '0'}`",
+        f"- EffectType: `{report['system']['effect_type'] or 'unset'}`",
+        f"- FixedBounds: `{json.dumps(report['system']['fixed_bounds']) if report['system']['fixed_bounds'] else 'unset'}`",
+        f"- WarmupTickCount: `{report['system']['warmup_tick_count'] or 0}`",
         "",
         "## Emitters",
         "",

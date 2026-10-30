@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from PIL import Image
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from flipbook_atlas_resizer import parse_grid, parse_target_size, resize_atlas_pair
+from vfx_flipbook.flipbook_atlas_resizer import parse_grid, parse_target_size, resize_atlas_pair
 
 
 class FlipbookAtlasResizerTests(unittest.TestCase):

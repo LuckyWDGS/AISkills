@@ -118,8 +118,8 @@ Before calling an atlas final for Unreal, produce or verify:
 
 - `atlas.png`
 - `flipbook-manifest.json`
-- `ue-readiness-report.md` from `scripts/ue_flipbook_readiness.py`
-- `atlas-catalog.md` / `atlas-catalog.json` from `scripts/flipbook_asset_catalog.py` when a folder contains multiple candidates, preview variants, alpha support outputs, or rejected/raw sources
+- `ue-readiness-report.md` from `tools/ue_flipbook_readiness.py`
+- `atlas-catalog.md` / `atlas-catalog.json` from `tools/flipbook_asset_catalog.py` when a folder contains multiple candidates, preview variants, alpha support outputs, or rejected/raw sources
 - row/column grid, frame count, start frame, end frame
 - atlas size, raw pre-snap size, exact cell size
 - whether the atlas is native high-resolution generation, repacked high-resolution frames, or an upscale derivative
@@ -137,7 +137,7 @@ Before calling an atlas final for Unreal, produce or verify:
 Run the readiness gate whenever an atlas is intended for UE:
 
 ```powershell
-python scripts/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
+python tools/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
 The report statuses mean:
@@ -151,7 +151,7 @@ The report statuses mean:
 When several generated outputs exist beside each other, use the catalog tool to make selection and handoff less error-prone:
 
 ```powershell
-python scripts/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
+python tools/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
 ```
 
 The catalog groups manifest-backed assets, pairs RGB preview atlases with alpha support outputs, imports existing readiness reports, and marks assets as `recommended`, `usable`, `conditional`, `blocked`, or `needs-review`. It also repeats the practical UE defaults that matter most for VFX delivery:

@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from PIL import Image
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from flipbook_asset_catalog import build_catalog, catalog_to_markdown, parse_readiness
+from vfx_flipbook.flipbook_asset_catalog import build_catalog, catalog_to_markdown, parse_readiness
 
 
 class FlipbookAssetCatalogTests(unittest.TestCase):
