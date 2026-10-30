@@ -49,8 +49,9 @@ gameplay explanation or a proposed edit.
 Read existing graphs before choosing an edit. For a local change, use typed
 nodes/pins and preserve unrelated branches. Discover candidate node types and
 their exact pin names; do not infer them from UI labels or old inventories.
-Arrange newly authored nodes only when needed, preserving unrelated layout and
-the user's window state. Inspect the resulting connections/defaults, compile
+Arrange newly authored graphs with `scripts/blueprint_normalize.py` and
+`scripts/blueprint_layout.py` ([layout rules](blueprint-delivery-standards.md#4-readable-graph-layout)),
+preserving unrelated layout and the user's window state. Inspect the resulting connections/defaults, compile
 logic edits and investigate errors/warnings. For comment-only work, verify frame
 membership/text and unchanged logic-node positions/topology; compile if required
 by the editing API. Validate changed runtime behavior with a bounded background
@@ -79,10 +80,12 @@ Blueprints, animation/state graphs, materials and Niagara as appropriate:
 - Give new functions/variables/components clear names and Chinese categories.
   Every authored function graph gets a Chinese function frame around its entry
   (purpose, inputs, outputs, side effects, caller). Details-panel function
-  descriptions and variable tooltips have no write route in tested 5.8.4 (MCP
-  BlueprintTools/ObjectTools and editor Python checked), so list them in a
-  handoff description table. Keep project/API identifiers stable; do not rename
-  existing references just to translate them.
+  descriptions, variable tooltips and function categories have no stock write
+  route in 5.8.4; write them with `scripts/blueprint_tooltips.py` once the
+  bundled MCPBlueprintMetadata plugin is installed
+  ([delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules)),
+  otherwise list them in a handoff description table. Keep project/API
+  identifiers stable; do not rename existing references just to translate them.
 - Keep frame titles on one line (about 40 characters) and the explanation in the
   frame's details text; frames must not overlap or share members. A long wrapped
   title is how two frame headers end up drawn on top of each other.

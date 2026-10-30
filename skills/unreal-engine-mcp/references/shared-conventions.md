@@ -56,8 +56,9 @@ domain-specific details.
 - Read-only audits and local-only work (for example atlas generation) never
   insert annotations into untouched assets.
 - Blueprint functions get a Chinese function frame (purpose, inputs, outputs,
-  side effects, caller); variables get Chinese category paths. Function
-  descriptions and variable tooltips have no write route in tested 5.8.4, so the
-  handoff includes a description table instead.
+  side effects, caller); variables get Chinese category paths. Hover
+  descriptions and function categories need the bundled MCPBlueprintMetadata
+  editor plugin (`scripts/blueprint_tooltips.py`); without it the handoff
+  includes a description table instead.
 - Details and naming: [Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations)
   and [Blueprint delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules).

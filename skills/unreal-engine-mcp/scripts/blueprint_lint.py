@@ -8,8 +8,8 @@ BlueprintTools. Nothing is edited, compiled or saved.
     python scripts/blueprint_lint.py /Game/Gameplay/BP_Throwable --out <dir>
     python scripts/blueprint_lint.py /Game/Gameplay/BP_Throwable --inspect-dir <existing inspect output> --no-comments
 
-Layout geometry is estimated from node positions and pin counts (the API has no node sizes),
-so treat counts as review pointers, not pixel-exact measurements.
+Layout geometry is estimated by blueprint_geometry (the API has no node sizes), so treat
+counts as review pointers, not pixel-exact measurements. blueprint_layout.py fixes most of them.
 """
 
 from __future__ import annotations
@@ -28,16 +28,18 @@ _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
+from blueprint_geometry import estimate_box, pin_point, segment_hits_box  # noqa: E402
 from inspect_blueprint import EXEC_TYPES, analyze_snapshot, ref_path  # noqa: E402
 
 
 SCHEMA_VERSION = "blueprint_lint/1"
 # Thresholds in graph units (one grid square is 16).
-BACKWARD_TOLERANCE = 40          # an exec target this far left of its source counts as a backward wire
+BACKWARD_TOLERANCE = 40          # a wire target this far left of its source counts as a backward wire
 EXEC_LANE_JUMP = 480             # vertical jump between consecutive exec nodes
 LONG_DATA_WIRE = 1400            # data wire length; getters should sit next to their consumer
 GETTER_SPREAD = 900              # distance between the farthest consumers of one getter node
 OVERLAP_SHARE = 0.25             # overlap area relative to the smaller node
+THROUGH_LIMIT = 2                # wires through other nodes tolerated per graph
 LARGE_GRAPH_NODES = 30
 CJK = re.compile(r"[一-鿿]")
 MODULE_ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+){1,}")
@@ -54,23 +56,9 @@ def short_title(type_id: str) -> str:
     return type_id.rsplit("|", 1)[-1] or type_id
 
 
-def node_box(node: dict[str, Any], exec_types: set[str]) -> tuple[float, float, float, float]:
-    """Estimated (x, y, width, height) of a node from its title and pin counts."""
-    x, y = node["position"]["x"], node["position"]["y"]
-    ins, outs = len(node["input_pins"]), len(node["output_pins"])
-    is_getter = node_name(ref_path(node["node"])).startswith("K2Node_VariableGet") and ins == 0
-    has_exec = any(pin["type_id"] in exec_types for pin in node["input_pins"] + node["output_pins"])
-    if is_getter or (ins + outs <= 2 and not has_exec):
-        return x, y, 160.0, 48.0
-    width = min(420.0, max(200.0, 120 + 7 * len(short_title(node["type_id"]))))
-    return x, y, width, 44.0 + 24.0 * max(ins, outs)
-
-
-def pin_point(node: dict[str, Any], box: tuple[float, float, float, float], pin_name: str, output: bool) -> tuple[float, float]:
-    pins = node["output_pins"] if output else node["input_pins"]
-    index = next((i for i, pin in enumerate(pins) if pin["name"] == pin_name), 0)
-    x, y, width, _ = box
-    return (x + width if output else x), y + 36 + 24 * index
+def node_box(node: dict[str, Any], exec_types: set[str] | None = None) -> tuple[float, float, float, float]:
+    """Estimated (x, y, width, height); see blueprint_geometry for the calibration."""
+    return estimate_box(node)
 
 
 def segments_cross(a: tuple, b: tuple, c: tuple, d: tuple) -> bool:
@@ -122,6 +110,10 @@ def lint_layout(snapshot: dict[str, Any], analysis: dict[str, Any], exec_types: 
                     add("exec_lane_jump", "info", f"exec wire jumps {abs(end[1] - start[1]):.0f} units vertically: "
                         f"{label(source)} -> {label(target)}", nodes=[node_name(source), node_name(target)])
             else:
+                if end[0] < start[0] - BACKWARD_TOLERANCE:
+                    add("backward_data_wire", "warning", f"data wire runs right-to-left: {label(source)}.{edge['source']['name']} -> "
+                        f"{label(target)}.{edge['target']['name']}; place the data node left of its consumer",
+                        nodes=[node_name(source), node_name(target)])
                 length = math.dist(start, end)
                 if length > LONG_DATA_WIRE:
                     add("long_data_wire", "warning", f"{length:.0f}-unit data wire {label(source)}.{edge['source']['name']} -> "
@@ -141,6 +133,12 @@ def lint_layout(snapshot: dict[str, Any], analysis: dict[str, Any], exec_types: 
                 if share > OVERLAP_SHARE:
                     add("node_overlap", "warning", f"{label(first)} and {label(second)} overlap (~{share:.0%})",
                         nodes=[node_name(first), node_name(second)])
+        through = [(a[2], a[3], other) for a in segments for other in paths
+                   if other not in (a[2], a[3]) and segment_hits_box(a[0], a[1], boxes[other])]
+        if len(through) > THROUGH_LIMIT:
+            examples = "; ".join(f"{label(s)} -> {label(t)} crosses {label(o)}" for s, t, o in through[:4])
+            add("wire_through_node", "warning", f"{len(through)} wires pass through other nodes (limit {THROUGH_LIMIT}): "
+                f"{examples}", count=len(through))
         crossings = sum(1 for i, a in enumerate(segments) for b in segments[i + 1:]
                         if not {a[2], a[3]} & {b[2], b[3]} and segments_cross(a[0], a[1], b[0], b[1]))
         limit = max(4, len(segments) // 6)

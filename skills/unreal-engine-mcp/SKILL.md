@@ -24,7 +24,8 @@ For programmer tasks, start with [Blueprint programming](references/blueprint-pr
 `scripts/inspect_blueprint.py` captures existing nodes/pins and verifies both ends
 of each wire without authoring, compiling or saving the asset;
 `scripts/blueprint_lint.py` builds on it to check layout, debug leftovers, logging
-and Chinese annotations read-only.
+and Chinese annotations read-only. `scripts/blueprint_normalize.py` and
+`scripts/blueprint_layout.py` clean up and lay out authored graphs.
 
 ## Transport routing
 
@@ -195,9 +196,15 @@ For a gameplay feature, follow [Blueprint delivery standards](references/bluepri
    Route visuals through `unreal-material-artist` / `niagara-vfx-artist`.
 3. Build the `bDebugLog` + `DebugLog` log path first and log state transitions
    and failure branches; diagnose from `LogsToolset.GetLogEntries` before guessing.
-4. Lay graphs out left to right, one getter per consumer, no overlaps or
-   backward exec wires.
-5. Explain every function, module and variable group in Chinese.
+4. Run `scripts/blueprint_normalize.py --write` (getters instead of SET outputs,
+   one copy of a shared pure node per exec consumer), then
+   `scripts/blueprint_layout.py --write --reframe` (exec lane left to right, data
+   trees left of their consumer). Store an exec output read past the next exec
+   node in a local variable.
+5. Explain every function, module and variable group in Chinese: comment
+   frames, plus hover descriptions and function categories written with
+   `scripts/blueprint_tooltips.py` (needs the bundled MCPBlueprintMetadata editor
+   plugin; `scripts/install_blueprint_metadata_plugin.py`, with the user's consent).
 6. Verify behavior with runtime state and log numbers; screenshot only to
    answer a named visual question.
 7. Finish with `scripts/blueprint_lint.py --strict`.

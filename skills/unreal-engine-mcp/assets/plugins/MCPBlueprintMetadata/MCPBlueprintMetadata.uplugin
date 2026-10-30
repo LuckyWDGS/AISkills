@@ -1,0 +1,20 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "MCP Blueprint Metadata",
+	"Description": "Editor-only bridge for MCP/AI automation: writes and reads Blueprint function and variable descriptions (hover tooltips) and function categories from editor Python, which stock UE does not expose. 供 MCP / AI 自动化调用：写入和读取蓝图函数、变量的描述（悬停提示）与函数分类。",
+	"Category": "Editor",
+	"CreatedBy": "AISkills unreal-engine-mcp",
+	"EnabledByDefault": true,
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "MCPBlueprintMetadata",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

@@ -82,23 +82,48 @@ are diagnosed from the log instead of guesswork:
 
 ## 4. Readable graph layout
 
-A connected graph is not a finished graph. Lay out every authored graph so it
-reads left to right without tracing wires across the canvas:
+A connected graph is not a finished graph, and a lint pass is not proof of a
+readable one. Lay out every authored graph so it reads left to right without
+tracing wires across the canvas:
 
 - One horizontal execution lane per event or function; execution flows left to
-  right. No exec wire runs backward; a loop body sits to the right of its loop
-  node, below the lane.
-- Pure data nodes sit to the left of and slightly below the pin they feed.
-  **Use one getter per consumer** instead of wiring one variable getter across
-  the graph; getters are free.
-- Lanes are separated by at least two node heights; nodes never overlap; use
-  reroute (knot) nodes when a wire must bend around something.
-- Split a graph that grows past about 30 nodes, or a step that repeats, into a
-  named function with a clear input/output contract.
-- Arrange authored nodes with `BlueprintTools.arrange_nodes` /
-  `set_node_position`, then correct by hand. Never re-layout untouched nodes.
+  right. No exec wire runs backward. A loop continues the lane from `Completed`;
+  its body, an else branch or another extra exec output is a row dropped just
+  below what is already placed.
+- The pure (data) nodes feeding an exec node form a small tree in columns
+  directly to its left, below the exec wire, each output aimed at the pin it
+  feeds. Data wires never run right to left and never pass through other nodes.
+- **One getter per consumer**: never wire one variable getter, or a SET node's
+  output pin, across the graph; getters are free.
+- **One copy of a pure node per exec consumer**: a pure node (Transform
+  Location, Break Hit Result, a math node) feeding two exec nodes is copied, one
+  per exec node. The Blueprint VM re-evaluates pure nodes for every impure node
+  that pulls them, so the copies compute exactly what the shared node did.
+- **An exec node's output read past the next exec node** (for example a trace
+  hit used after a loop) is stored in a local variable right after the producer
+  and read with getters where needed. The editor offers no reroute-node action
+  through MCP or Python, so long skipping wires cannot be bent around nodes.
+- Nodes never overlap. Split a graph that grows past about 30 nodes, or a step
+  that repeats, into a named function with a clear input/output contract.
 - Delete disabled or abandoned nodes (for example a disabled `Event Tick`)
   before delivery instead of leaving them greyed out.
+
+Tools, in order, on graphs you authored (never re-layout a user's hand-arranged
+graph without asking; back the asset up first):
+
+```powershell
+python scripts/blueprint_normalize.py /Game/Path/BP_Feature --all --write --project <Project>
+python scripts/blueprint_layout.py /Game/Path/BP_Feature --all --entry-order K2Node_Event_0,K2Node_Event_1 --write --reframe --project <Project>
+```
+
+`blueprint_normalize.py` applies the getter and pure-copy rules and reports exec
+outputs read past the next node; `blueprint_layout.py` places nodes with
+size estimates calibrated on UE 5.8 (`blueprint_geometry.py`) and rebuilds each
+comment frame around its module. Frame membership is only computed once a graph
+has been shown in the editor UI (and is lost on duplicated assets); for an event
+graph with several frames pass `--frame-map K2Node_Event_0=BP.Feature.Init,...`
+so each module finds its frame by module ID. `BlueprintTools.arrange_nodes` alone does not
+produce this layout.
 
 ## 5. Chinese explanations for functions, variables and modules
 
@@ -114,17 +139,40 @@ reads left to right without tracing wires across the canvas:
   `抛物线投掷|设置`, `抛物线投掷|调试`) and Chinese-explained names in the
   module frames that use them.
 - **Function descriptions and variable tooltips** (the Details-panel
-  "Description" / "Tooltip") have no write route in tested UE 5.8.4: MCP
-  BlueprintTools, ObjectTools (`metaData` / `newVariables` unreadable) and the
-  editor Python API (`new_variables` and function-entry metadata not exposed)
-  were all checked. Put the text in the frames above and include a
-  function/variable description table in the handoff so the user can paste it
-  into Details if they want tooltips. Recheck after engine upgrades; do not
-  write a C++ plugin for it.
+  "Description" that shows when hovering a function or variable, and the
+  function category in My Blueprint): every authored function, member variable
+  and non-obvious local variable gets a Chinese description, and functions get
+  Chinese categories like their variables. Stock UE 5.8.4 has no write route
+  (MCP tools, the graph DSL, editor Python and every reachable native UFunction
+  were checked), so the skill ships a small editor plugin,
+  `assets/plugins/MCPBlueprintMetadata`:
+
+  ```powershell
+  python scripts/install_blueprint_metadata_plugin.py --uproject <Project>.uproject --engine-root <UE root>
+  python scripts/blueprint_tooltips.py /Game/Path/BP_Feature --spec <session>/tooltips.json --write --project <Project>
+  ```
+
+  Installing adds C++ to the user's project and needs a compiler and an editor
+  restart: ask before installing, and ask the user to save and restart the editor
+  (never restart it yourself). Once the plugin is in the project, write the
+  descriptions as part of every delivery, compile, and check the read-back
+  (`missing` must be empty). Without the plugin, say so before delivery and put a
+  paste-ready description table in the handoff.
 
 Comment frames are created and read through Epic's public
 `BlueprintGraphEditor` API over Python Remote Execution; see
 [Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations).
+
+## Saving and backups
+
+Edits made through MCP and editor Python live only in the editor until the asset
+is saved; closing or restarting the editor without saving discards them, and a
+backup made with `AssetTools.duplicate` is an unsaved asset that disappears too.
+The version on disk is the real backup when the asset was clean before your
+edits. At handoff, state which assets are unsaved, and before any step that needs
+an editor restart (installing a plugin) ask the user to save, or save with their
+explicit consent, and confirm afterwards that the reloaded asset still contains
+the delivery (`blueprint_lint.py`, `blueprint_tooltips.py`).
 
 ## Delivery check
 
@@ -138,13 +186,16 @@ categories without editing or saving, and reports:
 | Rule | Meaning |
 | --- | --- |
 | `backward_exec`, `exec_lane_jump` | execution wire runs right-to-left / jumps lanes |
-| `long_data_wire`, `getter_fanout` | a value wired across the graph; use a local getter or reroute |
+| `backward_data_wire` | data wire runs right-to-left; the data node belongs left of its consumer |
+| `wire_through_node` | wires pass through other nodes (more than 2 per graph) |
+| `long_data_wire`, `getter_fanout` | a value wired across the graph; use a local getter or a local variable |
 | `node_overlap`, `wire_crossings`, `large_graph` | nodes stacked, tangled rows, graph due for splitting |
 | `debug_draw`, `screen_print`, `no_logging` | debug presentation left in, screen prints, no log path |
 | `function_without_description`, `entry_without_frame` | missing Chinese function or module frame |
 | `frame_not_chinese`, `frame_without_module_id`, `frame_title_too_long`, `frame_overlap` | frame quality |
 | `variable_without_category` | variable left in the default category |
 
-Geometry is estimated from positions and pin counts, so treat layout counts as
-pointers to review. Deliver with zero warnings, or list each remaining warning
+Geometry is estimated by `blueprint_geometry.py` from pins, default-value widgets
+and titles (the API has no node sizes), so treat layout counts as pointers to
+review. Deliver with zero warnings, or list each remaining warning
 with its reason in the handoff.
