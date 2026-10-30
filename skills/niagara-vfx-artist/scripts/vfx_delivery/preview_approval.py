@@ -5,7 +5,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .core import normalize_cli_global_args, resolve_root_context, utc_now_iso, write_text
+from .core import normalize_cli_global_args, print_json, resolve_root_context, utc_now_iso, write_text
 from .effect_state import acceptance_default, approvals_default, load_effect_record, save_effect_record
 from .reference_cache import find_entry, load_index
 
@@ -89,14 +89,14 @@ def invalidate_command(args: argparse.Namespace) -> int:
         review["updated_at"] = utc_now_iso()
         changed += 1
     path = save_effect_record(ctx, "preview-approvals", args.effect, payload)
-    print({"path": str(path), "changed": changed, "current_anchor_revision": current_revision})
+    print_json({"path": str(path), "changed": changed, "current_anchor_revision": current_revision})
     return 0
 
 
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     payload = load_effect_record(ctx, "preview-approvals", args.effect, approvals_default(args.effect))
-    print(payload)
+    print_json(payload)
     return 0
 
 

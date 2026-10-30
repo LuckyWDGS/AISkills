@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from .core import normalize_cli_global_args, read_jsonl, resolve_root_context, utc_now_iso, write_text
+from .core import normalize_cli_global_args, print_json, read_jsonl, resolve_root_context, utc_now_iso, write_text
 from .effect_state import acceptance_default, approvals_default, load_effect_record, save_effect_record
 from .reference_gate import assert_anchor_ready, is_anchor_changed
 from .reference_cache import find_entry, load_index
@@ -180,7 +180,7 @@ def assert_ready_command(args: argparse.Namespace) -> int:
     lock = assert_anchor_ready(ctx, args.effect, args.require_entry_id, args.require_scope)
     entry_id = str(lock.get("entry_id", "") or "")
     cached_path = str(lock.get("cached_path", "") or "")
-    print(
+    print_json(
         {
             "effect": args.effect,
             "ready": True,
@@ -196,7 +196,7 @@ def assert_ready_command(args: argparse.Namespace) -> int:
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     payload = load_effect_record(ctx, "reference-acceptance", args.effect, acceptance_default(args.effect))
-    print(payload)
+    print_json(payload)
     return 0
 
 

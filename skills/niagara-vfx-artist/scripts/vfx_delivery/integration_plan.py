@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .core import normalize_cli_global_args, resolve_root_context, write_text
+from .core import normalize_cli_global_args, print_json, resolve_root_context, write_text
 from .effect_state import integration_default, load_effect_record, save_effect_record
 from .reference_gate import assert_anchor_ready
 from .visual_layer_map import load_map
@@ -73,7 +73,7 @@ def export_command(args: argparse.Namespace) -> int:
 
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    print(load_effect_record(ctx, "integration-plans", args.effect, integration_default(args.effect)))
+    print_json(load_effect_record(ctx, "integration-plans", args.effect, integration_default(args.effect)))
     return 0
 
 

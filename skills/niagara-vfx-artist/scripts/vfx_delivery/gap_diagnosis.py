@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .core import append_jsonl, default_report_path, read_jsonl, resolve_root_context, slugify, utc_now_iso, write_text
+from .core import append_jsonl, default_report_path, print_json, read_jsonl, resolve_root_context, slugify, utc_now_iso, write_text
 
 
 SUSPECT_LAYERS = (
@@ -139,7 +139,7 @@ def list_command(args: argparse.Namespace) -> int:
     for entry in read_jsonl(diagnosis_path(ctx, args.effect)):
         if args.layer and entry.get("layer") != args.layer:
             continue
-        print(entry)
+        print_json(entry, indent=None)
     return 0
 
 

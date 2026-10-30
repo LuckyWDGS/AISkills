@@ -1,12 +1,6 @@
-from __future__ import annotations
+"""Command-line entry point; tools/_launch.py runs main() of the scripts/ module with this file's name."""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-
-from vfx_delivery.design_compare import main
-
+import _launch
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_launch.run(__file__))

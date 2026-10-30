@@ -16,6 +16,7 @@ from .core import (
     sha256_file,
     slugify,
     utc_now_iso,
+    print_json,
 )
 from .image_ops import crop_image, image_size, upscale_image
 
@@ -206,7 +207,7 @@ def list_command(args: argparse.Namespace) -> int:
 def print_json_entry(ctx: RootContext, entry: dict[str, Any]) -> None:
     serializable = dict(entry)
     serializable["cached_path"] = relative_or_absolute(Path(entry["cached_path"]), ctx.project_root)
-    print(serializable)
+    print_json(serializable)
 
 
 def build_parser() -> argparse.ArgumentParser:

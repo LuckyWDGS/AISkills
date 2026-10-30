@@ -7,6 +7,8 @@ description: Use when the user needs Unreal Engine Niagara VFX help or a complet
 
 ## Editor transport
 
+**Sibling skills:** install `unreal-engine-mcp` (every editor-connected tool imports its shared `scripts/ue_mcp` client) and `vfx-flipbook-generator` (only `tools/flipbook_builder.py` re-exports its builder) in the same `skills/` folder; a missing one stops with a clear error. `unreal-material-artist` is a workflow partner, not a code dependency.
+
 Follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background editor connections only, MCP first with
 Python Remote Execution for a verified gap, and Chinese emitter/module display
 descriptions with stable IDs on new or modified Niagara modules (existing
@@ -48,7 +50,7 @@ Default team model:
    - `tools/visual_layer_map.py`
    - `tools/design_compare_checklist.py`
    - `tools/preview_approval.py`
-   Before implementation, explicitly tell the user which design/reference image will be used as the active implementation anchor and wait for confirmation. Also state the implementation scope inside that image, such as `full effect`, `single layer`, `drag trail only`, or another precise sub-scope.
+   Before implementation, state which design/reference image is the active implementation anchor and the scope inside it, such as `full effect`, `single layer`, `drag trail only`, or another precise sub-scope. Proceed when exactly one image is supplied and the request names the scope; stop and ask only when several images could be the anchor, the scope is ambiguous, or the anchor changes an earlier approved one.
 
 3. Respect anchor authority and continuity.
    - If the active anchor changes, treat earlier previews, diffs, tuning notes, and diagnoses as historical only until they are revalidated against the new anchor.

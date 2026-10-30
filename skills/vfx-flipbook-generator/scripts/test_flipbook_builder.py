@@ -10,7 +10,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from vfx_delivery.flipbook_builder import (
+from vfx_flipbook.flipbook_builder import (
     VideoMetadata,
     atlas_size_for_mode,
     build_atlas_name,
@@ -266,7 +266,7 @@ class FlipbookBuilderTests(unittest.TestCase):
             root = Path(temp_name)
             exe = root / ("ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg")
             exe.write_text("", encoding="utf-8")
-            with patch("vfx_delivery.flipbook_builder.local_ffmpeg_roots", return_value=[root]):
+            with patch("vfx_flipbook.flipbook_builder.local_ffmpeg_roots", return_value=[root]):
                 self.assertEqual(Path(resolve_executable("ffmpeg", None)).resolve(), exe.resolve())
 
     def test_subprocess_error_includes_stderr(self) -> None:

@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .core import normalize_cli_global_args, resolve_root_context, utc_now_iso, write_text
+from .core import normalize_cli_global_args, print_json, resolve_root_context, utc_now_iso, write_text
 from .effect_state import effect_preview_approvals_default, load_effect_record, save_effect_record
 
 
@@ -112,7 +112,7 @@ def invalidate_command(args: argparse.Namespace) -> int:
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     payload = load_effect_record(ctx, "effect-preview-approvals", args.effect, effect_preview_approvals_default(args.effect))
-    print(payload)
+    print_json(payload)
     return 0
 
 

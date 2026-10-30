@@ -15,6 +15,7 @@ from .core import (
     slugify,
     utc_now_iso,
     write_text,
+    print_json,
 )
 from .reference_gate import assert_anchor_ready
 
@@ -186,7 +187,7 @@ def export_command(args: argparse.Namespace) -> int:
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     payload = load_map(ctx, args.effect)
-    print(payload)
+    print_json(payload)
     return 0
 
 

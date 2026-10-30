@@ -82,6 +82,10 @@ def save_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def print_json(payload: Any, indent: int | None = 2) -> None:
+    print(json.dumps(payload, ensure_ascii=False, indent=indent))
+
+
 def append_jsonl(path: Path, payload: Any) -> None:
     ensure_dir(path.parent)
     with path.open("a", encoding="utf-8") as handle:

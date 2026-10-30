@@ -86,6 +86,8 @@ def command(args: argparse.Namespace) -> int:
         asset=list(args.asset or []),
         final_system=list(args.final_system or []),
         final_material=list(args.final_material or []),
+        material_integration_probe=list(args.material_integration_probe or []),
+        allow_material_integration_warnings=args.allow_material_integration_warnings,
         effect_type_contract=args.effect_type_contract,
         require_niagara_renderer=list(args.require_niagara_renderer or []),
         require_niagara_material=list(args.require_niagara_material or []),
@@ -175,6 +177,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--final-system", action="append", required=True)
     parser.add_argument("--final-material", action="append", default=[])
     parser.add_argument("--asset", action="append", default=[])
+    parser.add_argument("--material-integration-probe", action="append", default=[], help="niagara_material_integration_probe.py report; auto-discovered by effect when omitted.")
+    parser.add_argument("--allow-material-integration-warnings", action="store_true")
     parser.add_argument("--local-file", default="")
     parser.add_argument("--source-policy", default="ue-only", choices=("generated", "required", "ue-only"))
     parser.add_argument("--texture-asset-path", default="")

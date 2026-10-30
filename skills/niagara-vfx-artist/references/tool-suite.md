@@ -288,6 +288,8 @@ Purpose:
 - run a real effect delivery chain instead of only fixture tests
 - sequence Niagara audit, optional live asset verify, delivery package/check, dashboard generation, and optional finalize
 - keep package health honest: the tool execution can pass while `delivery_overall` is still `risk` or `incomplete`
+- pass `--material-integration-probe <report>` (repeatable, plus `--allow-material-integration-warnings`) to pin probe reports; otherwise the package step auto-discovers them by effect
+- `--skip-audit` packages without an editor; `--allow-blocked-ue` records an unreachable editor as a `blocked` step instead of failing
 - write `.codex/session/vfx-delivery/chain-smoke/<effect>/delivery-chain-smoke.json`
 
 Key command:

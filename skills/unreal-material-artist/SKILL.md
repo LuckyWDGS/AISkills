@@ -7,6 +7,8 @@ description: Use when Codex needs a UE Material/Shader Specialist - designing, a
 
 ## Editor transport
 
+**Sibling skills:** install `unreal-engine-mcp` in the same `skills/` folder. Every editor-connected tool imports its shared `scripts/ue_mcp` client and stops with a clear error when it is missing; local-only tools run without it. `niagara-vfx-artist` and `cm-imagegen` are workflow partners, not code dependencies.
+
 Follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background editor connections only, MCP first with
 Python Remote Execution for a verified gap, and Chinese annotations on new or
 modified material modules (comment frames, Chinese parameter groups and

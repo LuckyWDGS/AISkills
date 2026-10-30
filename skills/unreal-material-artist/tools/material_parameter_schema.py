@@ -1,13 +1,6 @@
-from __future__ import annotations
+"""Command-line entry point; tools/_launch.py runs main() of the scripts/ module with this file's name."""
 
-import sys
-from pathlib import Path
-
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-
-from unreal_material_tools.material_parameter_schema import main
-
+import _launch
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_launch.run(__file__))

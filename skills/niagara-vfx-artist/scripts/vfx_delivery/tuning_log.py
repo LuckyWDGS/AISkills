@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .core import append_jsonl, default_report_path, read_jsonl, resolve_root_context, utc_now_iso, write_text
+from .core import append_jsonl, default_report_path, print_json, read_jsonl, resolve_root_context, utc_now_iso, write_text
 
 
 def log_path(ctx, effect: str) -> Path:
@@ -47,7 +47,7 @@ def export_command(args: argparse.Namespace) -> int:
 def list_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     for entry in read_jsonl(log_path(ctx, args.effect)):
-        print(entry)
+        print_json(entry, indent=None)
     return 0
 
 

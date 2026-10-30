@@ -4,7 +4,7 @@ import argparse
 from collections import Counter
 from pathlib import Path
 
-from .core import load_json, normalize_cli_global_args, read_jsonl, resolve_root_context, write_text
+from .core import load_json, normalize_cli_global_args, print_json, read_jsonl, resolve_root_context, write_text
 from .effect_state import learning_default, load_effect_record, save_effect_record
 from .preview_approval import approvals_default
 from .reference_acceptance import acceptance_default
@@ -135,7 +135,7 @@ def export_command(args: argparse.Namespace) -> int:
 
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
-    print(load_effect_record(ctx, "learning-loop", args.effect, learning_default(args.effect)))
+    print_json(load_effect_record(ctx, "learning-loop", args.effect, learning_default(args.effect)))
     return 0
 
 

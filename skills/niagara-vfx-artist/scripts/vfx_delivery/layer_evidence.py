@@ -7,7 +7,7 @@ from typing import Any
 
 from PIL import Image, ImageFilter, ImageStat
 
-from .core import load_json, resolve_root_context, save_json, utc_now_iso
+from .core import load_json, print_json, resolve_root_context, save_json, utc_now_iso
 from .effect_state import effect_folder, evidence_default, load_effect_record, save_effect_record
 from .image_ops import crop_image
 from .reference_cache import find_entry, load_index
@@ -151,7 +151,7 @@ def attach_command(args: argparse.Namespace) -> int:
 def show_command(args: argparse.Namespace) -> int:
     ctx = resolve_root_context(args.root)
     payload = load_effect_record(ctx, "layer-evidence", args.effect, evidence_default(args.effect))
-    print(payload)
+    print_json(payload)
     return 0
 
 

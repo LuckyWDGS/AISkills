@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the offline test suites of all four UE skills, with non-loopback networking blocked.
 
-Each suite runs in its own process (two skills ship a package named ``vfx_delivery``).
+Each suite runs in its own process, so suites cannot leak imports into each other.
 The client tests talk to a fake MCP server on 127.0.0.1, so loopback stays allowed.
 Used by CI (.github/workflows/ue-skills-tests.yml) and locally:
 
@@ -53,7 +53,7 @@ import sys
 import unittest
 
 suite = unittest.defaultTestLoader.discover(".", pattern="test_*.py")
-result = unittest.TextTestRunner(verbosity=1).run(suite)
+result = unittest.TextTestRunner(verbosity=1, buffer=True).run(suite)  # tool stdout shows only on failure
 sys.exit(not result.wasSuccessful())
 '''
 
