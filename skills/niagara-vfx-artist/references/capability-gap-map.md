@@ -1,11 +1,8 @@
 # Capability Gap Map
 
-UE 5.8.4 routing update: this is a historical workflow/implementation map,
-not proof of current official MCP gaps. Use Epic MCP for covered Niagara and
-editor operations; custom overlay and upstream-sync entries below describe
-retired UnrealBridge implementations that no longer run. Recheck each gap
-against live discovery; use Epic Python Remote Execution for a remaining one. See
-[niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md).
+A workflow capability map, not a list of official MCP gaps: recheck any editor gap
+against live discovery and use Epic Python Remote Execution for a remaining one. See
+[niagara-mcp-toolsets.md](niagara-mcp-toolsets.md).
 
 This map describes what is still missing to turn a reference image or text brief into a fully usable Niagara effect with minimal guesswork.
 
@@ -176,32 +173,39 @@ Current first-pass tool:
 - Preview approval should eventually integrate side-by-side visual diff automatically at review time.
 - Asset planning should eventually understand project-specific naming conventions and existing reusable masters.
 - Integration planning should eventually read real skeleton/socket/notify context from the target project.
-- Write-side UE helpers and the Niagara asset assistant should eventually cover richer emitter construction, user-parameter authoring, source/event wiring, and safe retirement of stale assets.
-- The local safe emitter-authoring route now exists, but it still needs broader higher-level helpers on top: emitter renaming, role assignment presets, common fire/smoke/trail recipes, and stronger post-write graph validation for complex systems.
-- Upstream sync is now baseline-capable, but still needs more hardening around stale-local file retirement, helper-clone cleanliness, and future cases where upstream adds a file path that overlaps a preserved local overlay path.
-- Live test result on 2026-05-13: directly writing `NiagaraSystem.EmitterHandles` via export-text was rejected by the engine and round-tripped back unchanged. Treat raw `EmitterHandles` export-text overwrite as a non-viable route for safe emitter authoring in the current bridge/tooling stack.
-- Niagara stack discovery still needs a safer route than `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters; that path crashed UE 5.7 during live testing.
+- `niagara_asset_assistant` plans need an MCP executor (NiagaraToolset_System through `builtin_mcp.py batch`, resolving emitter and renderer `StackItemReference`s from the topology tools), then richer emitter construction, user-parameter authoring, source/event wiring and safe retirement of stale assets.
+- Live test result on 2026-05-13: writing `NiagaraSystem.EmitterHandles` via export-text was rejected and round-tripped unchanged. Raw `EmitterHandles` export-text is not a route for emitter authoring; use `AddEmitter` / `RemoveEmitter`.
+- Stack discovery goes through the MCP topology tools; `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters crashed UE 5.7 and stays off the route.
 - Visual diff QA should eventually compare motion clips, not only still frames.
 - Delivery packaging should eventually pull final active assets directly from the project instead of relying on manual final lists.
 - Learning loop should eventually auto-build stronger case studies from shipped effects without manual curation.
-- Component variable editing is now bridged and proven, but not through raw ToolsetRegistry JSON round-trip:
-  - direct ToolsetRegistry execution for `NiagaraToolset_Component.GetVariable/SetVariable` proved fragile around `FNiagaraTypeDefinition` JSON input shape
-  - the local bridge now owns the stable path with authoritative `UNiagaraComponent` variable read/write underneath the same path-driven API
-- Bridge runtime hygiene is now part of Niagara delivery capability:
-  - a user script rebinding top-level `sys` can poison older UnrealBridge exec wrappers
-  - hardened wrapper logic is now required capability, not optional polish, because Niagara delivery depends on long-running safe exec sessions
 
 ## Priority Order
 
 1. Reference acceptance gate
 2. Layer evidence extraction
 3. Preview approval gate
-4. Write-side UE helpers
+4. MCP executor for asset-assistant plans
 5. Asset plan generator
 6. Integration hookup planner
 7. Visual diff QA
 8. Delivery packaging
 9. Learning loop
+
+## Automation Candidates
+
+Automate a check when it repeats often, is costly to miss, and has rules that can be
+written down. Highest value first:
+
+1. Naming: materials, MIs, textures, Niagara systems and emitters; parameter prefixes `S_ / V_ / T_ / SS_`.
+2. Effect Type and scalability assigned on every Niagara System.
+3. Low-end variants and per-platform versions present.
+4. Flipbook/atlas resolution, grid and naming.
+5. Exposed user-parameter count and naming.
+6. One-step template assets: standard MI, Niagara System and preset emitters, with batch Effect Type, naming and default user parameters.
+
+Offline scans and reports suit Python tools; batch authoring close to the artist
+workflow suits Editor Utilities or `builtin_mcp.py batch`.
 
 ## End Goal
 

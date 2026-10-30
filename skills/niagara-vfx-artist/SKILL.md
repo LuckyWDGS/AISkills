@@ -1,6 +1,6 @@
 ---
 name: niagara-vfx-artist
-description: Use when the user needs Unreal Engine Niagara VFX help or complete usable Niagara effect delivery from text, reference images, or existing UE assets. Acts as the VFX Lead for effect direction, reference deconstruction, layer/carrier decisions, emitter/system design, renderer selection, Niagara module planning, source/event wiring, animation/gameplay integration, graph-first Niagara validation, controlled preview capture, scalability, cleanup, and PC or Android Niagara performance optimization. For material graph authoring, texture planning, HLSL, material audits, or shader performance, use unreal-material-artist as the Material/Shader Specialist alongside this skill.
+description: Use when the user needs Unreal Engine Niagara VFX help or a complete usable Niagara effect from text, reference images or existing UE assets. Acts as the VFX Lead - effect direction, reference deconstruction, layers and carriers, systems/emitters/renderers/modules, events and gameplay integration, structural validation and preview capture through Epic MCP, scalability, cleanup and PC/Android performance. Material graphs, textures, HLSL and shader cost go to unreal-material-artist alongside this skill.
 ---
 
 # Niagara VFX Artist
@@ -20,7 +20,7 @@ gap. The historical 5.8.4 case involved opening an asset; it does not authorize
 opening/focusing editor UI for this user. If background loading cannot establish
 readiness, report that specific boundary rather than repeatedly sending writes.
 
-The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired and every editor-connected tool here runs on Epic MCP: `niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`, `ue_smoke`, `effect_control_schema` / `control_provenance_check` (user variables via `niagara_audit`), `asset_cleanup` and `delivery_finalize --promote-assets` (AssetTools batches). `niagara_asset_assistant` plans; apply its plans with NiagaraToolset_System tools through `builtin_mcp.py batch`. Previews use `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). See [references/niagara-toolsets-vs-unrealbridge.md](references/niagara-toolsets-vs-unrealbridge.md).
+The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired and every editor-connected tool here runs on Epic MCP: `niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`, `ue_smoke`, `effect_control_schema` / `control_provenance_check` (user variables via `niagara_audit`), `asset_cleanup` and `delivery_finalize --promote-assets` (AssetTools batches). `niagara_asset_assistant` plans; apply its plans with NiagaraToolset_System tools through `builtin_mcp.py batch`. Previews use `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). See [references/niagara-mcp-toolsets.md](references/niagara-mcp-toolsets.md).
 
 ## Overview
 
@@ -60,7 +60,7 @@ Default team model:
 
 5. Request a material contract when needed.
    If a layer needs a material, define the required carrier contract for `unreal-material-artist`: renderer type, UV expectations, Particle Color/Dynamic Parameter usage, required texture channels, alpha behavior, blend mode expectation, sorting risk, and platform budget.
-   For Niagara Ribbon / trail layers, explicitly state that the renderer's default UV convention is `U = ribbon length` and `V = ribbon width`. Ask the material side to put primary trail motion on raw `TexCoord0.U` / X, such as `Time * Speed -> Append(X, 0)` and length tiling `(Tiling_U, 1.0)`, while keeping width falloff on raw `TexCoord0.V` / Y. V-axis offsets may be used for vertical wobble/distortion. If a renderer uses custom UV overrides or a material intentionally remaps art-space texture axes, read it back and document the exception before handing the contract to material work.
+   For Niagara Ribbon / trail layers, hand over the ribbon UV contract (`U = ribbon length`, `V = ribbon width`; motion on `U`, width falloff on `V`) from [carrier-and-ribbon-rules.md](../unreal-material-artist/references/carrier-and-ribbon-rules.md#niagara-ribbon-uv-contract). If a renderer uses custom UV overrides or the material remaps art-space axes, read it back and document the exception in the contract.
 
 6. Implement or plan Niagara.
    Prefer template-first creation and reviewable mutation plans. Use official MCP for execution and structural readback. `niagara_asset_assistant.py` generates the plans (it has no executor); apply them with NiagaraToolset_System tools (`AddEmitter`, `AddRenderer`, `SetRendererData`, `AddModule`, `SetStackInputData`, `ApplyStackIssueFix`) and AssetTools through `builtin_mcp.py batch`, then read back with `niagara_audit.py` (`niagara_asset_assistant.py inspect-system` runs the same audit).
@@ -161,7 +161,7 @@ Read only what the task needs. [references/index.md](references/index.md) says w
 - **Fluids:** [fluids-and-flowmaps](references/fluids-and-flowmaps.md), [fluids-parameters](references/fluids-parameters.md), [fluids-production-pipeline](references/fluids-production-pipeline.md), [fluids-recipes](references/fluids-recipes.md), [fluids-troubleshooting](references/fluids-troubleshooting.md)
 - **Production and delivery:** [production-workflow-map](references/production-workflow-map.md), [end-to-end-vfx-delivery-map](references/end-to-end-vfx-delivery-map.md), [effect-layer-production-gate](references/effect-layer-production-gate.md), [asset-planning-checklist](references/asset-planning-checklist.md), [project-bootstrap-checklist](references/project-bootstrap-checklist.md), [review-checklist](references/review-checklist.md), [validation-and-qa](references/validation-and-qa.md), [self-training-and-iteration-loop](references/self-training-and-iteration-loop.md)
 - **Debugging and performance:** [debugging](references/debugging.md), [common-failure-cases](references/common-failure-cases.md), [ribbon-actor-trail-debugging](references/ribbon-actor-trail-debugging.md), [platform-optimization](references/platform-optimization.md), [mobile-checklist](references/mobile-checklist.md)
-- **Tools and editor:** [tool-suite](references/tool-suite.md), [niagara-toolsets-vs-unrealbridge](references/niagara-toolsets-vs-unrealbridge.md), [capability-gap-map](references/capability-gap-map.md), [tooling-and-automation-ideas](references/tooling-and-automation-ideas.md)
+- **Tools and editor:** [tool-suite](references/tool-suite.md), [niagara-mcp-toolsets](references/niagara-mcp-toolsets.md), [capability-gap-map](references/capability-gap-map.md)
 
 ## Output Expectations
 

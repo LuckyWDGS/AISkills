@@ -1,6 +1,6 @@
 # Closed-Loop Tool Suite
 
-> **Epic MCP only.** UnrealBridge is retired; every editor-connected tool below reads or writes through Epic's built-in MCP (`--mcp-url`, `--project`). See [niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md).
+> **Epic MCP only.** UnrealBridge is retired; every editor-connected tool below reads or writes through Epic's built-in MCP (`--mcp-url`, `--project`). See [niagara-mcp-toolsets.md](niagara-mcp-toolsets.md).
 
 This suite is core to the skill, not optional scaffolding.
 

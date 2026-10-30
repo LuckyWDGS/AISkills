@@ -18,10 +18,14 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
   Use when material work needs one handoff bundle that gathers plan, contract, texture QA, preview, audit, risk notes, missing evidence, and next actions.
 
 - [material-acceptance-gate.md](material-acceptance-gate.md)
-  Use when a delivery package needs to become a hard approved material delivery report with `delivery_summary.approved_for_reuse=true` for downstream reuse or Niagara delivery gating.
+  Use when a delivery package needs to become a hard approved material delivery report with `delivery_summary.approved_for_reuse=true` for downstream reuse or Niagara delivery gating, including the stricter stock-grade v2 gate.
 
-- [material-acceptance-gate-v2.md](material-acceptance-gate-v2.md)
-  Use when stronger stock-grade reuse approval should require parameter schema, provenance, preview matrix, readability, and translucent sorting evidence as hard gates.
+- [carrier-and-ribbon-rules.md](carrier-and-ribbon-rules.md)
+  Use for the canonical Niagara ribbon UV contract, ribbon breakup and "two images" diagnosis, wrapped mesh seams and mips, two-sided additive layering, and SubUV sprite defaults.
+
+- [evidence-chain.md](evidence-chain.md)
+  Use after a route is built and audited: readability scoring, regression baselines and drift diagnosis, variant tiers and permutations, cost and platform plans, project triage, recipe and refactor flows, reuse gates, and the end-to-end smoke chain.
+
 
 - [material-delivery-smoke.md](material-delivery-smoke.md)
   Use when the existing material-side tools should be run as one end-to-end smoke chain instead of being orchestrated by hand.

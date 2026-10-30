@@ -11,7 +11,7 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
 - [niagara-operations-and-workflows.md](niagara-operations-and-workflows.md)
   Use for templates, user parameters, scratch pad usage, renderers, animation notifies, and practical Niagara workflows.
 
-- [niagara-toolsets-vs-unrealbridge.md](niagara-toolsets-vs-unrealbridge.md)
+- [niagara-mcp-toolsets.md](niagara-mcp-toolsets.md)
   Use for official MCP coverage, supported references/topology, legacy script boundaries, and remaining fallback decisions.
 
 - [common-effect-patterns.md](common-effect-patterns.md)
@@ -132,7 +132,5 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
   这份文档专门用于 Android 和低端硬件上的 Niagara 特效落地检查。
 
 - [capability-gap-map.md](capability-gap-map.md)
-  UE 5.8.4 routing update: this is a historical workflow/implementation map, not proof of current official MCP gaps. Use Epic MCP for covered Niagara and editor operations; custom overlay and upstream-sync entries below describe retired...
+  Use to see which workflow capabilities exist, which still need tightening, the build priority, and which production checks are worth automating.
 
-- [tooling-and-automation-ideas.md](tooling-and-automation-ideas.md)
-  这份文档用于沉淀哪些 VFX 生产环节值得做成脚本、Editor Utility、Python 工具或自动检查。

@@ -47,19 +47,9 @@ The fallback recipe keeps the same ribbon UV contract and artist-facing control 
 
 ## Ribbon UV Contract
 
-Default Niagara ribbon convention:
-
-- Raw `TexCoord0.U` / X = ribbon length.
-- Raw `TexCoord0.V` / Y = ribbon width.
-- Longitudinal panning, flame travel, noise scroll, and length tiling use raw `U`.
-- Width masks, edge fades, center-core masks, and side breakup use raw `V`.
-
-Art-space texture exception:
-
-- If the texture is authored so its vertical sampling axis is the visible trail flow, explicitly create `Flow_UV = float2(TexCoord0.V, TexCoord0.U)` for texture sampling only.
-- Put panning and tiling on `Flow_UV.y`.
-- Keep width masks on the original raw `TexCoord0.V`.
-- Document this exception in the material comments and handoff. It is not the default ribbon rule.
+Use the canonical contract in [carrier-and-ribbon-rules.md](carrier-and-ribbon-rules.md#niagara-ribbon-uv-contract):
+raw `U` = length (flame travel, noise scroll, length tiling), raw `V` = width (width
+masks, edge fades, center core), and the documented `Flow_UV` art-space exception.
 
 ## Packed Mask Convention
 
