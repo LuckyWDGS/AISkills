@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unreal Sequencer"
+  short_description: "Level Sequences, cameras and cinematics through Epic's official MCP"
+  default_prompt: "Use $unreal-sequencer to plan, build, verify and render a UE Level Sequence (cameras, camera cuts, actor motion, fades) through Epic's official Sequencer MCP toolsets."

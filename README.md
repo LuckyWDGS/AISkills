@@ -27,7 +27,8 @@ Choose by intent:
   `niagara-vfx-artist`, and `vfx-flipbook-generator` as appropriate.
 - Work in Unreal Engine: start with `unreal-engine-mcp`; use
   `unreal-material-artist` for materials/shaders, `niagara-vfx-artist` for
-  Niagara systems.
+  Niagara systems, and `unreal-sequencer` for Level Sequences, cameras and
+  cinematics.
 - Deploy or troubleshoot an owned VPS proxy and subscription with
   [vps-proxy-deploy](skills/vps-proxy-deploy/SKILL.md).
 - Compile screenplay director packages into video prompts with

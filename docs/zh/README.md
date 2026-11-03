@@ -27,7 +27,8 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 - 普通生图、改图、UI mockup：`cm-imagegen`；要修 prompt、定风格或做内容策略：
   `image-generation-director`。
 - UE 编辑器、关卡、蓝图、资产自动化：`unreal-engine-mcp`；材质/Shader：
-  `unreal-material-artist`；Niagara：`niagara-vfx-artist`。
+  `unreal-material-artist`；Niagara：`niagara-vfx-artist`；关卡序列、镜头与过场：
+  `unreal-sequencer`。
 - 抖音 AI 内容包装、发布和复盘：`douyin-ai-publisher`；人像服装配方库需点名 `portrait-recipe-studio`。
 - 抖音 AI 创作者方向、对标拆片与原创小样：`douyin-ai-creator-lab`，实际发布再接 `douyin-ai-publisher`。
 - 自有 VPS 代理节点、订阅与分流排障：`vps-proxy-deploy`。
@@ -63,6 +64,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 | [unreal-engine-mcp](./unreal-engine-mcp.md) | 通过 UE5.8 官方 MCP 操作编辑器、资产、关卡、蓝图、PIE 和日志 | 需要 Codex 直接检查或修改正在运行的 Unreal 编辑器 | `$unreal-engine-mcp 检查 UE5.8 MCP，读取当前关卡并运行 20 秒 PIE 验证` |
 | [unreal-material-artist](./unreal-material-artist.md) | 设计、审查和优化 UE 材质图、Shader、贴图、HLSL、Substrate 和预算 | 火焰、能量、UI、后处理、Decal、Niagara 材质或 Shader 性能问题 | `$unreal-material-artist 审查这个 Niagara 材质的透明度、采样数和发光预算` |
 | [niagara-vfx-artist](./niagara-vfx-artist.md) | 设计、实现和优化 Niagara 发射器、渲染器、材质和 VFX 层级 | 火焰、命中、护盾、爆炸、拖尾、流体或移动端 VFX | `$niagara-vfx-artist 把这个能量护盾参考拆成可实现的 Niagara 分层方案` |
+| [unreal-sequencer](./unreal-sequencer.md) | 通过 UE5.8 官方 Sequencer MCP 搭建、检查、验证和渲染关卡序列：摄像机、镜头切换、推拉摇移、焦距对焦、Actor 动画、淡入淡出 | 过场动画、开场镜头、镜头巡游、游戏内演出，或审查修复已有序列 | `$unreal-sequencer 做一段 8 秒开场：广角建立镜头推到主角特写，开头 0.5 秒淡入` |
 | [vfx-flipbook-generator](./vfx-flipbook-generator.md) | 生成、补帧、修复和打包烟尘、火焰、爆炸等 Flipbook/SubUV Atlas | 需要 Sprite Sheet、序列图、Power-of-two 图集或 Niagara SubUV 资源 | `$vfx-flipbook-generator 把 12 张火焰参考帧扩展成 64 格透明图集` |
 
 ### 界面实现

@@ -123,7 +123,7 @@ Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection guid
 
 ## Shared material / Niagara routing
 
-The `unreal-material-artist`, `niagara-vfx-artist`, and `vfx-flipbook-generator` skills use this same routing. Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Image capture uses `scripts/capture.py` (`EditorAppToolset.CaptureViewport` / `CaptureAssetImage`, `mcp_capture/1` reports). Read `ProgrammaticToolset.get_execution_environment` before its first script.
+The `unreal-material-artist`, `niagara-vfx-artist`, `vfx-flipbook-generator` and `unreal-sequencer` skills use this same routing (`unreal-sequencer` covers Level Sequences, cameras and cinematics through the Sequencer toolsets). Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Image capture uses `scripts/capture.py` (`EditorAppToolset.CaptureViewport` / `CaptureAssetImage`, `mcp_capture/1` reports). Read `ProgrammaticToolset.get_execution_environment` before its first script.
 
 Local image processing, reference locks, visual comparison, manifests, and report packaging stay local: they are workflow code. Their editor-connected tools all run on Epic MCP; none constructs a plugin client.
 
