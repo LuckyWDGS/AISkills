@@ -1,0 +1,4 @@
+interface:
+  display_name: "抖音AI创作实验室"
+  short_description: "研究对标与普通作品，把观看规律转为原创方向、小样和真实反馈"
+  default_prompt: "使用 $douyin-ai-creator-lab 研究这条抖音和相近作者，给我有证据边界的方向建议与可试生的小样包。"
