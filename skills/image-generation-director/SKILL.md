@@ -27,6 +27,7 @@ The user's current preference: prompts should prioritize the desired visual effe
 The user explicitly requested on 2026-10-28: default to `cm-imagegen` first; if it cannot produce an image, try the system built-in `imagegen` tool. This supersedes the earlier system-first preference.
 
 - Use `cm-imagegen` first for raster generation, edits, reference images, and visual director boards unless the user explicitly selects another route for the current request.
+- For cm calls, follow the user's 2026-11-04 preference: explicitly use `generate --api images` for `/v1/images/generations` and `edit --api images` for `/v1/images/edits`. Default to `--model gpt-image-2.5-sunburst --quality max`; preserve explicit user model/quality overrides. These Images endpoints have no independent reasoning-effort field; `max` is image quality, not a verified reasoning setting. See cm-imagegen for provider configuration and payloads.
 - After a confirmed non-safety technical failure or tool unavailability, try the system built-in `imagegen` tool if available. This saved user preference authorizes that fallback; keep cm's configured provider and endpoints unchanged.
 - Let cm's own bounded retry policy finish. Recover or poll a running or uncertain job before submitting a fallback request, to avoid duplicate generation.
 - If neither route is available, report the actual limitation. A local `imagegen` skill file alone does not mean the built-in tool is callable.

@@ -1,6 +1,9 @@
 """Single-provider behavior with no installed controller profile or image skill."""
 import argparse
+import base64
 import contextlib
+from email import policy
+from email.parser import BytesParser
 import io
 import json
 import os
@@ -27,7 +30,7 @@ class StandaloneSub2ApiTests(unittest.TestCase):
             'env_key = "SUB2API_TEST_KEY"\n', encoding='utf-8')
         os.environ['SUB2API_TEST_KEY'] = 'test-only-not-a-real-key'
 
-    def test_copying_only_skill_uses_responses_without_profile(self):
+    def test_copying_only_skill_uses_images_without_profile(self):
         for command, extra in (('generate', ['--prompt', 'circle']),
                                ('edit', ['--prompt', 'circle', '--image', 'input.png']),
                                ('doctor', []), ('check-config', [])):
@@ -36,7 +39,9 @@ class StandaloneSub2ApiTests(unittest.TestCase):
                 with mock.patch.object(sys, 'argv', ['cm_image_gen.py', command, *extra]):
                     self.assertEqual(cm.main(), 0)
                 args = execute.call_args.args[0]
-                self.assertEqual(args.api, 'responses')
+                self.assertEqual(args.api, 'images')
+                self.assertEqual(cm.image_model_selection(args)['image_model'], cm.DEFAULT_MODEL)
+                self.assertEqual(cm.image_quality(args, cm.DEFAULT_MODEL), 'max')
                 self.assertEqual(cm.configured_responses_model(args), 'available-controller')
 
     def test_doctor_reads_only_primary_connection_and_hides_key(self):
@@ -48,10 +53,116 @@ class StandaloneSub2ApiTests(unittest.TestCase):
             self.assertEqual(cm.main(), 0)
         data = json.loads(output.getvalue())
         self.assertFalse(data['network_call_performed'])
-        self.assertEqual(data['configured_provider']['routes'][0]['endpoint'], '/responses')
-        self.assertEqual(data['payload_shapes'][0]['tool_choice'], {'type': 'image_generation'})
+        self.assertEqual(data['configured_provider']['routes'][0]['endpoint'], '/images/generations')
+        self.assertEqual(data['configured_provider']['routes'][1]['endpoint'], '/images/edits')
+        self.assertEqual(data['payload_shapes'][0]['json_fields']['quality'], 'max')
+        self.assertEqual(data['payload_shapes'][1]['form_fields']['quality'], 'max')
+        self.assertEqual(data['requested_quality'], 'max')
+        self.assertNotIn('responses_reasoning', data)
         self.assertNotIn(provider.api_key, output.getvalue())
         self.assertEqual([k for k in data if k.endswith('_provider')], ['configured_provider'])
+
+    def test_images_profile_needs_no_controller_and_cli_can_explicitly_select_responses(self):
+        profile = self.root / cm.LOCAL_CONFIG_DIR_NAME / 'controller.json'
+        profile.parent.mkdir()
+        profile.write_text('{"api":"images"}', encoding='utf-8')
+        self.assertEqual(cm.controller_defaults(), {'api': 'images'})
+        output = io.StringIO()
+        with mock.patch.object(sys, 'argv', ['cm_image_gen.py', 'doctor', '--api', 'responses',
+                                            '--responses-reasoning', 'max', '--show-payload-shape']), \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(cm.main(), 0)
+        data = json.loads(output.getvalue())
+        self.assertEqual(data['default_api'], 'images')
+        self.assertEqual(data['configured_provider']['routes'][0]['endpoint'], '/responses')
+        self.assertEqual(data['payload_shapes'][0]['reasoning_effort'], 'max')
+
+    def test_cli_sends_actual_images_json_and_multipart_with_max_quality(self):
+        """Exercise parsing, route selection, serialization and saved outputs offline."""
+        from PIL import Image
+
+        source = self.root / 'reference.png'
+        Image.new('RGB', (16, 16), 'blue').save(source)
+        png = source.read_bytes()
+        image_result = {'data': [{'b64_json': base64.b64encode(png).decode()}]}
+        profile_path = self.root / cm.LOCAL_CONFIG_DIR_NAME / 'controller.json'
+        profile_path.parent.mkdir()
+        profiles = [None,
+                    {'api': 'images', 'responses_model': 'stored-controller', 'responses_reasoning': 'max'},
+                    {'api': 'responses', 'responses_model': 'old-controller', 'responses_reasoning': 'max'}]
+        for profile in profiles:
+            if profile is not None:
+                profile_path.write_text(json.dumps(profile), encoding='utf-8')
+            for command in ('generate', 'edit'):
+                for quality_override in (None, 'low'):
+                    expected_quality = quality_override or 'max'
+                    endpoint = '/images/generations' if command == 'generate' else '/images/edits'
+                    submitted = []
+
+                    def fake_urlopen(request, timeout=None):
+                        if request.get_method() == 'GET':
+                            self.assertEqual(request.full_url, 'https://sub2api.example/v1/models')
+                            data = {'data': [{'id': cm.DEFAULT_MODEL}]}
+                        else:
+                            self.assertEqual(request.get_method(), 'POST')
+                            self.assertEqual(request.full_url, 'https://sub2api.example/v1' + endpoint)
+                            content_type = request.get_header('Content-type')
+                            if command == 'generate':
+                                self.assertEqual(content_type, 'application/json')
+                                fields = json.loads(request.data)
+                            else:
+                                self.assertTrue(content_type.startswith('multipart/form-data;'))
+                                message = BytesParser(policy=policy.default).parsebytes(
+                                    ('Content-Type: ' + content_type + '\r\n\r\n').encode() + request.data)
+                                parts = {part.get_param('name', header='content-disposition'): part
+                                         for part in message.iter_parts()}
+                                self.assertEqual(parts['image'].get_payload(decode=True), png)
+                                fields = {name: part.get_payload(decode=True).decode()
+                                          for name, part in parts.items() if part.get_filename() is None}
+                            self.assertEqual(fields['model'], cm.DEFAULT_MODEL)
+                            self.assertEqual(fields['quality'], expected_quality)
+                            self.assertEqual(fields['prompt'], 'Change the mug to blue')
+                            for key in ('reasoning', 'reasoning_effort', 'tools', 'tool_choice'):
+                                self.assertNotIn(key, fields)
+                            submitted.append(request.full_url)
+                            data = image_result
+                        response = io.BytesIO(json.dumps(data).encode())
+                        response.status = 200
+                        response.headers = {'content-type': 'application/json'}
+                        return response
+
+                    argv = ['cm_image_gen.py', command, '--prompt', 'Change the mug to blue',
+                            '--size', '16x16', '--out-dir', str(self.root / 'out')]
+                    if command == 'edit':
+                        argv += ['--image', str(source)]
+                    if profile and profile['api'] == 'responses':
+                        argv += ['--api', 'images']
+                    if quality_override:
+                        argv += ['--quality', quality_override]
+                    output = io.StringIO()
+                    with self.subTest(profile=profile, command=command, quality=expected_quality), \
+                         mock.patch.object(cm.urllib.request, 'urlopen', side_effect=fake_urlopen), \
+                         mock.patch.object(sys, 'argv', argv), contextlib.redirect_stdout(output):
+                        self.assertEqual(cm.main(), 0)
+                    result = json.loads(output.getvalue())
+                    self.assertEqual(len(submitted), 1)
+                    self.assertEqual(result['endpoint'], endpoint)
+                    self.assertEqual(result['requested_quality'], expected_quality)
+                    self.assertEqual(Path(result['paths'][0]).read_bytes(), png)
+
+    def test_quality_defaults_respect_selected_model_and_explicit_override(self):
+        for model, expected in ((cm.DEFAULT_MODEL, 'max'), ('image2.5-flare', 'max'),
+                                ('gpt-image-2.5-sunburst-2026-09-08', 'max'),
+                                ('gpt-image-2', None), ('custom-image-model', None)):
+            for explicit in (None, 'low', 'auto'):
+                args = argparse.Namespace(model=model, api='images', prompt='circle', size='1024x1024',
+                    response_format='b64_json', n=None, quality=explicit, background=None, output_format=None)
+                with self.subTest(model=model, explicit=explicit), \
+                     mock.patch.object(cm, 'model_catalog_check', return_value={'ok': True}):
+                    payload, selected = cm.image_payload(args)
+                    tool = cm.image_tool_config(args, selected)[0]
+                self.assertEqual(payload.get('quality'), explicit or expected)
+                self.assertEqual(tool.get('quality'), explicit or expected)
 
     def test_normal_image_request_forces_tool_but_explicit_extra_wins(self):
         args = argparse.Namespace(responses_model=None, responses_reasoning=None,
