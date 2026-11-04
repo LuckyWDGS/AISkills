@@ -15,6 +15,8 @@ import urllib.request
 from pathlib import Path
 
 DEFAULT_MODEL = "gpt-image-2.5-sunburst"
+DEFAULT_API = "images"
+DEFAULT_IMAGE_QUALITY = "max"
 LEGACY_MODEL = "gpt-image-2"
 
 # Official GPT Image 2.5 is published as two model families. Keep the short
@@ -554,8 +556,9 @@ def image_tool_config(args: argparse.Namespace, image_model: str) -> list[dict]:
         "size": args.size,
         "action": "generate",
     }
-    if args.quality:
-        tool["quality"] = args.quality
+    quality = image_quality(args, image_model)
+    if quality:
+        tool["quality"] = quality
     if args.background:
         tool["background"] = args.background
     if args.output_format:
@@ -601,20 +604,25 @@ def responses_payload(
 
 
 def controller_defaults() -> dict:
-    """Explicit user-selected image controller profile; never changes chat config."""
+    """Optional image route/controller defaults; never changes chat config."""
     path = codex_home() / LOCAL_CONFIG_DIR_NAME / "controller.json"
     if not path.exists():
         return {}
     try:
         profile = json.loads(path.read_text(encoding="utf-8"))
-        if (not isinstance(profile, dict) or profile.get("api") != "responses"
-                or not isinstance(profile.get("responses_model"), str)
-                or not profile["responses_model"].strip()
-                or profile.get("responses_reasoning") not in {"low", "medium", "high", "xhigh", "max", "ultra"}):
+        if not isinstance(profile, dict):
             raise ValueError("invalid controller profile")
+        if "api" in profile and profile["api"] not in ("images", "responses"):
+            raise ValueError("invalid API route")
+        if "responses_model" in profile and (not isinstance(profile["responses_model"], str)
+                                             or not profile["responses_model"].strip()):
+            raise ValueError("invalid Responses model")
+        if "responses_reasoning" in profile and profile["responses_reasoning"] not in (
+                "low", "medium", "high", "xhigh", "max", "ultra"):
+            raise ValueError("invalid Responses reasoning")
     except (OSError, ValueError) as exc:
         raise SystemExit(f"Invalid image controller profile: {path} ({type(exc).__name__})") from exc
-    return {key: profile[key] for key in ("api", "responses_model", "responses_reasoning")}
+    return {key: profile[key] for key in ("api", "responses_model", "responses_reasoning") if key in profile}
 
 
 def parse_sse_events(text: str) -> list[dict]:
@@ -2318,6 +2326,19 @@ def image_model_selection(args: argparse.Namespace) -> dict:
     }
 
 
+def image_quality(args: argparse.Namespace, model: str) -> str | None:
+    """Use the maximum supported image quality, separate from text reasoning."""
+    explicit = getattr(args, "quality", None)
+    if explicit:
+        return explicit
+    for family in ("gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
+        if model == family or model.startswith(family + "-"):
+            return DEFAULT_IMAGE_QUALITY
+    # Preserve provider defaults for other models; older GPT Image models do
+    # not support max. An explicit --quality always takes precedence.
+    return None
+
+
 def model_catalog_check(provider: ImageApiProvider, model: str) -> dict:
     """Read-only preflight: never generate or silently substitute another model."""
     url = f"{provider.base_url}/models"
@@ -2381,8 +2402,9 @@ def image_payload(args: argparse.Namespace) -> tuple[dict, str]:
     }
     if args.n is not None:
         payload["n"] = args.n
-    if args.quality:
-        payload["quality"] = args.quality
+    quality = image_quality(args, model)
+    if quality:
+        payload["quality"] = quality
     if args.background:
         payload["background"] = args.background
     if args.output_format:
@@ -2436,7 +2458,7 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
             },
         }
         for field in ("quality", "background", "output_format"):
-            value = getattr(args, field, None)
+            value = image_quality(args, model) if field == "quality" else getattr(args, field, None)
             if value:
                 shape["tool_fields"][field] = value
         return shape
@@ -2448,7 +2470,7 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
         "response_format": getattr(args, "response_format", DEFAULT_RESPONSE_FORMAT),
     }
     for field in ("n", "quality", "background", "output_format"):
-        value = getattr(args, field, None)
+        value = image_quality(args, model) if field == "quality" else getattr(args, field, None)
         if value is not None:
             common_fields[field] = value
     if operation == "edit":
@@ -2498,9 +2520,10 @@ def doctor(args: argparse.Namespace) -> int:
         "skill_primary_channel": "cm_image_gen_cli",
         "network_call_performed": False,
         "api": args.api,
-        "default_api": controller_defaults().get("api", "responses"),
+        "default_api": controller_defaults().get("api", DEFAULT_API),
         "commands": operations,
         "image_model": model,
+        "requested_quality": image_quality(args, model),
         **selection,
         "model_semantics": "Image model requested by the CLI; gateway Responses controller and actual upstream execution are separate.",
         "payload_shape_included": show_payload_shape,
@@ -2658,7 +2681,7 @@ def transport_probe(args: argparse.Namespace) -> int:
             "size": args.size,
             "response_format": args.response_format,
             "n": args.n,
-            "quality": args.quality,
+            "quality": payload.get("quality"),
             "background": args.background,
             "output_format": args.output_format,
         }
@@ -2772,6 +2795,7 @@ def generate(args: argparse.Namespace) -> int:
     result = {
         "ok": not size_check["size_validation_failed"],
         "operation": "generate",
+        "requested_quality": payload.get("quality"),
         "attempt_count": len(previous_errors) + 1,
         **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
@@ -2822,7 +2846,7 @@ def edit(args: argparse.Namespace) -> int:
         "size": args.size,
         "response_format": args.response_format,
         "n": args.n,
-        "quality": args.quality,
+        "quality": payload.get("quality"),
         "background": args.background,
         "output_format": args.output_format,
     }
@@ -2869,6 +2893,7 @@ def edit(args: argparse.Namespace) -> int:
     result = {
         "ok": not size_check["size_validation_failed"],
         "operation": "edit",
+        "requested_quality": payload.get("quality"),
         "attempt_count": len(previous_errors) + 1,
         **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
@@ -2916,8 +2941,8 @@ def main() -> int:
     gen.add_argument(
         "--api",
         choices=["images", "responses"],
-        default="responses",
-        help="HTTP API route to use. Default: Responses API with the image_generation tool.",
+        default=DEFAULT_API,
+        help="HTTP API route to use. Default: Images API /images/generations.",
     )
     gen.add_argument("--model")
     gen.add_argument("--responses-model")
@@ -2929,7 +2954,7 @@ def main() -> int:
     gen.add_argument("--out-dir")
     gen.add_argument("--filename")
     gen.add_argument("--n", type=int)
-    gen.add_argument("--quality")
+    gen.add_argument("--quality", help="Image quality; default max for Sunburst/Flare. Separate from Responses reasoning.")
     gen.add_argument("--background")
     gen.add_argument("--output-format", choices=["png", "jpeg", "webp"])
     gen.add_argument(
@@ -2947,8 +2972,8 @@ def main() -> int:
     edit_parser.add_argument(
         "--api",
         choices=["images", "responses"],
-        default="responses",
-        help="HTTP API route to use. Default: Responses API with image inputs and the image_generation tool.",
+        default=DEFAULT_API,
+        help="HTTP API route to use. Default: Images API /images/edits with multipart image inputs.",
     )
     edit_parser.add_argument("--model")
     edit_parser.add_argument("--responses-model")
@@ -2960,7 +2985,7 @@ def main() -> int:
     edit_parser.add_argument("--out-dir")
     edit_parser.add_argument("--filename")
     edit_parser.add_argument("--n", type=int)
-    edit_parser.add_argument("--quality")
+    edit_parser.add_argument("--quality", help="Image quality; default max for Sunburst/Flare. Separate from Responses reasoning.")
     edit_parser.add_argument("--background")
     edit_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
     edit_parser.add_argument(
@@ -2972,7 +2997,7 @@ def main() -> int:
                              help="Maximum image submissions, including the first (1-5; default 3).")
     edit_parser.set_defaults(func=edit)
     doctor_parser = sub.add_parser("doctor")
-    doctor_parser.add_argument("--api", choices=["images", "responses"], default="responses")
+    doctor_parser.add_argument("--api", choices=["images", "responses"], default=DEFAULT_API)
     doctor_parser.add_argument("--operation", choices=["generate", "edit", "all"], default="all")
     doctor_parser.add_argument("--model")
     doctor_parser.add_argument("--responses-model")
@@ -2985,7 +3010,7 @@ def main() -> int:
     doctor_parser.add_argument("--show-payload-shape", action="store_true")
     doctor_parser.set_defaults(func=doctor)
     check_parser = sub.add_parser("check-config")
-    check_parser.add_argument("--api", choices=["images", "responses"], default="responses")
+    check_parser.add_argument("--api", choices=["images", "responses"], default=DEFAULT_API)
     check_parser.add_argument("--operation", choices=["generate", "edit", "all"], default="all")
     check_parser.add_argument("--model")
     check_parser.add_argument("--responses-model")

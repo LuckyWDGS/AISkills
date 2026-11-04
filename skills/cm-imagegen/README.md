@@ -7,7 +7,8 @@
 ## 功能
 
 - 文生图、图生图和多张参考图。
-- 默认使用 Responses API 的 `image_generation` 工具；可显式使用同一服务的 Images API。
+- 默认显式调用 Images API：文生图 `/v1/images/generations`，图生图 `/v1/images/edits`。
+- 默认模型 `gpt-image-2.5-sunburst`，最高画质 `quality=max`；Images 接口没有独立的推理强度参数。
 - 只使用一个主服务，没有备用 API/key，也不会自动切换其他服务。
 - 同一请求最多尝试 3 次，保留失败原因；未结束的任务和流中断不会盲目重复提交。
 - 保存图片到本地，去除 SSE 重复结果，并检查输出尺寸。
@@ -49,23 +50,23 @@ python -m pip install -r requirements-optional.txt
 
 ```bash
 # 本地诊断，不联网、不生成图片
-python scripts/cm_image_gen.py doctor --show-payload-shape
+python scripts/cm_image_gen.py doctor --api images --show-payload-shape
 
 # 读取模型目录，不生成图片
-python scripts/cm_image_gen.py doctor --check-model
+python scripts/cm_image_gen.py doctor --api images --check-model
 
 # 真实生成，会使用服务额度
-python scripts/cm_image_gen.py generate --prompt "A blue ceramic mug on a plain white background" --out-dir ./generated-images
+python scripts/cm_image_gen.py generate --api images --model gpt-image-2.5-sunburst --quality max --prompt "A blue ceramic mug on a plain white background" --out-dir ./generated-images
 
 # 图生图
-python scripts/cm_image_gen.py edit --image ./reference.png --prompt "Change only the mug color to orange" --out-dir ./generated-images
+python scripts/cm_image_gen.py edit --api images --model gpt-image-2.5-sunburst --quality max --image ./reference.png --prompt "Change only the mug color to orange" --out-dir ./generated-images
 ```
 
-默认图片模型为 `gpt-image-2.5-sunburst`。`--model` 选择图片模型，`--responses-model` 选择控制模型；实际支持情况以自己的服务为准。没有外部 `controller.json` 也能运行。
+`--model` 选择图片模型，`--quality` 可覆盖画质。显式选择其他模型时，仅 Sunburst/Flare 默认使用 `max`，其他模型保留服务默认画质。`--api responses` 仅供明确需要 Responses 的工作流使用，其控制模型和推理设置不作用于 Images。没有外部 `controller.json` 也能运行。
 
 ## 验证与边界
 
-运行现有 50 项离线测试：
+运行离线测试：
 
 ```bash
 python -m unittest discover -s scripts -p "test_*.py"
@@ -73,7 +74,7 @@ python -m unittest discover -s scripts -p "test_*.py"
 
 GitHub Actions 在 Python 3.10 和 3.12 上运行同一套离线测试，不配置 API key、不调用真实生图服务。
 
-2026-10-25 的 Sub2API 文生图与隔离环境图生图实测均成功。该次服务拒绝 `ultra`，接受 `max`；这是当时的服务行为，不代表所有部署都相同。
+2026-10-25 的 Sub2API 文生图与隔离环境图生图实测均成功。该次 Responses 控制器拒绝 `reasoning.effort=ultra`，接受 `max`；这是当时的控制器行为，不能作为 Images 画质参数的验证。
 
 **技能不能保证每次请求成功或输出精确尺寸。** 实测请求 1024×1024，返回 1374×1145。需要精确尺寸时加 `--require-exact-size`，不匹配会报错；4K 请求自动严格检查。服务权限、配额、上游账号和网络仍由使用者自己的环境决定。
 

@@ -25,11 +25,13 @@ $env:CODEXMANAGER_IMAGE_API_KEY = '<your-own-primary-key>'
 
 ## 模型与默认路由
 
-默认使用 Responses + image_generation，显式选择图片工具。控制模型与图片模型是两个字段：控制模型来自 `--responses-model`、可选 `controller.json` 的默认值、`CODEXMANAGER_RESPONSES_MODEL`、Codex 当前配置或脚本默认值；图片模型默认 `gpt-image-2.5-sunburst`，可用 `--model` 设置。
+默认使用 Images API，命令中显式写 `--api images`：文生图调用 `/v1/images/generations`（JSON），图生图/参考图调用 `/v1/images/edits`（multipart 上传）。这些路径以服务 base URL 已包含 `/v1` 为前提；脚本会保留服务自己的 base 前缀。
 
-可选的 `$CODEX_HOME/cm-imagegen/controller.json` 只存路由和模型偏好，不存地址/key；缺少它仍可工作。已有的配置会继续生效。使用 `--api images` 可显式选择同一服务的 Images 接口，失败时不会自动切换。
+默认图片模型为 `gpt-image-2.5-sunburst`，最高画质为 `quality=max`。Sunburst/Flare 未指定画质时也使用 `max`；可用 `--model`、`--quality` 显式覆盖。其他模型不自动套用 `max`。Images 没有独立的 `reasoning.effort` 参数，最高画质不能等同于已验证的最高推理强度。
 
-迁移旧配置时注意：本次 Sub2API 实测拒绝 `reasoning.effort=ultra`，接受 `max`。如旧的图片控制器文件仍写着 `ultra`，应改成该服务接受的强度或移除该可选配置；不要因此修改聊天模型或全局推理设置。
+可选的 `$CODEX_HOME/cm-imagegen/controller.json` 只存路由和控制器偏好，不存地址/key；缺少它仍可工作。使用 Images 时将 `api` 设为 `images`，最小配置为 `{"api":"images"}`；旧 Responses 配置仍可读取，显式 `--api images` 优先于配置。失败时不会自动切换接口。
+
+仅在明确需要 Responses 时使用 `--api responses`；其 `--responses-model` 和 `--responses-reasoning` 与图片模型/画质独立，服务接受的推理档位可能不同。不要为此修改聊天模型或全局推理设置。
 
 ## 检查和使用
 
@@ -37,16 +39,16 @@ $env:CODEXMANAGER_IMAGE_API_KEY = '<your-own-primary-key>'
 
 ```powershell
 # 离线：查看配置和请求字段，不显示 key
-python scripts/cm_image_gen.py doctor --show-payload-shape
+python scripts/cm_image_gen.py doctor --api images --show-payload-shape
 
 # 联网读取模型目录，不生成图片
-python scripts/cm_image_gen.py doctor --check-model
+python scripts/cm_image_gen.py doctor --api images --check-model
 
 # 真实生图，会使用该服务额度；诊断时只请求一次
-python scripts/cm_image_gen.py generate --prompt 'A blue ceramic mug on a plain white background. No text.' --max-attempts 1 --out-dir './generated-images'
+python scripts/cm_image_gen.py generate --api images --model gpt-image-2.5-sunburst --quality max --prompt 'A blue ceramic mug on a plain white background. No text.' --max-attempts 1 --out-dir './generated-images'
 
 # 使用自己的参考图
-python scripts/cm_image_gen.py edit --image './reference.png' --prompt 'Change only the mug color to orange.' --out-dir './generated-images'
+python scripts/cm_image_gen.py edit --api images --model gpt-image-2.5-sunburst --quality max --image './reference.png' --prompt 'Change only the mug color to orange.' --out-dir './generated-images'
 ```
 
 成功标准是 `ok=true` 且 `paths[]` 指向可打开的图片。目录检查通过、HTTP 200、模型输出了一段文字，都不能代替实际图片结果。
@@ -55,10 +57,10 @@ python scripts/cm_image_gen.py edit --image './reference.png' --prompt 'Change o
 
 - 主 key 有效、余额/配额可用，绑定正确的 OpenAI 分组。
 - 分组允许图片生成（`allow_image_generation`），并有支持相应图片工具的健康上游账号。
-- 请求中的控制模型与图片模型在该服务的路由中可用。
+- 服务的 Images 接口可用，支持请求的图片模型和 `quality=max`。仅 Responses 模式还需支持对应控制模型。
 - HTTPS 证书可验证，网络和反向代理允许长时间流式响应。
 
-默认请求已经显式携带 image_generation 工具，不需要依赖服务端给普通聊天自动注入工具。不要仅为本技能修改全局聊天注入设置。只有文本转发能力的上游不能通过安装 skill 获得生图能力。
+默认请求直接调用 Images 接口，不需要依赖服务端给普通聊天自动注入工具。只有文本转发能力的上游不能通过安装 skill 获得生图能力。
 
 ## 失败与测试
 
