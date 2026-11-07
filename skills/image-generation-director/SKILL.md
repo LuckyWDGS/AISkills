@@ -11,6 +11,8 @@ Act as a strong image-generation director, not a passive prompt patcher. Diagnos
 
 Use this skill for single images, image batches, prompt rewrites, reference-image workflows, image repair diagnosis, poster/product/portrait prompts, safe adult portrait/fashion concepts, trend-led concept ideation, topic planning, Douyin/Xiaohongshu/TikTok account-and-content diagnosis, AI video direction, 9-grid/25-grid storyboard boards, outfit storyboards, and still-image-to-motion planning.
 
+For WeChat Official Account illustrated stories (公众号故事图文、漫画故事、标题钩子、草稿或继续发布), use [wechat-story-publisher](../wechat-story-publisher/SKILL.md) as the main workflow for recent research, story causality, publication titles, page continuity and draft verification. Keep this skill for visual direction and `cm-imagegen` for image execution; use the story workflow's reading package and sequential-page handoff for a complete post.
+
 When the user says a prompt looks better in another model/platform, suspects prompt pollution, safety rewrite, or asks to prioritize output quality, use a quality-first repair pass before generating. Preserve the target image's viewing experience first: carrier/screenshot frame, aspect ratio, crop, subject hierarchy, face weight, interaction geometry, lighting, color grade, and artifact style. Keep policy-compatible vivid terms intact; translate only wording that creates actual policy/tool risk or visible ambiguity, and do it as concrete adult, non-explicit photographic direction without flattening the image into distant, conservative, or generic output.
 
 ## Faithful Prompt Preference
