@@ -1,6 +1,6 @@
 ---
 name: douyin-ai-creator-lab
-description: Research public Douyin and Bilibili AI-video references, separate advertising from work samples, develop an original pilot, and review actual results. Use for 抖音/B站AI创作者方向、对标拆片、庇护所/梦核/环境影像研究、Muse首片生成与剪辑、从参考到系列复盘；publishing execution uses douyin-ai-publisher.
+description: Research public Douyin and Bilibili AI-video references, separate advertising from work samples, develop an original pilot, and review actual results. Use for 抖音/B站AI创作者方向、对标拆片、庇护所/梦核/环境影像研究、Muse生成与剪辑、成片横版适配及B站投稿；Douyin publishing uses douyin-ai-publisher.
 ---
 
 # 抖音与B站AI创作实验室
@@ -14,7 +14,9 @@ description: Research public Douyin and Bilibili AI-video references, separate a
 - 实际生图：使用当前可用的图像生成Skill。已安装image-generation-director/cm-imagegen时沿用用户路由偏好，真正生成并验图；工具不可用则交制作简报并明确图未完成。
 - 实际视频提示词：使用ai-video-prompt-director及当次平台适配器；参考选择、导演意图先于平台语法。用户未明确平台且没有有效持续偏好时，只问一次平台。已选Muse而底层模型未显示时，沿用自然中文导演稿并记模型未知，不反复要求二选一H3/Seedance。
 - 用户已授权用Muse生成、剪辑或修片：读[Muse制作与剪辑](references/muse-production-and-editing.md)，完成真实媒体和独立核验。仅研究/写提示词不触发生成；既有授权范围内的片长、单元与常规剪辑选择由Codex执行。
-- 成片发布：使用douyin-ai-publisher及真实媒体、具体账号与当前授权；研究或建立全流程不等于发布任何未确定的成片。
+- 已有成片改画幅：读[Muse制作与剪辑的尺寸与导出部分](references/muse-production-and-editing.md#尺寸与导出陷阱)，按用户选定的保留画面、裁切或重新制作路线执行。
+- 成片发抖音：使用douyin-ai-publisher及真实媒体、具体账号与当前授权。
+- 已确定成片发B站：读[B站投稿核验](references/bilibili-publishing.md)，核实际表单、双比例封面、AI声明和提交状态。研究或建立全流程不等于发布任何未确定的成片。
 
 在项目中先读AGENTS和当前进度。动态案例、账号数据、图片、成片和发布记录留项目；Skill只保存经实际使用支持的方法。不要把用户一个项目的画风、每镜时长或声音选择变成所有项目的要求。
 
