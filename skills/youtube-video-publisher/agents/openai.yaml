@@ -1,0 +1,4 @@
+interface:
+  display_name: "YouTube 投稿助手"
+  short_description: "在 YouTube Studio 上传成片、填写标题说明标签、受众与合成内容声明，停在发布前交用户确认"
+  default_prompt: "使用 $youtube-video-publisher 把这条已确定的成片上传到 YouTube Studio：核频道与查重、填写详细信息、受众和合成内容声明、检查与可见性；停在最后的发布按钮前，由我处理。"

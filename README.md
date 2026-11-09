@@ -4,7 +4,7 @@ Personal Codex skills managed as a single repository.
 
 ## Quick skill picker
 
-This repository contains 20 Codex skill packages. You can simply describe the
+This repository contains 21 Codex skill packages. You can simply describe the
 task in natural language; Codex selects a matching skill when available. For
 an explicit request, write `$<skill-name>` in the prompt, for example
 `$unreal-engine-mcp inspect the open UE 5.8 editor and report PIE state`.
@@ -26,6 +26,10 @@ Choose by intent:
   declaration, BV verification) with
   [bilibili-video-publisher](skills/bilibili-video-publisher/SKILL.md); it stops at
   the filled submission page unless the user authorizes that specific video.
+- Upload a finalized video or Short through YouTube Studio (audience, altered
+  content disclosure, checks, visibility) with
+  [youtube-video-publisher](skills/youtube-video-publisher/SKILL.md); it stops
+  before the final Publish/Save unless the user authorizes that specific video.
 - Create WeChat illustrated stories with [wechat-story-publisher](skills/wechat-story-publisher/SKILL.md): recent research, complete stories, compelling titles, coherent images and reload-verified drafts; publish when the current request authorizes it.
 - Build characters, storyboards, or VFX assets: combine
   `fantasy-character-design`, `short-video-storyboard`,
