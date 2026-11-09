@@ -13,7 +13,7 @@ Choose by intent:
 
 - Plan a product feature or UI flow: `feature-experience` first; use
   `ui-from-design` when an accepted design image already exists.
-- Generate or edit images: [cm-imagegen](skills/cm-imagegen/README.md) (standalone, single-provider Sub2API support); use `image-generation-director` for
+- Generate/edit images or request native GIF/SVG: [cm-imagegen](skills/cm-imagegen/README.md) (GPT Image 2.6, single-provider Sub2API support; format access depends on the upstream); use `image-generation-director` for
   prompt direction, trend/content strategy, or image-to-video planning.
 - Use [portrait-recipe-studio](skills/portrait-recipe-studio/SKILL.md) when explicitly
   requesting its portrait and clothing prompt recipes.

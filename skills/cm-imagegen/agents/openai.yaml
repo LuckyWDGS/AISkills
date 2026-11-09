@@ -1,9 +1,9 @@
 interface:
   display_name: "CM Image Gen"
-  short_description: "Generate images through configured Sub2API"
+  short_description: "Generate images; request native GIF/SVG via your provider"
   icon_small: "./assets/cm-imagegen-small.png"
   icon_large: "./assets/cm-imagegen.png"
-  default_prompt: "Use $cm-imagegen to generate or edit images through the configured Sub2API provider."
+  default_prompt: "Use $cm-imagegen to generate or edit images, or request native GIF/SVG through the configured provider and verify the returned files."
 
 policy:
   allow_implicit_invocation: true
