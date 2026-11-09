@@ -3,6 +3,9 @@
 
 Successful platform states need evidence starting with ``UI:`` or ``界面证据：``.
 The text is an operator's record, not independent verification by this script.
+
+Without --ledger, the ledger is <DOUYIN_PUBLISHER_HOME or ~/.douyin-publisher>/<account>/ledger.json,
+so one account shares one ledger across projects.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import tempfile
 from urllib.parse import urlsplit
@@ -63,6 +67,27 @@ def absolute_path(value: str, label: str) -> Path:
     return path.resolve()
 
 
+ACCOUNT_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+
+
+def publisher_home() -> Path:
+    return Path(os.environ.get("DOUYIN_PUBLISHER_HOME") or Path.home() / ".douyin-publisher").expanduser().resolve()
+
+
+def default_ledger(account: str | None) -> Path:
+    if not account:
+        raise LedgerError("ledger_or_account_required", "请提供 --ledger <绝对路径> 或 --account <账号ID>。")
+    if not ACCOUNT_RE.match(account):
+        raise LedgerError("invalid_account", "账号 ID 只能包含字母、数字、点、下划线和短横线。")
+    return publisher_home() / account / "ledger.json"
+
+
+def resolve_ledger(args: argparse.Namespace) -> Path:
+    if getattr(args, "ledger", None):
+        return absolute_path(args.ledger, "ledger")
+    return default_ledger(getattr(args, "account", None))
+
+
 def nonempty(value: str | None, label: str) -> str:
     text = (value or "").strip()
     if not text:
@@ -91,6 +116,12 @@ def package_info(path: Path) -> dict:
         raise LedgerError("invalid_package", "文案包必须是 UTF-8 JSON。") from exc
     if not isinstance(package, dict) or not package:
         raise LedgerError("invalid_package", "文案包必须是非空 JSON 对象。")
+    for marker in ("_draft", "_template"):
+        if marker in package:
+            raise LedgerError(
+                "draft_package",
+                f"文案包仍含 {marker}，不能登记。补齐后删除该字段，并先运行 prefill_release.py check。",
+            )
     return {"path": str(path), "sha256": hashlib.sha256(raw).hexdigest()}
 
 
@@ -317,27 +348,39 @@ def parser() -> argparse.ArgumentParser:
     cli = argparse.ArgumentParser(description=__doc__)
     commands = cli.add_subparsers(dest="command", required=True)
     register_cli = commands.add_parser("register", help="登记媒体与完整 JSON 文案包；不上传")
-    register_cli.add_argument("--ledger", required=True, help="账本绝对路径")
+    register_cli.add_argument("--ledger", help="账本绝对路径；省略时用账号目录下的默认账本")
     register_cli.add_argument("--account", required=True, help="稳定账号 ID")
     register_cli.add_argument("--kind", required=True, choices=("video", "image"))
     register_cli.add_argument("--media", required=True, nargs="+", help="媒体文件，顺序即发布顺序")
     register_cli.add_argument("--package", required=True, help="非空 UTF-8 JSON 文案包绝对路径")
     transition_cli = commands.add_parser("transition", help="记录状态及证据；不会执行平台操作")
-    transition_cli.add_argument("--ledger", required=True)
+    transition_cli.add_argument("--ledger", help="账本绝对路径；省略时需 --account")
+    transition_cli.add_argument("--account", help="账号 ID，用于定位默认账本")
     transition_cli.add_argument("--release-id", required=True)
     transition_cli.add_argument("--state", required=True, choices=sorted(STATES - {"prepared"}))
     transition_cli.add_argument("--evidence", required=True)
     transition_cli.add_argument("--work-url")
     transition_cli.add_argument("--work-id")
     list_cli = commands.add_parser("list", help="只读列出完整记录和历史")
-    list_cli.add_argument("--ledger", required=True)
+    list_cli.add_argument("--ledger", help="账本绝对路径；省略时需 --account")
+    list_cli.add_argument("--account", help="账号 ID，用于定位默认账本")
+    where_cli = commands.add_parser("where", help="显示账号目录与默认账本路径，不写文件")
+    where_cli.add_argument("--account", required=True)
     return cli
 
 
 def main() -> int:
     args = parser().parse_args()
     try:
-        path = absolute_path(args.ledger, "ledger")
+        if args.command == "where":
+            ledger = default_ledger(args.account)
+            print(json.dumps({
+                "ok": True, "home": str(publisher_home()), "account_dir": str(ledger.parent),
+                "ledger": str(ledger), "ledger_exists": ledger.exists(),
+                "operations_exists": (ledger.parent / "operations.json").exists(),
+            }, ensure_ascii=False))
+            return 0
+        path = resolve_ledger(args)
         if args.command == "register":
             result = register(args, path)
         elif args.command == "transition":

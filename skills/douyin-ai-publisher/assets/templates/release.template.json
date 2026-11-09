@@ -64,8 +64,17 @@
   "title": null,
   "caption": null,
   "topics": [],
+  "media_qa": {
+    "report_path": null,
+    "overall": null,
+    "warnings": [],
+    "blocks": [],
+    "decisions": [],
+    "manual_review": null
+  },
   "cover": {
     "source": null,
+    "candidates": [],
     "export_path": null,
     "text": null,
     "review_status": "unverified"
@@ -99,7 +108,8 @@
     "scheduled_at": null,
     "platform_timezone": null,
     "user_timezone": null,
-    "visibility": null
+    "visibility": null,
+    "submission_policy": null
   },
   "authorization": null,
   "pending_items": [
