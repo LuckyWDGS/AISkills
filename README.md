@@ -4,7 +4,7 @@ Personal Codex skills managed as a single repository.
 
 ## Quick skill picker
 
-This repository contains 17 Codex skill packages. You can simply describe the
+This repository contains 19 Codex skill packages. You can simply describe the
 task in natural language; Codex selects a matching skill when available. For
 an explicit request, write `$<skill-name>` in the prompt, for example
 `$unreal-engine-mcp inspect the open UE 5.8 editor and report PIE state`.
@@ -22,6 +22,7 @@ Choose by intent:
   requires a specific user instruction and a logged-in creator account.
 - Research Douyin AI creators and develop an original direction, pilot package,
   and feedback loop with [douyin-ai-creator-lab](skills/douyin-ai-creator-lab/SKILL.md).
+- Create WeChat illustrated stories with [wechat-story-publisher](skills/wechat-story-publisher/SKILL.md): recent research, complete stories, compelling titles, coherent images and reload-verified drafts; publish when the current request authorizes it.
 - Build characters, storyboards, or VFX assets: combine
   `fantasy-character-design`, `short-video-storyboard`,
   `niagara-vfx-artist`, and `vfx-flipbook-generator` as appropriate.

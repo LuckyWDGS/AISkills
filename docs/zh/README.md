@@ -1,6 +1,6 @@
 # Skills 中文说明与快速选择
 
-这里是仓库内 17 个 Skill 包的用户入口。每个 Skill 都说明三件事：它解决
+这里是仓库内 19 个 Skill 包的用户入口。每个 Skill 都说明三件事：它解决
 什么问题、什么时候值得用、以及可以直接复制的开始方式。文档只做解释，
 真正的触发规则和安全边界仍以对应 `skills/<name>/SKILL.md` 为准。
 
@@ -31,6 +31,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
   `unreal-sequencer`。
 - 抖音 AI 内容包装、发布和复盘：`douyin-ai-publisher`；人像服装配方库需点名 `portrait-recipe-studio`。
 - 抖音 AI 创作者方向、对标拆片与原创小样：`douyin-ai-creator-lab`，实际发布再接 `douyin-ai-publisher`。
+- 公众号故事图文、标题钩子、连贯配图与草稿验证：`wechat-story-publisher`。
 - 自有 VPS 代理节点、订阅与分流排障：`vps-proxy-deploy`。
 
 ## 技能总览
@@ -53,6 +54,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 | [xiaohongshu-content-publisher](./xiaohongshu-content-publisher.md) | 小红书图文/视频包装、上传、授权发布与历史归档 | 需要准备一条笔记或整理已有发布记录 | `$xiaohongshu-content-publisher 整理这条笔记的素材和文案，先保存草稿` |
 | [douyin-ai-publisher](./douyin-ai-publisher.md) | 分析素材、准备文案/封面/话题、执行授权发布并复盘 | 要发布或准备抖音 AI 视频、图文和口播内容 | `$douyin-ai-publisher 分析这个视频并准备标题、封面和相关话题，暂不发布` |
 | [douyin-ai-creator-lab](../../skills/douyin-ai-creator-lab/SKILL.md) | 实查高赞与普通作品，把观看规律转为原创方向、参考图、完整试生包和反馈 | 喜欢某条 AI 视频，想研究作者并寻找自己的创作方向 | `$douyin-ai-creator-lab 研究这条抖音和相近作者，给我有证据的方向建议与可试生的小样包` |
+| [wechat-story-publisher](./wechat-story-publisher.md) | 近期调研、完整故事、标题钩子、连续配图与公众号草稿回读验证 | 制作或继续公众号故事图片消息，或改善故事标题与可读性 | `$wechat-story-publisher 写一篇公众号故事图文，标题用真实冲突吸引人，制作配图并保存验证草稿，由我发布` |
 | [portrait-recipe-studio](./portrait-recipe-studio.md) | 人像与服装配方、参考审查和面容设计 | 明确需要使用这套提示词库；仅点名调用 | `$portrait-recipe-studio 根据参考选择合适的人像服装配方，先整理提示词` |
 | [fantasy-character-design](./fantasy-character-design.md) | 生成角色设定板、三视图、服装/法器细节和参考权重包 | 需要先锁定玄幻、仙侠、神女、女帝或其他主角形象 | `$fantasy-character-design 做一张仙侠女帝角色设定板和三视图` |
 | [short-video-storyboard](./short-video-storyboard.md) | 把剧本拆成分镜、首尾帧、关键帧、图文镜头卡和视频 Prompt | 需要做 9 格/25 格分镜、连续短视频或国内模型提示词 | `$short-video-storyboard 把这段文案拆成 10 个连续镜头和首尾帧提示词` |

@@ -1,0 +1,4 @@
+interface:
+  display_name: "公众号故事图文"
+  short_description: "近期选题、吸引力标题、完整故事与连贯配图，制作并验证公众号草稿"
+  default_prompt: "使用 $wechat-story-publisher 制作公众号故事图文：根据当前任务做近期调研、写清楚故事、设计正文能兑现的吸引力标题，完成配图和实际图片复核，并按本次授权保存或发布。"
