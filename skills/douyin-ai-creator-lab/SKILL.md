@@ -10,6 +10,7 @@ description: Research public Douyin and Bilibili AI-video references, separate a
 ## 路由
 
 - 对标、主页、相似作者、广告筛除、跨平台比较、为什么高赞：读[案例研究](references/case-study-method.md)；音效/BGM研究按其声音字段记录，用户要求不影响工作时按后台研究方式执行。
+- 回查作品时长、镜头约数、每房节奏或据此校准自己的片长：另读[时长与镜头核查](references/duration-and-shot-analysis.md)，分开可见切镜、空间段落、用途变化与生成单元。
 - 不知方向、给参考图/提示词、首片、验片或复盘：读[小样与反馈](references/pilot-and-feedback.md)。
 - 判断资料是否足够、给题材评分与实际封面比较：读[选题与封面评审](references/topic-selection-and-covers.md)，分开证据强弱、创作优先级与生成资产验收。
 - 实际生图：使用当前可用的图像生成Skill。已安装image-generation-director/cm-imagegen时沿用用户路由偏好，真正生成并验图；工具不可用则交制作简报并明确图未完成。
