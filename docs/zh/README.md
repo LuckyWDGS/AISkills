@@ -51,7 +51,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 | [ai-video-prompt-director](./ai-video-prompt-director.md) | 将已确定的导演包编译成可复制视频提示词，按需适配 H3/Seedance | 已有剧情、镜头与参考，需要核对空间、动作、对白和声音 | `$ai-video-prompt-director 按已确定的导演包整理 Seedance 提示词` |
 | [xiaohongshu-content-publisher](./xiaohongshu-content-publisher.md) | 小红书图文/视频包装、上传、授权发布与历史归档 | 需要准备一条笔记或整理已有发布记录 | `$xiaohongshu-content-publisher 整理这条笔记的素材和文案，先保存草稿` |
 | [douyin-ai-publisher](./douyin-ai-publisher.md) | 分析素材、准备文案/封面/话题、执行授权发布并复盘 | 要发布或准备抖音 AI 视频、图文和口播内容 | `$douyin-ai-publisher 分析这个视频并准备标题、封面和相关话题，暂不发布` |
-| [douyin-ai-creator-lab](../../skills/douyin-ai-creator-lab/SKILL.md) | 实查高赞与普通作品，把观看规律转为原创方向、参考图、完整试生包和反馈 | 喜欢某条 AI 视频，想研究作者并寻找自己的创作方向 | `$douyin-ai-creator-lab 研究这条抖音和相近作者，给我有证据的方向建议与可试生的小样包` |
+| [douyin-ai-creator-lab](../../skills/douyin-ai-creator-lab/SKILL.md) | 深挖作者系列、案例与标签，区分广告和实看证据，形成原创试验、制作与反馈 | 喜欢一组 AI 视频，想扩作者其他作品、检索案例并准备自己的方向 | `$douyin-ai-creator-lab 深挖这些作者其他系列与普通作品，补充案例库和实际标签，给我原创试验建议` |
 | [portrait-recipe-studio](./portrait-recipe-studio.md) | 人像与服装配方、参考审查和面容设计 | 明确需要使用这套提示词库；仅点名调用 | `$portrait-recipe-studio 根据参考选择合适的人像服装配方，先整理提示词` |
 | [fantasy-character-design](./fantasy-character-design.md) | 生成角色设定板、三视图、服装/法器细节和参考权重包 | 需要先锁定玄幻、仙侠、神女、女帝或其他主角形象 | `$fantasy-character-design 做一张仙侠女帝角色设定板和三视图` |
 | [short-video-storyboard](./short-video-storyboard.md) | 把剧本拆成分镜、首尾帧、关键帧、图文镜头卡和视频 Prompt | 需要做 9 格/25 格分镜、连续短视频或国内模型提示词 | `$short-video-storyboard 把这段文案拆成 10 个连续镜头和首尾帧提示词` |

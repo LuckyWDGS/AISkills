@@ -1,6 +1,6 @@
 ---
 name: douyin-ai-creator-lab
-description: Research public Douyin and Bilibili AI-video references, separate advertising from work samples, develop an original pilot, and review actual results. Use for 抖音/B站AI创作者方向、对标拆片、庇护所/梦核/环境影像研究、Muse生成与剪辑、成片横版适配及B站投稿；Douyin publishing uses douyin-ai-publisher.
+description: Research Douyin and Bilibili AI-video works, authors' series, reference cases and tags; separate evidence and advertising, develop original pilots and review results. Use for 抖音/B站AI方向、作者深挖、案例库、逐帧拆片、庇护所/梦核/奇观动作/异境列车研究、Muse制作与剪辑；Douyin publishing uses douyin-ai-publisher.
 ---
 
 # 抖音与B站AI创作实验室
@@ -10,7 +10,11 @@ description: Research public Douyin and Bilibili AI-video references, separate a
 ## 路由
 
 - 对标、主页、相似作者、广告筛除、跨平台比较、为什么高赞：读[案例研究](references/case-study-method.md)；音效/BGM研究按其声音字段记录，用户要求不影响工作时按后台研究方式执行。
+- 用户给喜欢的作品、要求更多样本或深挖作者其他作品：读[作者系列与原创转译](references/author-series-and-transfer.md)，从[案例库索引](references/case-library/index.md)检索现有证据，再补会改变判断的新样本；不要只解释用户给的几条。
+- 按作者、方向、证据或实际标签找案例：运行 `python scripts/search_cases.py --summary`；按需用 `--author`、`--family`、`--tag`、`--grade`、`--query`、`--id`。案例快照不代表当前热度，原链接失效也不删除既有观察范围。
+- 研究原作标签、标题机制或准备接发布：读[标签与发布交接](references/tags-and-release-handoff.md)，区分实际标签、研究分类、建议标签和当天热点。
 - 回查作品时长、镜头约数、每房节奏或据此校准自己的片长：另读[时长与镜头核查](references/duration-and-shot-analysis.md)，分开可见切镜、空间段落、用途变化与生成单元。
+- 每秒3–5帧、逐帧拆解或关键切点复核：按[密采样方法](references/duration-and-shot-analysis.md#每秒35帧的密采样)对真实源片默认取4fps并逐页实看，疑点补原帧；产表和实际检查分别登记。
 - 不知方向、给参考图/提示词、首片、验片或复盘：读[小样与反馈](references/pilot-and-feedback.md)。
 - 判断资料是否足够、给题材评分与实际封面比较：读[选题与封面评审](references/topic-selection-and-covers.md)，分开证据强弱、创作优先级与生成资产验收。
 - 实际生图：使用当前可用的图像生成Skill。已安装image-generation-director/cm-imagegen时沿用用户路由偏好，真正生成并验图；工具不可用则交制作简报并明确图未完成。
@@ -20,12 +24,12 @@ description: Research public Douyin and Bilibili AI-video references, separate a
 - 成片发抖音：使用douyin-ai-publisher及真实媒体、具体账号与当前授权。
 - 已确定成片发B站：读[B站投稿核验](references/bilibili-publishing.md)，核实际表单、双比例封面、AI声明和提交状态。研究或建立全流程不等于发布任何未确定的成片。
 
-在项目中先读AGENTS和当前进度。动态案例、账号数据、图片、成片和发布记录留项目；Skill只保存经实际使用支持的方法。不要把用户一个项目的画风、每镜时长或声音选择变成所有项目的要求。
+在项目中先读AGENTS和当前进度。用户要求沉淀样本时，可将有出处、观察日期和证据范围的公开案例摘要纳入按需读取的案例库；完整竞品媒体、签名资源地址、原始网络请求、私有账号数据与发布记录留本地项目。Skill保留可迁移方法和精选公开证据，不把一个项目的画风、每镜时长或声音选择变成通则。
 
 ## 研究到小样
 
 1. 从用户作品定位原链接与作者，记录平台、地区、作品日期、观察日期和查看范围。分享口令日期不是发布日期。
-2. 优先检查可核发布日期的近期高赞与同类普通作品，扩展到真正相近且有差异的作者；新抓取不等于新发布。用户要求近期信息时，按案例研究的时效窗口筛样，旧作与日期不明的卡片不进入当前趋势结论。按唯一作品URL去重，先分离作品、推荐线索与广告卡；数量不能代替观看质量，推荐或自动连播不算完整观看。
+2. 沿原作者其他系列、同类普通作品、近期作品及相邻作者扩展，分开作者固定承诺和每集变化；优先补可核日期及能检验假设的对照。新抓取不等于新发布；旧作与日期不明的卡片不进入当前趋势结论。按唯一作品ID去重，分离作品、推荐线索与广告卡；数量不能代替观看质量，推荐或自动连播不算完整观看。
 3. 明确每条是完整视听、无声画面采样、仅元数据还是检索线索。没听到声音就不写曲名、对白、配器或听感；没看动态就不写完整运镜。
 4. 用实际首屏、变化、切点、结尾与观众表达建立假设。高赞与普通都有的特征只能说明风格共性，不能解释爆款差异。不可见的播放、完播、投放和历史粉丝规模保持未知。
 5. 先写观众能获得什么，再提少量差异清楚的原创方向；保留原作的功能性经验，改变具体空间、视觉母题、文案、节拍或进入方式。不要逐帧复刻或换个提示词就宣称原创。

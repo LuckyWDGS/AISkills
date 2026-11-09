@@ -1,4 +1,4 @@
 interface:
   display_name: "抖音与B站AI创作实验室"
-  short_description: "区分广告与作品证据，把双平台研究转为原创小样、Muse制作和实片反馈"
-  default_prompt: "使用 $douyin-ai-creator-lab 研究抖音与B站的参考及普通作品，区分广告，形成原创首片方案；按我已明确的分工完成生成、剪辑或交付提示词。"
+  short_description: "深挖作者系列、案例和标签，区分证据与商业内容，转为原创小样及实片反馈"
+  default_prompt: "使用 $douyin-ai-creator-lab 从这些作品深挖作者其他系列、普通对照和相邻方向，检索并补充有出处的案例与标签，形成原创试验和发布简报。"
