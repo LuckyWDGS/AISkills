@@ -8,6 +8,7 @@ import json
 import mimetypes
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -17,6 +18,7 @@ from pathlib import Path
 from cm_image_formats import (OUTPUT_FORMATS, add_media_arguments, detect_format,
                               extra_image_fields, inspect_media, validate_markup,
                               validate_media_outputs, validate_size_option)
+import cm_job_ledger as jobs
 
 DEFAULT_MODEL = "gpt-image-2.6-sunburst"
 DEFAULT_API = "images"
@@ -1298,6 +1300,14 @@ def maybe_poll_async_result(
     )
     if not initial_shape.get("likely_async_or_polling_response") and not initial_candidates:
         return data
+    jobs.safe_call(
+        "note_polling",
+        endpoint=endpoint,
+        transport=transport,
+        request_url=request_url,
+        candidates=initial_candidates,
+        base_url=provider.base_url,
+    )
 
     interval_seconds = async_poll_interval_seconds()
     deadline = time.time() + async_poll_window_seconds(timeout)
@@ -2048,10 +2058,12 @@ def request_compat_with_provider(
     failures = []
     for attempt in range(1, retry_attempts + 2):
         try:
+            jobs.safe_call("note_submission", attempt, endpoint)
             result = request_provider(provider, command, endpoint, payload, timeout, multipart)
             require_image_result(result, provider)
             return result.data, provider, result.endpoint, result.transport, result.request_url, failures
         except ImageApiError as exc:
+            note_job_attempt_error(attempt, exc, will_retry=attempt <= retry_attempts and should_retry_primary_transport(exc))
             failures.append(
                 failure_record(
                     provider.name,
@@ -2124,10 +2136,12 @@ def request_responses_with_retry(
     endpoint = "/responses"
     for attempt in range(1, max_attempts + 1):
         try:
+            jobs.safe_call("note_submission", attempt, endpoint)
             result = request_responses_provider(provider, payload, timeout)
             require_image_result(result, provider)
             return result.data, provider, result.endpoint, result.transport, result.request_url, failures
         except ImageApiError as exc:
+            note_job_attempt_error(attempt, exc, will_retry=attempt < max_attempts and should_retry_primary_transport(exc))
             failures.append(
                 failure_record(
                     provider.name,
@@ -2853,8 +2867,328 @@ def transport_probe(args: argparse.Namespace) -> int:
     return 0 if result["ok"] else 1
 
 
+def note_job_attempt_error(attempt: int, exc: ImageApiError, *, will_retry: bool) -> None:
+    diagnostics = exc.diagnostics or {}
+    jobs.safe_call(
+        "note_attempt_error",
+        attempt,
+        exc.message,
+        exc.status,
+        will_retry=will_retry,
+        error_kind=diagnostics.get("error_kind"),
+        pending=bool(diagnostics.get("pending_image_result")),
+    )
+
+
+def file_digest_record(value: str | None) -> dict | None:
+    if not value:
+        return None
+    path = Path(value).expanduser()
+    return {"path": str(path.resolve()), "sha256": jobs.sha256_file(path)}
+
+
+def start_image_job(
+    args: argparse.Namespace,
+    command: str,
+    payload: dict,
+    model: str,
+    input_images: list[InputImage] | None = None,
+) -> Path:
+    """Create the job ledger before any chargeable submission; return the output directory."""
+    out_dir = Path(args.out_dir) if getattr(args, "out_dir", None) else output_dir()
+    jobs.set_active(None)
+    if getattr(args, "no_job_record", False):
+        return out_dir
+    prompt = getattr(args, "prompt", None) or ""
+    fields = {
+        "command": command,
+        "api": getattr(args, "api", DEFAULT_API),
+        "model": model,
+        "requested_quality": payload.get("quality"),
+        "requested_complexity": payload.get("complexity"),
+        "size": getattr(args, "size", None),
+        "n": getattr(args, "n", None),
+        "output_format": getattr(args, "output_format", None),
+        "frame_count": getattr(args, "frame_count", None),
+        "frame_duration_ms": getattr(args, "frame_duration_ms", None),
+        "require_exact_size": bool(getattr(args, "require_exact_size", False)),
+        "filename": getattr(args, "filename", None),
+        "prompt": prompt,
+        "prompt_sha256": jobs.sha256_bytes(prompt.encode("utf-8")),
+        "prompt_file": str(Path(args.prompt_file).resolve()) if getattr(args, "prompt_file", None) else None,
+        "max_attempts": getattr(args, "max_attempts", PRIMARY_EXTRA_RETRY_ATTEMPTS + 1),
+        "started_epoch": time.time(),
+    }
+    if input_images:
+        fields["input_images"] = [
+            {"path": str(image.path), "sha256": jobs.sha256_bytes(image.data)} for image in input_images
+        ]
+    for option in ("mask", "markup"):
+        record = file_digest_record(getattr(args, option, None))
+        if record:
+            fields[option] = record
+    try:
+        ledger = jobs.JobLedger.start(out_dir, job_file=getattr(args, "job_file", None), **fields)
+    except OSError as exc:
+        print(f"cm-imagegen: job ledger unavailable ({type(exc).__name__}); continuing without it.", file=sys.stderr)
+        return out_dir
+    jobs.set_active(ledger)
+    print(f"cm-imagegen job ledger: {ledger.path.resolve()}", file=sys.stderr, flush=True)
+    return out_dir
+
+
+def finish_image_job(args: argparse.Namespace, result: dict) -> None:
+    ledger = jobs.active()
+    if ledger is None:
+        return
+    try:
+        outputs = jobs.output_records([Path(path) for path in result.get("paths", [])])
+        ledger.update(
+            state="completed",
+            finished_at=jobs.now_iso(),
+            ok=result.get("ok"),
+            error_kind=result.get("error_kind"),
+            outputs=outputs,
+            provider=result.get("provider"),
+            base_url=result.get("base_url"),
+            request_url=result.get("request_url"),
+            endpoint=result.get("endpoint"),
+            transport=result.get("transport"),
+            attempt_count=result.get("attempt_count"),
+            async_poll_used=bool(result.get("async_poll_used")),
+            usage=result.get("usage"),
+            created=result.get("created"),
+        )
+        result["job_file"] = str(ledger.path.resolve())
+        result["sidecars"] = [] if getattr(args, "no_sidecar", False) else jobs.write_sidecars(ledger.record, outputs)
+    except Exception as exc:
+        result["job_record_warning"] = f"{type(exc).__name__}: {compact_text_preview(str(exc), 200)}"
+
+
+def run_image_job(args: argparse.Namespace, runner) -> int:
+    ledger = jobs.active()
+    try:
+        return runner()
+    except SystemExit as exc:
+        if ledger is not None and ledger.record.get("state") != "completed":
+            try:
+                ledger.finish_failed(str(exc.code))
+                print(
+                    f"cm-imagegen job state: {ledger.record.get('state')} ({ledger.path.resolve()})",
+                    file=sys.stderr,
+                    flush=True,
+                )
+            except Exception:
+                pass
+        raise
+    finally:
+        jobs.set_active(None)
+
+
 def generate(args: argparse.Namespace) -> int:
     payload, model = image_payload(args)
+    out_dir = start_image_job(args, "generate", payload, model)
+    return run_image_job(args, lambda: _generate(args, payload, model, out_dir))
+
+
+def edit(args: argparse.Namespace) -> int:
+    image_paths = [Path(value).expanduser() for value in args.image]
+    input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
+    multipart_files = image_edit_uploads(args, input_images)
+    payload, model = image_payload(args, "edit")
+    out_dir = start_image_job(args, "edit", payload, model, input_images)
+    return run_image_job(args, lambda: _edit(args, payload, model, out_dir, input_images, multipart_files))
+
+
+RESUBMIT_ADVICE = {
+    "already_completed": "Do not resubmit: the outputs already exist and match the ledger.",
+    "recovered": "Do not resubmit: the pending job finished and its outputs were saved.",
+    "pending": "Do not resubmit yet: the provider still reports the job as running. Run recover again later.",
+    "uncertain": (
+        "Do not resubmit automatically: the request reached the provider but the CLI lost the response. "
+        "Check the provider's usage/logs or ask the user before another chargeable request."
+    ),
+    "in_flight": (
+        "Do not resubmit: the ledger shows a submission without a final state and no pollable handle. "
+        "If the original process may still be running, wait for it; otherwise treat it as uncertain."
+    ),
+    "failed": "The job ended with a classified failure and no outstanding provider job; follow the retry rules before any new request.",
+    "provider_mismatch": "Do not poll: the configured provider differs from the one that accepted this job.",
+}
+
+
+def recover_media_args(record: dict) -> argparse.Namespace:
+    return argparse.Namespace(
+        size=record.get("size"),
+        n=record.get("n"),
+        output_format=record.get("output_format"),
+        frame_count=record.get("frame_count"),
+        frame_duration_ms=record.get("frame_duration_ms"),
+    )
+
+
+def recover(args: argparse.Namespace) -> int:
+    if not args.job_file:
+        out_dir = Path(args.out_dir) if args.out_dir else output_dir()
+        listed = jobs.list_jobs(out_dir)
+        result = {
+            "ok": True,
+            "operation": "recover",
+            "out_dir": str(out_dir.resolve()),
+            "unfinished": [job for job in listed if not job.get("terminal")],
+            "jobs": listed[: max(1, args.limit)],
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+
+    job_path = Path(args.job_file).expanduser()
+    if not job_path.is_file():
+        raise SystemExit(f"Job file not found: {job_path}")
+    ledger = jobs.JobLedger.load(job_path)
+    record = ledger.record
+    state = record.get("state")
+    result = {
+        "operation": "recover",
+        "job_file": str(job_path.resolve()),
+        "job_id": record.get("job_id"),
+        "command": record.get("command"),
+        "state_before": state,
+        "submissions": record.get("submissions"),
+        "started_at": record.get("started_at"),
+        "updated_at": record.get("updated_at"),
+    }
+
+    def emit(status: str, ok: bool, **extra) -> int:
+        result.update(ok=ok, recovery_status=status, resubmit_advice=RESUBMIT_ADVICE[status], **extra)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if ok else 1
+
+    if state == "completed":
+        checks = []
+        for output in record.get("outputs") or []:
+            path = Path(output.get("path", ""))
+            checks.append(
+                {
+                    "path": str(path),
+                    "exists": path.is_file(),
+                    "sha256_matches": path.is_file() and jobs.sha256_file(path) == output.get("sha256"),
+                }
+            )
+        ok = bool(checks) and all(check["exists"] and check["sha256_matches"] for check in checks)
+        return emit("already_completed", ok, paths=[check["path"] for check in checks], output_checks=checks)
+
+    if state == "failed":
+        return emit("failed", False, exit_error=record.get("exit_error"), attempts=record.get("attempts"))
+
+    candidates = record.get("poll_candidates") or []
+    if state in {"polling", "pending"} and candidates:
+        provider, _provider_name = configured_provider()
+        if record.get("base_url") and normalize_image_base_url(record["base_url"]) != provider.base_url:
+            return emit("provider_mismatch", False)
+        if args.no_poll:
+            return emit("pending", False, poll_candidate_count=len(candidates))
+        jobs.set_active(ledger)
+        try:
+            seed = {"status": "in_progress", "_cm_recover": [{"poll_url": url} for url in candidates]}
+            data = maybe_poll_async_result(
+                provider,
+                record.get("endpoint") or image_endpoint_path(record.get("command") or "generate"),
+                "recover_poll",
+                record.get("request_url") or candidates[0],
+                seed,
+                args.timeout,
+            )
+            items = response_image_items(data)
+            if not items:
+                ledger.update(state="pending", last_recover_at=jobs.now_iso())
+                return emit("pending", False, async_poll_diagnostics=data.get("_cm_async_poll_diagnostics"))
+            out_dir = Path(record.get("out_dir") or output_dir())
+            paths = [
+                save_image_from_item(item, out_dir, record.get("filename"), index, provider)
+                for index, item in enumerate(items)
+            ]
+            media_args = recover_media_args(record)
+            size_check = validate_output_sizes(
+                paths,
+                record.get("size"),
+                require_exact=exact_size_is_required(record.get("size"), record.get("require_exact_size", False)),
+            )
+            media_check = validate_media_outputs(paths, media_args)
+            recovered = {
+                "ok": not (size_check["size_validation_failed"] or media_check["media_validation_failed"]),
+                "paths": [str(path.resolve()) for path in paths],
+                "provider": provider.name,
+                "base_url": provider.base_url,
+                "endpoint": record.get("endpoint"),
+                "transport": "recover_poll",
+                "attempt_count": record.get("submissions"),
+                "async_poll_used": True,
+                "usage": data.get("usage"),
+                "created": data.get("created"),
+            }
+            finish_image_job(args, recovered)
+            return emit(
+                "recovered",
+                recovered["ok"],
+                paths=recovered["paths"],
+                sidecars=recovered.get("sidecars"),
+                **size_check,
+                **media_check,
+            )
+        finally:
+            jobs.set_active(None)
+
+    found = jobs.candidate_outputs(record)
+    if state in {"uncertain", "pending", "polling"}:
+        return emit("uncertain", False, possible_outputs=found, attempts=record.get("attempts"))
+    return emit(
+        "in_flight",
+        False,
+        possible_outputs=found,
+        pid=record.get("pid"),
+        last_state=state,
+        attempts=record.get("attempts"),
+    )
+
+
+def read_prompt_file(args: argparse.Namespace) -> None:
+    prompt_file = getattr(args, "prompt_file", None)
+    if not prompt_file:
+        return
+    path = Path(prompt_file).expanduser()
+    if not path.is_file():
+        raise SystemExit(f"Prompt file not found: {path}")
+    text = path.read_text(encoding="utf-8-sig").strip()
+    if not text:
+        raise SystemExit(f"Prompt file is empty: {path}")
+    args.prompt = text
+
+
+def add_prompt_arguments(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--prompt")
+    group.add_argument(
+        "--prompt-file",
+        help="UTF-8 text file holding the prompt; avoids shell quoting problems with long or Chinese prompts.",
+    )
+
+
+def add_job_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--job-file",
+        help="Ledger path for this run (default: <out-dir>/.cm-jobs/<job-id>.json). Use it with `recover`.",
+    )
+    parser.add_argument(
+        "--no-sidecar", action="store_true",
+        help="Do not write <image>.cm.json provenance next to saved images.",
+    )
+    parser.add_argument(
+        "--no-job-record", action="store_true",
+        help="Disable the job ledger and sidecars (recover will not be possible for this run).",
+    )
+
+
+def _generate(args: argparse.Namespace, payload: dict, model: str, out_dir: Path) -> int:
     responses_model = None
     if args.api == "responses":
         responses_payload_data, responses_model = responses_payload(args, model)
@@ -2883,8 +3217,8 @@ def generate(args: argparse.Namespace) -> int:
                 data=data,
             )
         )
-    out_dir = Path(args.out_dir) if args.out_dir else output_dir()
-    paths = [save_image_from_item(item, out_dir, args.filename, index, provider) for index, item in enumerate(items)]
+    jobs.safe_call("update", state="saving")
+    paths = [save_image_from_item(item, out_dir, getattr(args, "filename", None), index, provider) for index, item in enumerate(items)]
     size_check = validate_output_sizes(
         paths,
         args.size,
@@ -2934,15 +3268,19 @@ def generate(args: argparse.Namespace) -> int:
         result["async_poll_diagnostics"] = data.get("_cm_async_poll_diagnostics")
     if previous_errors:
         result["previous_errors"] = previous_errors
+    finish_image_job(args, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["ok"] else 1
 
 
-def edit(args: argparse.Namespace) -> int:
-    image_paths = [Path(value).expanduser() for value in args.image]
-    input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
-    multipart_files = image_edit_uploads(args, input_images)
-    payload, model = image_payload(args, "edit")
+def _edit(
+    args: argparse.Namespace,
+    payload: dict,
+    model: str,
+    out_dir: Path,
+    input_images: list[InputImage],
+    multipart_files: list[dict],
+) -> int:
     multipart_fields = dict(payload)
     responses_model = None
     if args.api == "responses":
@@ -2973,8 +3311,8 @@ def edit(args: argparse.Namespace) -> int:
                 data=data,
             )
         )
-    out_dir = Path(args.out_dir) if args.out_dir else output_dir()
-    paths = [save_image_from_item(item, out_dir, args.filename, index, provider) for index, item in enumerate(items)]
+    jobs.safe_call("update", state="saving")
+    paths = [save_image_from_item(item, out_dir, getattr(args, "filename", None), index, provider) for index, item in enumerate(items)]
     size_check = validate_output_sizes(
         paths,
         args.size,
@@ -3025,6 +3363,7 @@ def edit(args: argparse.Namespace) -> int:
         result["async_poll_diagnostics"] = data.get("_cm_async_poll_diagnostics")
     if previous_errors:
         result["previous_errors"] = previous_errors
+    finish_image_job(args, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["ok"] else 1
 
@@ -3033,7 +3372,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate and edit images through the configured Sub2API/OpenAI-compatible provider.")
     sub = parser.add_subparsers(dest="command", required=True)
     gen = sub.add_parser("generate")
-    gen.add_argument("--prompt", required=True)
+    add_prompt_arguments(gen)
     gen.add_argument(
         "--api",
         choices=["images", "responses"],
@@ -3062,7 +3401,7 @@ def main() -> int:
                      help="Maximum image submissions, including the first (1-5; default 3).")
     gen.set_defaults(func=generate)
     edit_parser = sub.add_parser("edit")
-    edit_parser.add_argument("--prompt", required=True)
+    add_prompt_arguments(edit_parser)
     edit_parser.add_argument("--image", action="append", required=True)
     edit_parser.add_argument("--mask")
     edit_parser.add_argument("--markup", help="Transparent PNG annotation overlay matching the first input image.")
@@ -3122,7 +3461,7 @@ def main() -> int:
     probe_parser = sub.add_parser("transport-probe")
     probe_parser.add_argument("--operation", choices=["generate", "edit"], required=True)
     probe_parser.add_argument("--client", choices=["urllib", "requests", "both"], default="both")
-    probe_parser.add_argument("--prompt", required=True)
+    add_prompt_arguments(probe_parser)
     probe_parser.add_argument("--image", action="append")
     probe_parser.add_argument("--mask")
     probe_parser.add_argument("--markup")
@@ -3138,6 +3477,18 @@ def main() -> int:
     probe_parser.add_argument("--timeout", type=int, default=600)
     probe_parser.add_argument("--save-images", action="store_true")
     probe_parser.set_defaults(func=transport_probe)
+    recover_parser = sub.add_parser(
+        "recover",
+        help="Inspect or resume a job ledger instead of resubmitting after an interrupted or uncertain run.",
+    )
+    recover_parser.add_argument("--job-file", help="Ledger to inspect/resume. Omit to list jobs in --out-dir.")
+    recover_parser.add_argument("--out-dir")
+    recover_parser.add_argument("--timeout", type=int, default=600, help="Polling window seconds (minimum 180).")
+    recover_parser.add_argument("--no-poll", action="store_true", help="Report the ledger state without contacting the provider.")
+    recover_parser.add_argument("--limit", type=int, default=20, help="Maximum jobs listed without --job-file.")
+    recover_parser.set_defaults(func=recover)
+    for command_parser in (gen, edit_parser):
+        add_job_arguments(command_parser)
     for command_parser in (doctor_parser, check_parser):
         command_parser.add_argument("--mask")
         command_parser.add_argument("--markup")
@@ -3155,6 +3506,7 @@ def main() -> int:
         command_parser.add_argument("--responses-reasoning", choices=["low", "medium", "high", "xhigh", "max", "ultra"])
         command_parser.set_defaults(**controller_defaults())
     args = parser.parse_args()
+    read_prompt_file(args)
     return args.func(args)
 
 

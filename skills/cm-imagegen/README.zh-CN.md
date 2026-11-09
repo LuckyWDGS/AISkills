@@ -77,6 +77,10 @@ python scripts/cm_image_gen.py generate --api images --model gpt-image-2.6-sunbu
 python scripts/cm_image_gen.py edit --api images --model gpt-image-2.6-sunburst --quality max --complexity high --image './reference.png' --prompt 'Change only the mug color to orange.' --out-dir './generated-images'
 ```
 
+长提示词或中文提示词建议写进 UTF-8 文本文件，用 `--prompt-file ./prompts/p01.txt` 代替 `--prompt`，避免命令行引号把内容截断或转义。`--filename p01` 固定输出文件名（扩展名按实际返回格式）。
+
+每次生成/编辑都会在 `--out-dir` 下写 `.cm-jobs/<任务>.json` 任务台账，并在每张图旁写 `<图片>.cm.json` 来源记录（提示词、参考图哈希、请求参数、输出哈希）。台账可能含服务地址和临时轮询链接，只留在本地；来源记录不含这些内容，可随成品交付。
+
 成功标准是 `ok=true` 且 `paths[]` 指向可打开的图片。目录检查通过、HTTP 200、模型输出了一段文字，都不能代替实际图片结果。
 
 ## Sub2API 必要条件
@@ -92,4 +96,13 @@ python scripts/cm_image_gen.py edit --api images --model gpt-image-2.6-sunburst 
 
 默认最多请求 3 次（间隔 5/15 秒），缺配置、鉴权、参数、权限和策略问题不盲目重试。流中断但任务尚未结束时不重复提交。详细规则见 `SKILL.md`。
 
-安装 Pillow 后可运行离线测试：`python -m unittest discover -s scripts -p "test_*.py"`。离线测试不证明真实服务可用；实测成功仅证明当时的配置与请求可用，不能承诺所有用户每次成功。
+命令被超时杀掉、输出丢失或结果不明时，先恢复再决定是否重发：
+
+```powershell
+python scripts/cm_image_gen.py recover --out-dir './generated-images'   # 列出未结束的任务
+python scripts/cm_image_gen.py recover --job-file './generated-images/.cm-jobs/<任务>.json'
+```
+
+按返回的 `recovery_status` 处理：`already_completed`/`recovered` 直接使用；`pending` 稍后再查；`uncertain`/`in_flight` 表示服务可能已经生成并计费，先查服务端用量或询问用户，不自动重发。状态说明见 [cli.md](references/cli.md#job-ledger-and-recovery)。
+
+安装 Pillow 后可运行离线测试：`python -m unittest discover -s scripts -p "test_*.py"`，也可单独运行 `python -I scripts/test_job_ledger.py` 等文件。离线测试不证明真实服务可用；实测成功仅证明当时的配置与请求可用，不能承诺所有用户每次成功。

@@ -2,12 +2,15 @@
 
 Run `python scripts/cm_image_gen.py --help` or `<command> --help` from this skill directory.
 
-- `generate --prompt TEXT`: create an image.
-- `edit --image PATH [--image PATH] --prompt TEXT`: edit or generate with references.
+- `generate --prompt TEXT | --prompt-file PATH`: create an image.
+- `edit --image PATH [--image PATH] --prompt TEXT | --prompt-file PATH`: edit or generate with references.
+- `recover [--job-file PATH] [--out-dir DIR] [--no-poll]`: inspect or resume a job ledger instead of resubmitting; see [Job ledger and recovery](#job-ledger-and-recovery).
 - `doctor` / `check-config`: offline configuration check; add `--show-payload-shape` for redacted fields or `--check-model` for an authenticated catalog GET.
 - `transport-probe --operation generate|edit --client urllib|requests|both --prompt TEXT`: diagnostic Images requests to the same configured provider. Each selected client submits a request; this consumes service quota. `--save-images` saves results. There is no provider-selection option.
 
-Common generation options: `--api images|responses` (default images; pass `--api images` explicitly in skill calls), `--model`, `--size`, `--quality`, `--complexity low|medium|high`, `--background`, `--output-format png|jpeg|webp|gif|svg`, `--out-dir`, `--filename`, `--timeout`, `--max-attempts 1..5`, `--require-exact-size`.
+Common generation options: `--api images|responses` (default images; pass `--api images` explicitly in skill calls), `--model`, `--size`, `--quality`, `--complexity low|medium|high`, `--background`, `--output-format png|jpeg|webp|gif|svg`, `--out-dir`, `--filename` (stem such as `p01`; the extension follows the returned bytes and later images in the same call get `-2`, `-3`), `--timeout`, `--max-attempts 1..5`, `--require-exact-size`, `--job-file`, `--no-sidecar`, `--no-job-record`.
+
+Prefer `--prompt-file` for long or Chinese prompts: the file is read as UTF-8 (a BOM is ignored) and avoids shell quoting damage. `--prompt` and `--prompt-file` are mutually exclusive.
 
 Images-only options also include `--output-compression 0..100`, `--frame-count 2..16`, `--frame-duration-ms 20..2000`, `--svg-model`, `--svg-reasoning`, `--stream`, `--partial-images 0..3`, `--moderation auto|low`, and `--safety-identifier`. Edits accept `--markup PATH` as an alternative to `--mask`. Read [formats-and-sizes.md](formats-and-sizes.md) for valid combinations, animation/vector validation, and square/landscape/portrait examples. SVG is generation-only pending resolution of inconsistent official edit documentation. `--response-format` is an optional legacy gateway compatibility override; it is omitted by default.
 
@@ -17,7 +20,36 @@ Use `--tools` and `--responses-extra` only for explicit advanced requests; JSON 
 
 Route precedence: `--api` > optional profile `api` > `images`. The profile accepts `api: "images"` without controller fields; older explicit Responses profiles remain supported. Image model precedence: `--model` > `CODEXMANAGER_IMAGE_MODEL` > `gpt-image-2.6-sunburst`. Image aliases: image2/gpt2 → gpt-image-2; image2.5/gpt2.5/image2.5-sunburst → gpt-image-2.5-sunburst; image2.5-flare → gpt-image-2.5-flare; image2.6/gpt2.6/image2.6-sunburst → gpt-image-2.6-sunburst; image2.6-flare → gpt-image-2.6-flare.
 
-Result JSON includes `ok`, `paths`, route metadata, requested image model, `requested_quality`, `requested_complexity`, attempt count, previous errors, pixel validation, and `media_outputs` / `media_validation_warnings`. Media validation detects format downgrades, broken files, GIF frame/timing mismatches, and non-static SVG content. Saved extensions follow actual bytes. `svg_usage` is retained when supplied. `doctor --show-payload-shape` exposes effective request fields without submitting an image; use `--operation generate` when previewing SVG. Count only readable matching media as success. See the Chinese README for setup and the SKILL entrypoint for retry rules.
+Result JSON includes `ok`, `paths`, route metadata, requested image model, `requested_quality`, `requested_complexity`, attempt count, previous errors, pixel validation, and `media_outputs` / `media_validation_warnings`. Media validation detects format downgrades, broken files, GIF frame/timing mismatches, and non-static SVG content. Saved extensions follow actual bytes. `svg_usage` is retained when supplied. `doctor --show-payload-shape` exposes effective request fields without submitting an image; use `--operation generate` when previewing SVG. Count only readable matching media as success. Successful runs also report `job_file` and `sidecars`. See the Chinese README for setup and the SKILL entrypoint for retry rules.
+
+## Job ledger and recovery
+
+`generate` and `edit` write a ledger before the first chargeable submission, at `<out-dir>/.cm-jobs/<job-id>.json` unless `--job-file` names one. Its path is printed to stderr immediately (`cm-imagegen job ledger: ...`), so it survives a shell timeout that discards stdout. The ledger records the prompt, prompt SHA-256, reference/mask/markup hashes, requested model/quality/complexity/size, every submission and attempt error, and any provider poll handle. It may contain the provider address and short-lived poll/result URLs: keep it local and never ship it in a publishing package.
+
+States: `prepared` → `submitting` / `retry_wait` → `polling` → `saving` → `completed`; a run that ends without images becomes `failed`, `pending` (the provider still reported a running job) or `uncertain` (the request reached the provider but the response was lost, including a final timeout). A process killed mid-request leaves `submitting`/`saving`.
+
+Each saved image gets `<image>.cm.json` beside it (for example `p01.png.cm.json`) with the prompt, references, requested settings, output SHA-256 and attempt count. Sidecars omit the provider address, request/poll URLs and process ID, so they can accompany delivered images. `--no-sidecar` skips them; `--no-job-record` disables both (and recovery).
+
+After an interrupted, timed-out or unclear run, use `recover` before any new submission:
+
+```powershell
+python scripts/cm_image_gen.py recover --out-dir "./generated-images"          # list jobs; `unfinished` shows non-terminal ones
+python scripts/cm_image_gen.py recover --job-file "./generated-images/.cm-jobs/<job-id>.json"
+```
+
+`recovery_status` and `resubmit_advice` decide the next step:
+
+| status | meaning | next step |
+| --- | --- | --- |
+| `already_completed` | outputs exist and their SHA-256 matches | use them; do not resubmit |
+| `recovered` | a pending provider job was polled to completion and saved with sidecars | use them; do not resubmit |
+| `pending` | the provider still reports the job running (or `--no-poll`) | run `recover` again later |
+| `uncertain` | the provider may have finished and billed but no handle remains; `possible_outputs` lists matching files | check provider usage/logs or ask the user before another chargeable request |
+| `in_flight` | killed during submission or saving with no pollable handle | if the original process may still run, wait; otherwise treat as `uncertain` |
+| `failed` | classified failure with no outstanding provider job | follow the normal retry rules |
+| `provider_mismatch` | the configured provider differs from the one that accepted the job | do not poll; restore the original provider configuration |
+
+`recover` polls only the recorded handles on the same configured provider and never submits a new generation. Polling uses `--timeout` (minimum 180 s).
 
 ## Responses controller profile
 
