@@ -1,0 +1,28 @@
+{
+  "case": "I1_B",
+  "requested_model": "gpt-image-2.6-sunburst",
+  "operation": "edit",
+  "started_at_utc": "2026-11-07T13:56:58.661235+00:00",
+  "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+  "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+  "requested_size": [
+    2560,
+    1440
+  ],
+  "quality": "max",
+  "complexity": "omitted",
+  "seed": "not exposed by CLI",
+  "max_attempts": 1,
+  "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+  "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+  "duration_seconds": 2.36,
+  "exit_code": 1,
+  "completed_at_utc": "2026-11-07T13:57:01.017593+00:00",
+  "result": {
+    "ok": false,
+    "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/edits) status=503: HTTP 503 from cm Images API: type=api_error message=No available compatible accounts diagnostics=[error_kind=http_error_response status=503 content_type=application/json; charset=utf-8 content_length=75 body_bytes=75 body_class=json_like request_id=f067ddc7-0c83-448b-b46c-8f98e1735dc6 body_preview={\"error\":{\"message\":\"No available compatible accounts\",\"type\":\"api_error\"}}]"
+  },
+  "images": [],
+  "has_readable_image": false,
+  "meets_2k": false
+}

@@ -1,0 +1,212 @@
+[
+  {
+    "id": "svg_01_greenhouse",
+    "label": "SVG 1：机械温室",
+    "format": "svg",
+    "size": "1024x1024",
+    "prompt": "Generate an editable static SVG vector illustration. Square 1:1 composition. An intricate isometric botanical greenhouse and astronomical observatory: a glass dome, a brass telescope, six planters with distinct fern leaves and citrus trees, small irrigation pipes, three visible gears, a tiled stone path, a curved footbridge, a red bicycle, and a crescent moon. Precise clean vector paths, geometric layering, consistent isometric perspective, six harmonious navy, teal, cream, coral and gold colors. Clear silhouettes and fine details, no lettering, no raster textures, no embedded bitmap images, no external resources. Return genuine SVG paths and shapes through SVG output.",
+    "elapsed_seconds": 57.53,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "operation": "generate",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "attempt_count": 1,
+      "requested_model": "gpt-image-2.6-sunburst",
+      "image_model": "gpt-image-2.6-sunburst",
+      "image_model_source": "cli",
+      "model_alias_applied": false,
+      "skill_primary_channel": "cm_image_gen_cli",
+      "execution_channel": "cm_image_gen_cli",
+      "api_channel": "configured_provider",
+      "api_provider": "cm",
+      "request_url": "https://209.87.95.5:18081/v1/images/generations",
+      "provider": "cm",
+      "base_url": "https://209.87.95.5:18081/v1",
+      "endpoint": "/images/generations",
+      "transport": "images_json",
+      "model": "gpt-image-2.6-sunburst",
+      "paths": [
+        "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png"
+      ],
+      "usage": {
+        "input_tokens": 138,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 138
+        },
+        "output_tokens": 2058,
+        "output_tokens_details": {
+          "image_tokens": 2058,
+          "text_tokens": 0
+        },
+        "total_tokens": 2196
+      },
+      "svg_usage": null,
+      "created": 1794062791,
+      "requested_size": "1024x1024",
+      "output_dimensions": [
+        "1254x1254"
+      ],
+      "size_verified": false,
+      "size_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png",
+          "warning": "image_size_mismatch",
+          "expected": "1024x1024",
+          "actual": "1254x1254"
+        }
+      ],
+      "size_validation_strict": false,
+      "size_validation_failed": false,
+      "requested_output_format": "svg",
+      "media_outputs": [
+        {
+          "format": "png",
+          "readable": true,
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png"
+        }
+      ],
+      "media_validation_failed": true,
+      "media_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png",
+          "warning": "output_format_mismatch",
+          "expected": "svg",
+          "actual": "png"
+        }
+      ],
+      "error_kind": "image_media_mismatch"
+    },
+    "original_files": [
+      {
+        "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png",
+        "sha256": "10238992fa69c277bf738ba102819cf5a0dc24c34217f1949ba46ee16357ad68"
+      }
+    ]
+  },
+  {
+    "id": "svg_02_canal",
+    "label": "SVG 2：运河小镇",
+    "format": "svg",
+    "size": "1024x1024",
+    "prompt": "Generate an editable static SVG vector illustration. Square 1:1 composition. A detailed miniature canal-town map: a winding blue canal, two distinct stone bridges, six small colorful houses with individual windows, a red tram, a lighthouse, a windmill, twelve trees, moored boats, a market square with striped awnings and a tiny compass rose. Elegant geometric paths and shapes, accurate road and bridge connections, thin consistent outlines, cream background, deep teal, coral, ochre and navy accents. No text labels, no raster textures, no embedded bitmap images, no external resources. Return genuine SVG vector content through SVG output.",
+    "elapsed_seconds": 61.53,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "operation": "generate",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "attempt_count": 1,
+      "requested_model": "gpt-image-2.6-sunburst",
+      "image_model": "gpt-image-2.6-sunburst",
+      "image_model_source": "cli",
+      "model_alias_applied": false,
+      "skill_primary_channel": "cm_image_gen_cli",
+      "execution_channel": "cm_image_gen_cli",
+      "api_channel": "configured_provider",
+      "api_provider": "cm",
+      "request_url": "https://209.87.95.5:18081/v1/images/generations",
+      "provider": "cm",
+      "base_url": "https://209.87.95.5:18081/v1",
+      "endpoint": "/images/generations",
+      "transport": "images_json",
+      "model": "gpt-image-2.6-sunburst",
+      "paths": [
+        "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png"
+      ],
+      "usage": {
+        "input_tokens": 133,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 133
+        },
+        "output_tokens": 2058,
+        "output_tokens_details": {
+          "image_tokens": 2058,
+          "text_tokens": 0
+        },
+        "total_tokens": 2191
+      },
+      "svg_usage": null,
+      "created": 1794062848,
+      "requested_size": "1024x1024",
+      "output_dimensions": [
+        "1254x1254"
+      ],
+      "size_verified": false,
+      "size_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png",
+          "warning": "image_size_mismatch",
+          "expected": "1024x1024",
+          "actual": "1254x1254"
+        }
+      ],
+      "size_validation_strict": false,
+      "size_validation_failed": false,
+      "requested_output_format": "svg",
+      "media_outputs": [
+        {
+          "format": "png",
+          "readable": true,
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png"
+        }
+      ],
+      "media_validation_failed": true,
+      "media_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png",
+          "warning": "output_format_mismatch",
+          "expected": "svg",
+          "actual": "png"
+        }
+      ],
+      "error_kind": "image_media_mismatch"
+    },
+    "original_files": [
+      {
+        "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png",
+        "sha256": "c8c4f0342f0e98d9a24a7b8eef9c1183f460b89ce6dba554c7e5dc3918c62e15"
+      }
+    ]
+  },
+  {
+    "id": "gif_01_greenhouse",
+    "label": "GIF 1：温室夜景",
+    "format": "gif",
+    "size": "auto",
+    "prompt": "Generate an actual animated GIF with 9 distinct frames at 200 milliseconds per frame, a clean seamless 1.8 second loop. A richly detailed miniature glass greenhouse and brass observatory at night: visible ferns, orange trees, small irrigation pipes, stone path, footbridge, telescope and a red bicycle. The brass gear makes a slow gentle oscillation, fern leaves sway slightly, and warm lantern light softly flickers. Fixed camera and stable architecture, legible detailed shapes, cozy navy and gold illustrated palette. The first and final poses connect smoothly. No text, no contact sheet, no sprite sheet: the output is one playable looping GIF animation.",
+    "elapsed_seconds": 2.14,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=400: HTTP 400 from cm Images API: type=invalid_request_error message=GIF output is not enabled for this request. diagnostics=[error_kind=http_error_response status=400 content_type=application/json; charset=utf-8 content_length=98 body_bytes=98 body_class=json_like request_id=1fff75cd-f64f-4aee-80ec-30d4b0a90de5 body_preview={\"error\":{\"message\":\"GIF output is not enabled for this request.\",\"type\":\"invalid_request_error\"}}]"
+    },
+    "original_files": []
+  },
+  {
+    "id": "gif_02_canal",
+    "label": "GIF 2：雨夜运河",
+    "format": "gif",
+    "size": "auto",
+    "prompt": "Generate an actual animated GIF with 9 distinct frames at 200 milliseconds per frame, a clean seamless 1.8 second loop. A detailed cozy canal town in light evening rain: colorful houses, a small stone bridge, a stationary red tram, market awnings, trees, and a cat resting under a warm lamp. A moored blue boat gently bobs on the water, hanging lanterns sway slightly, and soft circular rain ripples animate on the canal. Fixed camera, stable buildings, warm reflected lights, careful small details, elegant illustrated style. Smooth repeating motion with matching loop endpoints. No text, no contact sheet, no sprite sheet: one playable animated GIF file.",
+    "elapsed_seconds": 2.5,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=400: HTTP 400 from cm Images API: type=invalid_request_error message=GIF output is not enabled for this request. diagnostics=[error_kind=http_error_response status=400 content_type=application/json; charset=utf-8 content_length=98 body_bytes=98 body_class=json_like request_id=c4e6d238-19ba-45dd-8ac7-eb6588b9fa73 body_preview={\"error\":{\"message\":\"GIF output is not enabled for this request.\",\"type\":\"invalid_request_error\"}}]"
+    },
+    "original_files": []
+  }
+]

@@ -1,0 +1,112 @@
+{
+  "ok": true,
+  "operation": "doctor",
+  "execution_channel": "cm_image_gen_cli",
+  "skill_primary_channel": "cm_image_gen_cli",
+  "network_call_performed": true,
+  "api": "images",
+  "default_api": "images",
+  "commands": [
+    "generate",
+    "edit"
+  ],
+  "image_model": "gpt-image-2.6-sunburst",
+  "requested_quality": "max",
+  "requested_model": "gpt-image-2.6-sunburst",
+  "image_model_source": "cli",
+  "model_alias_applied": false,
+  "model_semantics": "Image model requested by the CLI; gateway Responses controller and actual upstream execution are separate.",
+  "payload_shape_included": true,
+  "codex_home": "C:\\Users\\miaoyin\\.codex",
+  "payload_shapes": [
+    {
+      "operation": "generate",
+      "api": "images",
+      "content_type": "application/json",
+      "json_fields": {
+        "model": "gpt-image-2.6-sunburst",
+        "prompt": "<provided at request time>",
+        "size": "1024x1024",
+        "response_format": "b64_json",
+        "quality": "max"
+      }
+    },
+    {
+      "operation": "edit",
+      "api": "images",
+      "content_type": "multipart/form-data",
+      "form_fields": {
+        "model": "gpt-image-2.6-sunburst",
+        "prompt": "<provided at request time>",
+        "size": "1024x1024",
+        "response_format": "b64_json",
+        "quality": "max"
+      },
+      "image_file_parts": "<redacted>",
+      "mask_file_part": "<redacted if provided>"
+    }
+  ],
+  "configured_provider": {
+    "ok": true,
+    "configured": true,
+    "api_provider": "cm",
+    "api_channel": "configured_provider",
+    "base_url": "https://209.87.95.5:18081/v1",
+    "api_key_present": true,
+    "routes": [
+      {
+        "operation": "generate",
+        "endpoint": "/images/generations",
+        "transport": "images_json",
+        "request_url": "https://209.87.95.5:18081/v1/images/generations"
+      },
+      {
+        "operation": "edit",
+        "endpoint": "/images/edits",
+        "transport": "images_multipart",
+        "request_url": "https://209.87.95.5:18081/v1/images/edits"
+      }
+    ]
+  },
+  "local_image_models": [
+    "gpt-image-2.6-flare",
+    "gpt-image-2.6-sunburst"
+  ],
+  "image_model_registered_locally": true,
+  "model_catalog_check": {
+    "ok": true,
+    "model": "gpt-image-2.6-sunburst",
+    "status": "locally_registered",
+    "remote_listed": false,
+    "local_registered": true,
+    "listed_models": [
+      "codex-auto-review",
+      "gpt-5.2",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.6",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
+      "gpt-image-1",
+      "gpt-image-1.5",
+      "gpt-image-2",
+      "gpt-image-2.5-flare",
+      "gpt-image-2.5-sunburst"
+    ],
+    "local_models": [
+      "gpt-image-2.6-flare",
+      "gpt-image-2.6-sunburst"
+    ],
+    "generation_verified": false,
+    "note": "Explicitly registered locally; upstream listing and successful generation are not verified.",
+    "image_tool_model": "gpt-image-2.6-sunburst"
+  }
+}

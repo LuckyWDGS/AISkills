@@ -1,0 +1,23 @@
+{
+  "case": "R1_T1_flare_omit",
+  "requested_model": "gpt-image-2.6-flare",
+  "api": "images",
+  "quality": "max",
+  "complexity": null,
+  "requested_size": "1536x1024",
+  "operation": "generate",
+  "prompt_file": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\T1_cinematic.txt",
+  "prompt_sha256": "a017ef8cb71d4e69d2087fac6294e903b786c04eae6fba0b65dfc1c88dc8d3d9",
+  "references": [],
+  "skill_script": "C:\\Users\\miaoyin\\.codex\\skills\\cm-imagegen\\scripts\\cm_image_gen.py",
+  "request_fields": {
+    "model": "gpt-image-2.6-flare",
+    "size": "1536x1024",
+    "quality": "max",
+    "response_format": "b64_json",
+    "n": 1
+  },
+  "complexity_field_present": false,
+  "max_attempts": 1,
+  "started_at_utc": "2026-11-05T02:35:19.383069+00:00"
+}

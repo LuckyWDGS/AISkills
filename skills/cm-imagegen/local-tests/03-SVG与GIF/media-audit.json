@@ -1,0 +1,28 @@
+[
+  {
+    "case": "svg_01_greenhouse",
+    "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png",
+    "requested_format": "svg",
+    "actual_format": "PNG",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "frames": 1,
+    "signature_hex": "89504e470d0a1a0a0000000d49484452",
+    "sha256": "10238992fa69c277bf738ba102819cf5a0dc24c34217f1949ba46ee16357ad68"
+  },
+  {
+    "case": "svg_02_canal",
+    "path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png",
+    "requested_format": "svg",
+    "actual_format": "PNG",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "frames": 1,
+    "signature_hex": "89504e470d0a1a0a0000000d49484452",
+    "sha256": "c8c4f0342f0e98d9a24a7b8eef9c1183f460b89ce6dba554c7e5dc3918c62e15"
+  }
+]

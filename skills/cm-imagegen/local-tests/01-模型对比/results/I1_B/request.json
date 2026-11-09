@@ -1,0 +1,18 @@
+{
+  "case": "I1_B",
+  "requested_model": "gpt-image-2.6-sunburst",
+  "operation": "edit",
+  "started_at_utc": "2026-11-07T13:56:58.661235+00:00",
+  "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+  "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+  "requested_size": [
+    2560,
+    1440
+  ],
+  "quality": "max",
+  "complexity": "omitted",
+  "seed": "not exposed by CLI",
+  "max_attempts": 1,
+  "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+  "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04"
+}

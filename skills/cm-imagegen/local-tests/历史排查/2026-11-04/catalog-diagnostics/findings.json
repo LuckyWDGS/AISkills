@@ -1,0 +1,25 @@
+{
+  "admin_version": "v0.2.19",
+  "group": "Codex分组",
+  "model_allowlist_enabled": false,
+  "image_generation_allowed": true,
+  "fixed_account_model_discovery_enabled": false,
+  "ui_explanation": "未启用：普通列表使用本地映射或默认模型；Codex 优先使用本地目录，无本地目录时由调度器选账。",
+  "api_model_count": 20,
+  "image_ids": [
+    "gpt-image-1",
+    "gpt-image-1.5",
+    "gpt-image-2",
+    "gpt-image-2.5-flare",
+    "gpt-image-2.5-sunburst"
+  ],
+  "public_source_commit": "8e92c892b47f3f934f18ce63da4c4dcb75f0b6bd",
+  "actual_only_ids": [],
+  "default_only_ids": [
+    "gpt-5.5"
+  ],
+  "admin_error_records_confirmed": 6,
+  "upstream_account_id": 39,
+  "new_generation_requests_this_check": 0,
+  "settings_changed": false
+}
