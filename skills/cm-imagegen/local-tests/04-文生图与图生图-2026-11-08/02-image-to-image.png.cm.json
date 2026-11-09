@@ -1,0 +1,63 @@
+{
+  "ledger_version": 1,
+  "job_id": "02-image-to-image-20261108-233204-522e49",
+  "state": "completed",
+  "started_at": "2026-11-08T23:32:04-0800",
+  "updated_at": "2026-11-08T23:32:54-0800",
+  "out_dir": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08",
+  "submissions": 1,
+  "attempts": [],
+  "command": "edit",
+  "api": "images",
+  "model": "gpt-image-2.6-sunburst",
+  "requested_quality": "max",
+  "requested_complexity": "high",
+  "size": "2560x1440",
+  "n": 1,
+  "output_format": "png",
+  "frame_count": null,
+  "frame_duration_ms": null,
+  "require_exact_size": false,
+  "filename": "02-image-to-image",
+  "prompt": "图像1是唯一的编辑基底。制作一张对应的高细节写实图生图，将“雨夜温室车站”改为“冬日晴朗清晨的温室车站”。\n只改变时间、季节、室外天气以及由此产生的照明、表面水汽与外部积雪；保留原图的摄影机位置、画幅、透视、建筑几何、拱形玻璃顶、铸铁桁架、石板步道、池塘、栏杆、植物架、架空走廊和电车的形状与位置。\n保持成年女植物学家的脸、发型、墨绿色长外套、手套、半蹲姿势、身体朝向、手的位置，以及小工具推车不变。保持远处成年站务员和收拢的伞的位置与姿势不变。保持所有主要物体数量不变。\n把室外蓝色雨夜变成寒冷但晴朗的金色冬日清晨，玻璃之外的城市屋顶与温室顶的外表面有薄薄白雪，远处天空淡粉浅金。温室内部仍温暖，植物保持鲜活，不要让室内植物、池塘或地面出现积雪。\n清晨阳光通过原有的玻璃与铁架形成可信的斜射光和细长投影，室内灯具仍在原位置但亮度自然减弱。外侧玻璃边缘有轻微霜花，内侧有少量水汽；材质、倒影与阴影符合新的光线。\n原图导视牌的“云栖花园”和“BOTANICAL STATION”必须原样保留，不增添额外文字。不添加新人物或物体，不改变人物衣服颜色，不重新设计场景。保持细节、写实摄影感、材质层次与画面清晰度。单张完整画面，无水印，无拼贴。",
+  "prompt_sha256": "25522536c6e358959605b541029883ba1d96182e0a7bfd3e3765754d687f5895",
+  "prompt_file": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08\\02-图生图-提示词.txt",
+  "max_attempts": 3,
+  "started_epoch": 1794209524.6101916,
+  "input_images": [
+    {
+      "path": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08\\01-text-to-image.png",
+      "sha256": "ce5edd5e762f7df186bb5a11d4dc54c35589b7a66b89d2781f8d45302d9ff93a"
+    }
+  ],
+  "current_attempt": 1,
+  "endpoint": "/images/edits",
+  "submitted_at": "2026-11-08T23:32:04-0800",
+  "finished_at": "2026-11-08T23:32:54-0800",
+  "ok": true,
+  "error_kind": null,
+  "provider": "cm",
+  "transport": "images_multipart",
+  "attempt_count": 1,
+  "async_poll_used": false,
+  "usage": {
+    "input_tokens": 1966,
+    "input_tokens_details": {
+      "image_tokens": 1508,
+      "text_tokens": 458
+    },
+    "output_tokens": 1158,
+    "output_tokens_details": {
+      "image_tokens": 1158,
+      "text_tokens": 0
+    },
+    "total_tokens": 3124
+  },
+  "created": 1794209569,
+  "output": {
+    "path": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08\\02-image-to-image.png",
+    "sha256": "82084fba698a7861da1478419432cd364383252f7ced94da4cae96d50be1d2d0"
+  },
+  "output_index": 0,
+  "sibling_outputs": []
+}

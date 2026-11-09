@@ -1,0 +1,57 @@
+{
+  "ledger_version": 1,
+  "job_id": "01-text-to-image-20261108-233056-5f7157",
+  "state": "completed",
+  "started_at": "2026-11-08T23:30:56-0800",
+  "updated_at": "2026-11-08T23:31:40-0800",
+  "out_dir": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08",
+  "submissions": 1,
+  "attempts": [],
+  "command": "generate",
+  "api": "images",
+  "model": "gpt-image-2.6-sunburst",
+  "requested_quality": "max",
+  "requested_complexity": "high",
+  "size": "2560x1440",
+  "n": 1,
+  "output_format": "png",
+  "frame_count": null,
+  "frame_duration_ms": null,
+  "require_exact_size": false,
+  "filename": "01-text-to-image",
+  "prompt": "用途：高细节文生图示例，单张完整横幅电影级写实建筑摄影，画面主题为“雨夜温室车站”。\n场景：一座改造成公共植物园的维多利亚式玻璃火车站，蓝调雨夜，巨大的拱形玻璃顶与精细铸铁桁架，旧砖墙、氧化铜管、清晰但自然的玻璃雨滴。透过玻璃可以看见外面的城市灯光和下雨的夜空。\n构图：人眼高度、28mm广角，沿弯曲的石板步道望向大厅深处，建筑透视准确，前中远景清楚分层。画面是一张连续的照片，无拼贴，无分格。\n前景：潮湿石板、铸铁栏杆、一池锦鲤、苔藓与蕨类，水面的灯光倒影遵守真实光学。中景有兰花架、植物标牌和铜制浇水设施，植物形态各不相同，不机械重复。\n人物：一名穿墨绿色长外套的成年女植物学家半蹲在兰花架旁，戴浅色园艺手套，手指和身体自然，旁边停着一辆小型工具推车。远处另一名成年站务员拿着收拢的伞，不遮挡建筑的主要结构。人物尺寸与建筑一致。\n主体细节：一辆奶油色和深绿色的复古有轨电车静停在温室大厅内的一段轨道上，车体的金属、木材、玻璃与植物叶面的质感清晰区分。大厅后部的架空走廊、细密栏杆和玻璃分格都保持合理结构。\n文字：大厅内一块真实安装的导视牌，只准确写“云栖花园”和“BOTANICAL STATION”，字体清晰端正，属于场景实物，不要加其他标题文字。\n光线和质感：室内温暖琥珀灯光与室外深蓝雨夜形成自然冷暖关系，柔和雾气、湿叶反光、细小划痕、砖缝和黄铜包浆丰富，但视觉重点清楚。摄影级材质，真实高级色彩，避免过强HDR、塑料质感、重复人物、肢体畸变和无意义细节。无水印。",
+  "prompt_sha256": "f5e39ebdde91009c6914c6b731974f5f63d7136ee28507535b5aeeb7c6e808c8",
+  "prompt_file": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08\\01-文生图-提示词.txt",
+  "max_attempts": 3,
+  "started_epoch": 1794209456.6033025,
+  "current_attempt": 1,
+  "endpoint": "/images/generations",
+  "submitted_at": "2026-11-08T23:30:56-0800",
+  "finished_at": "2026-11-08T23:31:40-0800",
+  "ok": true,
+  "error_kind": null,
+  "provider": "cm",
+  "transport": "images_json",
+  "attempt_count": 1,
+  "async_poll_used": false,
+  "usage": {
+    "input_tokens": 555,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 555
+    },
+    "output_tokens": 1158,
+    "output_tokens_details": {
+      "image_tokens": 1158,
+      "text_tokens": 0
+    },
+    "total_tokens": 1713
+  },
+  "created": 1794209496,
+  "output": {
+    "path": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests\\04-文生图与图生图-2026-11-08\\01-text-to-image.png",
+    "sha256": "ce5edd5e762f7df186bb5a11d4dc54c35589b7a66b89d2781f8d45302d9ff93a"
+  },
+  "output_index": 0,
+  "sibling_outputs": []
+}

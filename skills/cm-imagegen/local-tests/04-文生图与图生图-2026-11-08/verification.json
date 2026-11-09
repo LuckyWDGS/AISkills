@@ -1,0 +1,88 @@
+{
+  "case": "雨夜温室车站：文生图与冬日清晨图生图",
+  "generation_date_local": "2026-11-08",
+  "generation_timezone": "America/Los_Angeles",
+  "archived_at_utc": "2026-11-09T07:37:14.823232+00:00",
+  "purpose": "durable single-case generate/edit reference and regression example",
+  "archive_operation_network_calls": 0,
+  "reviewer": "same assistant, same session visual comparison; not independent blind review",
+  "all_original_provenance_checks_passed": true,
+  "strict_requested_dimensions_met": false,
+  "original_file_sha256": {
+    "01-text-to-image.png": "ce5edd5e762f7df186bb5a11d4dc54c35589b7a66b89d2781f8d45302d9ff93a",
+    "01-text-to-image.png.cm.json": "c50ed1391234432d192c16620816aedefb57c7e7f2e92858df9103c571bdccfd",
+    "01-文生图-提示词.txt": "9161bae7ec38428b88320efe1a0a3ea0e72a0e0cae9e9a8a88a0268bb1895fdd",
+    "02-image-to-image.png": "82084fba698a7861da1478419432cd364383252f7ced94da4cae96d50be1d2d0",
+    "02-image-to-image.png.cm.json": "d19504098323345f254528b7fad9725c2fc5c126922c86d01f1f9ee4cf85cb04",
+    "02-图生图-提示词.txt": "89f767a874687fe8fb8c80cd6c7e81c486a901079dfb9d8704109f4c08926903"
+  },
+  "operations": [
+    {
+      "operation": "generate",
+      "image": "01-text-to-image.png",
+      "sidecar": "01-text-to-image.png.cm.json",
+      "prompt_file": "01-文生图-提示词.txt",
+      "started_at": "2026-11-08T23:30:56-0800",
+      "finished_at": "2026-11-08T23:31:40-0800",
+      "api": "images",
+      "endpoint_path": "/images/generations",
+      "transport": "images_json",
+      "requested_model": "gpt-image-2.6-sunburst",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "requested_size": "2560x1440",
+      "require_exact_size": false,
+      "actual_format": "PNG",
+      "actual_dimensions": [
+        1672,
+        941
+      ],
+      "requested_dimensions_met": false,
+      "image_sha256": "ce5edd5e762f7df186bb5a11d4dc54c35589b7a66b89d2781f8d45302d9ff93a",
+      "prompt_file_sha256": "9161bae7ec38428b88320efe1a0a3ea0e72a0e0cae9e9a8a88a0268bb1895fdd",
+      "submitted_prompt_sha256": "f5e39ebdde91009c6914c6b731974f5f63d7136ee28507535b5aeeb7c6e808c8",
+      "input_image_sha256": null,
+      "submissions": 1,
+      "cli_recorded_ok": true,
+      "output_hash_matches_sidecar": true,
+      "prompt_text_and_hash_match_sidecar": true,
+      "input_hash_matches_archived_base": null
+    },
+    {
+      "operation": "edit",
+      "image": "02-image-to-image.png",
+      "sidecar": "02-image-to-image.png.cm.json",
+      "prompt_file": "02-图生图-提示词.txt",
+      "started_at": "2026-11-08T23:32:04-0800",
+      "finished_at": "2026-11-08T23:32:54-0800",
+      "api": "images",
+      "endpoint_path": "/images/edits",
+      "transport": "images_multipart",
+      "requested_model": "gpt-image-2.6-sunburst",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "requested_size": "2560x1440",
+      "require_exact_size": false,
+      "actual_format": "PNG",
+      "actual_dimensions": [
+        1672,
+        941
+      ],
+      "requested_dimensions_met": false,
+      "image_sha256": "82084fba698a7861da1478419432cd364383252f7ced94da4cae96d50be1d2d0",
+      "prompt_file_sha256": "89f767a874687fe8fb8c80cd6c7e81c486a901079dfb9d8704109f4c08926903",
+      "submitted_prompt_sha256": "25522536c6e358959605b541029883ba1d96182e0a7bfd3e3765754d687f5895",
+      "input_image_sha256": "ce5edd5e762f7df186bb5a11d4dc54c35589b7a66b89d2781f8d45302d9ff93a",
+      "submissions": 1,
+      "cli_recorded_ok": true,
+      "output_hash_matches_sidecar": true,
+      "prompt_text_and_hash_match_sidecar": true,
+      "input_hash_matches_archived_base": true
+    }
+  ],
+  "visual_observation": "The time, exterior weather and lighting visibly change. The main camera framing, glass roof, tram, pond, orchid racks, two character positions and main bilingual sign are broadly retained. This is a single visual example, not a statistical benchmark or exact pixel-preservation proof.",
+  "excluded_from_git": [
+    ".cm-jobs/"
+  ],
+  "scope": "Only existing samples were inspected and archived. No new generation, edit, upscaling or image re-encoding was performed."
+}
