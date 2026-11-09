@@ -9,7 +9,7 @@ description: Research public Douyin and Bilibili AI-video references, separate a
 
 ## 路由
 
-- 对标、主页、相似作者、广告筛除、跨平台比较、为什么高赞：读[案例研究](references/case-study-method.md)。
+- 对标、主页、相似作者、广告筛除、跨平台比较、为什么高赞：读[案例研究](references/case-study-method.md)；音效/BGM研究按其声音字段记录，用户要求不影响工作时按后台研究方式执行。
 - 不知方向、给参考图/提示词、首片、验片或复盘：读[小样与反馈](references/pilot-and-feedback.md)。
 - 实际生图：使用当前可用的图像生成Skill。已安装image-generation-director/cm-imagegen时沿用用户路由偏好，真正生成并验图；工具不可用则交制作简报并明确图未完成。
 - 实际视频提示词：使用ai-video-prompt-director及当次平台适配器；参考选择、导演意图先于平台语法。用户未明确平台且没有有效持续偏好时，只问一次平台。已选Muse而底层模型未显示时，沿用自然中文导演稿并记模型未知，不反复要求二选一H3/Seedance。
