@@ -1,4 +1,4 @@
 interface:
   display_name: "抖音 AI 发布助手"
-  short_description: "根据素材与当日相关热点准备标题文案和图文，授权后发布并核验作品状态"
-  default_prompt: "使用 $douyin-ai-publisher 根据我的视频或图片准备抖音发布包；我明确要求发布时直接提交并核验。"
+  short_description: "成片检查、关联当日热点、准备标题文案，填好发布页交用户发布并核验状态"
+  default_prompt: "使用 $douyin-ai-publisher 检查我的视频或图片并准备抖音发布包；填好发布页后停下，由我审核并手动发布。"

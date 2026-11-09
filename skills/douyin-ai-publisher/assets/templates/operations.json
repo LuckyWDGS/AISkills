@@ -14,7 +14,15 @@
     "account_id": null,
     "public_url": null,
     "observed_at": null,
-    "verify_in_current_ui": true
+    "verify_in_current_ui": true,
+    "browser_hint": null
+  },
+  "submission_policy": {
+    "mode": "handoff",
+    "description": "handoff：执行者填好发布页后停下，由用户审核并手动点击发布；agent_submits_when_authorized：用户对某条作品明确授权时由执行者提交一次。",
+    "decided_by_user": false,
+    "source": null,
+    "since": null
   },
   "working_direction": {
     "status": "not_selected",
