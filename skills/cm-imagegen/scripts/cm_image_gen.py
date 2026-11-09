@@ -14,15 +14,25 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-DEFAULT_MODEL = "gpt-image-2.5-sunburst"
+from cm_image_formats import (OUTPUT_FORMATS, add_media_arguments, detect_format,
+                              extra_image_fields, inspect_media, validate_markup,
+                              validate_media_outputs, validate_size_option)
+
+DEFAULT_MODEL = "gpt-image-2.6-sunburst"
 DEFAULT_API = "images"
 DEFAULT_IMAGE_QUALITY = "max"
+DEFAULT_IMAGE_COMPLEXITY = "high"
 LEGACY_MODEL = "gpt-image-2"
 
-# Official GPT Image 2.5 is published as two model families. Keep the short
-# aliases explicit so `image2.5` never expands to the invalid generic ID
-# `gpt-image-2.5`; callers can still pass an exact model or snapshot unchanged.
+# GPT Image 2.5 and 2.6 each have two families. Keep version aliases explicit;
+# callers can still pass an exact model or snapshot unchanged.
 IMAGE_MODEL_ALIASES = {
+    "image2.6": "gpt-image-2.6-sunburst",
+    "gpt2.6": "gpt-image-2.6-sunburst",
+    "image2.6-sunburst": "gpt-image-2.6-sunburst",
+    "gpt2.6-sunburst": "gpt-image-2.6-sunburst",
+    "image2.6-flare": "gpt-image-2.6-flare",
+    "gpt2.6-flare": "gpt-image-2.6-flare",
     "image2.5": "gpt-image-2.5-sunburst",
     "gpt2.5": "gpt-image-2.5-sunburst",
     "image2.5-sunburst": "gpt-image-2.5-sunburst",
@@ -32,7 +42,9 @@ IMAGE_MODEL_ALIASES = {
 }
 DEFAULT_RESPONSES_MODEL = "gpt-5.4"
 DEFAULT_SIZE = "1024x1024"
-DEFAULT_RESPONSE_FORMAT = "b64_json"
+# GPT Image returns base64 without this legacy parameter. Keep an explicit
+# override for gateways that document it, but do not send it automatically.
+DEFAULT_RESPONSE_FORMAT = None
 PRIMARY_EXTRA_RETRY_ATTEMPTS = 2
 PRIMARY_RETRY_DELAYS_SECONDS = (5, 15)
 ERROR_BODY_PREVIEW_CHARS = 500
@@ -343,6 +355,8 @@ def response_is_image_bytes(raw_bytes: bytes, headers, *, allow_partial: bool) -
         raw_bytes.startswith(b"\x89PNG\r\n\x1a\n")
         or raw_bytes.startswith(b"\xff\xd8")
         or (raw_bytes.startswith(b"RIFF") and b"WEBP" in raw_bytes[:16])
+        or raw_bytes.startswith((b"GIF87a", b"GIF89a"))
+        or detect_format(raw_bytes) == "svg"
     )
 
 
@@ -625,6 +639,30 @@ def controller_defaults() -> dict:
     return {key: profile[key] for key in ("api", "responses_model", "responses_reasoning") if key in profile}
 
 
+def local_image_models(provider: ImageApiProvider) -> list[str]:
+    """Read explicitly registered image IDs for this provider, not entitlements."""
+    path = codex_home() / LOCAL_CONFIG_DIR_NAME / "models.json"
+    if not path.exists():
+        return []
+    try:
+        catalog = json.loads(path.read_text(encoding="utf-8-sig"))
+        if not isinstance(catalog, dict):
+            raise ValueError("expected a JSON object")
+        base_url = catalog.get("base_url")
+        if not isinstance(base_url, str) or not base_url.strip():
+            raise ValueError("base_url is required")
+        if base_url.strip().rstrip("/") != provider.base_url.rstrip("/"):
+            return []
+        models = catalog.get("image_models")
+        if not isinstance(models, list) or any(
+                not isinstance(model, str) or not model.strip() or "*" in model
+                for model in models):
+            raise ValueError("image_models must contain exact model IDs")
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"Invalid local image catalog: {path} ({type(exc).__name__})") from exc
+    return sorted({model.strip() for model in models})
+
+
 def parse_sse_events(text: str) -> list[dict]:
     events = []
     event_name = None
@@ -787,7 +825,8 @@ def parse_sse_json_payloads(text: str) -> tuple[list[dict], dict]:
             invalid_json_count += 1
             continue
         if isinstance(value, dict):
-            if not value.get("type") and event_name in {"error", "response.completed", "response.failed", "response.incomplete", "response.cancelled"}:
+            if not value.get("type") and (event_name in {"error", "response.completed", "response.failed", "response.incomplete", "response.cancelled"}
+                                           or event_name.startswith(("image_generation.", "image_edit."))):
                 value = {**value, "type": event_name}
             payloads.append(value)
         else:
@@ -814,6 +853,8 @@ def parsed_sse_image_response(text: str) -> tuple[dict | None, dict]:
     items = []
     seen = set()
     for payload in payloads:
+        if "partial_image" in str(payload.get("type", "")):
+            continue  # Intermediate previews must never be reported as final outputs.
         for item in response_image_items(payload):
             kind = "b64_json" if item.get("b64_json") else "url"
             identity = (kind, hashlib.sha256(item[kind].strip().encode("utf-8")).hexdigest())
@@ -1531,7 +1572,7 @@ def request_json(provider: ImageApiProvider, endpoint: str, payload: dict, timeo
         headers={
             "Authorization": f"Bearer {provider.api_key}",
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            "Accept": "text/event-stream, application/json" if payload.get("stream") else "application/json",
         },
         method="POST",
     )
@@ -1688,7 +1729,7 @@ def multipart_body(fields: dict, files: list[dict]) -> tuple[bytes, str]:
             continue
         chunks.append(f"--{boundary}\r\n".encode("ascii"))
         chunks.append(f'Content-Disposition: form-data; name="{key}"\r\n\r\n'.encode("utf-8"))
-        chunks.append(str(value).encode("utf-8"))
+        chunks.append(multipart_field_value(value).encode("utf-8"))
         chunks.append(b"\r\n")
     for file_item in files:
         image = file_item["image"]
@@ -1707,6 +1748,12 @@ def multipart_body(fields: dict, files: list[dict]) -> tuple[bytes, str]:
     return b"".join(chunks), boundary
 
 
+def multipart_field_value(value) -> str:
+    if isinstance(value, (bool, dict, list)):
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return str(value)
+
+
 def request_multipart(
     provider: ImageApiProvider,
     endpoint: str,
@@ -1722,7 +1769,7 @@ def request_multipart(
         headers={
             "Authorization": f"Bearer {provider.api_key}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "Accept": "application/json",
+            "Accept": "text/event-stream, application/json" if fields.get("stream") else "application/json",
         },
         method="POST",
     )
@@ -1876,7 +1923,7 @@ def request_multipart_requests_stream(
 ) -> dict:
     requests = load_requests_module()
     url = f"{provider.base_url}{endpoint}"
-    data_fields = {key: value for key, value in fields.items() if value is not None}
+    data_fields = {key: multipart_field_value(value) for key, value in fields.items() if value is not None}
     file_parts = []
     for file_item in files:
         image = file_item["image"]
@@ -2105,8 +2152,28 @@ def request_responses_with_retry(
 def load_input_image(path: Path, label: str) -> InputImage:
     if not path.exists() or not path.is_file():
         raise SystemExit(f"{label} not found: {path}")
+    raw = path.read_bytes()
+    if path.suffix.lower() == ".svg" or detect_format(raw) == "svg":
+        raise SystemExit("SVG is an output format, not a supported raster image-edit input.")
     mime_type = mimetypes.guess_type(str(path))[0] or "image/png"
-    return InputImage(path.resolve(), path.name, mime_type, path.read_bytes())
+    return InputImage(path.resolve(), path.name, mime_type, raw)
+
+
+def image_edit_uploads(args: argparse.Namespace, input_images: list[InputImage]) -> list[dict]:
+    files = [{"field": "image", "image": image} for image in input_images]
+    mask = getattr(args, "mask", None)
+    markup = getattr(args, "markup", None)
+    if mask and markup:
+        raise SystemExit("--markup and --mask cannot be combined.")
+    if mask:
+        if getattr(args, "api", "images") != "images":
+            raise SystemExit("Mask edits require --api images.")
+        files.append({"field": "mask", "image": load_input_image(Path(mask).expanduser(), "Mask image")})
+    if markup:
+        overlay = load_input_image(Path(markup).expanduser(), "Markup image")
+        validate_markup(overlay, input_images[0])
+        files.append({"field": "markup", "image": overlay})
+    return files
 
 
 def download_url_image(url: str, provider: ImageApiProvider | None) -> bytes:
@@ -2203,6 +2270,12 @@ def parse_image_dimensions(raw: bytes) -> tuple[int, int] | None:
     if not isinstance(raw, (bytes, bytearray, memoryview)):
         return None
     data = bytes(raw)
+    if detect_format(data) == "svg":
+        info = inspect_media(data)
+        dimensions = info.get("dimensions")
+        if info["readable"] and dimensions and all(float(x).is_integer() for x in dimensions):
+            return tuple(int(x) for x in dimensions)
+        return None
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         # PNG IHDR is always first, has 13 data bytes and a 4-byte CRC.
         if len(data) < 33 or data[8:12] != b"\x00\x00\x00\x0d" or data[12:16] != b"IHDR":
@@ -2285,13 +2358,12 @@ def save_image_from_item(
         raw = download_url_image(url.strip(), provider)
     else:
         raise SystemExit("Response item has neither b64_json nor url.")
-    ext = ".png"
-    if raw.startswith(b"\xff\xd8"):
-        ext = ".jpg"
-    elif raw.startswith(b"RIFF") and b"WEBP" in raw[:16]:
-        ext = ".webp"
+    fmt = detect_format(raw)
+    ext = ".jpg" if fmt == "jpeg" else f".{fmt}" if fmt else ".bin"
     base = sanitize_filename(filename or f"codexmanager-image-{int(time.time())}")
-    if not base.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+    if Path(base).suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".bin"):
+        base = Path(base).stem + ext
+    else:
         base = f"{base}{ext}"
     if index > 0:
         stem = Path(base).stem
@@ -2331,7 +2403,8 @@ def image_quality(args: argparse.Namespace, model: str) -> str | None:
     explicit = getattr(args, "quality", None)
     if explicit:
         return explicit
-    for family in ("gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
+    for family in ("gpt-image-2.5-sunburst", "gpt-image-2.5-flare",
+                   "gpt-image-2.6-sunburst", "gpt-image-2.6-flare"):
         if model == family or model.startswith(family + "-"):
             return DEFAULT_IMAGE_QUALITY
     # Preserve provider defaults for other models; older GPT Image models do
@@ -2339,8 +2412,24 @@ def image_quality(args: argparse.Namespace, model: str) -> str | None:
     return None
 
 
-def model_catalog_check(provider: ImageApiProvider, model: str) -> dict:
-    """Read-only preflight: never generate or silently substitute another model."""
+def image_complexity(args: argparse.Namespace, model: str) -> str | None:
+    """Send image planning strength explicitly on the documented Images route."""
+    explicit = getattr(args, "complexity", None)
+    if getattr(args, "api", DEFAULT_API) != "images":
+        if explicit:
+            raise SystemExit("--complexity is supported only with --api images.")
+        return None
+    if explicit:
+        return explicit
+    for family in ("gpt-image-2.6-sunburst", "gpt-image-2.6-flare"):
+        if model == family or model.startswith(family + "-"):
+            return DEFAULT_IMAGE_COMPLEXITY
+    return None
+
+
+def model_catalog_check(provider: ImageApiProvider, model: str, *, allow_local: bool = True) -> dict:
+    """Check remote listing plus explicit local image registrations; never generate."""
+    local_models = local_image_models(provider) if allow_local else []
     url = f"{provider.base_url}/models"
     req = urllib.request.Request(url, headers={
         "Authorization": f"Bearer {provider.api_key}", "Accept": "application/json",
@@ -2357,10 +2446,16 @@ def model_catalog_check(provider: ImageApiProvider, model: str) -> dict:
         # Do not expose response bodies, authorization headers or credentials.
         return {"ok": False, "model": model, "status": "catalog_unavailable",
                 "error": f"Model catalog check failed ({type(exc).__name__}); no image request sent."}
-    found = model in ids
-    result = {"ok": found, "model": model, "status": "listed" if found else "not_listed",
-              "listed_models": ids}
-    if not found:
+    remote_listed = model in ids
+    local_registered = model in local_models
+    result = {"ok": remote_listed or local_registered, "model": model,
+              "status": "listed" if remote_listed else "locally_registered" if local_registered else "not_listed",
+              "remote_listed": remote_listed, "local_registered": local_registered,
+              "listed_models": ids, "local_models": local_models,
+              "generation_verified": False}
+    if local_registered and not remote_listed:
+        result["note"] = "Explicitly registered locally; upstream listing and successful generation are not verified."
+    if not result["ok"]:
         result["error"] = f"Image model {model!r} is not listed by this provider; no image request sent."
     return result
 
@@ -2374,9 +2469,31 @@ def is_loopback_provider(provider: ImageApiProvider) -> bool:
     return host in {"127.0.0.1", "localhost", "::1"}
 
 
-def image_payload(args: argparse.Namespace) -> tuple[dict, str]:
+def image_request_fields(args: argparse.Namespace, model: str, operation: str) -> dict:
+    api = getattr(args, "api", "images")
+    extra = extra_image_fields(args, operation, api)
+    size = getattr(args, "size", DEFAULT_SIZE)
+    validate_size_option(size, model, exact=getattr(args, "require_exact_size", False))
+    payload = {"model": model, "prompt": getattr(args, "prompt", ""), "size": size}
+    for field in ("response_format", "n", "background", "output_format"):
+        value = getattr(args, field, None)
+        if value is not None:
+            payload[field] = value
+    quality = image_quality(args, model)
+    if quality:
+        payload["quality"] = quality
+    complexity = image_complexity(args, model)
+    if complexity:
+        payload["complexity"] = complexity
+    payload.update(extra)
+    return payload
+
+
+def image_payload(args: argparse.Namespace, operation: str | None = None) -> tuple[dict, str]:
     selection = image_model_selection(args)
     model = selection["image_model"]
+    operation = operation or getattr(args, "operation", None) or getattr(args, "command", None) or "generate"
+    payload = image_request_fields(args, model, operation)
     # The Images API exposes the image model as its top-level `model`, so its
     # catalog can be checked before submission. Responses is different: the
     # top-level model is the mainline controller and the image model lives in
@@ -2394,21 +2511,6 @@ def image_payload(args: argparse.Namespace) -> tuple[dict, str]:
             check = model_catalog_check(provider, model)
             if not check["ok"]:
                 raise SystemExit(check["error"])
-    payload = {
-        "model": model,
-        "prompt": args.prompt,
-        "size": args.size,
-        "response_format": args.response_format,
-    }
-    if args.n is not None:
-        payload["n"] = args.n
-    quality = image_quality(args, model)
-    if quality:
-        payload["quality"] = quality
-    if args.background:
-        payload["background"] = args.background
-    if args.output_format:
-        payload["output_format"] = args.output_format
     return payload, model
 
 
@@ -2435,6 +2537,7 @@ def route_preview(base_url: str, api: str, operation: str) -> dict:
 
 def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, model: str) -> dict:
     prompt_present = bool(getattr(args, "prompt", None))
+    common_fields = image_request_fields(args, model, operation)
     if api == "responses":
         shape = {
             "operation": operation,
@@ -2463,16 +2566,9 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
                 shape["tool_fields"][field] = value
         return shape
 
-    common_fields = {
-        "model": model,
-        "prompt": "<redacted>" if prompt_present else "<provided at request time>",
-        "size": getattr(args, "size", DEFAULT_SIZE),
-        "response_format": getattr(args, "response_format", DEFAULT_RESPONSE_FORMAT),
-    }
-    for field in ("n", "quality", "background", "output_format"):
-        value = image_quality(args, model) if field == "quality" else getattr(args, field, None)
-        if value is not None:
-            common_fields[field] = value
+    common_fields["prompt"] = "<redacted>" if prompt_present else "<provided at request time>"
+    if "safety_identifier" in common_fields:
+        common_fields["safety_identifier"] = "<redacted>"
     if operation == "edit":
         return {
             "operation": operation,
@@ -2481,6 +2577,7 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
             "form_fields": common_fields,
             "image_file_parts": "<redacted>",
             "mask_file_part": "<redacted if provided>",
+            "markup_file_part": "<redacted if provided>",
         }
     return {
         "operation": operation,
@@ -2512,6 +2609,8 @@ def doctor(args: argparse.Namespace) -> int:
     operations = operation_names(args.operation)
     selection = image_model_selection(args)
     model = selection["image_model"]
+    for operation in operations:
+        image_request_fields(args, model, operation)
     show_payload_shape = bool(getattr(args, "show_payload_shape", False))
     result = {
         "ok": True,
@@ -2524,6 +2623,7 @@ def doctor(args: argparse.Namespace) -> int:
         "commands": operations,
         "image_model": model,
         "requested_quality": image_quality(args, model),
+        "requested_complexity": image_complexity(args, model),
         **selection,
         "model_semantics": "Image model requested by the CLI; gateway Responses controller and actual upstream execution are separate.",
         "payload_shape_included": show_payload_shape,
@@ -2546,6 +2646,9 @@ def doctor(args: argparse.Namespace) -> int:
             api=args.api,
             operations=operations,
         )
+        if args.api == "images":
+            result["local_image_models"] = local_image_models(primary)
+            result["image_model_registered_locally"] = model in result["local_image_models"]
         if getattr(args, "check_model", False):
             result["network_call_performed"] = True
             # For Responses, validate the top-level controller model. The
@@ -2556,7 +2659,8 @@ def doctor(args: argparse.Namespace) -> int:
                 if args.api == "responses"
                 else model
             )
-            result["model_catalog_check"] = model_catalog_check(primary, catalog_model)
+            result["model_catalog_check"] = model_catalog_check(
+                primary, catalog_model, allow_local=args.api == "images")
             result["model_catalog_check"]["image_tool_model"] = model
             result["ok"] = result["model_catalog_check"]["ok"]
     except SystemExit as exc:
@@ -2673,21 +2777,8 @@ def transport_probe(args: argparse.Namespace) -> int:
             raise SystemExit("--image is required for transport-probe --operation edit.")
         image_paths = [Path(value).expanduser() for value in args.image]
         input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
-        mask_path = Path(args.mask).expanduser() if args.mask else None
-        mask_image = load_input_image(mask_path, "Mask image") if mask_path else None
-        multipart_fields = {
-            "model": model,
-            "prompt": args.prompt,
-            "size": args.size,
-            "response_format": args.response_format,
-            "n": args.n,
-            "quality": payload.get("quality"),
-            "background": args.background,
-            "output_format": args.output_format,
-        }
-        multipart_files = [{"field": "image", "image": image} for image in input_images]
-        if mask_image:
-            multipart_files.append({"field": "mask", "image": mask_image})
+        multipart_fields = dict(payload)
+        multipart_files = image_edit_uploads(args, input_images)
         multipart = {"fields": multipart_fields, "files": multipart_files}
 
     clients = transport_probe_client_names(args.client)
@@ -2723,6 +2814,13 @@ def transport_probe(args: argparse.Namespace) -> int:
                     saved_paths=saved_paths,
                 )
             )
+            if saved_paths:
+                media_check = validate_media_outputs(saved_paths, args)
+                size_check = validate_output_sizes(saved_paths, args.size,
+                    require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)))
+                probes[-1].update(media_check)
+                probes[-1].update(size_check)
+                probes[-1]["ok"] = not (media_check["media_validation_failed"] or size_check["size_validation_failed"])
         except (ImageApiError, SystemExit) as exc:
             probes.append(
                 summarize_probe_failure(
@@ -2792,10 +2890,12 @@ def generate(args: argparse.Namespace) -> int:
         args.size,
         require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)),
     )
+    media_check = validate_media_outputs(paths, args)
     result = {
-        "ok": not size_check["size_validation_failed"],
+        "ok": not (size_check["size_validation_failed"] or media_check["media_validation_failed"]),
         "operation": "generate",
         "requested_quality": payload.get("quality"),
+        "requested_complexity": payload.get("complexity"),
         "attempt_count": len(previous_errors) + 1,
         **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
@@ -2810,11 +2910,15 @@ def generate(args: argparse.Namespace) -> int:
         "model": model,
         "paths": [str(path.resolve()) for path in paths],
         "usage": data.get("usage"),
+        "svg_usage": data.get("svg_usage"),
         "created": data.get("created"),
         **size_check,
+        **media_check,
     }
     if size_check["size_validation_failed"]:
         result["error_kind"] = "image_size_mismatch"
+    if media_check["media_validation_failed"]:
+        result["error_kind"] = "image_media_mismatch"
     if responses_model:
         result["responses_model"] = responses_model
         result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
@@ -2837,26 +2941,12 @@ def generate(args: argparse.Namespace) -> int:
 def edit(args: argparse.Namespace) -> int:
     image_paths = [Path(value).expanduser() for value in args.image]
     input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
-    mask_path = Path(args.mask).expanduser() if args.mask else None
-    mask_image = load_input_image(mask_path, "Mask image") if mask_path else None
-    payload, model = image_payload(args)
-    multipart_fields = {
-        "model": model,
-        "prompt": args.prompt,
-        "size": args.size,
-        "response_format": args.response_format,
-        "n": args.n,
-        "quality": payload.get("quality"),
-        "background": args.background,
-        "output_format": args.output_format,
-    }
-    multipart_files = [{"field": "image", "image": image} for image in input_images]
-    if mask_image:
-        multipart_files.append({"field": "mask", "image": mask_image})
+    multipart_files = image_edit_uploads(args, input_images)
+    payload, model = image_payload(args, "edit")
+    multipart_fields = dict(payload)
     responses_model = None
     if args.api == "responses":
-        response_images = input_images + ([mask_image] if mask_image else [])
-        responses_payload_data, responses_model = responses_payload(args, model, response_images)
+        responses_payload_data, responses_model = responses_payload(args, model, input_images)
         data, provider, endpoint, transport, request_url, previous_errors = request_responses_with_retry(
             responses_payload_data,
             args.timeout,
@@ -2890,10 +2980,12 @@ def edit(args: argparse.Namespace) -> int:
         args.size,
         require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)),
     )
+    media_check = validate_media_outputs(paths, args)
     result = {
-        "ok": not size_check["size_validation_failed"],
+        "ok": not (size_check["size_validation_failed"] or media_check["media_validation_failed"]),
         "operation": "edit",
         "requested_quality": payload.get("quality"),
+        "requested_complexity": payload.get("complexity"),
         "attempt_count": len(previous_errors) + 1,
         **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
@@ -2909,11 +3001,15 @@ def edit(args: argparse.Namespace) -> int:
         "source_images": [str(image.path) for image in input_images],
         "paths": [str(path.resolve()) for path in paths],
         "usage": data.get("usage"),
+        "svg_usage": data.get("svg_usage"),
         "created": data.get("created"),
         **size_check,
+        **media_check,
     }
     if size_check["size_validation_failed"]:
         result["error_kind"] = "image_size_mismatch"
+    if media_check["media_validation_failed"]:
+        result["error_kind"] = "image_media_mismatch"
     if responses_model:
         result["responses_model"] = responses_model
         result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
@@ -2956,7 +3052,7 @@ def main() -> int:
     gen.add_argument("--n", type=int)
     gen.add_argument("--quality", help="Image quality; default max for Sunburst/Flare. Separate from Responses reasoning.")
     gen.add_argument("--background")
-    gen.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    gen.add_argument("--output-format", choices=OUTPUT_FORMATS)
     gen.add_argument(
         "--require-exact-size", action="store_true",
         help="Fail when decoded output dimensions do not equal --size (4K requests are strict automatically).",
@@ -2969,6 +3065,7 @@ def main() -> int:
     edit_parser.add_argument("--prompt", required=True)
     edit_parser.add_argument("--image", action="append", required=True)
     edit_parser.add_argument("--mask")
+    edit_parser.add_argument("--markup", help="Transparent PNG annotation overlay matching the first input image.")
     edit_parser.add_argument(
         "--api",
         choices=["images", "responses"],
@@ -2987,7 +3084,7 @@ def main() -> int:
     edit_parser.add_argument("--n", type=int)
     edit_parser.add_argument("--quality", help="Image quality; default max for Sunburst/Flare. Separate from Responses reasoning.")
     edit_parser.add_argument("--background")
-    edit_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    edit_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     edit_parser.add_argument(
         "--require-exact-size", action="store_true",
         help="Fail when decoded output dimensions do not equal --size (4K requests are strict automatically).",
@@ -3006,7 +3103,7 @@ def main() -> int:
     doctor_parser.add_argument("--n", type=int)
     doctor_parser.add_argument("--quality")
     doctor_parser.add_argument("--background")
-    doctor_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    doctor_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     doctor_parser.add_argument("--show-payload-shape", action="store_true")
     doctor_parser.set_defaults(func=doctor)
     check_parser = sub.add_parser("check-config")
@@ -3019,7 +3116,7 @@ def main() -> int:
     check_parser.add_argument("--n", type=int)
     check_parser.add_argument("--quality")
     check_parser.add_argument("--background")
-    check_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    check_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     check_parser.add_argument("--show-payload-shape", action="store_true")
     check_parser.set_defaults(func=doctor)
     probe_parser = sub.add_parser("transport-probe")
@@ -3028,6 +3125,7 @@ def main() -> int:
     probe_parser.add_argument("--prompt", required=True)
     probe_parser.add_argument("--image", action="append")
     probe_parser.add_argument("--mask")
+    probe_parser.add_argument("--markup")
     probe_parser.add_argument("--model")
     probe_parser.add_argument("--size", default=DEFAULT_SIZE)
     probe_parser.add_argument("--response-format", default=DEFAULT_RESPONSE_FORMAT, choices=["b64_json", "url"])
@@ -3036,14 +3134,22 @@ def main() -> int:
     probe_parser.add_argument("--n", type=int)
     probe_parser.add_argument("--quality")
     probe_parser.add_argument("--background")
-    probe_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    probe_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     probe_parser.add_argument("--timeout", type=int, default=600)
     probe_parser.add_argument("--save-images", action="store_true")
     probe_parser.set_defaults(func=transport_probe)
+    for command_parser in (doctor_parser, check_parser):
+        command_parser.add_argument("--mask")
+        command_parser.add_argument("--markup")
     for command_parser in (gen, edit_parser, doctor_parser, check_parser, probe_parser):
+        add_media_arguments(command_parser)
+        command_parser.add_argument(
+            "--complexity", choices=["low", "medium", "high"],
+            help="Image planning strength on Images API; default high for GPT Image 2.6. Independent of quality.",
+        )
         command_parser.add_argument(
             "--check-model", action="store_true",
-            help="Read GET /models and require the image model to be listed before sending an image request.",
+            help="Read GET /models and check the model against remote entries and provider-scoped local image registrations.",
         )
     for command_parser in (gen, edit_parser, doctor_parser, check_parser):
         command_parser.add_argument("--responses-reasoning", choices=["low", "medium", "high", "xhigh", "max", "ultra"])

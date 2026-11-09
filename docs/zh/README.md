@@ -46,7 +46,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 
 | Skill | 它是干什么的 | 什么时候用 | 开始示例 |
 |---|---|---|---|
-| [cm-imagegen](./cm-imagegen.md) | 常规生图、图生图、改图、UI mockup、海报、产品图和批量素材 | 需要直接生成或编辑图片，且没有指定其他图片平台 | `$cm-imagegen 生成一张俯视角科幻竞技场地图概念图` |
+| [cm-imagegen](./cm-imagegen.md) | 2.6 Sunburst 文生图、图生图、批量素材，以及上游支持时的原生 GIF/SVG；含 Astra/max 控制器配置说明 | 生成或编辑图片、检查输出格式和尺寸 | `$cm-imagegen 生成一张细节丰富的科幻竞技场地图，横版 2560×1440，检查实际尺寸` |
 | [image-generation-director](./image-generation-director.md) | 做创意方向、Prompt 修复、风格锁定、趋势选题和图片转视频规划 | 画面方向不稳定，或要把一个视觉想法扩展成内容/视频方案 | `$image-generation-director 保留这张图的服装和构图，重写成可用 prompt` |
 | [ai-video-prompt-director](./ai-video-prompt-director.md) | 将已确定的导演包编译成可复制视频提示词，按需适配 H3/Seedance | 已有剧情、镜头与参考，需要核对空间、动作、对白和声音 | `$ai-video-prompt-director 按已确定的导演包整理 Seedance 提示词` |
 | [xiaohongshu-content-publisher](./xiaohongshu-content-publisher.md) | 小红书图文/视频包装、上传、授权发布与历史归档 | 需要准备一条笔记或整理已有发布记录 | `$xiaohongshu-content-publisher 整理这条笔记的素材和文案，先保存草稿` |
