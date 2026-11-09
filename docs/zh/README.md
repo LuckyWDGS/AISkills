@@ -52,10 +52,10 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 |---|---|---|---|
 | [cm-imagegen](./cm-imagegen.md) | 2.6 Sunburst 文生图、图生图、批量素材，以及上游支持时的原生 GIF/SVG；含 Astra/max 控制器配置说明 | 生成或编辑图片、检查输出格式和尺寸 | `$cm-imagegen 生成一张细节丰富的科幻竞技场地图，横版 2560×1440，检查实际尺寸` |
 | [image-generation-director](./image-generation-director.md) | 做创意方向、Prompt 修复、风格锁定、趋势选题和图片转视频规划 | 画面方向不稳定，或要把一个视觉想法扩展成内容/视频方案 | `$image-generation-director 保留这张图的服装和构图，重写成可用 prompt` |
-| [ai-video-prompt-director](./ai-video-prompt-director.md) | 将已确定的导演包编译成可复制视频提示词，按需适配 H3/Seedance | 已有剧情、镜头与参考，需要核对空间、动作、对白和声音 | `$ai-video-prompt-director 按已确定的导演包整理 Seedance 提示词` |
+| [ai-video-prompt-director](./ai-video-prompt-director.md) | 将已确定的导演包或 pilot_brief 编译成可复制视频提示词，按需适配 H3/Seedance，附 lint 检查与金标样例 | 已有剧情、镜头与参考，需要核对空间、动作、对白/旁白和声音，或按实片偏差修提示词 | `$ai-video-prompt-director 按已确定的导演包整理 Seedance 提示词` |
 | [xiaohongshu-content-publisher](./xiaohongshu-content-publisher.md) | 小红书图文/视频包装、上传、授权发布与历史归档 | 需要准备一条笔记或整理已有发布记录 | `$xiaohongshu-content-publisher 整理这条笔记的素材和文案，先保存草稿` |
 | [douyin-ai-publisher](./douyin-ai-publisher.md) | 分析素材、准备文案/封面/话题、执行授权发布并复盘 | 要发布或准备抖音 AI 视频、图文和口播内容 | `$douyin-ai-publisher 分析这个视频并准备标题、封面和相关话题，暂不发布` |
-| [douyin-ai-creator-lab](../../skills/douyin-ai-creator-lab/SKILL.md) | 实查高赞与普通作品，把观看规律转为原创方向、参考图、完整试生包和反馈 | 喜欢某条 AI 视频，想研究作者并寻找自己的创作方向 | `$douyin-ai-creator-lab 研究这条抖音和相近作者，给我有证据的方向建议与可试生的小样包` |
+| [douyin-ai-creator-lab](../../skills/douyin-ai-creator-lab/SKILL.md) | 深挖作者系列、案例与标签，区分广告和实看证据，形成原创方向与 pilot_brief，负责 Muse 制作、配音返修和实片验收 | 喜欢一组 AI 视频，想扩作者其他作品、检索案例并准备自己的方向 | `$douyin-ai-creator-lab 深挖这些作者其他系列与普通作品，补充案例库和实际标签，给我原创试验建议` |
 | [bilibili-video-publisher](../../skills/bilibili-video-publisher/SKILL.md) | 核账号与查重、上传、填写标题简介分区标签、检查 4:3/16:9 双比例封面和 AI 声明，核验 BV 号 | 已有确定成片要投稿到B站；竖片需先用 creator-lab 改横版 | `$bilibili-video-publisher 把这条横版成片准备为B站投稿，填好后停下由我发布` |
 | [youtube-video-publisher](../../skills/youtube-video-publisher/SKILL.md) | 在 YouTube Studio 上传成片，判断 Shorts/长视频，填写标题说明标签、受众与合成内容声明，完成检查与可见性 | 已有确定成片要发 YouTube，最后一步由自己确认 | `$youtube-video-publisher 把这条成片上传到 YouTube，填好后停在发布前由我处理` |
 | [wechat-story-publisher](./wechat-story-publisher.md) | 近期调研、完整故事、标题钩子、连续配图与公众号草稿回读验证 | 制作或继续公众号故事图片消息，或改善故事标题与可读性 | `$wechat-story-publisher 写一篇公众号故事图文，标题用真实冲突吸引人，制作配图并保存验证草稿，由我发布` |

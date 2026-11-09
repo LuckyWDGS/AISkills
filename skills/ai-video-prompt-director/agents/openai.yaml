@@ -1,4 +1,4 @@
 interface:
   display_name: "AI视频提示词导演"
-  short_description: "将剧情或无人环境节拍转成可执行提示词，检查参考、空间、声音和实片衔接"
-  default_prompt: "Use $ai-video-prompt-director to turn this story or environment beat into copy-ready AI video prompts with minimal references, clear spatial intent, audio, cuts, and a natural ending."
+  short_description: "把剧情或无人环境节拍编译成可复制提示词：参考计划、空间动作、声音归属、切点与稳定收尾，按H3/Seedance适配并单层修订"
+  default_prompt: "Use $ai-video-prompt-director to compile this story or environment beat (or pilot_brief) into a copy-ready AI video prompt package: minimal reference plan, spatial intent, voice ownership, cuts, a stable ending, and a lint check."
