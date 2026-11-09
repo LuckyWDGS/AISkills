@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'skills/unreal-engine-mcp/**'
+      - 'skills/unreal-sequencer/**'
       - 'skills/unreal-material-artist/**'
       - 'skills/niagara-vfx-artist/**'
       - 'skills/vfx-flipbook-generator/**'
@@ -11,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'skills/unreal-engine-mcp/**'
+      - 'skills/unreal-sequencer/**'
       - 'skills/unreal-material-artist/**'
       - 'skills/niagara-vfx-artist/**'
       - 'skills/vfx-flipbook-generator/**'
@@ -39,7 +41,7 @@ jobs:
       - name: Install skill requirements
         shell: bash
         run: |
-          for skill in unreal-material-artist niagara-vfx-artist vfx-flipbook-generator; do
+          for skill in unreal-sequencer unreal-material-artist niagara-vfx-artist vfx-flipbook-generator; do
             python -m pip install -r "skills/$skill/requirements.txt"
           done
       # Live-editor checks (live_smoke.py) need a running UE editor and stay local.

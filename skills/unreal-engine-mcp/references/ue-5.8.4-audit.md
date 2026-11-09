@@ -141,6 +141,39 @@ See [animation-state-machines-mcp.md](animation-state-machines-mcp.md) for
 task-specific routes and acceptance checks. Prefer a supported UE editor/UI or
 public Epic API route for a missing MCP operation before a custom adapter.
 
+## Broader developer-capability audit (2026-11-04)
+
+The connected 5.8.4 editor still exposed **35 toolsets / 654 tools**. A static
+scan of installed Epic C++ AICallable declarations and decorated Python toolset
+methods found **58 classes / 878 callable declarations** across 27 owning
+plugins, including every live tool and 23 unregistered classes / 224 further
+declarations. This is a source inventory, not 878 enabled or runtime-tested
+tools; dynamic external MCP/function-library registration is outside that
+finite declaration count. No hotfix addition is inferred from these totals.
+
+Read-only samples verified data-row struct discovery, asset dependencies and
+referencers, settings containers, and Enhanced Input action/mapping properties.
+In the inspected IMC, `defaultKeyMappings.mappings` contained the actual
+bindings while the deprecated top-level `mappings` was empty. Asset package
+paths from search needed `load_asset` to obtain ObjectTools-compatible object
+references. The input packages' dirty state and open asset tabs were unchanged.
+
+The wider source review found useful UMG/MVVM, Gameplay Tags/GAS, data registry,
+automation, plugin inspection, PhysicsAsset, PCG and Dataflow tools. It also
+confirmed two selection hazards: MVVM widget `List*` operations can create a
+missing View via RequestView, and SlateInspector actions operate the editor UI.
+Use the [official capability map](official-capability-map.md) for task routing,
+plugin selection and the distinction between source, live schema and runtime
+evidence. No additional plugin or PIE session was started in this audit.
+
+Client maintenance corrected a saved pid being reported after an editor switch:
+opening a client now checks current process creation time, pid and project
+instead of trusting the saved owner. Full project-path guards distinguish
+same-named checkouts, and `--refresh-schema` refreshes resumed inventories.
+The CLI smoke runner now defaults to MCP graph reads and propagates its target
+guard to child processes; its Remote Execution discovery is an explicit
+diagnostic option. Offline tests do not establish a live gameplay pass.
+
 ## Maintenance boundary
 
 1. Epic MCP owns covered UE reads/writes, compile/issue queries, asset/scene

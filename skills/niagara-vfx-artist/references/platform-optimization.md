@@ -11,7 +11,7 @@
 2. [Android 平台实现路径](#android-平台实现路径)
 3. [性能预算和基准](#性能预算和基准)
 4. [跨平台优化策略](#跨平台优化策略)
-5. [Scalability 设置](#scalability-设置)
+5. [Scalability 设置](#scalability-设置详解)
 
 ---
 

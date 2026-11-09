@@ -106,7 +106,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Pack a folder of frame PNGs into a flipbook atlas.")
     parser.add_argument("frames_dir", help="Folder containing frame images.")
     parser.add_argument("--pattern", default="*.png", help="Glob pattern inside frames_dir. Default: *.png")
-    parser.add_argument("--grid", required=True, type=parse_grid, help="Grid such as 12x12.")
+    parser.add_argument("--grid", required=True, type=parse_grid, help="Grid such as 8x8 or 16x16 for direct UE SubUV.")
     parser.add_argument("--cell-size", required=True, type=parse_size, help="Cell size such as 256x256.")
     parser.add_argument("--fit", choices=("contain", "cover", "stretch"), default="contain")
     parser.add_argument("--background", default="transparent")
@@ -126,34 +126,38 @@ def main() -> int:
 
     columns, rows = args.grid
     cells = columns * rows
-    frame_paths = frame_paths[:cells]
+    if len(frame_paths) > cells:
+        raise SystemExit(f"{len(frame_paths)} frames exceed {cells} cells; choose a larger grid or select frames explicitly.")
     background = parse_background(args.background)
     cell_size = args.cell_size
     out_dir = Path(args.out_dir).expanduser().resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
     atlas_path = out_dir / args.atlas_name
 
     raw_size = (columns * cell_size[0], rows * cell_size[1])
     final_size = atlas_size_for_mode(raw_size, args.atlas_size_mode)
     grid_divides_final = final_size[0] % columns == 0 and final_size[1] % rows == 0
+    if args.atlas_size_mode != "raw" and not grid_divides_final:
+        raise SystemExit("Power-of-two output cannot divide this grid evenly; use 8x8/16x8/16x16, "
+                         "or explicitly choose --atlas-size-mode raw for a documented NPOT route.")
     final_cell_size = (
         {"width": final_size[0] // columns, "height": final_size[1] // rows}
         if grid_divides_final
         else None
     )
-    atlas = Image.new("RGBA", raw_size, background)
+    # Padding the outside of an atlas shifts every SubUV cell boundary. Expand each cell instead.
+    pack_cell = ((final_size[0] // columns, final_size[1] // rows)
+                 if args.atlas_size_mode == "pad-to-power-of-two" else cell_size)
+    pack_size = final_size if args.atlas_size_mode == "pad-to-power-of-two" else raw_size
+    atlas = Image.new("RGBA", pack_size, background)
     for index, frame_path in enumerate(frame_paths):
         normalized = normalize_image(frame_path, cell_size, args.fit, background)
-        x = (index % columns) * cell_size[0]
-        y = (index // columns) * cell_size[1]
+        x = (index % columns) * pack_cell[0] + (pack_cell[0] - cell_size[0]) // 2
+        y = (index // columns) * pack_cell[1] + (pack_cell[1] - cell_size[1]) // 2
         atlas.alpha_composite(normalized, (x, y))
 
     if args.atlas_size_mode == "nearest-power-of-two" and final_size != raw_size:
         atlas = atlas.resize(final_size, Image.Resampling.LANCZOS)
-    elif args.atlas_size_mode == "pad-to-power-of-two" and final_size != raw_size:
-        padded = Image.new("RGBA", final_size, background)
-        padded.alpha_composite(atlas, (0, 0))
-        atlas = padded
+    out_dir.mkdir(parents=True, exist_ok=True)
     atlas.save(atlas_path)
 
     manifest = {
@@ -167,8 +171,10 @@ def main() -> int:
             "columns": columns,
             "rows": rows,
             "cells": cells,
-            "cell_width": cell_size[0],
-            "cell_height": cell_size[1],
+            "cell_width": final_cell_size["width"] if final_cell_size else cell_size[0],
+            "cell_height": final_cell_size["height"] if final_cell_size else cell_size[1],
+            "source_cell_width": cell_size[0],
+            "source_cell_height": cell_size[1],
             "fit": args.fit,
             "background": args.background,
         },

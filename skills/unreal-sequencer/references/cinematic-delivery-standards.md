@@ -31,19 +31,24 @@ Write it and show it before building anything longer than one shot:
 - Frame subjects off-centre on thirds unless symmetry is the point; leave look room in front
   of a moving subject. Keep the subject inside the frame for the whole shot (sample and render
   the first, middle and last frame).
-- Focus on the subject (`"focus": "auto"`), wide aperture (f/1.8-2.8) only for closes; f/4-8
+- Focus on the subject (`"focus": "auto"` resolves a build-time distance, not live tracking), wide aperture (f/1.8-2.8) only for closes; f/4-8
   for wides so the space stays readable.
 - Fades: 0.3-0.7 s in from black at the start, out at the end if it returns to gameplay.
 
 ## 3. Evidence
 
-- **State first:** `sequence_sample.py` numbers prove camera position, aim, lens and actor
-  motion at every key. Report them.
+- **State first:** the opt-in `sequence_sample.py` reports evaluated transforms,
+  roll, lens, manual focus and aperture where checked. Sample boundary and
+  intermediate frames as relevant; matching key endpoints alone cannot detect
+  cubic overshoot. Cut labels come from structure, not runtime active-camera
+  observation. Report actual coverage; no checks means collected, not passed.
 - **Lint:** `sequence_inspect.py --strict` must pass or each remaining finding is explained.
 - **Renders only for named visual questions** (framing, readability against the background,
   subject in frame, cut continuity). Name the question, render the frames, look, answer.
 - Gameplay triggers are verified in PIE with logs (`unreal-engine-mcp` Blueprint delivery
-  standards): the sequence starts, input state, finish event, camera returned.
+  standards): start, finish, stop, skip and abort, input state, event counts and
+  camera restoration. See [runtime acceptance](runtime-acceptance.md). Preserve
+  an existing user PIE session and do not open a timeline for background checks.
 
 ## 4. Gameplay integration
 

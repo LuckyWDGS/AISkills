@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import ntpath
+import os
 import re
 import subprocess
 import sys
@@ -34,11 +36,12 @@ def endpoint_owner(url: str) -> dict[str, Any]:
             if pid is None:
                 return {"known": False, "reason": f"no process is listening on port {port}"}
             script = (f"Get-CimInstance Win32_Process -Filter 'ProcessId={pid}' | "
-                      "Select-Object ExecutablePath,CommandLine | ConvertTo-Json -Compress")
+                      "Select-Object ExecutablePath,CommandLine,CreationDate | ConvertTo-Json -Compress")
             proc = subprocess.run(["powershell", "-NoProfile", "-Command", script],
                                   capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
             info = json.loads(proc.stdout) if proc.stdout.strip() else {}
             exe, command = info.get("ExecutablePath") or "", info.get("CommandLine") or ""
+            started = info.get("CreationDate")
         else:
             proc = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-Fp"],
                                   capture_output=True, text=True, timeout=10)
@@ -49,13 +52,16 @@ def endpoint_owner(url: str) -> dict[str, Any]:
             command = subprocess.run(["ps", "-o", "command=", "-p", str(pid)],
                                      capture_output=True, text=True, timeout=10).stdout.strip()
             exe = command.split(" ", 1)[0]
+            started = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)],
+                                     capture_output=True, text=True, timeout=10).stdout.strip()
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
         return {"known": False, "reason": f"process lookup failed: {exc}"}
 
     match = re.search(r'"([^"]+\.uproject)"|(\S+\.uproject)', command, re.IGNORECASE)
     uproject = (match.group(1) or match.group(2)) if match else ""
     owner: dict[str, Any] = {
-        "known": bool(uproject), "pid": pid, "executable": exe, "uproject": uproject,
+        "known": bool(uproject), "pid": pid, "process_started": started,
+        "executable": exe, "uproject": uproject,
         "project": Path(uproject).stem if uproject else "",
     }
     exe_path = Path(exe)
@@ -86,13 +92,37 @@ def connection_hint(url: str) -> str:
             "`builtin_mcp.py ensure` explains the options.")
 
 
+def _project_path(value: str) -> str:
+    """Normalize Windows project paths even when the offline tests run on Unix."""
+    if re.match(r"^[a-zA-Z]:[/\\]", value) or value.startswith(("\\\\", "//")):
+        return ntpath.normcase(ntpath.normpath(value))
+    return os.path.normcase(os.path.abspath(value))
+
+
+def same_editor_process(saved: dict[str, Any] | None, current: dict[str, Any]) -> bool:
+    """Only reuse an inventory when the OS identifies the same editor instance.
+
+    Session acceptance is insufficient: UE can accept a token saved before a
+    restart. Creation time also distinguishes recycled process ids. Older
+    records without this information get one fresh initialization.
+    """
+    if not isinstance(saved, dict) or not saved.get("known") or not current.get("known"):
+        return False
+    keys = ("pid", "process_started", "executable", "uproject")
+    return (all(saved.get(key) and current.get(key) for key in keys)
+            and all(saved[key] == current[key] for key in keys)
+            and saved.get("engine_version") == current.get("engine_version"))
+
+
 def check_expected_project(owner: dict[str, Any], expected: str) -> None:
-    wanted = expected.replace("\\", "/").lower()
-    wanted = wanted.rsplit("/", 1)[-1]
-    wanted = wanted[: -len(".uproject")] if wanted.endswith(".uproject") else wanted
     if not owner.get("known"):
         raise McpError(f"Cannot confirm the MCP endpoint serves {expected!r}: {owner.get('reason')}")
-    if owner["project"].lower() != wanted:
+    if "/" in expected or "\\" in expected:
+        matches = bool(owner.get("uproject")) and _project_path(owner["uproject"]) == _project_path(expected)
+    else:
+        wanted = expected.lower().removesuffix(".uproject")
+        matches = str(owner.get("project", "")).lower() == wanted
+    if not matches:
         raise McpError(
             f"MCP endpoint is served by project {owner['project']!r} ({owner['uproject']}), not {expected!r}. "
             "Close or reconfigure the other editor, or point --url at the intended one."

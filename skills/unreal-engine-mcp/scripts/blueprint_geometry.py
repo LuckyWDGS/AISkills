@@ -13,7 +13,21 @@ each pin {"name", "type_id", "value", "connected_pins"}.
 from __future__ import annotations
 
 import re
+import json
 from typing import Any
+
+
+def logic_signature(infos: list[dict[str, Any]]) -> str:
+    """Canonical node/pin/default/link data, excluding positions and comment presentation."""
+    rows = []
+    for info in infos:
+        row = {"node": info["node"], "type_id": info["type_id"]}
+        for side in ("input_pins", "output_pins"):
+            row[side] = [{**{k: p.get(k) for k in ("name", "type_id", "value", "pin_id")},
+                          "connected_pins": sorted(p["connected_pins"], key=lambda v: json.dumps(v, sort_keys=True))}
+                         for p in info[side]]
+        rows.append(row)
+    return json.dumps(sorted(rows, key=lambda row: json.dumps(row["node"], sort_keys=True)), sort_keys=True)
 
 # Localized exec pin type names (English and Simplified Chinese editors).
 EXEC_PIN_TYPES = {"exec", "Exec", "执行"}

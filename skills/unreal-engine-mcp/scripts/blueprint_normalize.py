@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Behaviour-preserving wiring cleanup for authored Blueprint graphs, run before blueprint_layout.py.
+"""Scoped wiring cleanup for authored Blueprint graphs; report first, then opt in to --write.
 
-1. A SET node's output pin wired onward becomes one member-variable getter per consumer.
-2. A pure node that feeds more than one exec node is copied once per exec node (with its pure
-   inputs, downstream first). The Blueprint VM re-evaluates pure nodes for every impure node that
-   pulls them, so each copy computes exactly what the shared node computed.
+Only supported pure call/operator nodes are copied, retaining every input and Target link.
+Variable getters and SET outputs are reported and left intact: the MCP node info does not prove
+their member owner/local scope, so recreating them by name is unsafe. Read back and compile a
+candidate asset before promoting it; this tool does not prove runtime equivalence.
 
-Neither step changes execution order or values; both remove wires that otherwise run across the
-graph. An exec node's output read past the next exec node is reported, not changed: store it in a
+An exec node's output read past the next exec node is reported, not changed: store it in a
 local variable right after the producer (function graphs) and read it with getters.
 
     python scripts/blueprint_normalize.py /Game/Path/BP_Feature --graph UpdatePreview            # report
@@ -21,7 +20,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -71,11 +69,11 @@ def owners_of(infos: list[dict[str, Any]]):
     return by_path, owners
 
 
-def next_shared_pure(infos: list[dict[str, Any]]) -> tuple[str, dict[str, list[tuple[str, dict, dict]]]] | None:
+def next_shared_pure(infos: list[dict[str, Any]], skip: set[str] | None = None) -> tuple[str, dict[str, list[tuple[str, dict, dict]]]] | None:
     """The next pure node to split (all its pure consumers already single-owner) and its links per owner."""
     by_path, owners = owners_of(infos)
     for path, info in by_path.items():
-        if has_exec(info) or len(owners(path)) < 2:
+        if path in (skip or set()) or has_exec(info) or len(owners(path)) < 2:
             continue
         consumers = {l["node"]["refPath"] for p in info["output_pins"] for l in p["connected_pins"]} & set(by_path)
         if not all(has_exec(by_path[c]) or len(owners(c)) == 1 for c in consumers):
@@ -112,16 +110,12 @@ def exec_output_skips(infos: list[dict[str, Any]]) -> list[dict[str, str]]:
     return found
 
 
-# -- editor side -----------------------------------------------------------------------
-GETTERS_SCRIPT = r"""
-import json, unreal
-def _codex():
-    lib, ge = unreal.BlueprintEditorLibrary, unreal.BlueprintGraphEditor
-    bp = unreal.load_asset(__ASSET__)
-    editor = ge.get_graph_editor(lib.find_graph(bp, __GRAPH__))
-    print("CODEX_GETTERS " + json.dumps([editor.add_get_member_variable_node(name).get_name() for name in json.loads(__NAMES__)]))
-_codex()
-"""
+def copy_gap(info: dict[str, Any]) -> str | None:
+    if node_kind(info) not in {"K2Node_CallFunction", "K2Node_PromotableOperator"}:
+        return "Member owner/local scope or node reconstruction is not proven; preserve the original node."
+    if any(len(p.get("connected_pins", [])) > 1 for p in info["input_pins"]):
+        return "Multiple sources on an input are outside the supported clone contract."
+    return None
 
 
 class Editor:
@@ -130,7 +124,7 @@ class Editor:
         from ue_mcp.skill_api import connect
 
         self.asset, self.project = asset, project
-        self.client = connect()
+        self.client = connect(project=project)
         self._unwrap = unwrap_result
 
     def bt(self, tool: str, **args: Any) -> Any:
@@ -143,59 +137,75 @@ class Editor:
     def node(self, graph: dict[str, Any], name: str) -> dict[str, Any]:
         return next(i for i in self.infos(graph) if short(node_path(i)) == name)
 
-    def getters(self, graph_name: str, names: list[str]) -> list[str]:
-        """Member-variable getters bound to this Blueprint's class (the node catalog also lists
-        same-named variables of other loaded Blueprints, so catalog type ids are ambiguous)."""
-        script = (GETTERS_SCRIPT.replace("__ASSET__", json.dumps(self.asset.split(".")[0]))
-                  .replace("__GRAPH__", json.dumps(graph_name)).replace("__NAMES__", repr(json.dumps(names))))
-        command = [sys.executable, str(_HERE / "python_remote.py")] + (["--project", self.project] if self.project else [])
-        proc = subprocess.run([*command, "exec", "--code", script], capture_output=True, text=True, encoding="utf-8",
-                              errors="replace", env={**os.environ, "PYTHONUTF8": "1"})
-        payload = json.loads(proc.stdout) if proc.stdout.strip().startswith("{") else {}
-        for row in payload.get("output") or []:
-            text = str(row.get("output", ""))
-            if text.startswith("CODEX_GETTERS "):
-                return json.loads(text[len("CODEX_GETTERS "):])
-        raise RuntimeError(f"getter creation failed: {(payload.get('result') or proc.stderr or proc.stdout)[:400]}")
-
     def rewire(self, out_pin: dict, link: dict, new_out: dict) -> None:
-        self.bt("break_pins", output_pin=out_pin, input_pin=link)
-        self.bt("connect_pins", output_pin=new_out, input_pin=link)
+        try:
+            self.bt("break_pins", output_pin=out_pin, input_pin=link)
+            self.bt("connect_pins", output_pin=new_out, input_pin=link)
+            target = self.bt("get_node_infos", nodes=[link["node"]])[0]
+            pin = next(p for p in target["input_pins"] if p["pin_id"] == link)
+            if pin["connected_pins"] != [new_out]:
+                raise RuntimeError("Rewire was not confirmed by input-pin readback")
+        except Exception:
+            # A timeout is unknown completion. Inspect before repairing only a missing old edge.
+            target = self.bt("get_node_infos", nodes=[link["node"]])[0]
+            pin = next(p for p in target["input_pins"] if p["pin_id"] == link)
+            if new_out in pin["connected_pins"]:
+                return
+            if not pin["connected_pins"]:
+                self.bt("connect_pins", output_pin=out_pin, input_pin=link)
+            raise
 
     def copy_node(self, graph_name: str, graph: dict[str, Any], info: dict[str, Any]) -> dict[str, Any]:
-        if node_kind(info) == "K2Node_VariableGet":
-            return self.node(graph, self.getters(graph_name, [info["output_pins"][0]["name"]])[0])
+        gap = copy_gap(info)
+        if gap:
+            raise RuntimeError(gap)
         pos = {"x": info["position"]["x"], "y": info["position"]["y"] + 40}
         copy = self.bt("get_node_infos", nodes=[self.bt("create_node", graph=graph, type_id=info["type_id"], pos=pos)])[0]
-        for pin in info["input_pins"]:
-            target = next((p for p in copy["input_pins"] if p["name"] == pin["name"]), None)
-            if target is None:
-                raise RuntimeError(f"copy of {short(node_path(info))} has no input {pin['name']}")
-            for link in pin["connected_pins"]:
-                self.bt("connect_pins", output_pin=link, input_pin=target["pin_id"])
-            if not pin["connected_pins"] and pin.get("value") and not is_exec_pin(pin) and pin["value"] != target.get("value"):
-                self.bt("set_pin_value", pin=target["pin_id"], value=pin["value"])
-        return self.bt("get_node_infos", nodes=[copy["node"]])[0]
+        try:
+            for side in ("input_pins", "output_pins"):
+                if [(p["name"], p["type_id"]) for p in copy[side]] != [(p["name"], p["type_id"]) for p in info[side]]:
+                    raise RuntimeError("Clone pin schema differs")
+            for pin, target in zip(info["input_pins"], copy["input_pins"]):
+                for link in pin["connected_pins"]:
+                    self.bt("connect_pins", output_pin=link, input_pin=target["pin_id"])
+                if not pin["connected_pins"] and pin.get("value") is not None and not is_exec_pin(pin) and pin["value"] != target.get("value"):
+                    self.bt("set_pin_value", pin=target["pin_id"], value=pin["value"])
+            result = self.bt("get_node_infos", nodes=[copy["node"]])[0]
+            for pin, target in zip(info["input_pins"], result["input_pins"]):
+                if target["connected_pins"] != pin["connected_pins"]:
+                    raise RuntimeError("Clone input/Target links were not confirmed")
+                if not pin["connected_pins"] and pin.get("value") != target.get("value"):
+                    raise RuntimeError("Clone input default was not confirmed")
+            return result
+        except Exception:
+            # No original output has been moved yet; removing this confirmed new node is safe.
+            self.bt("delete_node", node=copy["node"])
+            raise
 
 
 def normalize_graph(editor: Editor, graph_name: str, write: bool, limit: int = 100) -> dict[str, Any]:
     graph = editor.bt("get_graph", blueprint={"refPath": editor.asset}, graph_name=graph_name)
     infos = editor.infos(graph)
     report: dict[str, Any] = {"set_outputs": [f"{short(node_path(i))}->{len(o['connected_pins'])}" for i, o, _ in set_output_links(infos)],
-                              "getters_added": 0, "pure_copies": 0}
+                              "getters_added": 0, "pure_copies": 0, "skipped": []}
+    for info, _, _ in set_output_links(infos):
+        report["skipped"].append({"node": node_path(info), "reason": "SET output preserved: variable owner/Target/local scope is unverified."})
     if write:
-        for info, out, variable in set_output_links(infos):
-            names = editor.getters(graph_name, [variable] * len(out["connected_pins"]))
-            for link, name in zip(out["connected_pins"], names):
-                editor.rewire(out["pin_id"], link, editor.node(graph, name)["output_pins"][0]["pin_id"])
-                report["getters_added"] += 1
+        from ue_mcp.skill_api import ensure_editor_idle
+        ensure_editor_idle(editor.client)
+        skipped: set[str] = set()
         for _ in range(limit):
             infos = editor.infos(graph)
-            found = next_shared_pure(infos)
+            found = next_shared_pure(infos, skipped)
             if not found:
                 break
             path, groups = found
             info = next(i for i in infos if node_path(i) == path)
+            gap = copy_gap(info)
+            if gap:
+                skipped.add(path)
+                report["skipped"].append({"node": path, "reason": gap})
+                continue
             keep = min(groups, key=lambda o: (next(i for i in infos if node_path(i) == o)["position"]["x"], o))
             for owner, links in groups.items():
                 if owner == keep:
@@ -221,6 +231,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--write", action="store_true", help="Apply the edits (default: report only)")
     parser.add_argument("--project", default=os.environ.get("UE_MCP_PROJECT"))
     args = parser.parse_args(argv)
+    if bool(args.graph) == args.all:
+        parser.error("choose --graph (repeatable) or --all explicitly")
+    if args.write and not args.project:
+        parser.error("--write requires --project or UE_MCP_PROJECT")
     asset = args.blueprint if "." in args.blueprint.rsplit("/", 1)[-1] else f"{args.blueprint}.{args.blueprint.rsplit('/', 1)[-1]}"
     editor = Editor(asset, args.project)
     try:

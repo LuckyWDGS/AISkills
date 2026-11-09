@@ -91,6 +91,19 @@ Keep the relevant log slice, `CrashContext.runtime-xml`, assertion/fatal text an
 available call stack/minidump path under ignored session output. Do not dump
 entire unrelated logs or personal data into the handoff.
 
+For a GPU exit, also inspect the matching RHI/Aftermath diagnostic and
+`.nv-gpudmp` path. An Aftermath report may embed `CrashContext` as JSON-escaped
+`UserDefined+0` in the log without creating a new `Saved/Crashes` directory.
+Match its PID and crash GUID; the newest directory can still contain an older,
+unrelated ensure. Preserve the original log before an authorized relaunch.
+Correlate the first GPU error with the request's **start** time: a later MCP
+timeout is not evidence that the timed-out request caused the exit.
+`DXGI_ERROR_DEVICE_REMOVED` identifies device loss, not its underlying driver,
+OS, hardware or rendering cause. Record the removal reason, useful breadcrumbs,
+adapter/driver and memory budget/use without inferring a specific culprit from
+the last active pass. Do not disable domain plugins, switch the project RHI,
+change TDR registry values or update drivers merely to make an MCP check pass.
+
 Read the **first causal diagnostic and the crash stack together**. Last-written
 log lines may be unrelated or missing buffered output. An ensure can be nonfatal;
 a transport timeout can occur while compilation is healthy. Identify whether the

@@ -2,13 +2,14 @@
 """Build a Level Sequence from a shot plan (JSON) through Epic's Sequencer MCP toolsets.
 
     python scripts/sequence_plan_apply.py plan.json                      # validate and print the frame-normalized plan
-    python scripts/sequence_plan_apply.py plan.json --execute --out <dir> # build it in the running editor
+    python scripts/sequence_plan_apply.py plan.json --execute --allow-editor-ui --project MyGame --out <dir>
 
 The plan format is in references/shot-plan.md. Execution creates the sequence, spawnable cine
 cameras with transform/focal/focus/aperture keys (look_at aims them at actors or points), camera
 cuts, possessable bindings for level actors with transform keys and skeletal animation sections,
-and an optional fade track. It refuses to overwrite an existing asset unless --replace is given
-(Epic's create_level_sequence deletes an existing asset at the path). Nothing is saved unless
+and an optional fade track. This helper needs an explicitly requested Sequencer UI workflow.
+It refuses to overwrite an existing asset unless --replace, --backup-path and --save are given;
+the backup is saved and checked before rebuilding. Nothing is saved unless
 --save is passed, which only the user may ask for.
 """
 
@@ -25,23 +26,35 @@ _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from sequencer_tools.plan import look_at_targets, normalize, resolve_camera_keys, validate  # noqa: E402
+from sequencer_tools.plan import frame_rate, look_at_targets, normalize, resolve_camera_keys, validate  # noqa: E402
 
-SCHEMA_VERSION = "sequence_plan_apply/1"
+SCHEMA_VERSION = "sequence_plan_apply/2"
 
 
 def build(plan: dict[str, Any], editor: Any, *, replace: bool = False, keep_open: bool = False,
-          save: bool = False) -> dict[str, Any]:
+          save: bool = False, allow_editor_ui: bool = False, backup_path: str | None = None) -> dict[str, Any]:
     from sequencer_tools.editor import TRACK, short
 
     seq_info = plan["sequence"]
     path = seq_info["path"].split(".")[0]
+    rate = frame_rate(seq_info["fps"])
     report: dict[str, Any] = {"sequence": path, "cameras": {}, "shots": [], "actors": {}, "targets": {}, "fade": None,
                               "saved": False}
-    if editor.call("EditorAppToolset", "IsPIERunning"):
+    if editor.call("EditorAppToolset", "IsPIERunning") is not False:
         raise RuntimeError("stop PIE before editing sequences")
-    if editor.asset_exists(path) and not replace:
+    # Check the UI boundary before any asset write (including an optional backup).
+    state = editor.sequence_state(allow_editor_ui=allow_editor_ui)
+    exists = editor.asset_exists(path)
+    if exists and not replace:
         raise RuntimeError(f"{path} already exists; pass --replace to rebuild it (the old asset is deleted)")
+    if exists:
+        previous = state.get("sequence") or {}
+        if previous.get("refPath", "").split(".")[0] == path:
+            raise RuntimeError("Cannot replace the currently open sequence; use a new candidate path to preserve its UI state.")
+        if not backup_path or not save:
+            raise RuntimeError("--replace requires a distinct --backup-path and --save for a durable backup; prefer a new candidate path.")
+        editor.backup_asset(path, backup_path)
+        report["backup"] = backup_path
 
     # look_at aims at an actor's bounds centre ("aim": "bounds", default) or its pivot ("aim": "pivot").
     positions: dict[str, dict[str, list[float]]] = {"bounds": {}, "pivot": {}}
@@ -57,9 +70,16 @@ def build(plan: dict[str, Any], editor: Any, *, replace: bool = False, keep_open
 
     package, name = path.rsplit("/", 1)
     seq = editor.seq("create_level_sequence", package_path=package, asset_name=name)
-    editor.seq("set_display_rate", sequence=seq, numerator=int(seq_info["fps"]), denominator=1)
+    editor.seq("set_display_rate", sequence=seq, numerator=rate.numerator, denominator=rate.denominator)
     editor.seq("set_playback_range", sequence=seq, start_frame=seq_info["start_frame"], end_frame=seq_info["end_frame"])
-    editor.seq("open_sequence", sequence=seq)
+    with editor.sequence_session(seq, state, keep_open=keep_open):
+        return populate(plan, editor, seq, positions, actors, report, save)
+
+
+def populate(plan: dict[str, Any], editor: Any, seq: dict, positions: dict, actors: dict,
+             report: dict[str, Any], save: bool) -> dict[str, Any]:
+    from sequencer_tools.editor import TRACK, short
+    seq_info, path = plan["sequence"], report["sequence"]
 
     cameras: dict[str, dict[str, Any]] = {}
     for camera in plan.get("cameras", []):
@@ -69,6 +89,9 @@ def build(plan: dict[str, Any], editor: Any, *, replace: bool = False, keep_open
         section = editor.transform_section(binding)
         props = editor.camera_property_sections(binding)
         keys = resolve_camera_keys(camera, positions[camera.get("aim", "bounds")])
+        for prop in ("focal", "focus", "aperture"):
+            if camera.get(prop) is not None:
+                keys[0].setdefault(prop, camera[prop])
         for index, key in enumerate(keys):
             editor.key_transform(section, key["frame"], key.get("location"), key.get("rotation"), interpolation)
             for prop in ("focal", "focus", "aperture"):
@@ -76,7 +99,8 @@ def build(plan: dict[str, Any], editor: Any, *, replace: bool = False, keep_open
                 if value is not None and prop in props:
                     editor.add_float_key(props[prop], "None", key["frame"], value, interpolation)
         cameras[camera["id"]] = binding
-        report["cameras"][camera["id"]] = {"binding": binding["bindingId"], "keys": keys, "property_tracks": sorted(props)}
+        report["cameras"][camera["id"]] = {"binding": binding["bindingId"], "aim": camera.get("aim", "bounds"),
+                                           "look_at_mode": "snapshot", "keys": keys, "property_tracks": sorted(props)}
 
     shots = sorted(plan.get("shots", []), key=lambda s: s["start_frame"])
     # create_camera also adds a camera cut track with one cut per new camera; replace those with the plan's shots.
@@ -91,12 +115,14 @@ def build(plan: dict[str, Any], editor: Any, *, replace: bool = False, keep_open
         for shot in shots:
             section = editor.seq("add_section", track=cut_track)
             editor.seq("set_section_range", section=section, start_frame=shot["start_frame"], end_frame=shot["end_frame"])
-            cuts.append((short(section), cameras[shot["camera"]]["bindingId"]))
+            cuts.append((section, cameras[shot["camera"]]["bindingId"]))
             report["shots"].append({"camera": shot["camera"], "start_frame": shot["start_frame"],
                                     "end_frame": shot["end_frame"], "section": short(section)})
         bound = editor.bind_camera_cuts(path, cuts)
         for shot, result in zip(report["shots"], bound):
             shot["bound"] = bool(result.get("ok"))
+        if len(bound) != len(cuts) or not all(shot.get("bound") for shot in report["shots"]):
+            raise RuntimeError("Camera-cut binding readback failed; candidate remains unsaved.")
 
     for entry in plan.get("actors", []):
         label = entry["actor"]
@@ -138,11 +164,7 @@ def build(plan: dict[str, Any], editor: Any, *, replace: bool = False, keep_open
     editor.seq("set_playhead_frame", frame=seq_info["start_frame"])
     editor.seq("force_evaluate")
     if save:
-        script = ("import json, unreal\nprint('CODEX_SEQ ' + json.dumps(unreal.EditorAssetLibrary.save_asset("
-                  + json.dumps(path) + ", only_if_is_dirty=False)))")
-        report["saved"] = bool(editor.python(script))
-    if not keep_open:
-        editor.seq("close_sequence")
+        report["saved"] = editor.save_asset(path)
     return report
 
 
@@ -150,13 +172,22 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("plan", type=Path)
     parser.add_argument("--execute", action="store_true", help="Build in the running editor (default: validate only)")
-    parser.add_argument("--replace", action="store_true", help="Rebuild an existing sequence asset (deletes it first)")
+    parser.add_argument("--replace", action="store_true", help="Rebuild an existing asset only after --backup-path and --save verify a durable backup")
     parser.add_argument("--keep-open", action="store_true", help="Leave the sequence open in Sequencer")
+    parser.add_argument("--allow-editor-ui", action="store_true", help="Explicitly permit this builder to open Sequencer; default refuses before writing")
+    parser.add_argument("--backup-path", help="Unused /Game/... path for a saved backup when replacing an asset")
     parser.add_argument("--save", action="store_true", help="Save the sequence asset (only when the user asked)")
     parser.add_argument("--out", type=Path, help="Directory for apply-report.json")
     parser.add_argument("--project", default=os.environ.get("UE_MCP_PROJECT"))
     args = parser.parse_args(argv)
-    plan = normalize(json.loads(args.plan.read_text(encoding="utf-8")))
+    if args.execute and not args.project:
+        parser.error("--execute requires --project or UE_MCP_PROJECT")
+    if args.keep_open and not args.allow_editor_ui:
+        parser.error("--keep-open requires --allow-editor-ui")
+    try:
+        plan = normalize(json.loads(args.plan.read_text(encoding="utf-8")))
+    except (TypeError, ValueError, ZeroDivisionError) as exc:
+        parser.error(str(exc))
     findings = validate(plan)
     report: dict[str, Any] = {"tool": "sequence_plan_apply", "schema_version": SCHEMA_VERSION, "plan": str(args.plan),
                               "findings": findings, "executed": False}
@@ -166,12 +197,16 @@ def main(argv: list[str] | None = None) -> int:
 
         editor = Editor(args.project)
         try:
-            report["result"] = build(plan, editor, replace=args.replace, keep_open=args.keep_open, save=args.save)
+            report["result"] = build(plan, editor, replace=args.replace, keep_open=args.keep_open, save=args.save,
+                                     allow_editor_ui=args.allow_editor_ui, backup_path=args.backup_path)
             report["executed"] = True
         except Exception as exc:
             report["error"] = str(exc)
+            report["target_sequence"] = plan["sequence"]["path"]
+            report["partial_asset_possible"] = any(c.get("tool", "").endswith(".create_level_sequence") for c in editor.calls)
         finally:
             report["calls"] = len(editor.calls)
+            report["remote_fallbacks"] = [c for c in editor.calls if c.get("transport") == "Epic Python Remote Execution"]
             editor.close()
     else:
         report["normalized_plan"] = plan

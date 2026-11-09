@@ -65,6 +65,14 @@ finally:
     remote.stop()
 ```
 
+For scripts returning JSON through a printed marker, use
+`ue_mcp.remote.marker_json(result, marker)`. Require literal `success=True`, no
+Error lines, one Info marker and valid JSON; when invoking the CLI, also require
+exit code zero. A marker printed before a later exception is not success, and
+multiple markers are ambiguous. Preserve Warning lines in the raw evidence;
+they do not become command failure by themselves. Validate the returned domain
+schema as well: `null` annotations must not silently disable annotation checks.
+
 Read the installed module's documented defaults instead of copying its transport
 implementation. Tested defaults are multicast `239.0.0.1:6766`, bind
 `127.0.0.1`, TTL `0`, and the client's local command endpoint `127.0.0.1:6776`.
@@ -76,3 +84,12 @@ not be Python-exposed even when a similarly named C++ field exists. Use native
 comment frame APIs for annotation and validate Chinese text, member nodes and
 unchanged MCP topology. Return to MCP for covered compile/save operations and
 save only the intended asset. Keep script/results in ignored session output.
+
+For read-only Blueprint comment bounds that ObjectTools/Python properties do
+not expose, Epic's `AssetExportTask` with `ObjectExporterT3D` can export the native
+comment object's serializable model fields to a local temporary file. Set
+`automated=True`, `prompt=False`, `selected=False`; inspect export success/errors
+and verify object identity before using its fields. Windows non-ANSI exports
+can be UTF-16 with a BOM. `blueprint_comment_geometry.py` handles decoding and
+validation; `blueprint_lint.py` compares model containment against its MCP
+snapshot. This route neither rebuilds Slate's member cache nor saves an asset.

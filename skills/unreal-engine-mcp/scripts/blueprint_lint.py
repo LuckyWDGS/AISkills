@@ -29,7 +29,9 @@ if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
 from blueprint_geometry import estimate_box, pin_point, segment_hits_box  # noqa: E402
-from inspect_blueprint import EXEC_TYPES, analyze_snapshot, ref_path  # noqa: E402
+from blueprint_comment_geometry import GEOMETRY_SOURCE, geometry_matches_snapshot  # noqa: E402
+from inspect_blueprint import EXEC_TYPES, analyze_snapshot, asset_paths, ref_path  # noqa: E402
+from ue_mcp.remote import marker_json  # noqa: E402
 
 
 SCHEMA_VERSION = "blueprint_lint/1"
@@ -187,17 +189,37 @@ def lint_annotations(snapshot: dict[str, Any], comments: list[dict[str, Any]],
         gname = ref_path(graph["graph"]).rsplit(":", 1)[-1]
         nodes = {node_name(ref_path(node["node"])): node for node in graph["nodes"]}
         frames = by_graph.get(gname, [])
-        framed = {member for frame in frames for member in frame.get("members", [])}
+        verified_frames = [frame for frame in frames if frame.get("membership_source") != GEOMETRY_SOURCE
+                           or geometry_matches_snapshot(frame, nodes)]
+        framed = {member for frame in verified_frames for member in frame.get("members", [])}
+        # UE's NodesUnderComment cache can be empty after reload without opening
+        # the graph. That is unknown membership, not proof that an entry is bare.
+        unknown_membership = len(verified_frames) != len(frames) or any(
+            not frame.get("members") and frame.get("membership_source") != GEOMETRY_SOURCE for frame in frames)
+        partial = {member for frame in verified_frames for member in frame.get("partial_members", [])}
+        unverified_entries = []
         is_function = any(name.startswith("K2Node_FunctionEntry") for name in nodes) and gname != "UserConstructionScript"
         if gname == "UserConstructionScript" and len(nodes) <= 1:
             continue
-        if is_function and not any(CJK.search(frame.get("text", "")) for frame in frames):
+        has_function_description = any(CJK.search(frame.get("text", "")) for frame in frames)
+        if is_function and not has_function_description:
             findings.append({"graph": gname, "rule": "function_without_description", "severity": "warning",
                              "message": "function has no Chinese description frame (purpose, inputs, outputs, side effects, caller)"})
         for name, node in nodes.items():
-            if name.startswith(ENTRY_TYPES) and name not in framed and not is_function:
-                findings.append({"graph": gname, "rule": "entry_without_frame", "severity": "warning", "nodes": [name],
-                                 "message": f"entry {short_title(node['type_id'])} is not inside a Chinese module frame"})
+            if name.startswith(ENTRY_TYPES) and name not in framed:
+                if is_function and not has_function_description:
+                    continue  # Already reported the missing description above.
+                if unknown_membership or name in partial:
+                    unverified_entries.append(name)
+                else:
+                    findings.append({"graph": gname, "rule": "function_without_description" if is_function else "entry_without_frame", "severity": "warning", "nodes": [name],
+                                     "message": f"entry {short_title(node['type_id'])} is not inside a Chinese module frame"})
+        if unverified_entries:
+            findings.append({"graph": gname, "rule": "frame_membership_unavailable", "severity": "warning",
+                             "nodes": unverified_entries,
+                             "message": "entry coverage is unverified: native membership is empty and persisted geometry "
+                                        "is unavailable, changed during capture, or intersects an entry only partially. "
+                                        "Do not open/focus the editor or rewrite frames merely to satisfy this check"})
         for frame in frames:
             text = frame.get("text", "")
             title = text.splitlines()[0] if text else ""
@@ -212,7 +234,12 @@ def lint_annotations(snapshot: dict[str, Any], comments: list[dict[str, Any]],
                                  "message": f"{len(title)}-character title wraps and can overlap; keep the title short and "
                                             "move details to the frame's details text"})
         boxes = []
-        for frame in frames:
+        for frame in verified_frames:
+            if frame.get("membership_source") == GEOMETRY_SOURCE:
+                box = frame["bounds"]
+                boxes.append((frame.get("text", "")[:40], box["x"], box["y"],
+                              box["x"] + box["width"], box["y"] + box["height"]))
+                continue
             points = [nodes[m]["position"] for m in frame.get("members", []) if m in nodes]
             if points:
                 boxes.append((frame.get("text", "")[:40], min(p["x"] for p in points), min(p["y"] for p in points),
@@ -234,6 +261,10 @@ def lint(snapshot: dict[str, Any], *, comments: list[dict[str, Any]] | None = No
     exec_types = exec_types or EXEC_TYPES
     analysis = analyze_snapshot(snapshot, exec_types)
     findings = lint_layout(snapshot, analysis, exec_types) + lint_debug_and_logging(snapshot)
+    if not analysis["valid_returned_topology"]:
+        findings.append({"graph": "", "rule": "returned_topology_invalid", "severity": "warning",
+                         "message": "Returned nodes/pins have incomplete or inconsistent topology; review capture diagnostics",
+                         "diagnostics": analysis["diagnostics"]})
     if comments is not None:
         findings += lint_annotations(snapshot, comments, categories or {})
     counts = {level: sum(1 for item in findings if item["severity"] == level) for level in ("warning", "info")}
@@ -248,8 +279,9 @@ def lint(snapshot: dict[str, Any], *, comments: list[dict[str, Any]] | None = No
     }
 
 
-COMMENT_SCRIPT = r"""
-import json, unreal
+COMMENT_SCRIPT = (_HERE / "blueprint_comment_geometry.py").read_text(encoding="utf-8") + r"""
+import json, tempfile, unreal
+from pathlib import Path
 
 def _codex_comment_frames():
     lib = unreal.BlueprintEditorLibrary
@@ -258,8 +290,37 @@ def _codex_comment_frames():
     for name in lib.list_graph_names(bp):
         editor = unreal.BlueprintGraphEditor.get_graph_editor(lib.find_graph(bp, name))
         for node in editor.list_comment_nodes():
-            rows.append({"graph": str(name), "text": lib.get_comment_text(node),
-                         "members": [member.get_name() for member in lib.get_nodes_in_comment(node)]})
+            members = [member.get_name() for member in lib.get_nodes_in_comment(node)]
+            row = {"graph": str(name), "text": lib.get_comment_text(node), "members": members,
+                   "membership_source": "native_cache" if members else "unavailable"}
+            if not members:
+                try:
+                    # This exporter reads model properties, without creating a graph widget.
+                    # Its files are local temporary evidence, never project assets.
+                    with tempfile.TemporaryDirectory(prefix="ue_comment_bounds_") as folder:
+                        filename = Path(folder) / "comment.t3d"
+                        task = unreal.AssetExportTask()
+                        task.object = node
+                        task.filename = str(filename)
+                        task.exporter = unreal.ObjectExporterT3D()
+                        task.automated, task.prompt, task.selected = True, False, False
+                        task.replace_identical = False
+                        if not unreal.Exporter.run_asset_export_task(task) or task.errors:
+                            raise RuntimeError("Official comment text export failed: " + str(list(task.errors)))
+                        text = decode_object_export(filename.read_bytes())
+                    size = lib.get_node_size(node)
+                    row["bounds"] = parse_comment_bounds(text, node.get_path_name(), [size.x, size.y])
+                    row["node_bounds"] = {}
+                    for member in editor.list_all_nodes():
+                        if isinstance(member, unreal.K2Node):
+                            pos, size = lib.get_node_pos(member), lib.get_node_size(member)
+                            row["node_bounds"][member.get_name()] = {"x": pos.x, "y": pos.y,
+                                                                  "width": size.x, "height": size.y}
+                    row["members"], row["partial_members"] = contained_nodes(row["bounds"], row["node_bounds"])
+                    row["membership_source"] = GEOMETRY_SOURCE
+                except Exception as exc:
+                    row["membership_error"] = str(exc)
+            rows.append(row)
     print("CODEX_COMMENTS " + json.dumps(rows, ensure_ascii=False))
 
 _codex_comment_frames()
@@ -275,18 +336,23 @@ def read_comments(asset: str, project: str | None) -> list[dict[str, Any]]:
     proc = subprocess.run([*command, "exec", "--code", script], capture_output=True, text=True, encoding="utf-8",
                           errors="replace", env={**os.environ, "PYTHONUTF8": "1"})
     payload = json.loads(proc.stdout) if proc.stdout.strip().startswith("{") else {}
-    for row in payload.get("output") or []:
-        text = str(row.get("output", ""))
-        if text.startswith("CODEX_COMMENTS "):
-            return json.loads(text[len("CODEX_COMMENTS "):])
-    raise RuntimeError(f"comment frame read failed: {(payload.get('result') or proc.stderr or proc.stdout)[:400]}")
+    if proc.returncode:
+        raise RuntimeError(f"comment frame read failed: {(payload.get('result') or proc.stderr or proc.stdout)[:400]}")
+    rows = marker_json(payload, "CODEX_COMMENTS ")
+    if not isinstance(rows, list) or any(
+        not isinstance(row, dict) or not isinstance(row.get("graph"), str) or not isinstance(row.get("text"), str)
+        or not isinstance(row.get("members"), list) or any(not isinstance(name, str) for name in row["members"])
+        for row in rows
+    ):
+        raise RuntimeError("Comment annotation result has an invalid schema; coverage was not verified")
+    return rows
 
 
-def read_categories(asset: str, variables: list[str]) -> dict[str, str]:
+def read_categories(asset: str, variables: list[str], project: str | None = None) -> dict[str, str]:
     from ue_mcp import unwrap_result
     from ue_mcp.skill_api import connect
 
-    client = connect()
+    client = connect(project=project)
     try:
         blueprint = {"refPath": asset if "." in asset.rsplit("/", 1)[-1] else f"{asset}.{asset.rsplit('/', 1)[-1]}"}
         return {name: str(unwrap_result(client.call_resolved_tool("BlueprintTools", "get_variable_category",
@@ -316,18 +382,34 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     inspect_dir = args.inspect_dir or args.out / "inspect"
     if not args.inspect_dir:
-        proc = subprocess.run([sys.executable, str(_HERE / "inspect_blueprint.py"), args.blueprint, "--out", str(inspect_dir)],
+        command = [sys.executable, str(_HERE / "inspect_blueprint.py"), args.blueprint, "--out", str(inspect_dir)]
+        if args.project:
+            command += ["--expect-project", args.project]
+        proc = subprocess.run(command,
                               capture_output=True, text=True, encoding="utf-8", errors="replace")
         if proc.returncode:
             print(proc.stdout + proc.stderr, file=sys.stderr)
             return 2
-    snapshot = json.loads((inspect_dir / "snapshot.json").read_text(encoding="utf-8"))
+    try:
+        _, expected = asset_paths(args.blueprint)
+        snapshot = json.loads((inspect_dir / "snapshot.json").read_text(encoding="utf-8"))
+        if ref_path(snapshot["blueprint"]) != expected:
+            raise ValueError("Inspection snapshot belongs to another Blueprint; capture the requested asset")
+        if args.inspect_dir:
+            capture = json.loads((inspect_dir / "result.json").read_text(encoding="utf-8"))
+            if capture.get("passed") is not True or capture.get("blueprint") != expected:
+                raise ValueError("Inspection capture did not pass for the requested Blueprint; do not reuse failed/unproven evidence")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"Invalid inspection evidence: {exc}", file=sys.stderr)
+        return 2
     comments = categories = None
     if not args.no_comments:
         comments = read_comments(args.blueprint, args.project)
-        categories = read_categories(args.blueprint, list(snapshot.get("variables") or []))
+        categories = read_categories(args.blueprint, list(snapshot.get("variables") or []), args.project)
     report = lint(snapshot, comments=comments, categories=categories)
     args.out.mkdir(parents=True, exist_ok=True)
+    if comments is not None:
+        (args.out / "annotations.json").write_text(json.dumps(comments, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (args.out / "lint.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (args.out / "lint.md").write_text(render_markdown(report), encoding="utf-8")
     print(args.out / "lint.json")

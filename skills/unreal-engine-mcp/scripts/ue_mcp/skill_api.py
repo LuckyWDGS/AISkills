@@ -18,6 +18,14 @@ from .protocol import DEFAULT_PROTOCOL, DEFAULT_URL, _decode_text_value
 DEFAULT_MCP_URL = os.environ.get("UNREAL_MCP_URL", DEFAULT_URL)
 
 
+def ensure_editor_idle(client: UnrealMcpClient) -> None:
+    """Refuse writes during an existing PIE/Simulate session or an ambiguous state response."""
+    from . import unwrap_result
+    state = unwrap_result(client.call_resolved_tool("EditorAppToolset", "IsPIERunning", {}))
+    if state is not False:
+        raise RuntimeError("Editor is running PIE/Simulate or its state is unknown; no writes performed.")
+
+
 def builtin_mcp(skill_root: Path | None = None) -> ModuleType:
     """The ``ue_mcp`` package (client, batch runner, result helpers). ``skill_root`` is accepted for old callers."""
     del skill_root

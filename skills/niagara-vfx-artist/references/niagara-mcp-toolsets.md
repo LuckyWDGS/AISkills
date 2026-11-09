@@ -54,9 +54,12 @@ On first load of a previously unopened Epic template, GetSystemCompileState and
 GetStackIssues waited on pending compilation; a longer client request received
 the engine's own 120-second compile-wait timeout. Opening that asset through
 `EditorAppToolset.OpenEditorForAsset` let compilation finish. Both diagnostics
-then succeeded: UpToDate, no errors/warnings; the package remained clean. For
-this symptom, check compilation and open the intended asset with official tools
-before declaring an MCP gap. A timeout is not proof that the HTTP parser failed.
+then succeeded: UpToDate, no errors/warnings; the package remained clean. That is
+historical evidence of a UI side effect, not a permitted background recovery.
+For this symptom, inspect compilation/logs and a supported background load/compile
+route with a bounded deadline. Do not call OpenEditorForAsset unless the user
+requested that UI operation. If readiness cannot be established in the background,
+report the blocked diagnostic and preserve the package. A timeout is not proof that the HTTP parser failed.
 Do not blindly retry a state-changing operation after a timeout.
 
 Prefer official structural readback, compile state, and stack issues before

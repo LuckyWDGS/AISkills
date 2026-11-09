@@ -594,7 +594,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-shader-stats", action="store_true", help="Skip the Remote Execution statistics step")
     parser.add_argument("--graph-source", choices=("mcp", "remote"), default="mcp",
                         help="remote: read the graph with stock MaterialEditingLibrary over Python Remote Execution "
-                             "(opt-in, read-only; one editor call instead of ~0.25 s per node)")
+                             "(explicit transport override or documented MCP gap only; default: MCP)")
     parser.add_argument("--instruction-budget", type=int, default=0)
     parser.add_argument("--sampler-budget", type=int, default=0)
     parser.add_argument("--out")

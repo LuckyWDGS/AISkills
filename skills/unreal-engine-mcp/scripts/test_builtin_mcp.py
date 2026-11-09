@@ -174,6 +174,14 @@ class SchemaCacheTests(unittest.TestCase):
 
 
 class SessionReuseTests(unittest.TestCase):
+    OWNER = {"known": True, "pid": 42, "process_started": "2026-11-04T01:00:00Z",
+             "executable": "X/UnrealEditor.exe", "project": "MCPSI", "uproject": "X/MCPSI.uproject"}
+
+    def setUp(self):
+        lookup = patch("ue_mcp.client.endpoint_owner", return_value=self.OWNER.copy())
+        self.owner_lookup = lookup.start()
+        self.addCleanup(lookup.stop)
+
     def count(self, calls, method, rejected=False):
         return len([c for c in calls if c["method"] == method and bool(c.get("rejected")) == rejected])
 
@@ -199,7 +207,7 @@ class SessionReuseTests(unittest.TestCase):
             first = self.client(base.url, folder).open()
             first.call_resolved_tool("AssetTools", "exists", {})
             first.close()
-            live.clear()  # Editor restarted: the saved session id is now unknown.
+            live.clear()  # The server forgot the saved token, without an OS process change.
             resumed = self.client(base.url, folder).open()
             result = resumed.call_resolved_tool("AssetTools", "exists", {})
             self.assertTrue(_decode_text_value(result)["found"])
@@ -227,6 +235,72 @@ class SessionReuseTests(unittest.TestCase):
                 resumed = self.client(base.url, folder, expected_project="MCPSI").open()
             self.assertEqual(resumed.editor_owner()["project"], "MCPSI")
             self.assertEqual(self.count(calls, "initialize"), 2)
+
+    def test_matching_saved_project_cannot_hide_a_different_current_project(self):
+        with tempfile.TemporaryDirectory() as folder, server() as (base, calls):
+            first = self.client(base.url, folder, expected_project="MCPSI").open()
+            first.close()
+            before = len(calls)
+            self.owner_lookup.return_value = {**self.OWNER, "pid": 43, "project": "Other",
+                                              "uproject": "X/Other.uproject"}
+            with self.assertRaisesRegex(McpError, "not 'MCPSI'"):
+                self.client(base.url, folder, expected_project="MCPSI").open()
+            self.assertEqual(len(calls), before)  # Refuse before sending even initialize.
+
+    def test_unknown_current_owner_cannot_use_saved_identity(self):
+        with tempfile.TemporaryDirectory() as folder, server() as (base, calls):
+            first = self.client(base.url, folder, expected_project="MCPSI").open()
+            first.close()
+            before = len(calls)
+            self.owner_lookup.return_value = {"known": False, "reason": "lookup unavailable"}
+            with self.assertRaisesRegex(McpError, "Cannot confirm"):
+                self.client(base.url, folder, expected_project="MCPSI").open()
+            self.assertEqual(len(calls), before)
+
+    def test_process_change_discards_session_and_inventory_even_if_token_is_accepted(self):
+        for changed in ({"pid": 43}, {"process_started": "2026-11-04T02:00:00Z"},
+                        {"uproject": "Y/MCPSI.uproject"}, {"known": False}):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as folder, server() as (base, calls):
+                self.owner_lookup.return_value = self.OWNER.copy()
+                first = self.client(base.url, folder).open()
+                first.list_toolsets()
+                first.close()
+                self.owner_lookup.return_value = {**self.OWNER, **changed}
+                resumed = self.client(base.url, folder).open()
+                self.assertFalse(resumed.session_reused)
+                self.assertIsNone(resumed._toolsets)
+                resumed.list_toolsets()
+                self.assertEqual(resumed.editor_owner(), self.owner_lookup.return_value)
+                self.assertEqual(self.count(calls, "initialize"), 2)
+                self.assertEqual(self.count(calls, "tools/list"), 2)
+
+    def test_refresh_schema_also_refreshes_a_resumed_inventory(self):
+        with tempfile.TemporaryDirectory() as folder, server() as (base, calls):
+            first = self.client(base.url, folder).open()
+            first.list_toolsets()
+            first._toolsets = [{"name": "StaleTools"}]
+            first.close()
+            refreshed = self.client(base.url, folder, refresh_schema=True).open()
+            self.assertTrue(refreshed.session_reused)
+            self.assertEqual(refreshed.list_toolsets()[0]["name"], "editor_toolset.toolsets.asset.AssetTools")
+            self.assertEqual(self.count(calls, "initialize"), 1)
+            self.assertEqual(self.count(calls, "tools/list"), 2)
+
+    def test_expired_session_rechecks_owner_before_resending(self):
+        live = set()
+        with tempfile.TemporaryDirectory() as folder, server(sessions=live) as (base, calls):
+            first = self.client(base.url, folder, expected_project="MCPSI").open()
+            first.call_resolved_tool("AssetTools", "exists", {})
+            first.close()
+            resumed = self.client(base.url, folder, expected_project="MCPSI").open()
+            live.clear()
+            self.owner_lookup.return_value = {**self.OWNER, "project": "Other", "uproject": "X/Other.uproject"}
+            with self.assertRaisesRegex(McpError, "not 'MCPSI'"):
+                resumed.call_resolved_tool("AssetTools", "exists", {})
+            executed = [c for c in calls if c["method"] == "tools/call" and not c.get("rejected")
+                        and c["params"]["name"] == "call_tool"]
+            self.assertEqual(len(executed), 1)
+            self.assertEqual(self.count(calls, "initialize"), 1)
 
 
 class FakeBatchClient:
@@ -398,6 +472,13 @@ class BriefAndProjectTests(unittest.TestCase):
             check_expected_project(owner, "VR53")
         with self.assertRaisesRegex(McpError, "Cannot confirm"):
             check_expected_project({"known": False, "reason": "no listener"}, "MCPSI")
+
+    def test_full_project_path_distinguishes_same_named_projects(self):
+        owner = {"known": True, "project": "MCPSI", "uproject": r"E:\P\MCPSI\MCPSI.uproject"}
+        check_expected_project(owner, "e:/p/MCPSI/MCPSI.uproject")
+        check_expected_project(owner, "MCPSI.uproject")
+        with self.assertRaisesRegex(McpError, "not"):
+            check_expected_project(owner, r"E:\Other\MCPSI\MCPSI.uproject")
 
     def test_remote_endpoint_is_not_probed(self):
         self.assertFalse(endpoint_owner("http://10.0.0.5:8000/mcp")["known"])

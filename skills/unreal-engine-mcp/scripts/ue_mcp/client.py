@@ -17,7 +17,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .editor import check_expected_project, connection_hint, endpoint_owner
+from .editor import check_expected_project, connection_hint, endpoint_owner, same_editor_process
 from .protocol import (
     McpError, SessionExpired, _check_tool_result, _decode_response, _decode_text_value,
     _extract_text, _parse_toolsets, unwrap_result,
@@ -44,8 +44,8 @@ class UnrealMcpClient:
         self._schema_source: dict[str, str] = {}
         self._fingerprint: str | None = None
         # Reusing a session across CLI runs skips initialize, discovery and close (~300 ms each).
-        # A session the server still accepts proves the same editor process, so the inventory and
-        # editor identity saved with it stay valid; an expired one returns 404 and is re-initialized.
+        # Reuse requires a fresh OS identity check; token acceptance alone does not prove that the
+        # editor process/project is unchanged. An expired session gets one explicit 404 retry.
         self.session_dir = Path(session_dir) if session_dir else None
         self.session_reused = False
         self.expected_project = expected_project
@@ -461,7 +461,9 @@ class UnrealMcpClient:
         return self.session_dir / f"{self._url_key()}.json" if self.session_dir else None
 
     def open(self) -> "UnrealMcpClient":
-        """Resume a saved session when one exists, else initialize a new one."""
+        """Check the current editor, then resume a session from that same process."""
+        self._owner = endpoint_owner(self.url)
+        self._check_expected_project()  # Never trust a saved owner, even when it matches the guard.
         path = self._session_file()
         record: dict[str, Any] = {}
         if path and path.is_file():
@@ -469,24 +471,21 @@ class UnrealMcpClient:
                 record = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 record = {}
-        if record.get("url") == self.url and record.get("session_id"):
+        if not isinstance(record, dict):
+            record = {}
+        if (record.get("url") == self.url and record.get("session_id")
+                and same_editor_process(record.get("owner"), self._owner)):
             self.session_id = record["session_id"]
             self.protocol = record.get("protocol") or self.protocol
             self.initialize_result = record.get("initialize_result")
-            self._tools = record.get("tools")
-            self._toolsets = record.get("toolsets")
-            self._owner = record.get("owner")
+            if not self.refresh_schema:
+                self._tools = record.get("tools")
+                self._toolsets = record.get("toolsets")
             self.session_reused = True
             # Fresh JSON-RPC ids so concurrent runs sharing a session never collide.
             self.next_id = secrets.randbelow(10**9) + 1000
         else:
             self.initialize()
-        try:
-            self._check_expected_project()
-        except McpError:
-            if not self.session_reused:
-                raise
-            self.reinitialize()  # The saved identity may predate an editor switch; re-check against a fresh session.
         return self
 
     def reinitialize(self) -> None:
@@ -495,8 +494,9 @@ class UnrealMcpClient:
         self._tools = self._toolsets = self._owner = self._fingerprint = None
         self._schemas.clear()
         self._schema_source.clear()
-        self.initialize()
+        self._owner = endpoint_owner(self.url)
         self._check_expected_project()
+        self.initialize()
 
     def pie_running(self) -> bool:
         """Whether Play-In-Editor (or Simulate) runs; asset queries are unreliable while it does."""

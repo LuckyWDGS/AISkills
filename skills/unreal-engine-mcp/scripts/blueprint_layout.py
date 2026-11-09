@@ -265,26 +265,49 @@ def _codex_reframe():
     for frame in frames:
         text = str(lib.get_comment_text(frame))
         members = {m.get_name() for m in lib.get_nodes_in_comment(frame)}
-        best = max(modules, key=lambda m: len(members & set(m[1])), default=None)
-        if not members:
-            # Membership is only computed once the graph is shown in the editor UI (and is lost on
-            # duplicates): fall back to the frame map, or to the only frame and module of a graph.
+        best = None
+        if members:
+            scores = [(len(members & set(m[1])), m) for m in modules]
+            highest = max((score for score, _ in scores), default=0)
+            candidates = [m for score, m in scores if score == highest and score > 0]
+            if len(candidates) == 1:
+                best = candidates[0]
+        else:
+            # Reload can leave the native cache empty. Use only a unique explicit
+            # map or the graph's single-frame/single-module case; never choose a tie.
             mapped = [m for m in modules if frame_map.get(m[0]) and frame_map[m[0]] in text]
             if len(mapped) == 1:
                 best = mapped[0]
-            elif len(frames) == 1 and len(modules) == 1:
+            elif not mapped and len(frames) == 1 and len(modules) == 1:
                 best = modules[0]
-            members = set(best[1]) if best and (mapped or len(modules) == 1) else set()
-        if not best or not members & set(best[1]):
-            done.append({"text": text, "status": "unmapped"})
+        if not best or not best[1] or any(n not in by_name for n in best[1]) or len(set(best[1])) != len(best[1]):
+            done.append({"text": text, "status": "unmapped", "reason": "ambiguous, missing or empty module membership"})
             continue
         spec = {"text": text, "details": frame.get_editor_property("node_details"),
                 "font": frame.get_editor_property("font_size"), "color": frame.get_editor_property("comment_color")}
+        new = None
+        try:
+            new = editor.add_comment_to_nodes(spec["text"], [by_name[n] for n in best[1]], 60)
+            if new is None:
+                raise RuntimeError("Comment creation returned no candidate; original retained, inspect before retrying")
+            new.set_editor_property("node_details", spec["details"])
+            new.set_editor_property("font_size", spec["font"])
+            new.set_editor_property("comment_color", spec["color"])
+            if (str(lib.get_comment_text(new)) != spec["text"] or
+                {m.get_name() for m in lib.get_nodes_in_comment(new)} != set(best[1]) or
+                str(new.get_editor_property("node_details")) != str(spec["details"]) or
+                new.get_editor_property("font_size") != spec["font"] or
+                new.get_editor_property("comment_color") != spec["color"]):
+                raise RuntimeError("Candidate comment text, style or membership was not confirmed; original retained")
+        except Exception:
+            if new is not None:
+                editor.remove_comment_node(new)  # Only this operation's candidate.
+                if new in editor.list_comment_nodes():
+                    raise RuntimeError("Candidate cleanup was not confirmed; original retained, inspect partial work")
+            raise
         editor.remove_comment_node(frame)
-        new = editor.add_comment_to_nodes(spec["text"], [by_name[n] for n in best[1] if n in by_name], 60)
-        new.set_editor_property("node_details", spec["details"])
-        new.set_editor_property("font_size", spec["font"])
-        new.set_editor_property("comment_color", spec["color"])
+        if frame in editor.list_comment_nodes():
+            raise RuntimeError("Original comment removal was not confirmed; inspect both frames before retrying")
         modules = [m for m in modules if m is not best]
         done.append({"text": spec["text"], "status": "reframed", "members": len(best[1])})
     print("CODEX_REFRAME " + json.dumps(done, ensure_ascii=False))
@@ -302,12 +325,14 @@ def reframe(asset: str, graph: str, modules: dict[str, list[str]], project: str 
     command = [sys.executable, str(_HERE / "python_remote.py")] + (["--project", project] if project else [])
     proc = subprocess.run([*command, "exec", "--code", script], capture_output=True, text=True, encoding="utf-8",
                           errors="replace", env={**os.environ, "PYTHONUTF8": "1"})
+    from ue_mcp.remote import marker_json
     payload = json.loads(proc.stdout) if proc.stdout.strip().startswith("{") else {}
-    for row in payload.get("output") or []:
-        text = str(row.get("output", ""))
-        if text.startswith("CODEX_REFRAME "):
-            return json.loads(text[len("CODEX_REFRAME "):])
-    raise RuntimeError(f"reframe failed: {(payload.get('result') or proc.stderr or proc.stdout)[:400]}")
+    if proc.returncode:
+        raise RuntimeError(f"reframe failed: {(payload.get('result') or proc.stderr or proc.stdout)[:400]}")
+    rows = marker_json(payload, "CODEX_REFRAME ")
+    if not isinstance(rows, list):
+        raise RuntimeError("Reframe result is not a list; inspect comment state before another write")
+    return rows
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -324,17 +349,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, help="Write the plan JSON here")
     parser.add_argument("--project", default=os.environ.get("UE_MCP_PROJECT"))
     args = parser.parse_args(argv)
+    if bool(args.graph) == args.all:
+        parser.error("choose --graph (repeatable) or --all explicitly")
+    if args.write and not args.project:
+        parser.error("--write requires --project or UE_MCP_PROJECT")
 
     from ue_mcp import unwrap_result
-    from ue_mcp.skill_api import connect
+    from ue_mcp.skill_api import connect, ensure_editor_idle
+    from blueprint_geometry import logic_signature
 
     asset = args.blueprint if "." in args.blueprint.rsplit("/", 1)[-1] else f"{args.blueprint}.{args.blueprint.rsplit('/', 1)[-1]}"
-    client = connect()
+    client = connect(project=args.project)
     call = lambda tool, **kw: unwrap_result(client.call_resolved_tool("BlueprintTools", tool, kw))  # noqa: E731
     order = {name: i for i, name in enumerate(filter(None, args.entry_order.split(",")))}
     frame_map = dict(pair.split("=", 1) for pair in filter(None, args.frame_map.split(",")))
     report: dict[str, Any] = {"tool": "blueprint_layout", "schema_version": SCHEMA_VERSION, "blueprint": asset, "graphs": {}}
     try:
+        if args.write:
+            ensure_editor_idle(client)
         names = args.graph
         if args.all:
             names = [g["refPath"].rsplit(":", 1)[-1] if isinstance(g, dict) else str(g)
@@ -355,6 +387,12 @@ def main(argv: list[str] | None = None) -> int:
                      "leftovers": [short(p) for p in plan["leftovers"]], "plan": plan}
             if args.write and args.reframe:
                 entry["frames"] = reframe(asset, name, plan["modules"], args.project, frame_map)
+            if args.write:
+                current = call("find_nodes", graph=graph, title="")
+                after = call("get_node_infos", nodes=current) if current else []
+                entry["logic_unchanged"] = logic_signature(infos) == logic_signature(after)
+                if not entry["logic_unchanged"]:
+                    raise RuntimeError(f"{name}: topology/defaults changed during layout; inspect before saving.")
             report["graphs"][name] = entry
     finally:
         client.close()

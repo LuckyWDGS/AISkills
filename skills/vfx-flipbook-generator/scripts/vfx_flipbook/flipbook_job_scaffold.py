@@ -239,6 +239,9 @@ def anchor_prompts_for_effect(effect: str, count: int) -> list[dict[str, str]]:
 
 
 def build_job_spec(request_text: str, grid: tuple[int, int], duration: float, source_fps: float | None, out_root: Path) -> JobSpec:
+    if any(value <= 0 or value & (value - 1) for value in grid):
+        raise ValueError("The default UE power-of-two job requires power-of-two row/column counts. "
+                         "Use 16x16 for 144 frames (active 0..143); plan a raw NPOT route explicitly for 12x12.")
     effect = detect_effect(request_text)
     route = create_route(effect, grid, duration, source_fps)
     generation_canvas = infer_generation_canvas(effect)
@@ -365,7 +368,10 @@ def main() -> int:
         raise SystemExit("Duration must be > 0.")
 
     out_root = Path(args.out_root).expanduser().resolve() if args.out_root else (Path.cwd() / "flipbook-jobs").resolve()
-    spec = build_job_spec(args.request_text, grid, duration, args.source_fps, out_root)
+    try:
+        spec = build_job_spec(args.request_text, grid, duration, args.source_fps, out_root)
+    except ValueError as exc:
+        parser.error(str(exc))
     spec_path = write_job_files(spec)
     if args.json:
         print(json.dumps(asdict(spec), ensure_ascii=False, indent=2))

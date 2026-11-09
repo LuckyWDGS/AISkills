@@ -93,12 +93,14 @@ tracing wires across the canvas:
 - The pure (data) nodes feeding an exec node form a small tree in columns
   directly to its left, below the exec wire, each output aimed at the pin it
   feeds. Data wires never run right to left and never pass through other nodes.
-- **One getter per consumer**: never wire one variable getter, or a SET node's
-  output pin, across the graph; getters are free.
-- **One copy of a pure node per exec consumer**: a pure node (Transform
-  Location, Break Hit Result, a math node) feeding two exec nodes is copied, one
-  per exec node. The Blueprint VM re-evaluates pure nodes for every impure node
-  that pulls them, so the copies compute exactly what the shared node did.
+- Prefer nearby Getters for newly authored nodes when the variable owner,
+  Target, member/local scope and read timing are explicit. Preserve existing
+  SET outputs and external/inherited/local Getters when that identity is not
+  proven; a long wire is preferable to reading another object or a later value.
+- A pure node may be copied near consumers only when its type, every input and
+  Target link, defaults and evaluation behavior are preserved. Random, time,
+  mutable state, references and containers need particular care. Do not claim
+  equivalence merely because the node is pure or the graph compiles.
 - **An exec node's output read past the next exec node** (for example a trace
   hit used after a loop) is stored in a local variable right after the producer
   and read with getters where needed. The editor offers no reroute-node action
@@ -108,21 +110,33 @@ tracing wires across the canvas:
 - Delete disabled or abandoned nodes (for example a disabled `Event Tick`)
   before delivery instead of leaving them greyed out.
 
-Tools, in order, on graphs you authored (never re-layout a user's hand-arranged
-graph without asking; back the asset up first):
+Review a named graph first. A request to organize it authorizes scoped layout;
+otherwise preserve the user's arrangement. Before writes use a candidate or
+durable backup. `--all` is reserved for an explicitly requested whole-asset scope:
 
 ```powershell
-python scripts/blueprint_normalize.py /Game/Path/BP_Feature --all --write --project <Project>
-python scripts/blueprint_layout.py /Game/Path/BP_Feature --all --entry-order K2Node_Event_0,K2Node_Event_1 --write --reframe --project <Project>
+python scripts/blueprint_normalize.py /Game/Path/BP_Feature --graph UpdatePreview --project <Project>
+python scripts/blueprint_layout.py /Game/Path/BP_Feature --graph UpdatePreview --project <Project>
+# After reviewing the proposed scope; writes require a confirmed idle editor:
+python scripts/blueprint_normalize.py /Game/Path/BP_Feature --graph UpdatePreview --write --project <Project>
+python scripts/blueprint_layout.py /Game/Path/BP_Feature --graph UpdatePreview --write --reframe --project <Project>
 ```
 
-`blueprint_normalize.py` applies the getter and pure-copy rules and reports exec
-outputs read past the next node; `blueprint_layout.py` places nodes with
+`blueprint_normalize.py` copies supported pure-call/operator nodes after checking
+pin schemas and input readback; it reports and preserves variable Getters and
+SET outputs. A partial failure leaves unsaved work for inspection; it is not a
+transactional rewrite. `blueprint_layout.py` places nodes with
 size estimates calibrated on UE 5.8 (`blueprint_geometry.py`) and rebuilds each
-comment frame around its module. Frame membership is only computed once a graph
-has been shown in the editor UI (and is lost on duplicated assets); for an event
-graph with several frames pass `--frame-map K2Node_Event_0=BP.Feature.Init,...`
-so each module finds its frame by module ID. `BlueprintTools.arrange_nodes` alone does not
+comment frame around its module and compares node/pin/default/link signatures
+before saving. The observed frame membership cache depends on the graph having
+been shown and can be lost on duplication. Never open a tab to populate it;
+for several frames pass `--frame-map K2Node_Event_0=BP.Feature.Init,...` or report
+unresolved membership. Equal native overlap or multiple matching map entries
+remain `unmapped`; review the mapping instead of choosing the first module.
+The helper creates a replacement, verifies text/style/members, then removes
+the old frame. Candidate failures retain the original and remove only the
+helper's candidate; an unconfirmed removal reports partial work without saving.
+`BlueprintTools.arrange_nodes` alone does not
 produce this layout.
 
 ## 5. Chinese explanations for functions, variables and modules
@@ -138,26 +152,25 @@ produce this layout.
 - **Variables:** Chinese category paths (`抛物线投掷|运行时`,
   `抛物线投掷|设置`, `抛物线投掷|调试`) and Chinese-explained names in the
   module frames that use them.
-- **Function descriptions and variable tooltips** (the Details-panel
-  "Description" that shows when hovering a function or variable, and the
-  function category in My Blueprint): every authored function, member variable
-  and non-obvious local variable gets a Chinese description, and functions get
-  Chinese categories like their variables. Stock UE 5.8.4 has no write route
-  (MCP tools, the graph DSL, editor Python and every reachable native UFunction
-  were checked), so the skill ships a small editor plugin,
-  `assets/plugins/MCPBlueprintMetadata`:
+- **Descriptions:** explain authored functions, member variables and non-obvious
+  locals in Chinese, with units, defaults, owners and side effects. Prefer
+  official metadata tools when live discovery proves coverage. Without a stock
+  hover-metadata write route, the default delivery is the comment frames plus a
+  table keyed by asset/graph/module ID and identifier; missing hover text does
+  not require C++ or make that delivery incomplete.
+- **Optional hover-metadata extension:** only when the user explicitly requests
+  the extension workflow, use `assets/plugins/MCPBlueprintMetadata` and:
 
   ```powershell
   python scripts/install_blueprint_metadata_plugin.py --uproject <Project>.uproject --engine-root <UE root>
   python scripts/blueprint_tooltips.py /Game/Path/BP_Feature --spec <session>/tooltips.json --write --project <Project>
   ```
 
-  Installing adds C++ to the user's project and needs a compiler and an editor
-  restart: ask before installing, and ask the user to save and restart the editor
-  (never restart it yourself). Once the plugin is in the project, write the
-  descriptions as part of every delivery, compile, and check the read-back
-  (`missing` must be empty). Without the plugin, say so before delivery and put a
-  paste-ready description table in the handoff.
+  Installing adds C++, compiler and restart requirements. Do not install it
+  automatically for annotations. Use existing authorization for an extension;
+  otherwise finish the official comment/table delivery first. Preserve an
+  already installed extension and use it only within the task's scope; verify
+  metadata readback when used. Do not restart to obtain hover text.
 
 Comment frames are created and read through Epic's public
 `BlueprintGraphEditor` API over Python Remote Execution; see
@@ -199,3 +212,7 @@ Geometry is estimated by `blueprint_geometry.py` from pins, default-value widget
 and titles (the API has no node sizes), so treat layout counts as pointers to
 review. Deliver with zero warnings, or list each remaining warning
 with its reason in the handoff.
+
+For behavior changes, select cases from [runtime acceptance](runtime-acceptance.md).
+Compile, lint and graph readback do not replace the jump/overlap/physics/animation
+lifecycle checks relevant to the feature.

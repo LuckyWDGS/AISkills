@@ -1,9 +1,16 @@
 # Shot plan format
 
 `scripts/sequence_plan_apply.py` builds one Level Sequence from a JSON plan. Validate first
-(no flag), then `--execute`. Times are seconds (`time`, `start`, `end`, `seconds`) or
+(no flag). The current `--execute` builder requires an explicitly requested UI
+workflow (`--allow-editor-ui --project <Project>`); background tasks use tools
+with explicit sequence references. Times are seconds (`time`, `start`, `end`, `seconds`) or
 display-rate frames (`frame`, `start_frame`, `end_frame`); the tool converts seconds with the
 sequence fps.
+
+Use a new candidate path for builds. Replacing a saved asset requires
+`--replace --backup-path /Game/.../LS_Backup --save`; a backup must be duplicated,
+saved and verified before the original is deleted. Rebuilding the currently
+open sequence is refused to preserve the user's session.
 
 ```json
 {
@@ -33,6 +40,11 @@ sequence fps.
 
 **sequence** - `path` (`/Game/...`), `fps` (default 30), `seconds` or `end_frame` (playback
 end, exclusive); without them the last shot's end is used.
+Rates accept integers, decimals, `"30000/1001"`, or
+`{"numerator":24000,"denominator":1001}`. Decimals remain exact decimals;
+`29.97` is `2997/100`, not NTSC. Seconds use rational conversion to frames.
+Boundary keys may sit at `end_frame` for interpolation, but runtime samples of
+spawnables must remain inside the playback range (`end_frame-1` is visible).
 
 **cameras[]** - each becomes a spawnable cine camera.
 - `id` (required, unique), `label` (Sequencer display name; Chinese is fine).
@@ -43,6 +55,10 @@ end, exclusive); without them the last shot's end is used.
   or `look_at` (actor label or [x, y, z]); `focal` mm, `focus` cm or `"auto"` (distance to the
   look-at point), `aperture` f-stop. Consecutive yaws are unwrapped so cubic keys never spin
   the long way round.
+- `look_at` / `focus: "auto"` resolve from the target's build-time bounds/pivot
+  snapshot. They do not create a live tracking constraint. For moving subjects,
+  animate the camera/focus or use a separately verified tracking route. Sampling
+  traces from the actual camera to the target's current evaluated bounds/pivot.
 
 **shots[]** - camera cuts: `camera` (id), `start`, `end`. Shots must not overlap; gaps are
 warnings (the game camera shows through).
@@ -59,7 +75,10 @@ warnings (the game camera shows through).
 `--out <dir>` writes `apply-report.json`: binding GUIDs per camera and actor, resolved keys
 (rotation and focus filled in), camera-cut sections and whether each is bound, fade channel and
 the number of MCP calls. `sequence_sample.py --apply-report` checks the built sequence
-against exactly those resolved keys.
+against those resolved keys with UI opt-in. Focus checks require Manual focus
+mode, not merely a stored ManualFocusDistance value. Empty checks are collected
+data, not success. Fade values, animation/event execution and game camera/input
+restoration need the [runtime cases](runtime-acceptance.md).
 
 ## Not in the plan (use MCP tools directly)
 

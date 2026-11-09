@@ -15,5 +15,5 @@ if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
 from ue_mcp import unwrap_result  # noqa: E402,F401
-from ue_mcp.remote import run_python, stdout_of  # noqa: E402,F401
+from ue_mcp.remote import marker_json, run_python, stdout_of  # noqa: E402,F401
 from ue_mcp.skill_api import connect  # noqa: E402,F401

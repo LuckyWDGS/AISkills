@@ -1,6 +1,6 @@
 import unittest
 
-from python_remote import _matches, stdout_of
+from python_remote import RemoteError, _matches, marker_json, stdout_of
 
 
 NODE = {"project_name": "MCPSI", "project_root": "E:/UnrealProject/MCPSI5.8/MCPSI/"}
@@ -30,6 +30,42 @@ class OutputTests(unittest.TestCase):
 
     def test_selects_other_kinds(self):
         self.assertEqual(stdout_of(self.RESULT, kinds=("Warning", "Error")), "w\ne")
+
+
+class MarkerResultTests(unittest.TestCase):
+    def result(self, *rows, success=True):
+        return {'success': success, 'output': list(rows)}
+
+    def test_complete_success_accepts_one_info_marker_among_logs(self):
+        data = self.result({'type': 'Warning', 'output': 'native warning'},
+                           {'type': 'Info', 'output': 'other log\nDONE {"count": 4}\n'})
+        self.assertEqual(marker_json(data, 'DONE '), {'count': 4})
+        self.assertEqual(data['output'][0]['output'], 'native warning')
+
+    def test_missing_or_non_boolean_success_cannot_pass(self):
+        for success in [None, False, 'true', 1]:
+            with self.subTest(success=success), self.assertRaises(RemoteError):
+                marker_json(self.result({'type': 'Info', 'output': 'DONE {}'}, success=success), 'DONE ')
+
+    def test_error_after_marker_invalidates_the_whole_command(self):
+        data = self.result({'type': 'Info', 'output': 'DONE {}'}, {'type': 'Error', 'output': 'late failure'})
+        with self.assertRaisesRegex(RemoteError, 'late failure'):
+            marker_json(data, 'DONE ')
+
+    def test_multiple_markers_are_ambiguous_even_if_both_are_valid(self):
+        data = self.result({'type': 'Info', 'output': 'DONE {"first": true}\nDONE {"last": true}'})
+        with self.assertRaises(RemoteError):
+            marker_json(data, 'DONE ')
+
+    def test_warning_marker_is_not_a_result(self):
+        with self.assertRaises(RemoteError):
+            marker_json(self.result({'type': 'Warning', 'output': 'DONE {}'}), 'DONE ')
+
+    def test_malformed_output_and_invalid_json_never_pass(self):
+        for data in [{'success': True, 'output': None}, {'success': True, 'output': ['DONE {}']},
+                     self.result({'type': 'Info', 'output': 'DONE {bad json}'})]:
+            with self.subTest(data=data), self.assertRaises(RemoteError):
+                marker_json(data, 'DONE ')
 
 
 if __name__ == "__main__":

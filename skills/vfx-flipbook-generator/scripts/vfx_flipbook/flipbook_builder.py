@@ -788,17 +788,25 @@ def compose_atlas(
     cell_size: tuple[int, int],
     background: tuple[int, int, int, int],
     atlas_size: tuple[int, int] | None = None,
+    pad_cells: bool = False,
 ) -> tuple[int, int]:
     ensure_dir(atlas_path.parent)
     atlas_width = columns * cell_size[0]
     atlas_height = rows * cell_size[1]
+    pack_cell = cell_size
+    if pad_cells and atlas_size:
+        if atlas_size[0] % columns or atlas_size[1] % rows:
+            raise ValueError("Padded output must divide into integer SubUV cells")
+        pack_cell = (atlas_size[0] // columns, atlas_size[1] // rows)
+        atlas_width, atlas_height = atlas_size
     atlas = Image.new("RGBA", (atlas_width, atlas_height), background)
     for index, frame_path in enumerate(frame_paths[: columns * rows]):
         with Image.open(frame_path) as opened:
             image = opened.convert("RGBA")
             column = index % columns
             row = index // columns
-            atlas.alpha_composite(image, (column * cell_size[0], row * cell_size[1]))
+            atlas.alpha_composite(image, (column * pack_cell[0] + (pack_cell[0] - image.width) // 2,
+                                          row * pack_cell[1] + (pack_cell[1] - image.height) // 2))
     if atlas_size and atlas_size != (atlas_width, atlas_height):
         atlas = atlas.resize(atlas_size, Image.Resampling.LANCZOS)
         atlas_width, atlas_height = atlas_size
@@ -941,6 +949,8 @@ def build_command(args: argparse.Namespace) -> int:
     )
     raw_atlas_size = (columns * cell_size[0], rows * cell_size[1])
     atlas_size = atlas_size_for_mode(raw_atlas_size, args.atlas_size_mode)
+    if args.atlas_size_mode != "raw" and (atlas_size[0] % columns or atlas_size[1] % rows):
+        raise RuntimeError("Power-of-two output cannot divide this grid; use 8x8/16x8/16x16 or an explicit raw NPOT route.")
     background = parse_background(args.background)
     effect = args.effect or video_path.stem
     ctx = resolve_root_context(args.root)
@@ -967,6 +977,7 @@ def build_command(args: argparse.Namespace) -> int:
         cell_size=cell_size,
         background=background,
         atlas_size=atlas_size,
+        pad_cells=args.atlas_size_mode == "pad-to-power-of-two",
     )
     snapped_from = None
     if raw_atlas_size != (atlas_width, atlas_height):
@@ -992,8 +1003,10 @@ def build_command(args: argparse.Namespace) -> int:
             "columns": columns,
             "rows": rows,
             "cells": cells,
-            "cell_width": cell_size[0],
-            "cell_height": cell_size[1],
+            "cell_width": exact_cell["width"] if exact_cell else cell_size[0],
+            "cell_height": exact_cell["height"] if exact_cell else cell_size[1],
+            "source_cell_width": cell_size[0],
+            "source_cell_height": cell_size[1],
             "fit": args.fit,
             "background": args.background,
         },

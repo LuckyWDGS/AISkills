@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the offline test suites of all four UE skills, with non-loopback networking blocked.
+"""Run the offline test suites of all five UE skills, with non-loopback networking blocked.
 
 Each suite runs in its own process, so suites cannot leak imports into each other.
 The client tests talk to a fake MCP server on 127.0.0.1, so loopback stays allowed.
@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 
 SKILLS = Path(__file__).resolve().parents[2]
-SUITES = ["unreal-engine-mcp", "unreal-material-artist", "niagara-vfx-artist", "vfx-flipbook-generator"]
+SUITES = ["unreal-engine-mcp", "unreal-sequencer", "unreal-material-artist", "niagara-vfx-artist", "vfx-flipbook-generator"]
 
 # Loaded automatically by every child interpreter through PYTHONPATH.
 SITECUSTOMIZE = '''

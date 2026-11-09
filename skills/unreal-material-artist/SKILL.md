@@ -14,7 +14,11 @@ Python Remote Execution for a verified gap, and Chinese annotations on new or
 modified material modules (comment frames, Chinese parameter groups and
 descriptions, stable module IDs; existing parameter identifiers unchanged).
 
-Use Epic's MCP (UE 5.8+) through the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`, discovering the live schema of MaterialTools, MaterialInstanceTools, ObjectTools, TextureTools, AssetTools and ProgrammaticToolset before calling them. Every editor-connected tool here runs on MCP (plus Remote Execution for shader statistics). `preview_matrix.py --execute` captures only the axes MCP can drive and leaves the rest pending manual staging. Local image QA, packing, manifests and reports need no editor. Details: [official-toolsets-vs-local.md](references/official-toolsets-vs-local.md).
+For live parameter/lifetime or deployment changes, select the relevant
+[runtime acceptance cases](references/runtime-acceptance.md): MID/MPC ownership,
+slot restoration, pooled reuse, instance custom data and target-platform cook.
+
+Use Epic's MCP (UE 5.8+) through the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`, discovering the live schema of MaterialTools, MaterialInstanceTools, ObjectTools, TextureTools, AssetTools and ProgrammaticToolset before calling them. Editor operations use MCP first, with Remote Execution only for identified gaps such as unavailable shader statistics. `preview_matrix.py --execute` captures only the axes MCP can drive and leaves the rest pending staging; that does not authorize UI automation. Local image QA, packing, manifests and reports need no editor. Details: [official-toolsets-vs-local.md](references/official-toolsets-vs-local.md).
 
 ## Role
 
@@ -36,7 +40,7 @@ With `niagara-vfx-artist` (the VFX Lead): accept its material contract, implemen
    Carrier rules (Niagara ribbon UV `U = length`, `V = width`; ribbon breakup; wrapped meshes; two-sided additive layering; SubUV sprites; `_VFX` texture suffix): [carrier-and-ribbon-rules.md](references/carrier-and-ribbon-rules.md). Fire/flame/energy trails: [niagara-ribbon-flame-trail.md](references/niagara-ribbon-flame-trail.md).
    Parameters handed to Niagara, Blueprint, MIDs or artists get units, ranges, owners and tunability through [material-parameter-schema.md](references/material-parameter-schema.md) / `tools/material_parameter_schema.py`.
 
-4. **Read before writing.** For existing assets read the graph and outputs, expressions, parameters, MI override chain, instruction and sampler counts and stale overrides first: `tools/material_audit.py` (add `--graph-source remote` for a fast read-only graph), `tools/material_domain_audit.py`.
+4. **Read before writing.** For existing assets read the graph and outputs, expressions, parameters, MI override chain, instruction and sampler counts and stale overrides first: `tools/material_audit.py`, `tools/material_domain_audit.py`. Keep the default MCP graph source; `--graph-source remote` is a legacy opt-in for an explicitly requested transport override or a documented gap, not a speed shortcut. Shader-statistics reads need their own verified MCP gap.
 
 5. **Choose texture versus computation deliberately** ([texture-vs-compute.md](references/texture-vs-compute.md)). A named or provided texture keeps its identity: math may reveal, mask, rotate, recolor or remap it, never replace it with a procedural lookalike without approval.
 

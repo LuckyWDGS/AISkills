@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import copy
 import math
+from fractions import Fraction
 from typing import Any
 
 INTERPOLATIONS = {"cubic", "linear", "constant", "break", ""}
@@ -32,11 +33,30 @@ def finding(severity: str, rule: str, message: str, **detail: Any) -> dict[str, 
     return {"severity": severity, "rule": rule, "message": message, **detail}
 
 
-def to_frame(item: dict[str, Any], fps: float, seconds_key: str, frame_key: str) -> int | None:
+def frame_rate(value: Any = DEFAULT_FPS) -> Fraction:
+    """Exact positive rate: integer/decimal, '30000/1001', or numerator/denominator object.
+
+    Decimal 29.97 means exactly 2997/100; use 30000/1001 for the NTSC rate.
+    """
+    if isinstance(value, bool):
+        raise ValueError("fps must be a positive frame rate")
+    if isinstance(value, dict):
+        n, d = value.get("numerator"), value.get("denominator")
+        if type(n) is not int or type(d) is not int or n <= 0 or d <= 0:
+            raise ValueError("fps numerator and denominator must be positive integers")
+        rate = Fraction(n, d)
+    else:
+        rate = Fraction(str(value))
+    if rate <= 0 or rate.numerator > 2147483647 or rate.denominator > 2147483647:
+        raise ValueError("fps must be positive and fit UE's int32 numerator/denominator")
+    return rate
+
+
+def to_frame(item: dict[str, Any], fps: Fraction, seconds_key: str, frame_key: str) -> int | None:
     if item.get(frame_key) is not None:
         return int(item[frame_key])
     if item.get(seconds_key) is not None:
-        return int(round(float(item[seconds_key]) * fps))
+        return round(Fraction(str(item[seconds_key])) * fps)
     return None
 
 
@@ -65,8 +85,8 @@ def normalize(plan: dict[str, Any]) -> dict[str, Any]:
     """Deep copy with every time converted to frames ("frame", "start_frame", "end_frame")."""
     plan = copy.deepcopy(plan)
     seq = plan.setdefault("sequence", {})
-    fps = float(seq.get("fps") or DEFAULT_FPS)
-    seq["fps"] = int(fps) if fps == int(fps) else fps
+    fps = frame_rate(seq.get("fps", DEFAULT_FPS))
+    seq["fps"] = fps.numerator if fps.denominator == 1 else {"numerator": fps.numerator, "denominator": fps.denominator}
     start = to_frame(seq, fps, "start", "start_frame") or 0
     end = to_frame(seq, fps, "seconds", "end_frame")
     if end is None and seq.get("seconds") is None:
@@ -169,8 +189,12 @@ def resolve_camera_keys(camera: dict[str, Any], positions: dict[str, list[float]
     """Camera keys with rotation and focus filled in from look_at targets (labels resolved via positions)."""
     keys = []
     last_location = None
-    for key in camera.get("keys", []):
+    for index, key in enumerate(camera.get("keys", [])):
         key = dict(key)
+        if index == 0:
+            for prop in ("focal", "focus", "aperture"):
+                if camera.get(prop) is not None:
+                    key.setdefault(prop, camera[prop])
         location = key.get("location") or last_location
         last_location = location
         target = key.get("look_at")

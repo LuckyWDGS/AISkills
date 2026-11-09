@@ -5,6 +5,8 @@ Runs each tool through its real command line against template content (or the
 assets you pass), checks key report fields, and fails if any touched asset's
 dirty state changed. By default nothing is created, written or saved:
 material_instance_batch runs in plan-only mode and the batch step contains reads only.
+Unbound independent assets are collected, not counted as a binding pass. --out
+retains the underlying JSON/image evidence in a unique directory beside the report.
 
 --write adds the write paths in a scratch folder (default /Game/CodexTemp/LiveSmokeWrite,
 which must not exist yet): a recipe build, an MI batch, a texture import fix, a graph
@@ -23,6 +25,8 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
@@ -30,7 +34,7 @@ _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from ue_mcp import McpError, unwrap_result  # noqa: E402
+from ue_mcp import McpError, check_expected_project, unwrap_result  # noqa: E402
 from ue_mcp.skill_api import connect  # noqa: E402
 
 
@@ -66,13 +70,32 @@ class CheckFailed(AssertionError):
     pass
 
 
+@dataclass(frozen=True)
+class Observation:
+    detail: str
+    status: str = "pass"
+
+
+@contextmanager
+def evidence_workspace(report: Path | None):
+    """Retain underlying evidence beside an explicitly requested report."""
+    if report is not None:
+        report.parent.mkdir(parents=True, exist_ok=True)
+        yield Path(tempfile.mkdtemp(prefix=report.stem + "-artifacts-", dir=report.parent))
+    else:
+        with tempfile.TemporaryDirectory(prefix="ue-live-smoke-") as folder:
+            yield Path(folder)
+
+
 def expect(condition: bool, message: str) -> None:
     if not condition:
         raise CheckFailed(message)
 
 
-def run_tool(name: str, *args: str, timeout: float = 300) -> tuple[int, str]:
+def run_tool(name: str, *args: str, timeout: float = 300, project: str | None = None) -> tuple[int, str]:
     env = {**os.environ, "PYTHONUTF8": "1"}
+    if project:
+        env["UE_MCP_PROJECT"] = project
     proc = subprocess.run([sys.executable, str(TOOLS[name]), *args], capture_output=True, text=True,
                           encoding="utf-8", errors="replace", timeout=timeout, env=env)
     return proc.returncode, (proc.stdout + proc.stderr).strip()
@@ -88,6 +111,9 @@ class Smoke:
         self.client = connect(project=args.project)
         self.results: list[dict[str, Any]] = []
 
+    def tool(self, name: str, *args: str, timeout: float = 300) -> tuple[int, str]:
+        return run_tool(name, *args, timeout=timeout, project=self.args.project)
+
     def call(self, toolset: str, tool: str, arguments: dict[str, Any]) -> Any:
         return unwrap_result(self.client.call_resolved_tool(toolset, tool, arguments))
 
@@ -97,7 +123,7 @@ class Smoke:
     def dirty(self, path: str) -> bool:
         return bool(self.call("AssetTools", "is_dirty", {"asset_path": path}))
 
-    def check(self, name: str, assets: list[str], body: Callable[[], str]) -> None:
+    def check(self, name: str, assets: list[str], body: Callable[[], str | Observation]) -> None:
         started = time.monotonic()
         row: dict[str, Any] = {"check": name}
         missing = [path for path in assets if not self.exists(path)]
@@ -106,7 +132,11 @@ class Smoke:
         else:
             before = {path: self.dirty(path) for path in assets}
             try:
-                row.update(status="pass", detail=body())
+                observation = body()
+                if isinstance(observation, Observation):
+                    row.update(status=observation.status, detail=observation.detail)
+                else:
+                    row.update(status="pass", detail=observation)
             except (CheckFailed, McpError, OSError, subprocess.SubprocessError, KeyError, ValueError) as exc:
                 row.update(status="fail", detail=f"{type(exc).__name__}: {exc}"[:600])
             changed = [path for path in assets if self.dirty(path) != before[path]]
@@ -119,15 +149,15 @@ class Smoke:
     # --- checks -------------------------------------------------------------------------------
 
     def status(self) -> str:
-        code, out = run_tool("builtin_mcp", "status")
+        code, out = self.tool("builtin_mcp", "status")
         expect(code == 0, out)
         editor = json.loads(out)["editor"]
         if self.args.project:
-            expect(editor.get("project", "").lower() == self.args.project.lower(), f"served by {editor.get('project')}")
+            check_expected_project(editor, self.args.project)
         return f"{editor.get('project')} {editor.get('engine_version')} session reuse ok"
 
     def brief(self) -> str:
-        code, out = run_tool("builtin_mcp", "describe-toolset", "MaterialTools", "--brief")
+        code, out = self.tool("builtin_mcp", "describe-toolset", "MaterialTools", "--brief")
         expect(code == 0 and "get_expressions(" in out, out[:300])
         return f"{len(out)} bytes"
 
@@ -139,20 +169,20 @@ class Smoke:
              "readback": {"toolset": "AssetTools", "tool": "exists", "args": {"path": self.args.material}}, "expect": True},
         ]
         plan.write_text("\n".join(json.dumps(line) for line in lines) + "\n", encoding="utf-8")
-        code, out = run_tool("builtin_mcp", "batch", str(plan))
+        code, out = self.tool("builtin_mcp", "batch", str(plan))
         result = json.loads(out)
         expect(code == 0 and result["ok"], out[:300])
         return f"{result['counts']}"
 
     def remote(self) -> str:
         args = ["--project", self.args.project, "nodes"] if self.args.project else ["nodes"]
-        code, out = run_tool("python_remote", *args)
+        code, out = self.tool("python_remote", *args)
         expect(code == 0, out[:300])
         return f"{len(json.loads(out))} editor(s) answer Remote Execution"
 
     def niagara(self) -> str:
         out_file = self.work / "niagara.json"
-        code, out = run_tool("niagara_audit", self.args.niagara, "--out", str(out_file))
+        code, out = self.tool("niagara_audit", self.args.niagara, "--out", str(out_file))
         expect(code == 0, out[-400:])
         report = load(out_file)
         expect(report.get("schema_version", "").startswith("niagara_audit/"), "missing schema_version")
@@ -162,7 +192,7 @@ class Smoke:
     def material(self, source: str) -> str:
         out_file = self.work / f"material-{source}.json"
         extra = ["--project", self.args.project] if self.args.project else []
-        code, out = run_tool("material_audit", self.args.material, "--graph-source", source, "--out", str(out_file), *extra)
+        code, out = self.tool("material_audit", self.args.material, "--graph-source", source, "--out", str(out_file), *extra)
         expect(code == 0, out[-400:])
         report = load(out_file)
         expect(report.get("schema_version", "").startswith("material_audit/"), "missing schema_version")
@@ -175,7 +205,7 @@ class Smoke:
     def domain(self) -> str:
         out_file = self.work / "domain.json"
         extra = ["--project", self.args.project] if self.args.project else []
-        code, out = run_tool("material_domain_audit", self.args.material, "--graph-source", "remote",
+        code, out = self.tool("material_domain_audit", self.args.material, "--graph-source", "mcp",
                              "--out", str(out_file), *extra)
         expect(code == 0, out[-400:])
         report = load(out_file)
@@ -185,7 +215,7 @@ class Smoke:
 
     def texture(self) -> str:
         out_file = self.work / "texture.json"
-        code, out = run_tool("texture_import_audit", self.args.texture, "--role", "normal", "--out", str(out_file))
+        code, out = self.tool("texture_import_audit", self.args.texture, "--role", "normal", "--out", str(out_file))
         expect(code == 0, out[-400:])
         row = load(out_file)["textures"][0]
         expect(row["found"] and row["width"] > 0 and row["compression_settings"], f"empty texture row {row}")
@@ -194,30 +224,41 @@ class Smoke:
     def permutations(self) -> str:
         out_file = self.work / "permutations.json"
         folder = self.args.material.rsplit("/", 1)[0]
-        code, out = run_tool("shader_permutation_report", "--path-prefix", folder, "--out", str(out_file))
+        code, out = self.tool("shader_permutation_report", "--path-prefix", folder, "--out", str(out_file))
         expect(code == 0, out[-400:])
         summary = load(out_file)["summary"]
         return f"{summary['groups']} group(s), {summary['bases']} base(s)"
 
-    def live_verify(self) -> str:
+    def live_verify(self) -> Observation:
         out_file = self.work / "live-verify.json"
-        code, out = run_tool("live_asset_verify", "--texture-asset-path", self.args.texture, "--material-path",
+        code, out = self.tool("live_asset_verify", "--texture-asset-path", self.args.texture, "--material-path",
                              self.args.material, "--renderer-path", self.args.niagara, "--source-policy", "ue-only",
                              "--out", str(out_file))
         expect(code == 0, out[-400:])
         report = load(out_file)
         expect(report["texture_asset_exists"] and report["material_exists"] and report["renderer_exists"],
                "texture, material or renderer not found")
-        return f"renderer materials: {report['renderer_material_path'][:80]}"
+        verdict = report.get("verification_passed")
+        expect(isinstance(verdict, bool), "live_asset_verify did not return a binding verdict")
+        links = (report.get("material_references_target_texture"), report.get("renderer_references_material"))
+        expect(all(isinstance(link, bool) for link in links), "live_asset_verify omitted binding evidence")
+        expect(verdict == all(links), "ue-only binding verdict contradicts its reported links")
+        if not verdict:
+            return Observation(
+                f"assets exist; binding not verified: texture->material={links[0]}, "
+                f"material->renderer={links[1]}; independent defaults are not a connected VFX fixture",
+                status="collected",
+            )
+        return Observation("texture -> material -> renderer bindings verified")
 
     def capture(self) -> str:
         camera = lambda: unwrap_result(self.client.call_resolved_tool("EditorAppToolset", "GetCameraTransform", {}))
         before = camera()
-        code, out = run_tool("capture", "asset", self.args.material, "--out-dir", str(self.work / "capture"))
+        code, out = self.tool("capture", "asset", self.args.material, "--out-dir", str(self.work / "capture"))
         expect(code == 0, out[-400:])
         location = before["location"]
         pose = f"{location['x']},{location['y']},{location['z'] + 100},-15,0,0"
-        code, out = run_tool("capture", "viewport", f"--pose={pose}", "--out-dir", str(self.work / "capture"))
+        code, out = self.tool("capture", "viewport", f"--pose={pose}", "--out-dir", str(self.work / "capture"))
         expect(code == 0, out[-400:])
         frame = load(Path(out.strip().splitlines()[-1]))["frames"][0]
         expect(camera() == before, "posed viewport capture moved the user's viewport camera")
@@ -231,7 +272,7 @@ class Smoke:
                         encoding="utf-8")
         out_file = self.work / "mi.json"
         extra = ["--project", self.args.project] if self.args.project else []
-        code, out = run_tool("material_instance_batch", str(spec), "--out", str(out_file), *extra)  # no --execute
+        code, out = self.tool("material_instance_batch", str(spec), "--out", str(out_file), *extra)  # no --execute
         report = load(out_file)
         expect(code == 0 and report["status"] == "planned", f"{report.get('status')} {report.get('problems')}")
         expect(not self.exists(probe), "plan-only run created an asset")
@@ -239,7 +280,7 @@ class Smoke:
 
     def blueprint(self) -> str:
         out_dir = self.work / "blueprint"
-        code, out = run_tool("inspect_blueprint", self.args.blueprint, "--out", str(out_dir))
+        code, out = self.tool("inspect_blueprint", self.args.blueprint, "--out", str(out_dir))
         expect(code == 0, out[-400:])
         result = load(out_dir / "result.json")
         expect(result.get("passed") is True, result.get("error", "capture failed"))
@@ -259,7 +300,7 @@ class Smoke:
 
     def recipe_build(self) -> str:
         report_file = self.work / "recipe-build.json"
-        code, out = run_tool("material_toolset_builder", "recipe", "dissolve_edge", "--root", str(self.work),
+        code, out = self.tool("material_toolset_builder", "recipe", "dissolve_edge", "--root", str(self.work),
                              "--folder-path", self.args.scratch_folder, "--asset-name", "M_LiveSmoke", "--execute",
                              "--build-report-out", str(report_file), *self.project_args())
         report = load(report_file)
@@ -276,7 +317,7 @@ class Smoke:
         values = [{"name": scalar, "type": "scalar", "value": 0.37}] if scalar else []
         spec.write_text(json.dumps({"parent_path": material, "instances": [{"path": instance, "params": values}]}), encoding="utf-8")
         out_file = self.work / "mi-write-report.json"
-        code, out = run_tool("material_instance_batch", str(spec), "--execute", "--out", str(out_file), *self.project_args())
+        code, out = self.tool("material_instance_batch", str(spec), "--execute", "--out", str(out_file), *self.project_args())
         report = load(out_file)
         expect(code == 0 and report["status"] == "applied", f"{report.get('status')} {report.get('problems')}")
         if scalar:
@@ -294,7 +335,7 @@ class Smoke:
         texture = self.scratch("T_LiveSmokeMask")
         expect(self.exists(texture), "import_file did not create the texture")
         out_file = self.work / "texture-fix.json"
-        code, out = run_tool("texture_import_fix", texture, "--role", "mask", "--apply", "--root", str(self.work),
+        code, out = self.tool("texture_import_fix", texture, "--role", "mask", "--apply", "--root", str(self.work),
                              "--out", str(out_file), *self.project_args())
         report = load(out_file)
         expect(code == 0 and report["status"] in ("applied", "no_changes"), f"{report.get('status')} {report.get('problems')}")
@@ -313,7 +354,7 @@ class Smoke:
         spec = self.work / "refactor-patch.json"
         spec.write_text(json.dumps({"target_material": material, "operations": ["add_fresnel_layer"]}), encoding="utf-8")
         out_file = self.work / "refactor.json"
-        code, out = run_tool("graph_refactor_apply", "--root", str(self.work), "--patch-spec", str(spec), "--execute",
+        code, out = self.tool("graph_refactor_apply", "--root", str(self.work), "--patch-spec", str(spec), "--execute",
                              "--candidate-path", self.scratch("M_LiveSmoke_Candidate"),
                              "--backup-path", self.scratch("M_LiveSmoke_Backup"), "--out", str(out_file),
                              *self.project_args(), timeout=900)
@@ -338,12 +379,12 @@ class Smoke:
         ]}
         plan_file, out_file = self.work / "niagara-plan.json", self.work / "niagara-apply.json"
         plan_file.write_text(json.dumps(plan), encoding="utf-8")
-        code, out = run_tool("niagara_asset_assistant", "--root", str(self.work), "apply", "--plan", str(plan_file),
+        code, out = self.tool("niagara_asset_assistant", "--root", str(self.work), "apply", "--plan", str(plan_file),
                              "--execute", "--out", str(out_file))
         report = load(out_file)
         expect(code == 0 and report["status"] == "applied", f"{report['status']} {[row.get('error') for row in report['operations']]}")
         audit_file = self.work / "niagara-write-audit.json"
-        code, out = run_tool("niagara_audit", system, "--out", str(audit_file))
+        code, out = self.tool("niagara_audit", system, "--out", str(audit_file))
         expect(code == 0, out[-400:])
         audit = load(audit_file)
         ribbons = [row for emitter in audit["emitters"] for row in emitter["renderers"] if "Ribbon" in row["class_name"]]
@@ -381,11 +422,10 @@ class Smoke:
         self.check("builtin_mcp status", [], self.status)
         self.check("describe-toolset --brief", [], self.brief)
         self.check("batch (reads + readback)", [a.material], self.batch_reads)
-        self.check("python_remote nodes", [], self.remote)
+        if a.probe_remote:
+            self.check("python_remote nodes (explicit transport diagnostic)", [], self.remote)
         self.check("niagara_audit", [a.niagara], self.niagara)
-        self.check("material_audit (remote graph)", [a.material], lambda: self.material("remote"))
-        if a.full:
-            self.check("material_audit (MCP graph)", [a.material], lambda: self.material("mcp"))
+        self.check("material_audit (MCP graph)", [a.material], lambda: self.material("mcp"))
         self.check("material_domain_audit", [a.material], self.domain)
         self.check("texture_import_audit", [a.texture], self.texture)
         self.check("shader_permutation_report", [a.material], self.permutations)
@@ -396,9 +436,10 @@ class Smoke:
         if a.write:
             self.run_writes()
         self.client.close()
-        failed = [row for row in self.results if row["status"] == "fail"]
-        print(f"\n{len(self.results) - len(failed)}/{len(self.results)} checks without failure")
-        return 1 if failed else 0
+        counts = {state: sum(row["status"] == state for row in self.results)
+                  for state in ("pass", "collected", "skipped", "fail")}
+        print(f"\n{len(self.results)} checks: " + ", ".join(f"{count} {state}" for state, count in counts.items()))
+        return 1 if counts["fail"] else 0
 
 
 def main() -> int:
@@ -409,17 +450,23 @@ def main() -> int:
     parser.add_argument("--project", default=os.environ.get("UE_MCP_PROJECT"), help="Expected project name")
     for key, value in DEFAULTS.items():
         parser.add_argument(f"--{key}", default=value)
-    parser.add_argument("--full", action="store_true", help="Also run the slow MCP-route material audit")
+    parser.add_argument("--full", action="store_true", help="Compatibility flag; MCP graph audit now runs by default")
+    parser.add_argument("--probe-remote", action="store_true",
+                        help="Also discover Epic Remote Execution nodes for an explicit transport diagnostic")
     parser.add_argument("--write", action="store_true", help="Also run the write paths in --scratch-folder, then delete it")
     parser.add_argument("--scratch-folder", default="/Game/CodexTemp/LiveSmokeWrite")
-    parser.add_argument("--out", help="Write per-check results as JSON")
+    parser.add_argument("--out", help="Write JSON results and retain evidence in a unique adjacent artifacts directory")
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="ue-live-smoke-") as folder:
-        smoke = Smoke(args, Path(folder))
-        code = smoke.run()
-    if args.out:
-        Path(args.out).write_text(json.dumps({"project": args.project, "results": smoke.results}, indent=2) + "\n",
-                                  encoding="utf-8")
+    report = Path(args.out).resolve() if args.out else None
+    with evidence_workspace(report) as work:
+        smoke = Smoke(args, work)
+        try:
+            code = smoke.run()
+        finally:
+            smoke.client.close()
+            if report is not None:
+                report.write_text(json.dumps({"project": args.project, "artifact_directory": str(work),
+                                              "results": smoke.results}, indent=2) + "\n", encoding="utf-8")
     return code
 
 

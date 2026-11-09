@@ -80,9 +80,9 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Print the complete MCP result as JSON")
     parser.add_argument("--out", dest="save_to", help="Write the command's output to this UTF-8 file and print only its path")
     parser.add_argument("--expect-project", default=os.environ.get("UE_MCP_PROJECT"),
-                        help="Fail unless the endpoint is served by this project (name or .uproject); env UE_MCP_PROJECT")
+                        help="Fail unless the endpoint serves this project (name or full .uproject path); env UE_MCP_PROJECT")
     parser.add_argument("--no-cache", action="store_true", help="Do not read or write the toolset schema cache")
-    parser.add_argument("--refresh-schema", action="store_true", help="Ignore cached schemas and fetch them live")
+    parser.add_argument("--refresh-schema", action="store_true", help="Refresh the tool inventory and fetch schemas live")
     parser.add_argument("--new-session", action="store_true",
                         help="Do not resume or keep a saved MCP session; initialize and close a fresh one")
     sub = parser.add_subparsers(dest="command", required=True)

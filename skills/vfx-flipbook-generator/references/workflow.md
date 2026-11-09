@@ -92,7 +92,7 @@ Common examples:
 Local direct-extract tool:
 
 - `python tools/flipbook_builder.py recommend D:/clip.mov`
-- `python tools/flipbook_builder.py build D:/clip.mov --grid 12x12 --fit contain --atlas-size-mode pad-to-power-of-two`
+- `python tools/flipbook_builder.py build D:/clip.mov --grid 16x16 --frames 144 --fit contain --atlas-size-mode pad-to-power-of-two`
 - the tool looks for `ffmpeg.exe` and `ffprobe.exe` under `tools/ffmpeg` (a per-machine install, ignored by git) before checking system `PATH`
 - `contain` preserves the entire frame and pads when aspect ratios differ; `cover` crops to fill the cell and should only be used intentionally
 
@@ -128,7 +128,7 @@ For one-shot generated atlas previews, still finish with a production snap:
 - keep a raw generated copy when resizing or snapping the preview output
 - if an alpha material route is needed, derive a separate alpha PNG from the black-background luminance map or regenerate through a true alpha-capable path
 
-Note: a `10x10` grid cannot divide `1024x1024`, `2048x2048`, or `4096x4096` into integer-pixel cells. Treat `10x10 @ power-of-two square` as a review/sample format, not default final UE/Niagara SubUV delivery. For direct UE SubUV production output, prefer `8x8`, `16x8`, `16x16`, or another grid whose rows and columns divide the atlas dimensions exactly.
+Note: `12x12` and `10x10` grids cannot divide `1024x1024`, `2048x2048`, or `4096x4096` into integer-pixel cells. Do not force either grid into a power-of-two atlas: default packers reject it before output. Use a separately planned raw NPOT route if exact row/column counts are required, or use `16x16` for 144 valid frames with playback `0..143`. For direct UE SubUV production output, prefer `8x8`, `16x8`, `16x16`, or another grid whose rows and columns divide the atlas dimensions exactly.
 
 Recommended planning step after `flipbook_job_scaffold.py`:
 
@@ -198,7 +198,7 @@ Typical state ladders:
 - No frame-to-frame scale popping
 - No accidental cutoffs from `cover`
 - No suspicious transparent bands unless `contain` padding was intentional
-- Prefer padding to power-of-two atlas size instead of scaling the whole atlas when raw dimensions are close but not exact
+- Pad each cell independently to its final integer UV tile when expanding to power-of-two; never add only an outer atlas border. Record source and final cell dimensions
 - Final atlas dimensions reported
 - Whether the delivered atlas is native high-resolution generation, repacked high-resolution frames, or an upscale derivative reported
 - Raw pre-snap dimensions reported when snapped

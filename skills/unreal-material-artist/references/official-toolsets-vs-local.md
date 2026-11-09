@@ -70,9 +70,19 @@ client any more. Every editor-connected tool reads or writes through Epic MCP:
 `material_instance_batch` and `texture_import_fix` (plan, then `builtin_mcp`
 batch with readbacks), and `material_toolset_builder build` (a create script for
 the expressions, then a batch for properties and wiring).
-`graph_refactor_apply`, `preview_matrix` and `preview_environment_executor` only
-plan; see [porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
-for the pattern if one of them gets an MCP executor.
+`graph_refactor_apply --execute` supports candidate-asset refactors; it does not
+authorize an in-place rewrite of unrelated graphs. `preview_matrix --execute`
+captures supported axes; unsupported environment/time/quality axes remain pending
+staging. `preview_environment_executor --execute --staged` captures an environment
+already staged in the level; it does not apply the light rig, background or
+exposure. Claim coverage per executed cell/axis and recorded environment.
+See [porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
+when adding a genuinely missing executor.
+
+The MCP graph source remains the default. `--graph-source remote` is an explicit
+legacy override or verified-gap route, not an automatic performance fallback.
+Capture and property APIs must also pass the shared background-operation check;
+official tools that open asset editors are not background staging.
 
 For an operation no MCP tool covers, use a stock `unreal.*` API through
 `../unreal-engine-mcp/scripts/python_remote.py`. Record the uncovered operation,

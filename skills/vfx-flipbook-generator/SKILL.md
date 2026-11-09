@@ -15,12 +15,12 @@ Atlas generation, FFmpeg extraction, alpha QA, packing, and manifests run locall
 
 Use this skill when the user wants a flipbook atlas, not just a single concept image.
 
-This skill owns three things:
+This skill covers:
 
 1. Decide whether the job should use source footage, hybrid generation, or full generation.
 2. Use search/reference gathering and image generation when source material is too short or too weak.
 3. Assemble frames into a power-of-two atlas that is ready for SubUV-style use, preferring 2K or 4K source delivery when the platform budget allows.
-4. Scaffold a reusable flipbook job pack from a short request such as `smoke 12x12 6s`.
+4. Scaffold a reusable flipbook job pack from a short request such as `smoke 8x8 6s`.
 5. Turn a scaffolded job into a per-frame batch plan before the actual image generation run.
 6. Run the batch plan one phase at a time, stop on anchor approval gates, and prefer image-reference edit for intra-phase fill after an anchor is accepted.
 7. Gate Unreal/Niagara delivery with a UE readiness check before calling an atlas direct material/SubUV-ready.
@@ -30,11 +30,11 @@ Resolve script paths relative to this skill directory. Sample media/job paths be
 ## Workflow
 
 1. Quantify the source before committing to a grid.
-   - If the user only gives a short natural-language request like `smoke 12x12 6s`, scaffold a job pack first.
+   - If the user only gives a short natural-language request like `smoke 8x8 6s`, scaffold a job pack first.
    - Run:
 
 ```powershell
-python tools/flipbook_job_scaffold.py "smoke 12x12 6s"
+python tools/flipbook_job_scaffold.py "smoke 8x8 6s"
 ```
 
    - The scaffold writes:
@@ -47,7 +47,7 @@ python tools/flipbook_job_scaffold.py "smoke 12x12 6s"
    - Run:
 
 ```powershell
-python tools/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
+python tools/flipbook_route_advisor.py --grid 8x8 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
 ```
 
    - Treat the route result as the first decision, not as a hard law.
@@ -106,13 +106,15 @@ python tools/flipbook_route_advisor.py --grid 12x12 --effect dust --clip-duratio
    - For pre-made frame folders, generated anchor families, or hand-curated PNG frames, use:
 
 ```powershell
-python tools/frame_atlas_packer.py D:/path/to/frames --grid 12x12 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
+python tools/frame_atlas_packer.py D:/path/to/frames --grid 8x8 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
 ```
 
    - Default to power-of-two final atlas output.
    - For final Unreal/Niagara delivery, prefer `2048x2048` or `4096x4096` atlases with exact grid divisibility. Downscale from that source when smaller variants are needed.
-   - Prefer padding to power-of-two when the raw atlas does not land on exact power-of-two dimensions. This keeps the packed cells unscaled and records the raw pre-snap size in the manifest.
+   - When padding to power-of-two, expand and center every cell within its final UV tile. Do not pad only the outside of the atlas; that shifts SubUV boundaries. Record final and source cell dimensions.
    - For direct UE/Niagara SubUV output, require the final atlas dimensions to divide evenly by columns and rows. A `10x10` review sheet at `1024x1024` is not direct production SubUV-ready under the default contract.
+
+   - Default job scaffolds require power-of-two row/column counts. For 144 source frames use `16x16 --frames 144`, with valid playback indices `0..143`; leave the other 112 cells unused. Packers reject excess frames instead of silently dropping them. An exact `12x12` or `10x10` request needs an explicit `--atlas-size-mode raw` NPOT plan and platform validation, rather than a forced power-of-two snap.
 
 7. Run a quick QC pass before delivery.
    - Check that there are no obvious blank accidental rows or columns.
@@ -150,45 +152,45 @@ python tools/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/
 Source-video route:
 
 ```powershell
-python tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 12x12 --frames 144 --cell-size 171x341 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two
+python tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 16x16 --frames 144 --cell-size 128x128 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two
 ```
 
 Route decision:
 
 ```powershell
-python tools/flipbook_route_advisor.py --grid 12x12 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
+python tools/flipbook_route_advisor.py --grid 8x8 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
 ```
 
 Job scaffold from a short request:
 
 ```powershell
-python tools/flipbook_job_scaffold.py "smoke 12x12 6s" --out-root D:/flipbook-jobs
+python tools/flipbook_job_scaffold.py "smoke 8x8 6s" --out-root D:/flipbook-jobs
 ```
 
 Frame-plan scaffold with default system-imagegen workflow:
 
 ```powershell
-python tools/flipbook_batch_plan.py D:/flipbook-jobs/smoke-12x12-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
+python tools/flipbook_batch_plan.py D:/flipbook-jobs/smoke-8x8-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
 ```
 
 Phase runner with anchor approval gates:
 
 ```powershell
-python tools/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
-python tools/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json
-python tools/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-12x12-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
+python tools/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-8x8-6s/.../frame-plan.json
+python tools/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-8x8-6s/.../frame-plan.json
+python tools/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-8x8-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
 ```
 
 Generated-frame packing:
 
 ```powershell
-python tools/frame_atlas_packer.py D:/frames/smoke_a --grid 10x10 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_10x10.png
+python tools/frame_atlas_packer.py D:/frames/smoke_a --grid 8x8 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_8x8.png
 ```
 
 Unreal/Niagara readiness gate:
 
 ```powershell
-python tools/ue_flipbook_readiness.py D:/atlas_out/smoke_10x10.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
+python tools/ue_flipbook_readiness.py D:/atlas_out/smoke_8x8.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
 ```
 
 Asset catalog for a candidate folder:
@@ -202,6 +204,8 @@ Resize a ready atlas/alpha pair to 2K and 4K delivery derivatives:
 ```powershell
 python tools/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres
 ```
+
+For UE playback changes, select the relevant [runtime acceptance cases](references/runtime-acceptance.md); local image readiness is only static evidence.
 
 ## Reference Map
 

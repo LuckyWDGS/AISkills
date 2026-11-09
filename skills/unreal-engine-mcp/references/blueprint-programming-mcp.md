@@ -49,9 +49,12 @@ gameplay explanation or a proposed edit.
 Read existing graphs before choosing an edit. For a local change, use typed
 nodes/pins and preserve unrelated branches. Discover candidate node types and
 their exact pin names; do not infer them from UI labels or old inventories.
-Arrange newly authored graphs with `scripts/blueprint_normalize.py` and
-`scripts/blueprint_layout.py` ([layout rules](blueprint-delivery-standards.md#4-readable-graph-layout)),
-preserving unrelated layout and the user's window state. Inspect the resulting connections/defaults, compile
+Review named graphs with `scripts/blueprint_normalize.py` and
+`scripts/blueprint_layout.py` in report mode first
+([layout rules](blueprint-delivery-standards.md#4-readable-graph-layout)). Apply
+only supported changes within the requested scope, preserving unrelated layout
+and the user's window state. Do not recreate Getters or replace SET outputs by
+name when owner/Target/local scope is unproven. Inspect connections/defaults, compile
 logic edits and investigate errors/warnings. For comment-only work, verify frame
 membership/text and unchanged logic-node positions/topology; compile if required
 by the editing API. Validate changed runtime behavior with a bounded background
@@ -80,11 +83,11 @@ Blueprints, animation/state graphs, materials and Niagara as appropriate:
 - Give new functions/variables/components clear names and Chinese categories.
   Every authored function graph gets a Chinese function frame around its entry
   (purpose, inputs, outputs, side effects, caller). Details-panel function
-  descriptions, variable tooltips and function categories have no stock write
-  route in 5.8.4; write them with `scripts/blueprint_tooltips.py` once the
-  bundled MCPBlueprintMetadata plugin is installed
-  ([delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules)),
-  otherwise list them in a handoff description table. Keep project/API
+  descriptions, variable tooltips and function categories had no verified stock
+  write route in the audited 5.8.4 build; recheck live tools after upgrades.
+  Default to comment frames, supported categories and a handoff description table.
+  The bundled MCPBlueprintMetadata plugin is optional for explicitly requested
+  hover metadata ([delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules)). Keep project/API
   identifiers stable; do not rename existing references just to translate them.
 - Keep frame titles on one line (about 40 characters) and the explanation in the
   frame's details text; frames must not overlap or share members. A long wrapped
@@ -126,8 +129,33 @@ adding comments, saving or clearing dirty flags. `scripts/blueprint_lint.py`
 reads frames (`BlueprintGraphEditor.list_comment_nodes`,
 `BlueprintEditorLibrary.get_comment_text` / `get_nodes_in_comment`) and reports
 missing function/module frames, overlaps and long titles. Comment nodes are not
-`K2Node`s, so `get_node_pos` / `get_node_size` reject them; their extent comes from
-their member nodes.
+`K2Node`s, so `get_node_pos` rejects them. The current public `get_node_size`
+accepts EdGraphNode comments, but their position properties remain protected;
+size alone cannot establish containment. After reload, the native member cache
+can be empty: `NodesUnderComment` is not serialized. The lint then uses Epic's
+public `AssetExportTask` / `ObjectExporterT3D` to read the comment's serializable
+model coordinates into a temporary local file, without opening a graph. It
+checks the exact exported object, native class, size and field consistency,
+then combines these bounds with each K2 node's public position and UE-provided
+size (`get_node_size`, which can use the engine's estimate without a Slate cache).
+It verifies that the node set and positions match the MCP snapshot before
+using complete containment as coverage. `annotations.json` records the bounds,
+members, partial intersections and `membership_source` for review.
+
+This validates the graph model, not exact rendered Slate pixels, and does not
+populate the native member cache. Unreadable/changed geometry or a partially
+enclosed entry remains `frame_membership_unavailable`; a proven uncovered entry
+remains `entry_without_frame`. Do not open/focus a graph, rewrite frames or
+suppress unknown coverage merely to satisfy strict lint.
+
+Function-entry coverage follows the same rule: an unrelated Chinese frame
+elsewhere in the function graph does not establish its description coverage.
+For `--inspect-dir`, keep the original `snapshot.json` and successful
+`result.json` together. The lint requires both to identify the requested
+Blueprint; missing/failed capture evidence or another asset is refused before
+live annotation reads. Returned topology diagnostics also fail strict lint,
+even when the visible layout looks clean. A reused snapshot remains evidence
+of that capture, not a fresh runtime observation.
 
 ### Chinese-editor DSL limitation observed in 5.8.4
 

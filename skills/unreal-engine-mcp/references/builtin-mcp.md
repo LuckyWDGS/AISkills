@@ -52,7 +52,7 @@ over the `scripts/ue_mcp` package: `protocol` (messages, errors), `client`
 views), `editor` (which editor serves an endpoint), `batch` (ordered steps with
 readback), `remote` (Python Remote Execution), `capture` (EditorAppToolset
 images, `scripts/capture.py`), `skill_api` (what sibling skills import through their `mcp.py`
-shims) and `cli`. `scripts/live_smoke.py` checks every tool read-only against a
+shims) and `cli`. `scripts/live_smoke.py` samples the skills' CLI workflows against a
 running editor (`--write` adds the write paths in a scratch folder it deletes), and `scripts/record_fixtures.py` re-records the material and
 Niagara contract-test fixtures (`--check` only reports drift). Python 3.10+.
 
@@ -64,7 +64,8 @@ Search-mode toolset schemas are cached per live inventory. The cache key hashes 
 and toolset list, so enabling or disabling a toolset plugin starts a fresh
 cache. A tool missing from a cached schema is re-checked live, and a tool error
 on a cached schema deletes that entry (the call itself is never retried). Use
-`--refresh-schema` to force a live read or `--no-cache` to bypass it.
+`--refresh-schema` to refresh the inventory as well as schemas, including on a
+resumed session, or `--no-cache` to bypass the schema cache.
 
 Each HTTP request to the UE 5.8.4 server took ~300 ms in testing, even for a
 1.7 KB `tools/list`, with background CPU throttling already off. A fresh CLI
@@ -72,16 +73,23 @@ Each HTTP request to the UE 5.8.4 server took ~300 ms in testing, even for a
 call, close): ~2 s. The CLI therefore keeps its session:
 
 - The session id, inventory and serving-editor identity are saved in
-  `sessions/` on exit instead of closing the session. The next run sends only
-  its own call (~0.3 s measured).
+  `sessions/` on exit instead of closing the session. Each new client first
+  checks the current OS listener's project/process. It reuses the token and
+  inventory only when pid, process creation time, executable, project path and
+  engine version match; otherwise it initializes and discovers afresh.
 - UE answers an unknown or closed session with HTTP 404 and does not execute the
   request. The client then re-initializes, re-reads the inventory and editor
   identity, re-checks `--expect-project`, and re-sends that one request. Any
   other failure is never retried.
-- A session the server still accepts proves the same editor process, so the
-  saved inventory and identity remain valid; a session survived 70 s idle in testing.
-- If a saved identity contradicts `--expect-project`, the client re-validates
-  with a fresh session before refusing.
+- A token the server accepts does not prove process identity. A 2026-11-04
+  audit found an older saved pid while a different editor process owned the
+  port. Expected-project checks use fresh OS evidence, never the saved owner;
+  unknown identity refuses a guarded connection. Full `.uproject` paths are
+  matched in full, while a project-name guard remains name based.
+- The smoke runner uses MCP graph reads by default and propagates its selected
+  project guard to every child process. `--probe-remote` separately requests
+  Remote Execution discovery for transport diagnostics; `--full` is retained
+  as a compatibility flag because the MCP graph audit now runs by default.
 - `--new-session` initializes and closes a private session (the old behaviour).
   Library callers get a private session unless they pass `session_dir`.
 

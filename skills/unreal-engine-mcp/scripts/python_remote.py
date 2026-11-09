@@ -15,7 +15,7 @@ if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
 from ue_mcp.remote import (  # noqa: E402,F401
-    PythonRemote, RemoteError, _matches, load_remote_module, main, run_python, stdout_of,
+    PythonRemote, RemoteError, _matches, load_remote_module, main, marker_json, run_python, stdout_of,
 )
 
 

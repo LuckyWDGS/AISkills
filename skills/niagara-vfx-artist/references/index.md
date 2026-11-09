@@ -99,7 +99,7 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
   这份文档用于规范：什么时候该做模型、什么时候不该优先做模型，以及如果要用生成式模型辅助建模，应该怎么准备多视图输入。
 
 - [advanced-techniques.md](advanced-techniques.md)
-  1. [纹理生成与优化](#纹理生成与优化) 2. [Flipbook 工作流](#flipbook-工作流) 3. [HLSL 自定义模块](#hlsl-自定义模块) 4. [Flow Maps 流向图](#flow-maps-流向图) 5. [通道打包优化](#通道打包优化)
+  1. [纹理生成与优化](advanced-techniques.md#纹理生成与优化) 2. [Flipbook 工作流](advanced-techniques.md#flipbook-工作流) 3. [HLSL 自定义模块](advanced-techniques.md#hlsl-自定义模块) 4. [Flow Maps 流向图](advanced-techniques.md#flow-maps-流向图) 5. [通道打包优化](advanced-techniques.md#通道打包优化)
 
 - [system-integration-patterns.md](system-integration-patterns.md)
   这份文档用于定义 Niagara 与 Unreal 其他系统之间的标准接法，减少“效果本身没问题，但接入方式混乱”的问题。

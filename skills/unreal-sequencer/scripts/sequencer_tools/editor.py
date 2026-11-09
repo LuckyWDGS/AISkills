@@ -10,17 +10,21 @@ Verified behaviour (UE 5.8.4, see references/sequencer-mcp-toolsets.md):
 - A float property section has one channel named "None".
 - set_property_name_and_path's display_name argument becomes the property *name*: pass the
   property's FName (e.g. "CurrentFocalLength"), not a spaced label.
-- set_camera_cut_binding fails inside the tool ("call() takes at most 0 arguments"); camera cuts
-  are bound with stock editor Python instead (bind_camera_cuts).
+- set_camera_cut_binding fails inside the tool ("call() takes at most 0 arguments"); use
+  get_binding_id + ObjectTools for complete camera-cut binding IDs (bind_camera_cuts).
 - SceneTools.find_actors(name=...) is a substring match on actor labels; filter on the exact label.
 """
 
 from __future__ import annotations
 
 import json
+import os
+from contextlib import contextmanager
 from typing import Any
+from uuid import UUID
 
-from .mcp import connect, run_python, stdout_of, unwrap_result
+from .mcp import connect, marker_json, run_python, unwrap_result
+from .background_compat import spawnable_script
 
 SEQ_TOOLS = "SequencerTools"
 KEY_TOOLS = "SequencerKeyframingTools"
@@ -45,18 +49,45 @@ def short(ref: Any) -> str:
     return path.rsplit(".", 1)[-1].rsplit(":", 1)[-1]
 
 
+def valid_binding(binding: Any, sequence: dict[str, str] | None = None) -> dict[str, Any]:
+    """Reject the zero/None proxy some official tools return without an error."""
+    try:
+        guid = UUID(str(binding["bindingId"]))
+        ref = binding["sequence"]["refPath"]
+        if not guid.int or not isinstance(ref, str) or not ref or ref == "None":
+            raise ValueError()
+        if sequence is not None and ref.split(".")[0] != sequence["refPath"].split(".")[0]:
+            raise ValueError()
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise RuntimeError("Invalid Sequencer binding: expected a nonzero GUID and the target sequence reference") from None
+    return {**binding, "bindingId": str(guid).upper()}
+
+
+def binding_id_data(value: Any) -> dict[str, Any]:
+    """Keep the complete official ID, including its sequence resolution space."""
+    try:
+        guid = UUID(str(value["guid"]))
+        if any(type(value[key]) is not int for key in ("sequenceId", "resolveParentIndex")):
+            raise ValueError()
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise RuntimeError("Invalid camera binding ID: GUID, sequenceId and resolveParentIndex are required") from None
+    return {**value, "guid": str(guid).upper()}
+
+
 class Editor:
     """One MCP session plus editor-Python calls; every tool call is recorded in self.calls."""
 
     def __init__(self, project: str | None = None):
-        self.project = project
-        self.client = connect(project=project)
+        self.project = project or os.environ.get("UE_MCP_PROJECT")
+        self.client = connect(project=self.project)
         self.calls: list[dict[str, Any]] = []
 
     def close(self) -> None:
         self.client.close()
 
     def call(self, toolset: str, tool: str, **args: Any) -> Any:
+        if toolset == SEQ_TOOLS and "binding" in args:
+            valid_binding(args["binding"])
         try:
             result = unwrap_result(self.client.call_resolved_tool(toolset, tool, args))
         except Exception as exc:
@@ -71,15 +102,27 @@ class Editor:
     def key(self, tool: str, **args: Any) -> Any:
         return self.call(KEY_TOOLS, tool, **args)
 
-    def python(self, script: str, marker: str = "CODEX_SEQ ") -> Any:
+    def python(self, script: str, marker: str = "CODEX_SEQ ", *, gap: str) -> Any:
         """Run stock editor Python; the script prints one marker line with a JSON payload."""
-        result = run_python(script, project=self.project)
-        text = stdout_of(result)
-        for line in text.splitlines():
-            if line.startswith(marker):
-                return json.loads(line[len(marker):])
-        errors = stdout_of(result, kinds=("Error", "Warning"))
-        raise RuntimeError(f"editor Python failed: {(errors or result.get('result') or text)[:600]}")
+        if not gap.strip():
+            raise ValueError("Remote Python requires an identified MCP gap")
+        record = {"transport": "Epic Python Remote Execution", "gap": gap}
+        self.calls.append(record)
+        try:
+            result = run_python(script, project=self.project)
+        except Exception as exc:
+            record["error"] = str(exc)
+            raise
+        record.update({"engine_version": result.get("node", {}).get("engine_version"),
+                       "success": result.get("success"),
+                       "warnings": [row.get("output", "") for row in result.get("output", []) if row.get("type") == "Warning"],
+                       "errors": [row.get("output", "") for row in result.get("output", []) if row.get("type") == "Error"]})
+        try:
+            record["result"] = marker_json(result, marker)
+        except (RuntimeError, ValueError) as exc:
+            record["error"] = str(exc)
+            raise
+        return record["result"]
 
     # -- level -------------------------------------------------------------------------
     def find_actor(self, label: str) -> dict[str, str] | None:
@@ -105,15 +148,115 @@ class Editor:
         return [(box["min"][a] + box["max"][a]) / 2 for a in "xyz"]
 
     def asset_exists(self, asset_path: str) -> bool:
-        script = ("import json, unreal\nprint('CODEX_SEQ ' + json.dumps(unreal.EditorAssetLibrary.does_asset_exist("
-                  + json.dumps(asset_path.split(".")[0]) + ")))")
-        return bool(self.python(script))
+        result = self.call("AssetTools", "exists", path=asset_path.split(".")[0])
+        if not isinstance(result, bool):
+            raise RuntimeError("Asset existence is unknown; refusing creation or replacement")
+        return result
+
+    def save_asset(self, asset_path: str) -> bool:
+        path = asset_path.split(".")[0]
+        if self.call("AssetTools", "save_assets", asset_paths=[path]) is not True:
+            raise RuntimeError(f"save_assets failed for {path}")
+        if self.call("AssetTools", "is_dirty", asset_path=path) is not False:
+            raise RuntimeError(f"{path} is still dirty or save state is unknown")
+        return True
+
+    def backup_asset(self, source: str, target: str) -> None:
+        if not target.startswith("/Game/") or "." in target or ":" in target or target == source:
+            raise RuntimeError("backup-path must be a distinct /Game/... package path")
+        if self.asset_exists(target):
+            raise RuntimeError(f"backup target already exists: {target}")
+        if self.call("AssetTools", "duplicate", path=source, new_path=target) is not True or not self.asset_exists(target):
+            raise RuntimeError("backup duplication failed; source not replaced")
+        self.save_asset(target)
+
+    def sequence_state(self, *, allow_editor_ui: bool = False) -> dict[str, Any]:
+        """UI-dependent helpers must be explicitly selected, before creating any asset."""
+        if not allow_editor_ui:
+            raise RuntimeError("This helper requires opening Sequencer. Background policy refused before writing; "
+                               "use explicit-sequence MCP edits or a verified public background API. "
+                               "--allow-editor-ui is only for an explicitly requested UI workflow.")
+        root = self.seq("get_current_sequence")
+        if not root:
+            return {"sequence": None}
+        focused = self.seq("get_focused_sequence")
+        if focused and focused != root:
+            raise RuntimeError("A sub-sequence is focused; this helper cannot restore its hierarchy safely.")
+        if self.seq("is_playing") is not False:
+            raise RuntimeError("An existing sequence is playing or playback state is unknown; preserve the user session.")
+        return {"sequence": root, "frame": self.seq("get_playhead_frame"),
+                "speed": self.seq("get_playback_speed"), "loop": self.seq("get_loop_mode")}
+
+    @contextmanager
+    def sequence_session(self, sequence: dict, state: dict, *, keep_open: bool = False):
+        """Restore only the UI session this operation owns, including when opening times out."""
+        succeeded = False
+        try:
+            self.seq("open_sequence", sequence=sequence)
+            yield
+            succeeded = True
+        finally:
+            if not (keep_open and succeeded):
+                current = self.seq("get_current_sequence")
+                if current == sequence:
+                    previous = state["sequence"]
+                    if previous != sequence:
+                        self.seq("close_sequence")
+                        if previous:
+                            self.seq("open_sequence", sequence=previous)
+                    if previous:
+                        self.seq("set_playhead_frame", frame=state["frame"])
+                        self.seq("set_playback_speed", speed=state["speed"])
+                        self.seq("set_loop_mode", loop=state["loop"])
+                        self.seq("force_evaluate")
+                # If the user switched sequences during the operation, leave their new session alone.
 
     # -- sequence structure ----------------------------------------------------------------
+    def add_spawnable_from_class(self, sequence: dict[str, str], actor_class_path: str) -> dict[str, Any]:
+        """MCP first; fill its verified active-Sequencer gap without opening a timeline."""
+        def ids():
+            rows = self.seq("get_bindings", sequence=sequence)
+            if not isinstance(rows, list):
+                raise RuntimeError("Binding inventory is unknown; inspect before another write")
+            keys = [valid_binding(row, sequence)["bindingId"] for row in rows]
+            if len(set(keys)) != len(keys):
+                raise RuntimeError("Binding inventory contains duplicate IDs; inspect before another write")
+            return set(keys)
+
+        before = ids()
+        # Exceptions/timeouts are ambiguous: never repeat the write through another route.
+        native = self.seq("add_spawnable_from_class", sequence=sequence, actor_class_path=actor_class_path)
+        try:
+            binding = valid_binding(native, sequence)
+        except RuntimeError:
+            if ids() != before:
+                raise RuntimeError("MCP returned an invalid binding after changing the inventory; inspect partial work") from None
+            try:
+                known_empty = isinstance(native, dict) and native.get("sequence") == "None" and UUID(str(native.get("bindingId"))).int == 0
+            except (TypeError, ValueError, AttributeError):
+                known_empty = False
+            if not known_empty:
+                raise RuntimeError("MCP returned an unrecognized invalid proxy; no fallback creation attempted") from None
+            focused = self.seq("get_focused_sequence")
+            if isinstance(focused, dict) and focused.get("refPath", "").split(".")[0] == sequence["refPath"].split(".")[0]:
+                raise RuntimeError("MCP returned an invalid binding for the focused sequence; background gap is unproven") from None
+            if focused not in (None, "None") and not (isinstance(focused, dict) and focused.get("refPath")):
+                raise RuntimeError("Focused sequence is unknown; refusing an unproven fallback") from None
+            script = spawnable_script(sequence["refPath"], actor_class_path)
+            result = self.python(script, gap=(
+                "UE 5.8.4 MCP add_spawnable_from_class calls LevelSequenceEditorSubsystem and requires the target "
+                "timeline open; invalid proxy and unchanged inventory confirmed. The deprecated public sequence "
+                "extension is permitted only on the audited engine build, with its warning retained; no UI is opened."))
+            binding = valid_binding(result.get("binding") if isinstance(result, dict) else None, sequence)
+        after = ids()
+        if binding["bindingId"] in before or after != before | {binding["bindingId"]}:
+            raise RuntimeError("Spawnable binding readback disagrees with creation; inspect partial work before retrying")
+        return binding
+
     def transform_section(self, binding: dict[str, Any], current: dict[str, Any] | None = None) -> dict[str, str]:
         """The binding's transform section, created when missing.
 
-        A section added through MCP has no length, so a new one is made unbounded. For a level actor
+        Explicitly make a new transform section unbounded; defaults vary by section class. For a level actor
         pass its current transform (ActorTools.get_actor_transform): every channel's default is set to it,
         otherwise unkeyed channels evaluate to 0 (rotation) and 1 (scale) and snap the actor.
         """
@@ -160,30 +303,54 @@ class Editor:
             for channel, value in (("Rotation.Y", pitch), ("Rotation.Z", yaw), ("Rotation.X", roll)):
                 self.add_float_key(section, channel, frame, value, interpolation)
 
-    def bind_camera_cuts(self, sequence_path: str, cuts: list[tuple[str, str]]) -> list[dict[str, Any]]:
-        """Bind camera-cut sections (by object name) to cameras (by binding GUID) with stock editor Python."""
-        script = r'''
-import json, unreal
-def _codex():
-    seq = unreal.load_asset(__SEQ__)
-    by_guid = {unreal.GuidLibrary.conv_guid_to_string(b.get_id()).upper(): b for b in seq.get_bindings()}
-    sections = {}
-    for track in seq.get_tracks():
-        if isinstance(track, unreal.MovieSceneCameraCutTrack):
-            for section in track.get_sections():
-                sections[section.get_name()] = section
-    done = []
-    for section_name, guid in json.loads(__CUTS__):
-        binding = by_guid.get(guid.replace("-", "").upper())
-        section = sections.get(section_name)
-        if binding is None or section is None:
-            done.append({"section": section_name, "ok": False})
-            continue
-        section.set_camera_binding_id(unreal.MovieSceneSequenceExtensions.get_binding_id(seq, binding))
-        bound = unreal.GuidLibrary.conv_guid_to_string(section.get_camera_binding_id().get_editor_property("guid")).upper()
-        done.append({"section": section_name, "ok": bound == guid.replace("-", "").upper()})
-    print("CODEX_SEQ " + json.dumps(done))
-_codex()
-'''
-        script = script.replace("__SEQ__", json.dumps(sequence_path.split(".")[0])).replace("__CUTS__", repr(json.dumps(cuts)))
-        return self.python(script)
+    def bind_camera_cuts(self, sequence_path: str, cuts: list[tuple[dict, str]]) -> list[dict[str, Any]]:
+        """[CINE.CameraCuts] 官方 MCP 完整绑定与回读；任何不确定结果停止后续写入。"""
+        if not cuts:
+            return []
+        sequence = object_ref(sequence_path)
+        bindings = self.seq("get_bindings", sequence=sequence)
+        if not isinstance(bindings, list):
+            raise RuntimeError("Binding inventory is unknown; refusing camera-cut writes")
+        by_guid = {}
+        for binding in bindings:
+            binding = valid_binding(binding, sequence)
+            if binding["bindingId"] in by_guid:
+                raise RuntimeError("Binding inventory contains duplicate IDs; refusing camera-cut writes")
+            by_guid[binding["bindingId"]] = binding
+        # Preflight all targets before the first write. Names alone cannot identify a section.
+        pending, seen = [], set()
+        for section, guid in cuts:
+            path = section.get("refPath", "") if isinstance(section, dict) else ""
+            if not path.startswith(sequence["refPath"] + ":") or path in seen:
+                raise RuntimeError("Camera-cut section must be unique and belong to the target sequence")
+            seen.add(path)
+            binding = valid_binding({"bindingId": guid, "sequence": sequence}, sequence)
+            if binding["bindingId"] not in by_guid:
+                raise RuntimeError("Camera-cut binding is absent from the target sequence")
+            expected = binding_id_data(self.seq("get_binding_id", sequence=sequence, binding=by_guid[binding["bindingId"]]))
+            if expected["guid"] != binding["bindingId"]:
+                raise RuntimeError("get_binding_id returned a different GUID; refusing camera-cut writes")
+            pending.append((section, expected, self.camera_binding_id(section)))
+        done = []
+        for section, expected, before in pending:
+            changed = before != expected
+            if changed:
+                # Use the reflected EditAnywhere property, with all official struct fields.
+                result = self.call("ObjectTools", "set_properties", instance=section,
+                                   values=json.dumps({"cameraBindingId": expected}))
+                actual = self.camera_binding_id(section)
+                if result is not True or actual != expected:
+                    raise RuntimeError(f"Camera-cut binding readback failed for {section['refPath']}: {actual}; inspect before retrying")
+            else:
+                actual = before
+            done.append({"section": short(section), "ok": True, "binding_id": actual, "changed": changed})
+        return done
+
+    def camera_binding_id(self, section: dict[str, str]) -> dict[str, Any]:
+        """Read an editable cut binding through official MCP; zero GUID is an unbound cut."""
+        data = self.call("ObjectTools", "get_properties", instance=section, properties=["cameraBindingId"])
+        if isinstance(data, str):
+            data = json.loads(data)
+        if not isinstance(data, dict) or "cameraBindingId" not in data:
+            raise RuntimeError("Camera-cut binding property is unavailable; inspect the current official schema")
+        return binding_id_data(data["cameraBindingId"])

@@ -14,7 +14,11 @@ Python Remote Execution for a verified gap, and Chinese emitter/module display
 descriptions with stable IDs on new or modified Niagara modules (existing
 parameter namespaces and bindings unchanged).
 
-Use Epic's MCP as the editor control path on UE 5.8+, following the sibling `unreal-engine-mcp` skill. Discover Niagara System/Assets/Component/Blueprint/Info toolsets and their schemas live. Use official system/emitter summaries, topology, renderer/stack data, module/user-variable editing, compile state, and stack issues before considering a custom plugin. Read ProgrammaticToolset's execution environment before batching official tools.
+For gameplay integration or lifetime changes, select the relevant
+[runtime acceptance cases](references/runtime-acceptance.md): activation,
+completion, pooling/reset, owner destruction, moving bounds and verified age/seek behavior.
+
+Use Epic's MCP as the editor control path on UE 5.8+, following the sibling `unreal-engine-mcp` skill. Discover Niagara System/Assets/Component/Blueprint/Info toolsets and their schemas live. Use official system/emitter summaries, topology, renderer/stack data, module/user-variable editing, compile state, and stack issues. For a verified gap use public Epic Python over background Remote Execution; report unsupported operations without adding a custom plugin. Read ProgrammaticToolset's execution environment before batching official tools.
 
 If diagnostics wait on first-load compilation, check compile readiness and a
 supported background asset-load route before treating the timeout as a capability
@@ -22,7 +26,7 @@ gap. The historical 5.8.4 case involved opening an asset; it does not authorize
 opening/focusing editor UI for this user. If background loading cannot establish
 readiness, report that specific boundary rather than repeatedly sending writes.
 
-The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired and every editor-connected tool here runs on Epic MCP: `niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`, `ue_smoke`, `effect_control_schema` / `control_provenance_check` (user variables via `niagara_audit`), `asset_cleanup` and `delivery_finalize --promote-assets` (AssetTools batches). `niagara_asset_assistant` plans; apply its plans with NiagaraToolset_System tools through `builtin_mcp.py batch`. Previews use `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). See [references/niagara-mcp-toolsets.md](references/niagara-mcp-toolsets.md).
+The local report/reference/image-processing workflow stays local. UnrealBridge (custom plugin + TCP) is retired and every editor-connected tool here runs on Epic MCP: `niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`, `ue_smoke`, `effect_control_schema` / `control_provenance_check` (user variables via `niagara_audit`), `asset_cleanup` and `delivery_finalize --promote-assets` (AssetTools batches). `niagara_asset_assistant apply` executes its supported plans with official tool readbacks; inspect its scope before execution. Previews use `../unreal-engine-mcp/scripts/capture.py` (workflow step 8). See [references/niagara-mcp-toolsets.md](references/niagara-mcp-toolsets.md).
 
 ## Overview
 

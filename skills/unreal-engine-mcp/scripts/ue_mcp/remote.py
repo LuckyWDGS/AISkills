@@ -212,6 +212,27 @@ def stdout_of(result: dict[str, Any], *, kinds: tuple[str, ...] = ("Info",)) -> 
     )
 
 
+def marker_json(result: dict[str, Any], marker: str) -> Any:
+    """Accept one Info JSON marker only after the complete command has succeeded."""
+    if not marker:
+        raise ValueError("A nonempty result marker is required")
+    if not isinstance(result, dict) or not isinstance(result.get("output", []), list):
+        raise RemoteError("Malformed editor Python result")
+    rows = result.get("output", [])
+    if any(not isinstance(row, dict) for row in rows):
+        raise RemoteError("Malformed editor Python output")
+    if result.get("success") is not True or any(row.get("type") == "Error" for row in rows):
+        detail = stdout_of(result, kinds=("Error", "Warning")) or str(result.get("result", ""))
+        raise RemoteError(f"editor Python failed: {detail[:600]}")
+    candidates = [line[len(marker):] for line in stdout_of(result).splitlines() if line.startswith(marker)]
+    if len(candidates) != 1:
+        raise RemoteError(f"Expected one editor Python result marker; received {len(candidates)}")
+    try:
+        return json.loads(candidates[0])
+    except ValueError as exc:
+        raise RemoteError("Editor Python result marker contains invalid JSON") from exc
+
+
 def main() -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):

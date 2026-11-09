@@ -3,7 +3,8 @@
 
     python scripts/sequence_inspect.py /Game/Cinematics/LS_Intro --out <dir> [--strict]
 
-Uses stock editor Python over Remote Execution (one call, nothing is opened, edited or saved).
+Uses official MCP first; stock Python reads only the documented metadata gaps.
+Nothing is opened, edited or saved.
 Lint rules: no_camera_cuts, cut_without_camera, cut_overlap, cut_gap, cut_unbounded,
 unused_camera, empty_track, empty_section, animation_missing, key_outside_range.
 --strict exits 1 when an error or warning remains.
@@ -21,22 +22,18 @@ _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from sequencer_tools.inspect import DUMP_SCRIPT, lint, summarize  # noqa: E402
+from sequencer_tools.inspect import lint, mcp_dump, summarize  # noqa: E402
 
 SCHEMA_VERSION = "sequence_inspect/1"
 
 
 def dump_sequence(asset: str, project: str | None) -> dict:
-    from sequencer_tools.mcp import run_python, stdout_of
-
-    result = run_python(DUMP_SCRIPT.replace("__SEQ__", json.dumps(asset.split(".")[0])), project=project)
-    for line in stdout_of(result).splitlines():
-        if line.startswith("CODEX_SEQ "):
-            data = json.loads(line[len("CODEX_SEQ "):])
-            if "error" in data:
-                raise SystemExit(data["error"])
-            return data
-    raise SystemExit(f"sequence dump failed: {(stdout_of(result, kinds=('Error',)) or result.get('result'))!s:.600}")
+    from sequencer_tools.editor import Editor
+    editor = Editor(project)
+    try:
+        return mcp_dump(editor, asset)
+    finally:
+        editor.close()
 
 
 def render_markdown(report: dict) -> str:
