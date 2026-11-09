@@ -8,4 +8,6 @@
 
 例：`$wechat-story-publisher 结合最近一周资料写三篇完整故事，比较后制作推荐篇；标题要有钩子，保存并验证公众号草稿，由我发布。`
 
+对白气泡、联系表、390px 窄屏预览、局部复核图和版本对比由技能自带脚本按 `story_manifest.json` 页表生成（只需 Pillow），用于复核取证，不替代看图验收。
+
 配图方向复用 `image-generation-director`，实际生图复用 `cm-imagegen`。故事、图片、浏览器证据、账号与发布记录留在各自内容项目；技能源码统一在 AISkills。
