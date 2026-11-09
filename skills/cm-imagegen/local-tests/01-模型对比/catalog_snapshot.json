@@ -1,0 +1,93 @@
+{
+  "ok": true,
+  "operation": "doctor",
+  "execution_channel": "cm_image_gen_cli",
+  "skill_primary_channel": "cm_image_gen_cli",
+  "network_call_performed": true,
+  "api": "images",
+  "default_api": "images",
+  "commands": [
+    "generate",
+    "edit"
+  ],
+  "image_model": "gpt-image-2.6-flare",
+  "requested_quality": "max",
+  "requested_model": "gpt-image-2.6-flare",
+  "image_model_source": "cli",
+  "model_alias_applied": false,
+  "model_semantics": "Image model requested by the CLI; gateway Responses controller and actual upstream execution are separate.",
+  "payload_shape_included": false,
+  "codex_home": "C:\\Users\\miaoyin\\.codex",
+  "configured_provider": {
+    "ok": true,
+    "configured": true,
+    "api_provider": "cm",
+    "api_channel": "configured_provider",
+    "base_url": "https://209.87.95.5:18081/v1",
+    "api_key_present": true,
+    "routes": [
+      {
+        "operation": "generate",
+        "endpoint": "/images/generations",
+        "transport": "images_json",
+        "request_url": "https://209.87.95.5:18081/v1/images/generations"
+      },
+      {
+        "operation": "edit",
+        "endpoint": "/images/edits",
+        "transport": "images_multipart",
+        "request_url": "https://209.87.95.5:18081/v1/images/edits"
+      }
+    ]
+  },
+  "local_image_models": [
+    "gpt-image-2.6-flare",
+    "gpt-image-2.6-sunburst"
+  ],
+  "image_model_registered_locally": true,
+  "model_catalog_check": {
+    "ok": true,
+    "model": "gpt-image-2.6-flare",
+    "status": "listed",
+    "remote_listed": true,
+    "local_registered": true,
+    "listed_models": [
+      "codex-auto-review",
+      "gpt-4o-audio-preview",
+      "gpt-4o-realtime-preview",
+      "gpt-5.2",
+      "gpt-5.2-2025-12-11",
+      "gpt-5.2-chat-latest",
+      "gpt-5.2-pro",
+      "gpt-5.2-pro-2025-12-11",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.4-2026-03-05",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
+      "gpt-image-1",
+      "gpt-image-1.5",
+      "gpt-image-2",
+      "gpt-image-2.5-flare",
+      "gpt-image-2.5-sunburst",
+      "gpt-image-2.6-flare",
+      "gpt-image-2.6-sunburst"
+    ],
+    "local_models": [
+      "gpt-image-2.6-flare",
+      "gpt-image-2.6-sunburst"
+    ],
+    "generation_verified": false,
+    "image_tool_model": "gpt-image-2.6-flare"
+  }
+}

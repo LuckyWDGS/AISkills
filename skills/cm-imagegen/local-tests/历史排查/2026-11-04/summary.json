@@ -1,0 +1,56 @@
+{
+  "status": "blocked_by_provider_compatibility",
+  "successful_images": 0,
+  "image_quality_scores": null,
+  "calls": 6,
+  "attempts": [
+    {
+      "case": "I0",
+      "model": "gpt-image-2.6-flare",
+      "complexity": "high",
+      "operation": "edit",
+      "ok": false,
+      "duration_seconds": 6.86
+    },
+    {
+      "case": "I0",
+      "model": "gpt-image-2.6-sunburst",
+      "complexity": "high",
+      "operation": "edit",
+      "ok": false,
+      "duration_seconds": 6.875
+    },
+    {
+      "case": "T1",
+      "model": "gpt-image-2.6-flare",
+      "complexity": null,
+      "operation": "generate",
+      "ok": false,
+      "duration_seconds": 10.609
+    },
+    {
+      "case": "T1",
+      "model": "gpt-image-2.6-flare",
+      "complexity": "high",
+      "operation": "generate",
+      "ok": false,
+      "duration_seconds": 11.484
+    },
+    {
+      "case": "T1",
+      "model": "gpt-image-2.6-sunburst",
+      "complexity": null,
+      "operation": "generate",
+      "ok": false,
+      "duration_seconds": 10.563
+    },
+    {
+      "case": "T1",
+      "model": "gpt-image-2.6-sunburst",
+      "complexity": "high",
+      "operation": "generate",
+      "ok": false,
+      "duration_seconds": 10.359
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "ok": false,
+  "operation": "edit",
+  "requested_quality": "max",
+  "attempt_count": 1,
+  "requested_model": "gpt-image-2.5-sunburst",
+  "image_model": "gpt-image-2.5-sunburst",
+  "image_model_source": "cli",
+  "model_alias_applied": false,
+  "skill_primary_channel": "cm_image_gen_cli",
+  "execution_channel": "cm_image_gen_cli",
+  "api_channel": "configured_provider",
+  "api_provider": "cm",
+  "request_url": "https://209.87.95.5:18081/v1/images/edits",
+  "provider": "cm",
+  "base_url": "https://209.87.95.5:18081/v1",
+  "endpoint": "/images/edits",
+  "transport": "images_multipart",
+  "model": "gpt-image-2.5-sunburst",
+  "source_images": [
+    "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\references\\edit_control_2k.png"
+  ],
+  "paths": [
+    "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png"
+  ],
+  "usage": {
+    "input_tokens": 2025,
+    "input_tokens_details": {
+      "image_tokens": 1508,
+      "text_tokens": 517
+    },
+    "output_tokens": 1158,
+    "output_tokens_details": {
+      "image_tokens": 1158,
+      "text_tokens": 0
+    },
+    "total_tokens": 3183
+  },
+  "created": 1794059812,
+  "requested_size": "2560x1440",
+  "output_dimensions": [
+    "1672x941"
+  ],
+  "size_verified": false,
+  "size_validation_warnings": [
+    {
+      "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png",
+      "warning": "image_size_mismatch",
+      "expected": "2560x1440",
+      "actual": "1672x941"
+    }
+  ],
+  "size_validation_strict": true,
+  "size_validation_failed": true,
+  "error_kind": "image_size_mismatch"
+}

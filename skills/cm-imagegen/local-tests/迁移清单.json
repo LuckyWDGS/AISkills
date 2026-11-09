@@ -1,0 +1,1897 @@
+{
+  "state": "completed",
+  "source_directories": [
+    {
+      "Source": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07",
+      "Relative": "01-模型对比"
+    },
+    {
+      "Source": "E:\\GitHubProject\\imagegen-formats-2026-11-07",
+      "Relative": "02-画幅与格式"
+    },
+    {
+      "Source": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07",
+      "Relative": "03-SVG与GIF"
+    },
+    {
+      "Source": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04",
+      "Relative": "历史排查\\2026-11-04"
+    }
+  ],
+  "original_file_count": 264,
+  "original_bytes": 95151537.0,
+  "files": [
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\__pycache__\\run_benchmark.cpython-310.pyc",
+      "new_relative_path": "01-模型对比/__pycache__/run_benchmark.cpython-310.pyc",
+      "bytes": 4383,
+      "sha256": "36fde3efd01977cdeee126a4a04ca2eb73133c20e021fd109a41b0fc2d9c4354",
+      "cache": true
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\尺寸核查.md",
+      "new_relative_path": "01-模型对比/尺寸核查.md",
+      "bytes": 1622,
+      "sha256": "558639b5874938e805dd3b785fde010024173d197817792468ff0327884b9ee4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\评测画廊.html",
+      "new_relative_path": "01-模型对比/评测画廊.html",
+      "bytes": 20862,
+      "sha256": "5ca1cbf392d1de436fd0d3bda092f99c4dd201290331233d9c156278f8b20902",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\实测报告.md",
+      "new_relative_path": "01-模型对比/实测报告.md",
+      "bytes": 9793,
+      "sha256": "f20458e109fbea977c9cf331b52b417c70288645fb8641f2f86920a8f50c123d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\build_report.py",
+      "new_relative_path": "01-模型对比/build_report.py",
+      "bytes": 16937,
+      "sha256": "8ec96e1de657006b5553ae0ee2628810cfb0fca8c01fd4f91e12f547c9239293",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\catalog_snapshot.json",
+      "new_relative_path": "01-模型对比/catalog_snapshot.json",
+      "bytes": 2582,
+      "sha256": "74869905290c3b9bfd5d8b8aa35cd3b6803ced9ce067e3255e639d5e9250aaf9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\complete_missing_cases.py",
+      "new_relative_path": "01-模型对比/complete_missing_cases.py",
+      "bytes": 3640,
+      "sha256": "fd878eba4527ddd36997dd0cd07b6aff59b182c40a05a71da96257a7f7c74c5f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\final_results.json",
+      "new_relative_path": "01-模型对比/final_results.json",
+      "bytes": 9548,
+      "sha256": "36187c188b4b867ad6aaa79cdd59fc9382988b85338ec1e74102bfe2234cefcc",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\make_reference.py",
+      "new_relative_path": "01-模型对比/make_reference.py",
+      "bytes": 4621,
+      "sha256": "af88016dc4b582f35f689c4df026526f45f0083697c552381a7cca156bd56430",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\make_review_assets.py",
+      "new_relative_path": "01-模型对比/make_review_assets.py",
+      "bytes": 2183,
+      "sha256": "20a1e09665f68abdd4ed89f21ea1372693131fc646f5284824e0bf77abf9a94e",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\model_key.json",
+      "new_relative_path": "01-模型对比/model_key.json",
+      "bytes": 133,
+      "sha256": "7b40d490bcb7140413e782a505ca270d72d0e00c5f7dbffb9962281a26f4e139",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+      "new_relative_path": "01-模型对比/prompts/I1.txt",
+      "bytes": 2437,
+      "sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+      "new_relative_path": "01-模型对比/prompts/T1.txt",
+      "bytes": 2431,
+      "sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\protocol.md",
+      "new_relative_path": "01-模型对比/protocol.md",
+      "bytes": 3484,
+      "sha256": "0aae0df3f036004592e31469e291c8c93dcc9412e3ab625868cade546005b933",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_B/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_B/cli_stdout.json",
+      "bytes": 1668,
+      "sha256": "85acee3f7b4833b43317ed0b44e76daeb08bfca5d9a50e0d9fe9c0599dbcb2a6",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\I1_B.png",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_B/I1_B.png",
+      "bytes": 2928455,
+      "sha256": "9a07d4b4a38594da8888c07e8c5fe069ad5107d2cf47694f2c915406812dac5d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\request.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_B/request.json",
+      "bytes": 860,
+      "sha256": "202e984fc1846d87e1d0e807f62d871bf89c15a5d64a8b00fb91c8cccf31074b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\result.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_B/result.json",
+      "bytes": 3135,
+      "sha256": "fbfbb0d8d615f21e9dbab515ccbc08f6cedf730904629b790567f0026716e644",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_D/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_D/cli_stdout.json",
+      "bytes": 1659,
+      "sha256": "dee964b0ea302d5e9c0c6ebe13113e1900f3106f782e472aea6a252ddbcb85db",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\I1_D.png",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_D/I1_D.png",
+      "bytes": 2934913,
+      "sha256": "410ebca71719c10bef593e526fc2ecce4df257df9191421d519f60113e0b0bf4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\request.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_D/request.json",
+      "bytes": 857,
+      "sha256": "0742cf212e76a8f400a0e265a795cd9fadf5650ad5a7f64d1b46cfec4df2cc35",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\result.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/I1_D/result.json",
+      "bytes": 3123,
+      "sha256": "90983ec469a31cc07acf241c432ec510109e2fdb91a4ac3fc967bb180ae8c65e",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\status.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/status.json",
+      "bytes": 10403,
+      "sha256": "a5122cabb9bfd9574f6c74cbc871341edef105da566c7517d9548be317ea40a4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/recovery_20261107/T1_D/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/T1_D/cli_stdout.json",
+      "bytes": 1551,
+      "sha256": "956ba6c8f91595b29cd3c5a5e9a614052ffa974c0ac28150e34f2be8411ec4e3",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\request.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/T1_D/request.json",
+      "bytes": 799,
+      "sha256": "4b528232240386e24d10101f89c8e7e4945dcf227fdfddcf6c33f345d1f2c2d9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\result.json",
+      "new_relative_path": "01-模型对比/recovery_20261107/T1_D/result.json",
+      "bytes": 2953,
+      "sha256": "b31c8ef012d06678738e9603c03b7e50f56db34d531939db97fb562261bc6deb",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\T1_D.png",
+      "new_relative_path": "01-模型对比/recovery_20261107/T1_D/T1_D.png",
+      "bytes": 3080854,
+      "sha256": "c4509144d8516f15cb4c2ee4b4562f5d0bf5452e808d07aabab88964ec17f0fa",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\references\\edit_control_2k.png",
+      "new_relative_path": "01-模型对比/references/edit_control_2k.png",
+      "bytes": 78414,
+      "sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/I1_A/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/I1_A/cli_stdout.json",
+      "bytes": 1648,
+      "sha256": "8937f31deca021faaba72045a376fd1e9a62ec70d215435274d5a39e900e4880",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png",
+      "new_relative_path": "01-模型对比/results/I1_A/I1_A.png",
+      "bytes": 2846821,
+      "sha256": "b436f3762671ed7e4447585b4102ef398ec9a929ffebc688e7922cbc6e341cbd",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\request.json",
+      "new_relative_path": "01-模型对比/results/I1_A/request.json",
+      "bytes": 659,
+      "sha256": "23f5cb58b1fc96c00ee3361f885c6d10f1dd7dfb0fbb07bc1f33bfd493e94936",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\result.json",
+      "new_relative_path": "01-模型对比/results/I1_A/result.json",
+      "bytes": 2904,
+      "sha256": "a3c9b2713d536dfc493154ed503442c4c92531a48e628cf150a9def7bfb40a25",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_B\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/I1_B/cli_stderr.txt",
+      "bytes": 488,
+      "sha256": "b1ac17c979863d3b16a0806401ded6f5f8d31e28a1859bab92bc5938fd799694",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_B\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/I1_B/cli_stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_B\\request.json",
+      "new_relative_path": "01-模型对比/results/I1_B/request.json",
+      "bytes": 659,
+      "sha256": "d56bb9ab15601ace9940a06560c3607cd2997ce55ff2758ec626f0ccc88e2437",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_B\\result.json",
+      "new_relative_path": "01-模型对比/results/I1_B/result.json",
+      "bytes": 1389,
+      "sha256": "4a1fb704152cd747264f80cbf3e55d943037333c92a7782a885a759d84565755",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/I1_C/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/I1_C/cli_stdout.json",
+      "bytes": 1639,
+      "sha256": "53e935de13c835326178f74f75df8fe2354ffbf94d15355f2b1cbdd6b068ff33",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\I1_C.png",
+      "new_relative_path": "01-模型对比/results/I1_C/I1_C.png",
+      "bytes": 2864064,
+      "sha256": "b22ccbc8d6fb61dc063f62b19549adfe8fde3001dd51f9698a644542532aa4c3",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\request.json",
+      "new_relative_path": "01-模型对比/results/I1_C/request.json",
+      "bytes": 656,
+      "sha256": "3f3b897fcfc0f93ec4bb9849f3d684846e5ebf5579c51b34ad417a494afd3a45",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\result.json",
+      "new_relative_path": "01-模型对比/results/I1_C/result.json",
+      "bytes": 2892,
+      "sha256": "c0e7f471b989a9279637b68e890b88b7b96b4a4bd682a2b267322857daf38714",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_D\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/I1_D/cli_stderr.txt",
+      "bytes": 488,
+      "sha256": "a5112088082e9b18ceb6d77769a95625de286c0d1187f8a92d1e01f46221994f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_D\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/I1_D/cli_stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_D\\request.json",
+      "new_relative_path": "01-模型对比/results/I1_D/request.json",
+      "bytes": 656,
+      "sha256": "ce358826552aa9fb70ad3d7ac0521a05b6d68a53f0dba8e7f3321c39cf441e4c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_D\\result.json",
+      "new_relative_path": "01-模型对比/results/I1_D/result.json",
+      "bytes": 1386,
+      "sha256": "f8a00ebce0d9b374a9ac537ca80ac83981d72da17307c456fda9f0605639cf6a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/T1_A/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/T1_A/cli_stdout.json",
+      "bytes": 1540,
+      "sha256": "1ee4742615ef02a8fcd395be744bfdfc6df94d7a2a8831e7c4d8834658d310a8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\request.json",
+      "new_relative_path": "01-模型对比/results/T1_A/request.json",
+      "bytes": 601,
+      "sha256": "ed7e98d1b36d6d22f47494f8c8b222cfb8843134b64c927a209e6254a0a9288b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\result.json",
+      "new_relative_path": "01-模型对比/results/T1_A/result.json",
+      "bytes": 2734,
+      "sha256": "b2cb35953f397d79fd7a1be4229af2616efdf56a83b6fd1962f458ed2344dd1f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+      "new_relative_path": "01-模型对比/results/T1_A/T1_A.png",
+      "bytes": 3220906,
+      "sha256": "49837edf8a9539f92a028572082767532bb4d2e96862efe4cd9429046b6b8085",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/T1_B/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/T1_B/cli_stdout.json",
+      "bytes": 1540,
+      "sha256": "438326ba78b398921174f43c0bffd16ad637203f568fdc7468601c1f2b9482c6",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\request.json",
+      "new_relative_path": "01-模型对比/results/T1_B/request.json",
+      "bytes": 601,
+      "sha256": "e6d324337ba054da4f88b272ed654777ce9025c91fbf8f069530ffb4af65b527",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\result.json",
+      "new_relative_path": "01-模型对比/results/T1_B/result.json",
+      "bytes": 2734,
+      "sha256": "980cc88edf4b517be43eacaa4c0f5d0b4ac926009dab47a9a636ec142b9b6709",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\T1_B.png",
+      "new_relative_path": "01-模型对比/results/T1_B/T1_B.png",
+      "bytes": 3261035,
+      "sha256": "655ce417b1c80aa1286cf3f642d11a4c8e4681cde7e41d8b39c84b97fc858730",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/T1_C/cli_stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/T1_C/cli_stdout.json",
+      "bytes": 1531,
+      "sha256": "4583fc60792c5aaded14f68b01cb80ff647b7cdd8d53991efdbb0afe5bc0357d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\request.json",
+      "new_relative_path": "01-模型对比/results/T1_C/request.json",
+      "bytes": 598,
+      "sha256": "a60ed6750d553945e8536b28dbb680a7d2086b679eca642dc14f3bf5de8e490d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\result.json",
+      "new_relative_path": "01-模型对比/results/T1_C/result.json",
+      "bytes": 2721,
+      "sha256": "8e10b8f1b8d38d14415444db419a0ce34c6416fcf0c0d9ce990dd9f781833c4d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png",
+      "new_relative_path": "01-模型对比/results/T1_C/T1_C.png",
+      "bytes": 3159677,
+      "sha256": "54892a37048a910bd680d91f1d7e9aa2d6b72bd092a59e569b7b1a7976c9d777",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_D\\cli_stderr.txt",
+      "new_relative_path": "01-模型对比/results/T1_D/cli_stderr.txt",
+      "bytes": 494,
+      "sha256": "2255ffbed766d5572dcdb408c293ee41157fed80554e166d1911746d9f204ec9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_D\\cli_stdout.json",
+      "new_relative_path": "01-模型对比/results/T1_D/cli_stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_D\\request.json",
+      "new_relative_path": "01-模型对比/results/T1_D/request.json",
+      "bytes": 598,
+      "sha256": "0166d09eebb65663b26c645fc749a33a521a3784861ce1da8b6a08164a6648c0",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_D\\result.json",
+      "new_relative_path": "01-模型对比/results/T1_D/result.json",
+      "bytes": 1333,
+      "sha256": "cd64955f0c92c24902d1a0a70ffb86a4cee508b95fd8eeaec0c520979922aa8c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\blind_image_manifest.json",
+      "new_relative_path": "01-模型对比/review/blind_image_manifest.json",
+      "bytes": 1568,
+      "sha256": "1bfd8777f2af5b62ce582ad0942a667e891acc842b30a2460a7a1d0dc58f28b7",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_A_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/I1_A_CENTER_native.png",
+      "bytes": 666092,
+      "sha256": "76c4409a2674297ada3e6f5f90607d12d88c6edcdbcbee701b732609a707648a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_A_LL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_A_LL_native.png",
+      "bytes": 737622,
+      "sha256": "0ee0846ab49b8e8e3d72d36d3c11a9879457713b017106348066ebc555209956",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_A_LR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_A_LR_native.png",
+      "bytes": 683089,
+      "sha256": "bc6d89211d78ffbd55273ad8207193c28b231e8ebfabed712f982be826acaa8b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_A_preview.jpg",
+      "new_relative_path": "01-模型对比/review/I1_A_preview.jpg",
+      "bytes": 365423,
+      "sha256": "7105a539070db827af5947be278ae311665164db3eff9dc505b62af0952921bb",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_A_UL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_A_UL_native.png",
+      "bytes": 662837,
+      "sha256": "50300c21149a3372cf9366481611f88416f5b017a69cbe1abced65309e51559f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_A_UR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_A_UR_native.png",
+      "bytes": 631145,
+      "sha256": "f38ace908324978db1734ace9fb9b9bb2a3970cd278855bc51e59a50b3309412",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_B_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/I1_B_CENTER_native.png",
+      "bytes": 662712,
+      "sha256": "77e8f8727f8e05704ff9c0cd9570fb2162ef15ad8e791706515760b4be8bbb17",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_B_LL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_B_LL_native.png",
+      "bytes": 743573,
+      "sha256": "256d92ae50497f2b63750cfee8d908080a07c1e580c9d54a547abdc46c471b0c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_B_LR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_B_LR_native.png",
+      "bytes": 682556,
+      "sha256": "b45672f9affff23fdcede2a438c70d757efe79ed3b0b9276a094b170676ada1b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_B_preview.jpg",
+      "new_relative_path": "01-模型对比/review/I1_B_preview.jpg",
+      "bytes": 390539,
+      "sha256": "c1bbf3eb3a794ad1ecafc0deaf1d95299a100aac837a9b76f993ee9eb6b0b438",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_B_UL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_B_UL_native.png",
+      "bytes": 700479,
+      "sha256": "46d257f28c29840fa6d574c6e29a05e39af279494f15e6650ef1ce35d9949d60",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_B_UR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_B_UR_native.png",
+      "bytes": 676853,
+      "sha256": "9b0e81a14a268ea80a1cef068e8d3900df66500273dd09755ccff433db5c2d8f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_C_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/I1_C_CENTER_native.png",
+      "bytes": 685002,
+      "sha256": "cf8ceee4de9e71e28d5f04a912d9e484c71a49502d0c20a06f5682804c8dac2d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_C_LL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_C_LL_native.png",
+      "bytes": 748659,
+      "sha256": "e7fdee2097fe72ef66e34d92526a02aa3f2df4a25539733164c949ac9bf47ada",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_C_LR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_C_LR_native.png",
+      "bytes": 686270,
+      "sha256": "e161adb04d7e9f004d64aeaaf8abe9c082f4dbdcd414a2051439ce0cbd8c1c85",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_C_preview.jpg",
+      "new_relative_path": "01-模型对比/review/I1_C_preview.jpg",
+      "bytes": 370993,
+      "sha256": "453c2cf897869a3b1eda420fa17e010593cadb7622d56ea3b3e46c4fed5f9025",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_C_UL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_C_UL_native.png",
+      "bytes": 662732,
+      "sha256": "58775792c6da33f210722040301d948af96dd121c67b2bf51e34fd603af56603",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_C_UR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_C_UR_native.png",
+      "bytes": 645954,
+      "sha256": "5c9e8e2666ee38aa250bdfeb96ee1f571fa24e7963a4158b239c890dd95e4e0c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_comparison_blind.jpg",
+      "new_relative_path": "01-模型对比/review/I1_comparison_blind.jpg",
+      "bytes": 1894937,
+      "sha256": "e53677f0c1d04276cfb9bfde2bf26eb6fc2a5a87756c05c8bcf4f3ce12405253",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_comparison_labeled.jpg",
+      "new_relative_path": "01-模型对比/review/I1_comparison_labeled.jpg",
+      "bytes": 1957074,
+      "sha256": "3d73dc21ee4283fdf291f6e2648ab3a52e6d8058f946f953f922d1c3ab592613",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_D_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/I1_D_CENTER_native.png",
+      "bytes": 685361,
+      "sha256": "e008d8cb71aca63add98ea09a929b3afe05b72b04d433425d715fa1adca13003",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_D_LL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_D_LL_native.png",
+      "bytes": 742673,
+      "sha256": "183e3cce18ad2fdd5b447ff859de688818c8165e06d8b80b6022cd62a4bb0319",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_D_LR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_D_LR_native.png",
+      "bytes": 696020,
+      "sha256": "ca1a2272560a1a27ec004b8ea799264381d8d4d4279fc461ff00b284f660424b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_D_preview.jpg",
+      "new_relative_path": "01-模型对比/review/I1_D_preview.jpg",
+      "bytes": 370446,
+      "sha256": "779bddc111f76c8ad34d358d1430b4fd9f3775057b22ed0a54caae681861c7db",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_D_UL_native.png",
+      "new_relative_path": "01-模型对比/review/I1_D_UL_native.png",
+      "bytes": 670199,
+      "sha256": "df54dec5a07b96fe7da8572983703c61d81254d79f2168d2d62fc75a30d562b5",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\I1_D_UR_native.png",
+      "new_relative_path": "01-模型对比/review/I1_D_UR_native.png",
+      "bytes": 656037,
+      "sha256": "272fcf462c794b7c2aefc0f74d85d3f6d654864433952d7085063f87ad13cde1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\label_check.png",
+      "new_relative_path": "01-模型对比/review/label_check.png",
+      "bytes": 268729,
+      "sha256": "29f2080b12e0fc48a1e5436311437decf292a81b4c2b21fc4d1b2de4e2d437b1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\scores_blind.json",
+      "new_relative_path": "01-模型对比/review/scores_blind.json",
+      "bytes": 4516,
+      "sha256": "97577570403bd81fab19f160730b7f16d04e640a4970cb44e6934cc4b09aca24",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_A_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/T1_A_CENTER_native.png",
+      "bytes": 725037,
+      "sha256": "f19ff3afa81c6a1d7d02af69f618b023a1e6c0c6925e7b2514b67754a64e4f7c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_A_LL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_A_LL_native.png",
+      "bytes": 750665,
+      "sha256": "8ea4d1677a311ee245aac025c44df5915e75e5f6db4b22f074231f485518d410",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_A_LR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_A_LR_native.png",
+      "bytes": 739811,
+      "sha256": "f51671b5d1f742b20f95d1f55f6ebc62def9971821ecb6531122d0a21e5dcbc2",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_A_preview.jpg",
+      "new_relative_path": "01-模型对比/review/T1_A_preview.jpg",
+      "bytes": 391978,
+      "sha256": "a5736bac96dc264b6420a0d1288c783d0b21b3e35e33552d604f4c4857bc24ff",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_A_UL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_A_UL_native.png",
+      "bytes": 778963,
+      "sha256": "12a6f6eb4c74762858ec1bb79b47250da4ac89dc2958a7ce81cde03eb15ee3ee",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_A_UR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_A_UR_native.png",
+      "bytes": 730052,
+      "sha256": "06c55bbfe15991d48ded265c2a7d1bb57e91272e4c1e4384db1380b9c1f8bf97",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_B_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/T1_B_CENTER_native.png",
+      "bytes": 745068,
+      "sha256": "1843e3ab4b40b48d8f59aa2b77493b002053a63e588a63132cefc85c548b3273",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_B_LL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_B_LL_native.png",
+      "bytes": 762184,
+      "sha256": "c140afb8426eee231d9bdaf18ade138fd5e49132f894a5b7521b7a1c473be59f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_B_LR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_B_LR_native.png",
+      "bytes": 746517,
+      "sha256": "734fec4b0c0805320ac48dc9257609a7662e140f354b3341fa9b5b74fa8664fa",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_B_preview.jpg",
+      "new_relative_path": "01-模型对比/review/T1_B_preview.jpg",
+      "bytes": 402222,
+      "sha256": "196281068492b147b4179c42ab27eceaed92a781edc1b676890a278c3012c751",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_B_UL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_B_UL_native.png",
+      "bytes": 779482,
+      "sha256": "293d603630a75ee2fa6c1d7f854ea5160ed1c1fc571a0006e7440ed0f0f2c906",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_B_UR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_B_UR_native.png",
+      "bytes": 744758,
+      "sha256": "b6ba1dc53554e61e8dae18080617d8981d64941d4fe26c1678ec1eff7c1de044",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_C_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/T1_C_CENTER_native.png",
+      "bytes": 733265,
+      "sha256": "51ad3906013011e69d58eaac49580ad90eaf46a4debe9a9ee906fceda2be6533",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_C_LL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_C_LL_native.png",
+      "bytes": 724136,
+      "sha256": "602f8cfaf76b5bce9d3b3600ac43e45b1a7fd3d0956db32aec86325abb2acdf8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_C_LR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_C_LR_native.png",
+      "bytes": 734297,
+      "sha256": "36c3ddf4989722ee13a2718c8b2eee8884bb3a56272edefeb36542d6775fdda9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_C_preview.jpg",
+      "new_relative_path": "01-模型对比/review/T1_C_preview.jpg",
+      "bytes": 387109,
+      "sha256": "9e574d2855a208bb2cbe8edd226bb967a1d3f9656ab669c0cd5b6d4c93f7f4b4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_C_UL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_C_UL_native.png",
+      "bytes": 785422,
+      "sha256": "ec849ce6fb0df2e9e9ef2920dfce00e0bc35944b61101bfa244487f143aa1a42",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_C_UR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_C_UR_native.png",
+      "bytes": 716510,
+      "sha256": "40c574a79919b9cfa7eb11a99a8e434d0c525ec9065e31fa960a92c9a9dde705",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_comparison_blind.jpg",
+      "new_relative_path": "01-模型对比/review/T1_comparison_blind.jpg",
+      "bytes": 1928855,
+      "sha256": "c26865f8f10dce2adf56873313a34dcf04477134a87c14f9e61d7deb4592929b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_comparison_labeled.jpg",
+      "new_relative_path": "01-模型对比/review/T1_comparison_labeled.jpg",
+      "bytes": 2336776,
+      "sha256": "8727a4dc4e64bc50f2d93cf0bbd092924c0818e3fd5ef061ef22f600512650c3",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_D_CENTER_native.png",
+      "new_relative_path": "01-模型对比/review/T1_D_CENTER_native.png",
+      "bytes": 721504,
+      "sha256": "91ebaa4a88ef71e313342752f0f540e83b986d8badf0d3e08f8a270bfdddcc83",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_D_LL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_D_LL_native.png",
+      "bytes": 710549,
+      "sha256": "7a9cbcbc278a2db729dbb0d4932792b1424b5248ce350e13b4d3ccd3240b4b96",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_D_LR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_D_LR_native.png",
+      "bytes": 705649,
+      "sha256": "569fd44c16678f26a7b64e06f1d6b58f3625e4dcc21d7f9ad2861a04c87e42dc",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_D_preview.jpg",
+      "new_relative_path": "01-模型对比/review/T1_D_preview.jpg",
+      "bytes": 370582,
+      "sha256": "0b0d4eb2af6c4473b2d7003634046713b98f0b2b66db36112d7a3f34de32e65a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_D_UL_native.png",
+      "new_relative_path": "01-模型对比/review/T1_D_UL_native.png",
+      "bytes": 761642,
+      "sha256": "49666163c64d6500fb3b8ab23431da06b7d08dbe7615694f96ec5eb676b03330",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\review\\T1_D_UR_native.png",
+      "new_relative_path": "01-模型对比/review/T1_D_UR_native.png",
+      "bytes": 722126,
+      "sha256": "2f4233c8f1010f2ff5118537e6d761cc8d508e7d8d5c954eae2e442495a998c0",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\run_benchmark.py",
+      "new_relative_path": "01-模型对比/run_benchmark.py",
+      "bytes": 4248,
+      "sha256": "e1ca817f6eed3c1c6a88a23a6582bd2bb469b7585b9bfe48f931a9b21bd9fca2",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\run_status.json",
+      "new_relative_path": "01-模型对比/run_status.json",
+      "bytes": 20350,
+      "sha256": "b73ef97aedadbccce66d3ed55575f0c5f7dfff0045f64c2aaa657833976d6367",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\__pycache__\\run_live.cpython-310.pyc",
+      "new_relative_path": "02-画幅与格式/__pycache__/run_live.cpython-310.pyc",
+      "bytes": 3766,
+      "sha256": "012968bd472e59728d69c2d475d1b3b37f1e7d1c6a3875d04c85ad6070ba76cf",
+      "cache": true
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\画幅实测预览.jpg",
+      "new_relative_path": "02-画幅与格式/画幅实测预览.jpg",
+      "bytes": 490315,
+      "sha256": "8218129343b45084377a105f0a271040e5a758b9a32c6d5c3f177b1f960b3ab7",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\检查报告.md",
+      "new_relative_path": "02-画幅与格式/检查报告.md",
+      "bytes": 1753,
+      "sha256": "f2cf1412763612ea7373e26806ebcaa93f53874ca138797eaac381bc8aef0a0f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\检查画廊.html",
+      "new_relative_path": "02-画幅与格式/检查画廊.html",
+      "bytes": 7359,
+      "sha256": "1e22c1cb2dfc02af0a89720e4477afbe66dec1404cd989b05d531e59bcf68133",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\build_report.py",
+      "new_relative_path": "02-画幅与格式/build_report.py",
+      "bytes": 7359,
+      "sha256": "ab58ded896588a5c733b40b0c67dfa5255ceef0612ec728e0de6527ad0d2577e",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\gif\\request.json",
+      "new_relative_path": "02-画幅与格式/gif/request.json",
+      "bytes": 1275,
+      "sha256": "e522094559ae68e371fcdd5f2c95843aa2d34748964059238e74c13a13e1a234",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\gif\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/gif/stderr.txt",
+      "bytes": 540,
+      "sha256": "3d8ef898587857ca21b5c7719741d12cd492ea6bfc99106e76c78b2b72d02da6",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\gif\\stdout.json",
+      "new_relative_path": "02-画幅与格式/gif/stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\landscape.png",
+      "new_relative_path": "02-画幅与格式/landscape/landscape.png",
+      "bytes": 3919581,
+      "sha256": "7da91cc83a5519452f3574f213c2835f2a94d715597cb7e1fa4743ee3f3e5193",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\request.json",
+      "new_relative_path": "02-画幅与格式/landscape/request.json",
+      "bytes": 2174,
+      "sha256": "a5610366e62dffbc715832bb8e8168218d119f9abfb7ac56986beeb872d64086",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/landscape/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\stdout.json",
+      "new_relative_path": "02-画幅与格式/landscape/stdout.json",
+      "bytes": 1696,
+      "sha256": "c296188d1850d3b20da2b9130160398e9ca9b2eba6ae4d3a7b8387a2898d51b8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\portrait.png",
+      "new_relative_path": "02-画幅与格式/portrait/portrait.png",
+      "bytes": 3908811,
+      "sha256": "d7224285e333ff3d8b26c73322582d11ce20e7bd31b6c2b12c64141a6b762af1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\request.json",
+      "new_relative_path": "02-画幅与格式/portrait/request.json",
+      "bytes": 2171,
+      "sha256": "3008a64a0a8ffc58fcf0c1ff9ab01901c0e811745111bd22cc84316f96e76f16",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/portrait/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\stdout.json",
+      "new_relative_path": "02-画幅与格式/portrait/stdout.json",
+      "bytes": 1942,
+      "sha256": "6862622315880f56512e47ee923d4aea1f72ce16eb06971d43e1e7577b3fe21d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\portrait_prompt\\portrait_prompt.png",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/portrait_prompt/portrait_prompt.png",
+      "bytes": 3803178,
+      "sha256": "c786ed2ead90258b02563daae1604e463b04aab398ff870d31a7bc0b1d513877",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\portrait_prompt\\request.json",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/portrait_prompt/request.json",
+      "bytes": 2851,
+      "sha256": "68221b1c15bb6bc6266cc9a9045b9d5417c751d468b7ef83a99ccbaf32996159",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\portrait_prompt\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/portrait_prompt/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\portrait_prompt\\stdout.json",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/portrait_prompt/stdout.json",
+      "bytes": 1750,
+      "sha256": "ef5d151a78b9a4e427ee176c152c82702f40d1daace4f6f1fa5fd10c16abf51d",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\results.json",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/results.json",
+      "bytes": 4634,
+      "sha256": "1dde01107fdc47124ab8394063b953fec3abd030232f7cd2ee7d6a1b951f1091",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\request.json",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/square_prompt/request.json",
+      "bytes": 2671,
+      "sha256": "6bd78322bbb709ca44f0b312ae2140ff7a3141f5e527b1086b5514cb11e38330",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\square_prompt.png",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/square_prompt/square_prompt.png",
+      "bytes": 3885453,
+      "sha256": "f315e34a7b75e02aec3c4f924880348d01f5ed2aae3016f0e0a9331f33cdc4a0",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/square_prompt/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\stdout.json",
+      "new_relative_path": "02-画幅与格式/prompt-shapes/square_prompt/stdout.json",
+      "bytes": 2017,
+      "sha256": "1cae9a6da964611cd1e1d9fe1a64e695d0eacef27036933b2931822eea401091",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\results.json",
+      "new_relative_path": "02-画幅与格式/results.json",
+      "bytes": 10186,
+      "sha256": "d2bae5f83a32a8920a57b44019f55f124db3034e401b186e0aaa5fed481ff225",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\run_live.py",
+      "new_relative_path": "02-画幅与格式/run_live.py",
+      "bytes": 3961,
+      "sha256": "52180a750530bd575c171000c56aae8a7184c33176efabaa6811c151de2cb6d8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\run_prompt_shapes.py",
+      "new_relative_path": "02-画幅与格式/run_prompt_shapes.py",
+      "bytes": 892,
+      "sha256": "43a63f38ab3dedf9fc3050026d6ede569c98ee2d0bc7c4b49c85af81453f411c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\request.json",
+      "new_relative_path": "02-画幅与格式/square/request.json",
+      "bytes": 2165,
+      "sha256": "64e44198a337923743e4f662ceabd02e6644c81bb7f710abc60b5575a0cbdf7a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\square.png",
+      "new_relative_path": "02-画幅与格式/square/square.png",
+      "bytes": 3910801,
+      "sha256": "1debd431eecc2f406e858ec353d8acad624ca9ed8a78c358b50ce49b0bd8d121",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/square/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\stdout.json",
+      "new_relative_path": "02-画幅与格式/square/stdout.json",
+      "bytes": 1930,
+      "sha256": "dec2a42d716f9678ef3536c9120dc33e6e1e69c3923f727c93ae074fd425a64a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\request.json",
+      "new_relative_path": "02-画幅与格式/svg/request.json",
+      "bytes": 1311,
+      "sha256": "06a80ef4cb6bc928babaedf1ab91b27ac2af9a94c97ba116cbcaa28997de2f16",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\stderr.txt",
+      "new_relative_path": "02-画幅与格式/svg/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\stdout.json",
+      "new_relative_path": "02-画幅与格式/svg/stdout.json",
+      "bytes": 2102,
+      "sha256": "08a538d0e89cf817d6d351fde0b1030389c677e0e5af2d7a32f3b6086376e6f8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png",
+      "new_relative_path": "02-画幅与格式/svg/svg.png",
+      "bytes": 1368039,
+      "sha256": "b0a298293d46e5e8e925b3ebdd2771d9eb5f9049b72495827f1a7698efb69806",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\测试报告.md",
+      "new_relative_path": "03-SVG与GIF/测试报告.md",
+      "bytes": 2483,
+      "sha256": "abaf857b8a0c0050f7aa8becdb5a8e71ab45dcd7b5f4562c0c5b2f675665afe2",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\实际返回PNG预览.jpg",
+      "new_relative_path": "03-SVG与GIF/实际返回PNG预览.jpg",
+      "bytes": 472853,
+      "sha256": "bd65faa441f92c5d4f017aae15f90da5d8d922814c8f5ae01c227c66673f330f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gateway-check\\后台SVG-GIF诊断.md",
+      "new_relative_path": "03-SVG与GIF/gateway-check/后台SVG-GIF诊断.md",
+      "bytes": 7423,
+      "sha256": "e2a9a5d8fc55aa20029b78ae762ba47991174935a206443dd6972cd0c7ed4958",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gateway-check\\source-manifest.json",
+      "new_relative_path": "03-SVG与GIF/gateway-check/source-manifest.json",
+      "bytes": 1513,
+      "sha256": "4ea28abe06218fe3a76418aedc0289cbca4aa7d92ad1fc354dfdb9a6f23e8a6a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gateway-check\\source\\backend\\internal\\pkg\\openai\\constants.go",
+      "new_relative_path": "03-SVG与GIF/gateway-check/source/backend/internal/pkg/openai/constants.go",
+      "bytes": 12067,
+      "sha256": "3ea34045c767e672857b1b05502472e516e20a8c1d6154c17ec13d8a5373a8e6",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gateway-check\\source\\backend\\internal\\service\\openai_images_direct.go",
+      "new_relative_path": "03-SVG与GIF/gateway-check/source/backend/internal/service/openai_images_direct.go",
+      "bytes": 10167,
+      "sha256": "1afb9d18a84bbc252de25060ed9423ba672405addd81324c6de73b1d54f9e561",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gateway-check\\source\\backend\\internal\\service\\openai_images_responses.go",
+      "new_relative_path": "03-SVG与GIF/gateway-check/source/backend/internal/service/openai_images_responses.go",
+      "bytes": 76995,
+      "sha256": "c09b06fe7c7b4fb3b2799e1601fbf3561cc3e15215e50806cc2cb322e38d8494",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gateway-check\\source\\backend\\internal\\service\\openai_images.go",
+      "new_relative_path": "03-SVG与GIF/gateway-check/source/backend/internal/service/openai_images.go",
+      "bytes": 61144,
+      "sha256": "c1b51a5167280f24b2227188f5f68f3719bb8debcaf4e8c6db5da1cfd6e1541a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gif_01_greenhouse\\request.json",
+      "new_relative_path": "03-SVG与GIF/gif_01_greenhouse/request.json",
+      "bytes": 2193,
+      "sha256": "604c81be3a81c6b25d49dc278eeb289539c0abe1612a4f95cbd3225eb1114dc4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gif_01_greenhouse\\stderr.txt",
+      "new_relative_path": "03-SVG与GIF/gif_01_greenhouse/stderr.txt",
+      "bytes": 540,
+      "sha256": "7f567f79c0354a1403d328b34efb0c57c2fc72a957829e0f44a22e1d0525ac0b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gif_01_greenhouse\\stdout.json",
+      "new_relative_path": "03-SVG与GIF/gif_01_greenhouse/stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gif_02_canal\\request.json",
+      "new_relative_path": "03-SVG与GIF/gif_02_canal/request.json",
+      "bytes": 2174,
+      "sha256": "3e17da401c85efa95b4dc36da3630a41baebb7b05a843e6f3718b075aec395f4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gif_02_canal\\stderr.txt",
+      "new_relative_path": "03-SVG与GIF/gif_02_canal/stderr.txt",
+      "bytes": 540,
+      "sha256": "03a9816ccb99ec135c116a5d0ee15c90d81d78981990adae054632be6c236df9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\gif_02_canal\\stdout.json",
+      "new_relative_path": "03-SVG与GIF/gif_02_canal/stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\make_report.py",
+      "new_relative_path": "03-SVG与GIF/make_report.py",
+      "bytes": 4690,
+      "sha256": "47feb36b52f3d08cbfd05e56a0e9539935498a69793587a6a8f07a3ad58fd024",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\media-audit.json",
+      "new_relative_path": "03-SVG与GIF/media-audit.json",
+      "bytes": 834,
+      "sha256": "80795640b39712539c7510af7057227432a1c4fb9f3a2c9dd0b5ef640ed1e42c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\results.json",
+      "new_relative_path": "03-SVG与GIF/results.json",
+      "bytes": 10191,
+      "sha256": "b973577ad65a2f3c04db972a1a5c566702326dab684231a723c55207f8a71918",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\run_tests.py",
+      "new_relative_path": "03-SVG与GIF/run_tests.py",
+      "bytes": 5664,
+      "sha256": "c34eca3a6bbcd68bf5072c04f16a81ff2e150364ae1caef769f41fd3a79b0c0b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\request.json",
+      "new_relative_path": "03-SVG与GIF/svg_01_greenhouse/request.json",
+      "bytes": 2169,
+      "sha256": "312a666b9449b4bb0267c2f83de2666aaffe10eb88069404485df065f500be05",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\stderr.txt",
+      "new_relative_path": "03-SVG与GIF/svg_01_greenhouse/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\stdout.json",
+      "new_relative_path": "03-SVG与GIF/svg_01_greenhouse/stdout.json",
+      "bytes": 2216,
+      "sha256": "284a7abc1e9321031dae29b6371063904084f6657ee90e513c67b7e00f965b92",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_01_greenhouse\\svg_01_greenhouse.png",
+      "new_relative_path": "03-SVG与GIF/svg_01_greenhouse/svg_01_greenhouse.png",
+      "bytes": 2849698,
+      "sha256": "10238992fa69c277bf738ba102819cf5a0dc24c34217f1949ba46ee16357ad68",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\request.json",
+      "new_relative_path": "03-SVG与GIF/svg_02_canal/request.json",
+      "bytes": 2084,
+      "sha256": "0a0d02e0750e0cd7fa6902036487959d24e422a7705d8889a823565f931bd523",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\stderr.txt",
+      "new_relative_path": "03-SVG与GIF/svg_02_canal/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\stdout.json",
+      "new_relative_path": "03-SVG与GIF/svg_02_canal/stdout.json",
+      "bytes": 2176,
+      "sha256": "d933fe557141c54ad7eb0dd374a1dc6a1ff982b9c8c0c99f7018b82aef47f566",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-svg-gif-2026-11-07\\svg_02_canal\\svg_02_canal.png",
+      "new_relative_path": "03-SVG与GIF/svg_02_canal/svg_02_canal.png",
+      "bytes": 2263672,
+      "sha256": "c8c4f0342f0e98d9a24a7b8eef9c1183f460b89ce6dba554c7e5dc3918c62e15",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\实测报告.md",
+      "new_relative_path": "历史排查/2026-11-04/实测报告.md",
+      "bytes": 10101,
+      "sha256": "59a33fb34686632b02c8527a7c8ce87050465980e7ab8a429fceb85d17cfabc6",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog_diagnostic.py",
+      "new_relative_path": "历史排查/2026-11-04/catalog_diagnostic.py",
+      "bytes": 3944,
+      "sha256": "5106961284e025fa6400cf44d1b1e2171edfd16781d8bac0a9ffb523b3dc169a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\目录漏列原因.md",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/目录漏列原因.md",
+      "bytes": 4046,
+      "sha256": "4608de1350aa301a65d0d790b71e45456e9bc79426f5bcdf6634b32a1cfa8b29",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\网关参数追踪.md",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/网关参数追踪.md",
+      "bytes": 7688,
+      "sha256": "67c645b787bdeb5d7f9b71b030688463875d5b47876fd5a04d97be42e54c037b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\远程目录复查.md",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/远程目录复查.md",
+      "bytes": 1427,
+      "sha256": "2d77b748e305b6c47272a3ff8f0aebc3e4ceb72614077eaafe43b5984a2fb9a1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\discovery.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/discovery.json",
+      "bytes": 19858,
+      "sha256": "f39b9bcd276a0b81baac3f13f45ae8f03dce36c43a9aa0544aebbccc161594e6",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\findings.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/findings.json",
+      "bytes": 799,
+      "sha256": "0ea5cdea551cf1f633e7b34129caf218103404939efcb9e401fc65af9c017bd0",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\index-DdaKIIDt.js",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/index-DdaKIIDt.js",
+      "bytes": 192125,
+      "sha256": "1b3f11eb4c5bf9eb20c4a2bf886f5a9594d1155919de4d47d60819014eff65ae",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\local-registration-gpt-image-2.6-flare.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/local-registration-gpt-image-2.6-flare.json",
+      "bytes": 3200,
+      "sha256": "3c2c9a633bcec1a3d687066caf38eff7194f86f274a1a5946f6a95cf54fa93b8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\local-registration-gpt-image-2.6-sunburst.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/local-registration-gpt-image-2.6-sunburst.json",
+      "bytes": 3218,
+      "sha256": "d965cfe1a0b936919136c27c64d494040f236739af4b01129228ef3d244cee80",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\models.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/models.json",
+      "bytes": 3876,
+      "sha256": "70867500a6fa637082e619bc414edbd3452d9478cd8297a96ee3ce595df72334",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\public-source-tree.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/public-source-tree.json",
+      "bytes": 1311205,
+      "sha256": "ac922a7b7a152ea0b1a38ecedf0166cd9f26f33ab215247810121b663b6a7551",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\recheck-20261105T022226Z.json",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/recheck-20261105T022226Z.json",
+      "bytes": 3064,
+      "sha256": "ea970459df0a46d53a00cf5a580522da523bf9d2c5cedc30c8ae8447dbd1ea87",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\cmd\\server\\VERSION",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/cmd/server/VERSION",
+      "bytes": 7,
+      "sha256": "d8f3e6b0f7817c4ad634608dc673833c04c255c7ad2ef87ece9a443579553d25",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\domain\\codex_models_manifest_config.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/domain/codex_models_manifest_config.go",
+      "bytes": 762,
+      "sha256": "57c7d5cddbff9ec38241866e41e82004bc518ae28b5ea44d26e6dc15cf71a1ea",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\domain\\model_allowlist.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/domain/model_allowlist.go",
+      "bytes": 348,
+      "sha256": "a73c748912aa39affa6e051d6ef1a4fe86b304311464f6be2c0a24b49142ebca",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\handler\\gateway_handler.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/handler/gateway_handler.go",
+      "bytes": 102924,
+      "sha256": "aa1d8b11a9646b42e556e2f2e2bb7ec3d994428ab86f69e4641eda2fc1ec4687",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\handler\\gateway_models_test.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/handler/gateway_models_test.go",
+      "bytes": 65807,
+      "sha256": "c24006587474964b09b0e7c79afcf2ec5a9da7b697cc0fcd963f7260fcc1de28",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\handler\\model_plaza_handler.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/handler/model_plaza_handler.go",
+      "bytes": 10661,
+      "sha256": "63fb99572e18b5b56419f8762cd657d04d3468af704284a3b036ba6d18274189",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\handler\\openai_models_handler.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/handler/openai_models_handler.go",
+      "bytes": 3474,
+      "sha256": "3355edd308905d4e9561628221d9479b03ac3cdc35a7bc368a897d59447a83fa",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\pkg\\openai\\constants.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/pkg/openai/constants.go",
+      "bytes": 10123,
+      "sha256": "3d1259c39da1b74b27c508d14c66ad2c287f7020e2e59045729fa08309a545b4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\server\\routes\\gateway.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/server/routes/gateway.go",
+      "bytes": 31477,
+      "sha256": "ac8a09dc0c05107b2d38b584937bae4a3b3686be5fa07d0c7a214fcb785d8543",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\server\\routes\\model_plaza.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/server/routes/model_plaza.go",
+      "bytes": 984,
+      "sha256": "f2b122ccece86e535293ee60c1aa2805c6c1879b05a77e685a36e8204c7dc2fb",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\account.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/account.go",
+      "bytes": 100929,
+      "sha256": "65c641236f9358b36dfe7a29b8b7c985441be7ad87e8dc8ad51c9e1f0f602687",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\codex_image_generation_bridge.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/codex_image_generation_bridge.go",
+      "bytes": 3489,
+      "sha256": "7752cbacd097fe971898d0a27d0d3ae5dbbb64ba78088623457a7ee9e49d36cc",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\gateway_model_availability.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/gateway_model_availability.go",
+      "bytes": 4422,
+      "sha256": "3ed6aaadce54178b71beacb47d174e8775aa75a8fa9c57b5bafa6ae41f8bd02a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\gateway_service.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/gateway_service.go",
+      "bytes": 65250,
+      "sha256": "bb401741b9ab73dba06f7b4c44045ba0831bc7a284dd4eb4610f0cff5d4e3748",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_codex_fingerprint.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_codex_fingerprint.go",
+      "bytes": 22053,
+      "sha256": "c974262d3b0fff3c8d1eb8286078234be2905b2402245f4a46b4e9bced63eeb9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_codex_models_pinned.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_codex_models_pinned.go",
+      "bytes": 8158,
+      "sha256": "26d5d7072d344ec8defb3094cd39807c828d73714b1b65f5d7dd295c40e74a46",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_codex_models_service.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_codex_models_service.go",
+      "bytes": 94131,
+      "sha256": "33b1f510c4de78feb6f0bb9998d75bd1afbada3a990c13de9a9fa31b7ed7539e",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_gateway_forward.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_gateway_forward.go",
+      "bytes": 64136,
+      "sha256": "66667935add18917cce3b6b0c8808e132de86c742ae765b300334367fd74f15b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_gateway_passthrough.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_gateway_passthrough.go",
+      "bytes": 96208,
+      "sha256": "9fd23fb8cf0f2a077123bcdfb69392397b9a3987bb5026299b4a895eb792edcd",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_gateway_request_body.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_gateway_request_body.go",
+      "bytes": 83502,
+      "sha256": "1dcd527614627f464ec6bf4a23a9d72c2e3a6f3afbbc09bcb10e3f1dd0e1c0d4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_gateway_service.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_gateway_service.go",
+      "bytes": 46804,
+      "sha256": "585822f57a645551af4055fc824a00dafed613d1a5b1054fca638d45a0276bb0",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_images_direct.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_images_direct.go",
+      "bytes": 9201,
+      "sha256": "e37e5259a132a154882203c46d37f21d70cba6c2286c70fb914d181ce210eaed",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_images_responses.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_images_responses.go",
+      "bytes": 76566,
+      "sha256": "1975a2fef7b396cfa35d893b6bd0ceb63c53ea6ff446bceb906ddb70244cecd8",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_images.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_images.go",
+      "bytes": 57914,
+      "sha256": "a28c4de0b955685f7982ccd972a532be93808da9da41b86c95779189df249806",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_model_mapping.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_model_mapping.go",
+      "bytes": 5364,
+      "sha256": "e6fab13f0e7726052f918d60c21aa9247b399f9d8f508522840dc27bcd411834",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_models_list.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_models_list.go",
+      "bytes": 14270,
+      "sha256": "428493a09fa1b0c181904371bc2ed8116f6e6fcc01c56d3a55ed92202670053e",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_ws_pool.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_ws_pool.go",
+      "bytes": 65569,
+      "sha256": "756eb71554d50117d525e88c54b4c0126a8d6c948eee592ce94475a8becd7656",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\openai_ws_protocol_resolver.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/openai_ws_protocol_resolver.go",
+      "bytes": 4068,
+      "sha256": "44ea9e022c9e50c1f0587e5f16d9c88be9ccd27a6163ae5556c14d5ab21262fa",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\backend\\internal\\service\\upstream_models.go",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/backend/internal/service/upstream_models.go",
+      "bytes": 66622,
+      "sha256": "3ab072d7daf9aed952390b0b6fd7d04f8093ff29f5018c81ff7b48a27c4adcdb",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\frontend\\src\\components\\account\\EditAccountModal.vue",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/frontend/src/components/account/EditAccountModal.vue",
+      "bytes": 285692,
+      "sha256": "d8ba17090983160a6cb54983685bf79d020091e2dc41b820bcb07729e549e09f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\frontend\\src\\components\\admin\\group\\CodexManifestAccountsField.vue",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/frontend/src/components/admin/group/CodexManifestAccountsField.vue",
+      "bytes": 8415,
+      "sha256": "bf64832d07e8bda994d0bb5bdc7c9aae03e11893c17b5fc9a3abc2c1bee987e1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\frontend\\src\\components\\common\\VersionBadge.vue",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/frontend/src/components/common/VersionBadge.vue",
+      "bytes": 40534,
+      "sha256": "965e706812bd652f353ea6a411f3653b21bfd723658f88bee8c753c8b5568ccd",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\frontend\\src\\i18n\\locales\\zh\\admin\\accounts.ts",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/frontend/src/i18n/locales/zh/admin/accounts.ts",
+      "bytes": 105606,
+      "sha256": "4d2fd84ae20ff9cb165f2345a43ebbd9aab915a4b38b0515ee09c7b89563f529",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\catalog-diagnostics\\source\\frontend\\src\\views\\admin\\GroupsView.vue",
+      "new_relative_path": "历史排查/2026-11-04/catalog-diagnostics/source/frontend/src/views/admin/GroupsView.vue",
+      "bytes": 273069,
+      "sha256": "cd14868b648e9a1e14b21004b3de2cb1ae6c33c0de1f13265f445daaa22f8907",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\make_edit_reference.py",
+      "new_relative_path": "历史排查/2026-11-04/make_edit_reference.py",
+      "bytes": 1637,
+      "sha256": "7dee0885d228127ee7b5926e1cb48704bde0e89fedbfb272a1c14fe6af272468",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\I0_endpoint_probe.txt",
+      "new_relative_path": "历史排查/2026-11-04/prompts/I0_endpoint_probe.txt",
+      "bytes": 848,
+      "sha256": "ca09bcf13ac0ebafe054cc708c5139d259f0c8b6b6bfdac21edae032ae85f595",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\I12_local_edit.txt",
+      "new_relative_path": "历史排查/2026-11-04/prompts/I12_local_edit.txt",
+      "bytes": 1516,
+      "sha256": "5c7f9bb7486d576379d4f931c2f0d231e3e1b24c01692d2fff96e6954529eeb4",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\T1_cinematic.txt",
+      "new_relative_path": "历史排查/2026-11-04/prompts/T1_cinematic.txt",
+      "bytes": 2102,
+      "sha256": "a017ef8cb71d4e69d2087fac6294e903b786c04eae6fba0b65dfc1c88dc8d3d9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\T2_typography.txt",
+      "new_relative_path": "历史排查/2026-11-04/prompts/T2_typography.txt",
+      "bytes": 2424,
+      "sha256": "c3447e67f63de706be81d9f2eafbace0bbcd42bdcc5661b3c4079511b7ae0909",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\T3_spatial.txt",
+      "new_relative_path": "历史排查/2026-11-04/prompts/T3_spatial.txt",
+      "bytes": 2816,
+      "sha256": "3ff2bef535ce36614c117edb73391fd4f0f9ca6f8640b9f71403789c34133285",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\protocol.md",
+      "new_relative_path": "历史排查/2026-11-04/protocol.md",
+      "bytes": 3400,
+      "sha256": "f72fba8f0b0eec061d020553e30dc5466e0d152de9076583eac4184eb1dcaa84",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\references\\edit_control.png",
+      "new_relative_path": "历史排查/2026-11-04/references/edit_control.png",
+      "bytes": 36028,
+      "sha256": "736dab5f08fd57b6940148bd03677ee5fcf5d6e3169517bb4a0425138ceb06a1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\I0_flare_high\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/I0_flare_high/request.json",
+      "bytes": 849,
+      "sha256": "57ba707ec99b2ff0c79031b4153a7092ecae4a0f70bdbf31cf434453d2822b36",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\I0_flare_high\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/I0_flare_high/result.json",
+      "bytes": 1598,
+      "sha256": "7b8eeb3f6e67d9056fd8f72c6d4d8d45184044b16297786ac66043c5c6d847ff",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\I0_sunburst_high\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/I0_sunburst_high/request.json",
+      "bytes": 852,
+      "sha256": "718a960fe8c24a9905e45be6a8e26ca005174ac67d27b531bd4e3bf0e5fc7cca",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\I0_sunburst_high\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/I0_sunburst_high/result.json",
+      "bytes": 1602,
+      "sha256": "164f62349ded11ffe20be1c060a71ed277b96d6c6ad60dbcb98e767de74f41e2",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_flare_high\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_flare_high/request.json",
+      "bytes": 815,
+      "sha256": "c95405d5a89497880889d709cd198ea6405a0ef7ecb4e81bc134bd4f003651a2",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_flare_high\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_flare_high/result.json",
+      "bytes": 2477,
+      "sha256": "aea9ad25065db98f3dce915298acde3558207f9e396f431cad710fdc3c4d778f",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_flare_omit\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_flare_omit/request.json",
+      "bytes": 787,
+      "sha256": "0aff55275e8072bdf59ee0c3fc1f3369999e9cd9d519fa610cc8a5590026869c",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_flare_omit\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_flare_omit/result.json",
+      "bytes": 2449,
+      "sha256": "9183009e1bf0c6196a3c9fce7866458045c22a950111601d5e0b3643702f6540",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_sunburst_high\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_sunburst_high/request.json",
+      "bytes": 824,
+      "sha256": "93bc48fb2a3cd226784d6c9025cf03f0dc3ab3dd812915b973429bd0aed8f3d2",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_sunburst_high\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_sunburst_high/result.json",
+      "bytes": 2489,
+      "sha256": "2813bf21fb1e3e4a9850a4ef1eb184547812154b30245bde3d7c984fd2d738ef",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_sunburst_omit\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_sunburst_omit/request.json",
+      "bytes": 796,
+      "sha256": "7f09f11749bb0a3a83876d06b2103f3df8fb3d0b1e8b6488f8ddd1680e338479",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\R1_T1_sunburst_omit\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/R1_T1_sunburst_omit/result.json",
+      "bytes": 2461,
+      "sha256": "c9b8fe8151185f7c8418fa82a9b7efffc5d7d14766d515e65f39094992197c1a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_flare_high\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_flare_high/request.json",
+      "bytes": 649,
+      "sha256": "d2fc649834ad8172c72e475588bd628ce39011ee470801f438c907e86a55f8c1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_flare_high\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_flare_high/result.json",
+      "bytes": 1406,
+      "sha256": "ddd040bb5c4bba8b3dd83f6804bc2bd362e881a3bc91cd2f5f4c32797453ab6b",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_flare\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_flare/request.json",
+      "bytes": 624,
+      "sha256": "405ce684955316854ef437221cab007c72ab0db548b0ec1e7e617a774a625fe1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_flare\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_flare/result.json",
+      "bytes": 1381,
+      "sha256": "1e5785b947f5bb5be82b155d216d0c0dd7f270a42eac3955519ee79b556b31a1",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_sunburst_high\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_sunburst_high/request.json",
+      "bytes": 652,
+      "sha256": "6fa942e719d2287308dde418182f8de9ed909842fd92beacaf9b794b7ef96889",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_sunburst_high\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_sunburst_high/result.json",
+      "bytes": 1409,
+      "sha256": "cf4e0e7303dfd234fba3e06202b29e52b753909d2f32e97dc31f1b2ca0e1b3f9",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_sunburst\\request.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_sunburst/request.json",
+      "bytes": 627,
+      "sha256": "c40705841b0e941c9bca6bb930d887aaf5d355a01acb8549f1290300449e47b3",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\results\\T1_sunburst\\result.json",
+      "new_relative_path": "历史排查/2026-11-04/results/T1_sunburst/result.json",
+      "bytes": 1384,
+      "sha256": "1439731851bd942eb07943e5cd0ee878a82b718c3b038be30ed639403bdf1b51",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\run_case.py",
+      "new_relative_path": "历史排查/2026-11-04/run_case.py",
+      "bytes": 4953,
+      "sha256": "59e9056f85e6e7f4bf6248db6064048fce5418f302bb94b9161d9e71a0baf01a",
+      "cache": false
+    },
+    {
+      "original_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\summary.json",
+      "new_relative_path": "历史排查/2026-11-04/summary.json",
+      "bytes": 1284,
+      "sha256": "5611c3c669dc95ffdb932e0acaab92e32e121b0937a5eeb5005fad5defe35714",
+      "cache": false
+    }
+  ],
+  "organized_on": "2026-11-08",
+  "archive_root": "E:\\GitHubProject\\AISkills\\skills\\cm-imagegen\\local-tests",
+  "retained_original_files": 264,
+  "retained_cache_files": 2,
+  "removed_cache_files": 0,
+  "cleanup_note": "两份 Python 缓存仅保留在本机，未纳入 Git 归档。",
+  "historical_path_note": "原始请求、响应与汇总 JSON 保留测试当时的绝对路径；依据 original_path → new_relative_path 查找迁移后的文件。",
+  "verification": {
+    "retained_file_bytes_unchanged": true,
+    "original_file_sha256_verified": 264,
+    "generated_images_submitted": false,
+    "local_links_checked": 110,
+    "broken_local_links": [],
+    "original_directories_absent": true
+  },
+  "git_archive_policy": {
+    "included_original_files": 262,
+    "excluded_cache_files": 2,
+    "excluded_patterns": [
+      "__pycache__/",
+      "*.py[cod]"
+    ],
+    "purpose": "用户指定将整理后的测试材料作为长期参考提交到 Git。"
+  }
+}

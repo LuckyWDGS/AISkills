@@ -1,0 +1,28 @@
+{
+  "case": "T1_D",
+  "requested_model": "gpt-image-2.6-flare",
+  "operation": "generate",
+  "started_at_utc": "2026-11-07T13:56:12.093652+00:00",
+  "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+  "prompt_sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+  "requested_size": [
+    2560,
+    1440
+  ],
+  "quality": "max",
+  "complexity": "omitted",
+  "seed": "not exposed by CLI",
+  "max_attempts": 1,
+  "reference_sha256": null,
+  "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+  "duration_seconds": 3.8,
+  "exit_code": 1,
+  "completed_at_utc": "2026-11-07T13:56:15.887020+00:00",
+  "result": {
+    "ok": false,
+    "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=503: HTTP 503 from cm Images API: type=api_error message=No available compatible accounts diagnostics=[error_kind=http_error_response status=503 content_type=application/json; charset=utf-8 content_length=75 body_bytes=75 body_class=json_like request_id=d4feecc1-52de-4169-b3fc-59c31b891ffb body_preview={\"error\":{\"message\":\"No available compatible accounts\",\"type\":\"api_error\"}}]"
+  },
+  "images": [],
+  "has_readable_image": false,
+  "meets_2k": false
+}

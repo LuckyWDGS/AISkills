@@ -1,0 +1,20 @@
+{
+  "case": "I0",
+  "requested_model": "gpt-image-2.6-sunburst",
+  "api": "images",
+  "quality": "max",
+  "complexity": "high",
+  "requested_size": "1024x1024",
+  "operation": "edit",
+  "prompt_file": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\I0_endpoint_probe.txt",
+  "prompt_sha256": "ca09bcf13ac0ebafe054cc708c5139d259f0c8b6b6bfdac21edae032ae85f595",
+  "references": [
+    {
+      "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\references\\edit_control.png",
+      "sha256": "736dab5f08fd57b6940148bd03677ee5fcf5d6e3169517bb4a0425138ceb06a1"
+    }
+  ],
+  "skill_script": "C:\\Users\\miaoyin\\.codex\\skills\\cm-imagegen\\scripts\\cm_image_gen.py",
+  "catalog_gate": "explicit user model tested despite stale/omitting catalog; no substitution",
+  "started_at_utc": "2026-11-05T01:45:39.024022+00:00"
+}

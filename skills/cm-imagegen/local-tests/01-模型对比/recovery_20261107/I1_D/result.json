@@ -1,0 +1,93 @@
+{
+  "case": "I1_D",
+  "requested_model": "gpt-image-2.6-flare",
+  "operation": "edit",
+  "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+  "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+  "requested_size": [
+    2560,
+    1440
+  ],
+  "quality": "max",
+  "complexity": "omitted",
+  "seed": "not exposed by CLI",
+  "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+  "started_at_utc": "2026-11-07T14:05:38.890899+00:00",
+  "max_attempts": 3,
+  "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+  "prior_result": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_D\\result.json",
+  "reason": "Renewed user request after terminal 503/no-image result; preserve same visual inputs.",
+  "duration_seconds": 91.91,
+  "exit_code": 1,
+  "completed_at_utc": "2026-11-07T14:07:10.793883+00:00",
+  "result": {
+    "ok": false,
+    "operation": "edit",
+    "requested_quality": "max",
+    "attempt_count": 1,
+    "requested_model": "gpt-image-2.6-flare",
+    "image_model": "gpt-image-2.6-flare",
+    "image_model_source": "cli",
+    "model_alias_applied": false,
+    "skill_primary_channel": "cm_image_gen_cli",
+    "execution_channel": "cm_image_gen_cli",
+    "api_channel": "configured_provider",
+    "api_provider": "cm",
+    "request_url": "https://209.87.95.5:18081/v1/images/edits",
+    "provider": "cm",
+    "base_url": "https://209.87.95.5:18081/v1",
+    "endpoint": "/images/edits",
+    "transport": "images_multipart",
+    "model": "gpt-image-2.6-flare",
+    "source_images": [
+      "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\references\\edit_control_2k.png"
+    ],
+    "paths": [
+      "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\I1_D.png"
+    ],
+    "usage": {
+      "input_tokens": 2025,
+      "input_tokens_details": {
+        "image_tokens": 1508,
+        "text_tokens": 517
+      },
+      "output_tokens": 4632,
+      "output_tokens_details": {
+        "image_tokens": 4632,
+        "text_tokens": 0
+      },
+      "total_tokens": 6657
+    },
+    "created": 1794060420,
+    "requested_size": "2560x1440",
+    "output_dimensions": [
+      "1672x941"
+    ],
+    "size_verified": false,
+    "size_validation_warnings": [
+      {
+        "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\I1_D.png",
+        "warning": "image_size_mismatch",
+        "expected": "2560x1440",
+        "actual": "1672x941"
+      }
+    ],
+    "size_validation_strict": true,
+    "size_validation_failed": true,
+    "error_kind": "image_size_mismatch"
+  },
+  "images": [
+    {
+      "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\I1_D.png",
+      "size": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "sha256": "410ebca71719c10bef593e526fc2ecce4df257df9191421d519f60113e0b0bf4",
+      "readable": true
+    }
+  ],
+  "has_readable_image": true,
+  "meets_2k": false
+}

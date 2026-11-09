@@ -1,0 +1,37 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cm-imagegen 参数与画幅验证</title><style>
+body{margin:0;background:#eef2f5;color:#172435;font:16px/1.65 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1400px;margin:36px auto;padding:0 24px}h1{font-size:32px;margin:0}.intro{max-width:1050px;color:#415366}table{border-collapse:collapse;width:100%;background:white;margin:24px 0}td,th{padding:12px;text-align:left;border-bottom:1px solid #e1e8ee}th{background:#172435;color:white}.pass{color:#15764f;font-weight:700}.fail{color:#a5472a;font-weight:700}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}article{background:white;border-radius:12px;padding:20px}h2{font-size:20px;margin:0 0 8px}article p{font-size:14px;color:#526275}img{display:block;max-width:100%;height:430px;object-fit:contain;margin:auto}pre{font:12px/1.6 monospace;white-space:pre-wrap;overflow-wrap:anywhere}details{margin-top:12px}.scroll{overflow-x:auto}@media(max-width:600px){main{padding:0 14px}.grid{grid-template-columns:1fr}img{height:auto;max-height:500px}}
+</style><main><h1>参数与画幅验证</h1><p class="intro">本轮使用 gpt-image-2.6-sunburst，quality=max、complexity=high，同一网关。每个案例只提交一次。前三个案例提示词完全一致，仅改变 size；追加案例单独检验明确画幅提示词。所有原图保持服务返回字节，未裁剪、缩放或转换格式。</p><p>仅改变 size 的三次请求均返回 1536×1024。明确写 1:1 后返回 1254×1254 方图；明确写 2:3 竖版后返回 1024×1536，符合目标。GIF 被当前请求通道以 HTTP 400 拒绝：尚未启用；SVG 请求实际返回 PNG，未获得矢量文件。</p><p>已接入 GIF/SVG、标注编辑、压缩、流式及相应校验。客户端支持与网关实测支持分别记录。</p><div class="scroll"><table><thead><tr><th>案例</th><th>请求尺寸</th><th>请求格式</th><th>实际尺寸</th><th>实际格式</th><th>画幅比例</th><th>精确尺寸/格式</th></tr></thead><tbody><tr><td>方图：只改变 size</td><td>1024x1024</td><td>png</td><td>1536x1024</td><td>png</td><td>不匹配</td><td class="fail">未通过</td></tr><tr><td>横图：只改变 size</td><td>1536x1024</td><td>png</td><td>1536x1024</td><td>png</td><td>匹配</td><td class="pass">通过</td></tr><tr><td>竖图：只改变 size</td><td>1024x1536</td><td>png</td><td>1536x1024</td><td>png</td><td>不匹配</td><td class="fail">未通过</td></tr><tr><td>GIF 动画</td><td>auto</td><td>gif</td><td>未返回可读文件</td><td>—</td><td>—</td><td class="fail">未通过</td></tr><tr><td>SVG 矢量</td><td>1024x1024</td><td>svg</td><td>1536x1024</td><td>png</td><td>—</td><td class="fail">未通过</td></tr><tr><td>方图：加入明确构图提示</td><td>1024x1024</td><td>png</td><td>1254x1254</td><td>png</td><td>匹配</td><td class="fail">未通过</td></tr><tr><td>竖图：加入明确构图提示</td><td>1024x1536</td><td>png</td><td>1024x1536</td><td>png</td><td>匹配</td><td class="pass">通过</td></tr></tbody></table></div><section class="grid"><article><h2>方图：只改变 size</h2><p>1024x1024 / png → 1536x1024 / png</p><a href="square/square.png" target="_blank"><img src="square/square.png" alt="方图：只改变 size"></a><details><summary>核查结果 · 55.53 秒</summary><pre>[
+  {
+    &quot;path&quot;: &quot;E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\square.png&quot;,
+    &quot;warning&quot;: &quot;image_size_mismatch&quot;,
+    &quot;expected&quot;: &quot;1024x1024&quot;,
+    &quot;actual&quot;: &quot;1536x1024&quot;
+  }
+]</pre></details></article><article><h2>横图：只改变 size</h2><p>1536x1024 / png → 1536x1024 / png</p><a href="landscape/landscape.png" target="_blank"><img src="landscape/landscape.png" alt="横图：只改变 size"></a><details><summary>核查结果 · 47.8 秒</summary><pre>文件格式与请求尺寸检查通过。</pre></details></article><article><h2>竖图：只改变 size</h2><p>1024x1536 / png → 1536x1024 / png</p><a href="portrait/portrait.png" target="_blank"><img src="portrait/portrait.png" alt="竖图：只改变 size"></a><details><summary>核查结果 · 55.28 秒</summary><pre>[
+  {
+    &quot;path&quot;: &quot;E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\portrait.png&quot;,
+    &quot;warning&quot;: &quot;image_size_mismatch&quot;,
+    &quot;expected&quot;: &quot;1024x1536&quot;,
+    &quot;actual&quot;: &quot;1536x1024&quot;
+  }
+]</pre></details></article><article><h2>GIF 动画</h2><p>auto / gif → 未返回可读文件 / —</p><details><summary>核查结果 · 2.11 秒</summary><pre>Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=400: HTTP 400 from cm Images API: type=invalid_request_error message=GIF output is not enabled for this request. diagnostics=[error_kind=http_error_response status=400 content_type=application/json; charset=utf-8 content_length=98 body_bytes=98 body_class=json_like request_id=7a49ba1b-9bc2-4913-a2e0-2a137ed83edf body_preview={&quot;error&quot;:{&quot;message&quot;:&quot;GIF output is not enabled for this request.&quot;,&quot;type&quot;:&quot;invalid_request_error&quot;}}]</pre></details></article><article><h2>SVG 矢量</h2><p>1024x1024 / svg → 1536x1024 / png</p><a href="svg/svg.png" target="_blank"><img src="svg/svg.png" alt="SVG 矢量"></a><details><summary>核查结果 · 34.19 秒</summary><pre>[
+  {
+    &quot;path&quot;: &quot;E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png&quot;,
+    &quot;warning&quot;: &quot;image_size_mismatch&quot;,
+    &quot;expected&quot;: &quot;1024x1024&quot;,
+    &quot;actual&quot;: &quot;1536x1024&quot;
+  },
+  {
+    &quot;path&quot;: &quot;E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png&quot;,
+    &quot;warning&quot;: &quot;output_format_mismatch&quot;,
+    &quot;expected&quot;: &quot;svg&quot;,
+    &quot;actual&quot;: &quot;png&quot;
+  }
+]</pre></details></article><article><h2>方图：加入明确构图提示</h2><p>1024x1024 / png → 1254x1254 / png</p><a href="prompt-shapes/square_prompt/square_prompt.png" target="_blank"><img src="prompt-shapes/square_prompt/square_prompt.png" alt="方图：加入明确构图提示"></a><details><summary>核查结果 · 58.12 秒</summary><pre>[
+  {
+    &quot;path&quot;: &quot;E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\square_prompt.png&quot;,
+    &quot;warning&quot;: &quot;image_size_mismatch&quot;,
+    &quot;expected&quot;: &quot;1024x1024&quot;,
+    &quot;actual&quot;: &quot;1254x1254&quot;
+  }
+]</pre></details></article><article><h2>竖图：加入明确构图提示</h2><p>1024x1536 / png → 1024x1536 / png</p><a href="prompt-shapes/portrait_prompt/portrait_prompt.png" target="_blank"><img src="prompt-shapes/portrait_prompt/portrait_prompt.png" alt="竖图：加入明确构图提示"></a><details><summary>核查结果 · 48.88 秒</summary><pre>文件格式与请求尺寸检查通过。</pre></details></article></section><p>点击图片打开未加工原图。具体请求和 CLI 输出保存在各案例目录的 request.json / stdout.json / stderr.txt。</p></main></html>

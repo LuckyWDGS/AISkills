@@ -48,3 +48,5 @@ PNG、JPEG、WebP 用于常规位图。GIF 需要所选模型的 GIF preview 权
 客户端会保留实际返回的格式；SVG 请求收到 PNG 会判定格式不符，单帧或重复帧 GIF 也不算成功。HTTP 200 或模型名称出现在目录里，都不能代替实际文件验收。普通尺寸可加 `--require-exact-size` 严格检查，4K 请求自动严格检查；不会用放大、裁剪或改扩展名伪造通过。
 
 安装和完整使用方法见 [中文使用说明](../../skills/cm-imagegen/README.zh-CN.md)，参数、互斥条件及方图／横图／竖图测试见 [格式与尺寸规则](../../skills/cm-imagegen/references/formats-and-sizes.md)。技能执行规则以 [SKILL.md](../../skills/cm-imagegen/SKILL.md) 为准。
+
+历史模型评分、画幅实测、SVG/GIF 与网关排查已集中保存在 [测试归档](../../skills/cm-imagegen/local-tests/README.md)，其中保留原图、提示词和请求记录。
