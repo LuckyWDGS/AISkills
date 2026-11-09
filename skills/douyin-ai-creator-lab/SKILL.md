@@ -11,6 +11,7 @@ description: Research Douyin and Bilibili AI-video works, authors' series, refer
 
 - 对标、主页、相似作者、广告筛除、跨平台比较、为什么高赞：读[案例研究](references/case-study-method.md)；音效/BGM研究按其声音字段记录，用户要求不影响工作时按后台研究方式执行。
 - 用户给喜欢的作品、要求更多样本或深挖作者其他作品：读[作者系列与原创转译](references/author-series-and-transfer.md)，从[案例库索引](references/case-library/index.md)检索现有证据，再补会改变判断的新样本；不要只解释用户给的几条。
+- 批量拆片、组织并行研究、维护案例库或沉淀本轮有效方法：读[研究执行与证据复核](references/research-execution-and-review.md)，沿时间轴追踪观看任务，核对实看记录、导出字段与汇总结论。
 - 按作者、方向、证据或实际标签找案例：运行 `python scripts/search_cases.py --summary`；按需用 `--author`、`--family`、`--tag`、`--grade`、`--query`、`--id`。案例快照不代表当前热度，原链接失效也不删除既有观察范围。
 - 研究原作标签、标题机制或准备接发布：读[标签与发布交接](references/tags-and-release-handoff.md)，区分实际标签、研究分类、建议标签和当天热点。
 - 回查作品时长、镜头约数、每房节奏或据此校准自己的片长：另读[时长与镜头核查](references/duration-and-shot-analysis.md)，分开可见切镜、空间段落、用途变化与生成单元。
@@ -25,6 +26,8 @@ description: Research Douyin and Bilibili AI-video works, authors' series, refer
 - 已确定成片发B站：读[B站投稿核验](references/bilibili-publishing.md)，核实际表单、双比例封面、AI声明和提交状态。研究或建立全流程不等于发布任何未确定的成片。
 
 在项目中先读AGENTS和当前进度。用户要求沉淀样本时，可将有出处、观察日期和证据范围的公开案例摘要纳入按需读取的案例库；完整竞品媒体、签名资源地址、原始网络请求、私有账号数据与发布记录留本地项目。Skill保留可迁移方法和精选公开证据，不把一个项目的画风、每镜时长或声音选择变成通则。
+
+研究或验片得到经过实际验证、可迁移的新方法时，将其补入本Skill对应参考或工具，并连接入口；先查重，写明适用条件、已知失败和复核方式。案例事实、待验证创意和通用方法分别保存，不只留在聊天或项目交接里，也不把一次成功扩成所有题材的硬规则。
 
 ## 研究到小样
 
