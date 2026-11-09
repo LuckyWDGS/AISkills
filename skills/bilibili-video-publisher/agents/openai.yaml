@@ -1,0 +1,4 @@
+interface:
+  display_name: "B站投稿助手"
+  short_description: "核验成片、填写标题简介分区标签、双比例封面与AI声明，填好投稿页交用户发布并核验BV号"
+  default_prompt: "使用 $bilibili-video-publisher 把这条已确定的成片准备为B站投稿：核账号与查重、上传、填写元数据、检查4:3与16:9封面和AI声明；填好后停下，由我审核并手动投稿。"
