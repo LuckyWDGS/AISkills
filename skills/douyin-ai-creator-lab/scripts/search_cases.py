@@ -26,12 +26,24 @@ def select_cases(works: list[dict], args: argparse.Namespace) -> list[dict]:
             continue
         if args.grade and work["evidence_grade"] != args.grade:
             continue
+        if args.dense and not work.get("dense_review"):
+            continue
+        if args.role and args.role not in work.get("sample_roles", []):
+            continue
+        if args.layer and not contains(work.get("research_layer"), args.layer):
+            continue
+        if args.content_format and not contains(work.get("content_format"), args.content_format):
+            continue
+        if args.task and not any(contains(t, args.task) for t in work.get("viewer_tasks") or []):
+            continue
+        if args.freshness and work.get("freshness_current") != args.freshness:
+            continue
         if args.family and not any(contains(f, args.family) for f in work["families"]):
             continue
         if args.tag and not any(contains(t, args.tag.lstrip("#")) for t in work.get("actual_hashtags") or []):
             continue
         if args.query:
-            text = " ".join(str(work.get(k) or "") for k in ("title_excerpt", "view_scope", "visual_observation"))
+            text = " ".join(str(work.get(k) or "") for k in ("title_excerpt", "view_scope", "visual_observation", "sample_role_note", "content_format", "viewer_tasks"))
             if not contains(text, args.query):
                 continue
         selected.append(work)
@@ -45,15 +57,24 @@ def main() -> int:
     parser.add_argument("--author", help="Author name substring")
     parser.add_argument("--platform", choices=("douyin", "bilibili"))
     parser.add_argument("--grade", choices=("A", "B", "C", "D"))
+    parser.add_argument("--dense", action="store_true", help="Only works with completed full 4fps visual-review records; B alone also includes sparse samples")
+    parser.add_argument("--role", choices=("user_seed", "ordinary_control"), help="Recorded sampling role; missing role is not inferred")
+    parser.add_argument("--layer", help="Research layer, e.g. finished_content_reference or production_tutorial")
+    parser.add_argument("--format", dest="content_format", help="Dynamically established content format substring; unclassified records remain unclassified")
+    parser.add_argument("--task", help="Dynamically established viewing task, e.g. choose/enter/stay/arrive/learn")
+    parser.add_argument("--freshness", choices=("within_7_calendar_days", "within_30_calendar_days_outside_7", "historical", "unknown", "date_unverified"), help="Publication-date group at the snapshot's recorded as-of date, not today's popularity")
     parser.add_argument("--family", help="Research classification substring, not an author hashtag")
     parser.add_argument("--tag", help="Observed author hashtag substring")
     parser.add_argument("--query", help="Search title and documented visual scope")
     parser.add_argument("--limit", type=int, default=12, help="Maximum printed results; 0 prints all")
     parser.add_argument("--summary", action="store_true", help="Summarize matching records")
+    parser.add_argument("--summary-limit", type=int, default=20, help="Maximum authors/tags printed per summary group; 0 prints all, complete matched count is unchanged")
     parser.add_argument("--json", action="store_true", help="Return full matching records as JSON")
     args = parser.parse_args()
     if args.limit < 0:
         parser.error("--limit must be nonnegative")
+    if args.summary_limit < 0:
+        parser.error("--summary-limit must be nonnegative")
     try:
         data = json.loads(args.library.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
@@ -70,10 +91,21 @@ def main() -> int:
         "note": "Dated research snapshot. Counts are not completed watches or current popularity.",
     }
     if args.summary:
+        def capped(counter: Counter) -> dict:
+            return dict(counter.most_common(args.summary_limit or None))
         context["evidence_grades"] = dict(sorted(Counter(w["evidence_grade"] for w in selected).items()))
-        context["authors"] = dict(Counter(w.get("author") or "unknown" for w in selected).most_common())
+        author_counts = Counter(w.get("author") or "unknown" for w in selected)
+        context["authors"] = capped(author_counts)
+        context["recorded_canonical_profiles"] = len({w["author_url"].split("?")[0].rstrip("/") for w in selected if w.get("author_url")})
+        context["dense_4fps_reviewed_works"] = sum(bool(w.get("dense_review")) for w in selected)
+        context["research_layers"] = dict(Counter(w.get("research_layer") or "unclassified" for w in selected))
+        context["content_formats"] = dict(Counter(w.get("content_format") or "unclassified" for w in selected))
+        context["viewer_tasks"] = dict(Counter(t for w in selected for t in w.get("viewer_tasks") or []))
+        context["sample_roles"] = dict(Counter(t for w in selected for t in w.get("sample_roles") or []))
+        context["freshness_at_recorded_as_of"] = dict(Counter(w.get("freshness_current") or "not_recomputed" for w in selected))
         context["research_families"] = dict(Counter(f for w in selected for f in w["families"]).most_common())
-        context["actual_tag_work_counts"] = dict(Counter(t for w in selected for t in set(w.get("actual_hashtags") or [])).most_common())
+        tag_counts = Counter(t for w in selected for t in set(w.get("actual_hashtags") or []))
+        context["actual_tag_work_counts"] = capped(tag_counts)
         tag_profiles: dict[str, set[str]] = {}
         tag_names: dict[str, set[str]] = {}
         for work in selected:
@@ -82,8 +114,9 @@ def main() -> int:
                     tag_profiles.setdefault(tag, set()).add(work["author_url"].split("?")[0].rstrip("/"))
                 if work.get("author"):
                     tag_names.setdefault(tag, set()).add(work["author"])
-        context["actual_tag_profile_counts"] = {t: len(v) for t, v in tag_profiles.items()}
-        context["actual_tag_display_name_counts"] = {t: len(v) for t, v in tag_names.items()}
+        context["actual_tag_profile_counts"] = {t: len(tag_profiles.get(t, set())) for t in context["actual_tag_work_counts"]}
+        context["actual_tag_display_name_counts"] = {t: len(tag_names.get(t, set())) for t in context["actual_tag_work_counts"]}
+        context["summary_groups"] = {"limit":args.summary_limit, "author_groups_total":len(author_counts), "author_groups_shown":len(context["authors"]), "tag_groups_total":len(tag_counts), "tag_groups_shown":len(context["actual_tag_work_counts"]), "expand_all":"--summary-limit 0"}
         context["tag_coverage_unique_works"] = sum(w.get("actual_hashtags") is not None for w in selected)
         context["tag_note"] = "Sample-library usage only; not platform search volume or recommendation weight."
         print(json.dumps(context, ensure_ascii=False, indent=2))
@@ -99,6 +132,12 @@ def main() -> int:
         print(work["title_excerpt"])
         print(work["url"])
         print(f"Research families: {', '.join(work['families'])}")
+        dense = work.get("dense_review")
+        if dense:
+            sample_count = dense.get("sample_count", dense.get("reviewed_sample_count"))
+            print(f"Visual depth: full 4fps temporal samples inspected; {sample_count} samples / {len(dense['reviewed_sheets'])} sheets; not continuous audiovisual viewing")
+        else:
+            print("Visual depth: no completed full 4fps review; refer to recorded scope")
         print(f"View scope: {work['view_scope']}; audio: {work['audio_review']}")
         tags = work.get("actual_hashtags")
         print("Observed hashtags: " + ("not collected" if tags is None else ", ".join(tags) or "none found in recorded scope"))

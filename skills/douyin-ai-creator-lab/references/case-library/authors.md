@@ -1,6 +1,6 @@
 # 作者系列与普通对照
 
-快照2026-11-08。这里的系列归纳是局部样本判断；重点视频实际范围见[密审](seed-studies.md)，其余C级只能分析标题和可见元数据。所有声音均未直接听审。
+基线快照2026-11-08，以下数量保留该批历史口径；当前数量从[索引](index.md)查询，新增主页与普通动态对照见[第二轮作者](wave2-authors.md)。这里的系列归纳是局部样本判断；重点视频实际范围见[密审](seed-studies.md)，其余C级只能分析标题和可见元数据。所有声音均未直接听审。
 ## 𝘼𝙞𝙨𝙢𝙧
 
 [已核主页](https://www.douyin.com/user/MS4wLjABAAAAj_D6-0oHEGESl4NCLKzlilg4O9SnoqX92ULgegXGTZ8WLlDvCWG7ZWzddfRdxu03)；库内75条。
