@@ -4,12 +4,45 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from datetime import date, timedelta
 import json
 from pathlib import Path
+import re
 import sys
 
 
 DEFAULT_LIBRARY = Path(__file__).resolve().parents[1] / "references" / "case-library" / "cases.json"
+
+
+def as_of_date(value: str) -> date:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise argparse.ArgumentTypeError("use a valid YYYY-MM-DD date")
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("use a valid YYYY-MM-DD date") from exc
+
+
+def freshness_on(work: dict, as_of: date) -> str:
+    """Reclassify full displayed calendar dates; never infer a year or timezone."""
+    raw = work.get("published_at_raw")
+    if not raw:
+        return "unknown"
+    match = re.search(r"(?<!\d)(\d{4})[-年](\d{1,2})[-月](\d{1,2})(?:日)?(?!\d)", str(raw))
+    if not match:
+        return "date_unverified"
+    try:
+        published = date(*(int(part) for part in match.groups()))
+    except ValueError:
+        return "date_unverified"
+    age = (as_of - published).days
+    if age < 0:
+        return "future_date"
+    if age <= 6:
+        return "within_7_calendar_days"
+    if age <= 29:
+        return "within_30_calendar_days_outside_7"
+    return "historical"
 
 
 def select_cases(works: list[dict], args: argparse.Namespace) -> list[dict]:
@@ -28,7 +61,7 @@ def select_cases(works: list[dict], args: argparse.Namespace) -> list[dict]:
             continue
         if args.dense and not work.get("dense_review"):
             continue
-        if args.role and args.role not in work.get("sample_roles", []):
+        if args.role and args.role not in (work.get("sample_roles") or []):
             continue
         if args.layer and not contains(work.get("research_layer"), args.layer):
             continue
@@ -62,7 +95,8 @@ def main() -> int:
     parser.add_argument("--layer", help="Research layer, e.g. finished_content_reference or production_tutorial")
     parser.add_argument("--format", dest="content_format", help="Dynamically established content format substring; unclassified records remain unclassified")
     parser.add_argument("--task", help="Dynamically established viewing task, e.g. choose/enter/stay/arrive/learn")
-    parser.add_argument("--freshness", choices=("within_7_calendar_days", "within_30_calendar_days_outside_7", "historical", "unknown", "date_unverified"), help="Publication-date group at the snapshot's recorded as-of date, not today's popularity")
+    parser.add_argument("--as-of", type=as_of_date, help="Recompute calendar windows from full displayed publication dates without changing the library or refreshing metrics")
+    parser.add_argument("--freshness", choices=("within_7_calendar_days", "within_30_calendar_days_outside_7", "historical", "unknown", "date_unverified", "future_date"), help="Publication-date group at --as-of, or the library's recorded as-of if omitted; not today's popularity")
     parser.add_argument("--family", help="Research classification substring, not an author hashtag")
     parser.add_argument("--tag", help="Observed author hashtag substring")
     parser.add_argument("--query", help="Search title and documented visual scope")
@@ -83,13 +117,20 @@ def main() -> int:
     keys = [(w["platform"], w["work_id"]) for w in works]
     if len(set(keys)) != len(keys):
         parser.exit(2, "Duplicate platform/work IDs in library\n")
+    if args.as_of:
+        works = [dict(w, freshness_current=freshness_on(w, args.as_of), freshness_current_as_of=args.as_of.isoformat()) for w in works]
     selected = select_cases(works, args)
     context = {
         "snapshot_date": data["snapshot_date"],
         "timezone": data["timezone"],
         "matched_unique_works": len(selected),
+        "platform_counts": dict(Counter(w["platform"] for w in selected)),
+        "freshness_query_as_of": args.as_of.isoformat() if args.as_of else None,
+        "freshness_query_basis": "full displayed calendar date; no timezone conversion, relative-date inference or network refresh" if args.as_of else "recorded library groups; consult freshness_current_as_of for each record",
         "note": "Dated research snapshot. Counts are not completed watches or current popularity.",
     }
+    if args.as_of:
+        context["calendar_windows"] = {"last7_inclusive": [(args.as_of - timedelta(days=6)).isoformat(), args.as_of.isoformat()], "last30_inclusive": [(args.as_of - timedelta(days=29)).isoformat(), args.as_of.isoformat()], "publication_timezone": "not inferred"}
     if args.summary:
         def capped(counter: Counter) -> dict:
             return dict(counter.most_common(args.summary_limit or None))
@@ -102,7 +143,8 @@ def main() -> int:
         context["content_formats"] = dict(Counter(w.get("content_format") or "unclassified" for w in selected))
         context["viewer_tasks"] = dict(Counter(t for w in selected for t in w.get("viewer_tasks") or []))
         context["sample_roles"] = dict(Counter(t for w in selected for t in w.get("sample_roles") or []))
-        context["freshness_at_recorded_as_of"] = dict(Counter(w.get("freshness_current") or "not_recomputed" for w in selected))
+        freshness_key = "freshness_at_query_as_of" if args.as_of else "freshness_at_recorded_as_of"
+        context[freshness_key] = dict(Counter(w.get("freshness_current") or "not_recomputed" for w in selected))
         context["research_families"] = dict(Counter(f for w in selected for f in w["families"]).most_common())
         tag_counts = Counter(t for w in selected for t in set(w.get("actual_hashtags") or []))
         context["actual_tag_work_counts"] = capped(tag_counts)
@@ -127,6 +169,8 @@ def main() -> int:
         return 0
     print(f"Snapshot {data['snapshot_date']} ({data['timezone']}); {len(selected)} matches, showing {len(shown)}.")
     print(context["note"])
+    if args.as_of:
+        print(f"Publication windows recomputed as of {args.as_of}; metrics and trend data were not refreshed.")
     for work in shown:
         print(f"\n[{work['evidence_grade']}] {work.get('author') or 'unknown'} | {work['work_id']}")
         print(work["title_excerpt"])
