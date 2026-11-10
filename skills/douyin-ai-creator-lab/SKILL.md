@@ -15,6 +15,7 @@ description: Research Douyin and Bilibili AI-video works, authors' series, refer
 - 按作者、方向、证据或实际标签找案例：运行 `python -X utf8 scripts/search_cases.py --summary`；按需用 `--author/--family/--tag/--grade/--query/--id`，研究层、观看任务、时效和密审对照筛选见[案例库](references/case-library/index.md)。案例快照不代表当前热度，原链接失效也不删除既有观察范围。
 - 研究原作标签、标题机制或准备接发布：读[标签与发布交接](references/tags-and-release-handoff.md)，区分实际标签、研究分类、建议标签和当天热点。
 - 抖音低播放、创作当天热点复核、千条样本或方向调整：读[热点与作品表现复核](references/trend-and-performance-review.md)，先核权限/统计口径，再按观看意图、近期对照与真实实片决定试验；不要用历史全库数量冒充当前热门。
+- 学习抖音官方课程、把经验转成创作检查：读[课程实读与迁移](references/official-course-learning.md)；历史方法与近月市场证据分开，官方发布与讲师个人经验分开。
 - 回查作品时长、镜头约数、每房节奏或据此校准自己的片长：另读[时长与镜头核查](references/duration-and-shot-analysis.md)，分开可见切镜、空间段落、用途变化与生成单元。
 - 每秒3–5帧、逐帧拆解或关键切点复核：按[密采样方法](references/duration-and-shot-analysis.md#每秒35帧的密采样)对真实源片默认取4fps并逐页实看，疑点补原帧；产表和实际检查分别登记。
 - 不知方向、给参考图/提示词、首片、验片或复盘：读[小样与反馈](references/pilot-and-feedback.md)。
