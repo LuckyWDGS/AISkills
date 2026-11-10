@@ -4,7 +4,7 @@ Personal Codex skills managed as a single repository.
 
 ## Quick skill picker
 
-This repository contains 17 Codex skill packages. You can simply describe the
+This repository contains 18 Codex skill packages. You can simply describe the
 task in natural language; Codex selects a matching skill when available. For
 an explicit request, write `$<skill-name>` in the prompt, for example
 `$unreal-engine-mcp inspect the open UE 5.8 editor and report PIE state`.
@@ -32,8 +32,12 @@ Choose by intent:
   [vps-proxy-deploy](skills/vps-proxy-deploy/SKILL.md).
 - Compile screenplay director packages into video prompts with
   [ai-video-prompt-director](skills/ai-video-prompt-director/SKILL.md).
-- Prepare and publish a specifically authorized Xiaohongshu note with
+- Prepare and publish a specifically authorized Xiaohongshu note, or review
+  note performance read-only, with
   [xiaohongshu-content-publisher](skills/xiaohongshu-content-publisher/SKILL.md).
+- Prepare and publish a specifically authorized Toutiao image article (body
+  images plus independent three-image cover), archive it, or review it
+  read-only with [toutiao-content-publisher](skills/toutiao-content-publisher/SKILL.md).
 
 See the [中文技能目录](docs/zh/README.md) for a per-skill purpose, use case,
 recommended combination, and copyable example prompt.

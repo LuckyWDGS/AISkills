@@ -1,6 +1,6 @@
 # Skills 中文说明与快速选择
 
-这里是仓库内 17 个 Skill 包的用户入口。每个 Skill 都说明三件事：它解决
+这里是仓库内 18 个 Skill 包的用户入口。每个 Skill 都说明三件事：它解决
 什么问题、什么时候值得用、以及可以直接复制的开始方式。文档只做解释，
 真正的触发规则和安全边界仍以对应 `skills/<name>/SKILL.md` 为准。
 
@@ -30,6 +30,7 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
   `unreal-material-artist`；Niagara：`niagara-vfx-artist`。
 - 抖音 AI 内容包装、发布和复盘：`douyin-ai-publisher`；人像服装配方库需点名 `portrait-recipe-studio`。
 - 抖音 AI 创作者方向、对标拆片与原创小样：`douyin-ai-creator-lab`，实际发布再接 `douyin-ai-publisher`。
+- 小红书图文/视频笔记发布与只读复盘：`xiaohongshu-content-publisher`；今日头条图文文章（正文插图、三图封面）发布与只读复盘：`toutiao-content-publisher`。两者各自查重与授权，不互借原创、封面或活动规则。
 - 自有 VPS 代理节点、订阅与分流排障：`vps-proxy-deploy`。
 
 ## 技能总览
@@ -49,7 +50,8 @@ $feature-experience 规划一个带加载、空态和错误态的搜索功能；
 | [cm-imagegen](./cm-imagegen.md) | 常规生图、图生图、改图、UI mockup、海报、产品图和批量素材 | 需要直接生成或编辑图片，且没有指定其他图片平台 | `$cm-imagegen 生成一张俯视角科幻竞技场地图概念图` |
 | [image-generation-director](./image-generation-director.md) | 做创意方向、Prompt 修复、风格锁定、趋势选题和图片转视频规划 | 画面方向不稳定，或要把一个视觉想法扩展成内容/视频方案 | `$image-generation-director 保留这张图的服装和构图，重写成可用 prompt` |
 | [ai-video-prompt-director](./ai-video-prompt-director.md) | 将已确定的导演包编译成可复制视频提示词，按需适配 H3/Seedance | 已有剧情、镜头与参考，需要核对空间、动作、对白和声音 | `$ai-video-prompt-director 按已确定的导演包整理 Seedance 提示词` |
-| [xiaohongshu-content-publisher](./xiaohongshu-content-publisher.md) | 小红书图文/视频包装、上传、授权发布与历史归档 | 需要准备一条笔记或整理已有发布记录 | `$xiaohongshu-content-publisher 整理这条笔记的素材和文案，先保存草稿` |
+| [xiaohongshu-content-publisher](./xiaohongshu-content-publisher.md) | 小红书图文/视频包装、上传、授权发布、历史归档与只读效果复盘 | 需要准备一条笔记、整理已有发布记录或看之前笔记的数据 | `$xiaohongshu-content-publisher 整理这条笔记的素材和文案，先保存草稿` |
+| [toutiao-content-publisher](./toutiao-content-publisher.md) | 头条号图文文章的正文插图、独立三图封面、广告收益/AI/首发设置、授权发布、归档与只读复盘 | 要发一篇头条图文、整理头条发布记录或看文章数据 | `$toutiao-content-publisher 把这组六图整理成头条文章并保存草稿，暂不发布` |
 | [douyin-ai-publisher](./douyin-ai-publisher.md) | 分析素材、准备文案/封面/话题、执行授权发布并复盘 | 要发布或准备抖音 AI 视频、图文和口播内容 | `$douyin-ai-publisher 分析这个视频并准备标题、封面和相关话题，暂不发布` |
 | [douyin-ai-creator-lab](../../skills/douyin-ai-creator-lab/SKILL.md) | 深挖作者系列、案例与标签，区分广告和实看证据，形成原创试验、制作与反馈 | 喜欢一组 AI 视频，想扩作者其他作品、检索案例并准备自己的方向 | `$douyin-ai-creator-lab 深挖这些作者其他系列与普通作品，补充案例库和实际标签，给我原创试验建议` |
 | [portrait-recipe-studio](./portrait-recipe-studio.md) | 人像与服装配方、参考审查和面容设计 | 明确需要使用这套提示词库；仅点名调用 | `$portrait-recipe-studio 根据参考选择合适的人像服装配方，先整理提示词` |
