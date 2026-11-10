@@ -1,6 +1,6 @@
 ---
 name: xiaohongshu-content-publisher
-description: Prepare, upload and publish Xiaohongshu image-text or video notes from approved local media through browser MCP, or archive existing release records offline. Use for 小红书发布、星座图文、视频笔记、发布包、发布归档 and upload troubleshooting.
+description: Prepare, upload and publish Xiaohongshu image-text or video notes from approved local media, archive release records offline, or review note performance read-only. Use for 小红书发布、星座图文、视频笔记、发布归档、效果复盘 and upload troubleshooting.
 ---
 
 # 小红书发布助手
@@ -14,18 +14,21 @@ description: Prepare, upload and publish Xiaohongshu image-text or video notes f
 - 仅要求整理历史发布资料、归档或同步 GitHub 时走离线路径：复用已有证据与媒体原件，不进入上传、创建草稿或修改线上笔记。按 [归档验收](references/release-verification.md#离线归档与-github-验收) 整理并核对。
 - 准备新笔记、预览或审核默认做到草稿；“帮我发布这条／下一个星座”等明确指令，在账号、当前内容和媒体已确定后可覆盖最终一次提交。已有授权时不要因旧版 `review-only` 默认再索要同一许可。内容目标变化或未获发布授权时交接草稿。
 - 每次发布指令只适用于本次确定的内容，不扩展为持续发布、定时、付费推广、商业挂载、修改主页或操作其他账号。只供参考的图片不自动成为公开媒体。
+- 用户说已自己发布时，立即停止上传与提交；需要时只读核验，记为用户自行发布，不再生成同稿草稿。
 
 ## 执行入口
 
-先区分“离线整理已有发布资料”和“准备／执行新发布”。离线任务完成归档验收即可；以下浏览器流程只用于用户要求的发布准备或执行任务。
+先区分“离线整理”“只读复盘”和“准备／执行新发布”。离线任务完成归档验收即可；检查阅读、收藏、涨粉或“之前发得如何”时直接使用[只读效果复盘](references/performance-review.md)，不走上传、草稿或提交步骤。以下流程只用于用户要求的发布准备或执行任务。
 
 1. 读取项目规则和本次发布记录，确认平台、账号、图文／视频、素材与授权。用户说“下一个”时先查当前笔记管理和已有草稿，避免根据旧进度重复发布。
 2. 建立本地发布包：源文件及哈希、标题正文、媒体顺序／封面、声明、话题活动、当前状态。媒体保持原件；仓库记录使用相对路径，临时上传路径不作为长期依赖。
-3. 按用户偏好使用 Chrome DevTools MCP 控制浏览器。先读当前工具 schema 和页面 snapshot，核对真实站点及可见账号，再走页面自己的文件输入。图文执行 [MCP 上传与图文验收](references/mcp-image-flow.md)；视频另读 [视频通道](references/video-flow.md)。
+3. 按用户偏好使用 Chrome DevTools MCP 控制浏览器（不可用时见本节末尾）。先读当前工具 schema 和页面 snapshot，核对真实站点及可见账号，再走页面自己的文件输入。图文执行 [MCP 上传与图文验收](references/mcp-image-flow.md)；视频另读 [视频通道](references/video-flow.md)。
 4. 写兑现首图的标题与正文；按 [内容与页面设置](references/content-settings.md) 动态选话题、有效活动，并核对原创、AI、可见范围及时间。
 5. 看手机预览，保存草稿，整页刷新后从相应草稿分类重新打开。逐项核对媒体和设置，记录实际通过的证据；不把浏览器本地草稿图片当作远程上传证明。
 6. 有本次发布授权且验收通过时，使用最新页面的真实最终按钮提交一次。没有授权时交付可复核草稿。提交超时先查结果，不重复点击。
 7. 按 [提交核验与发布记录](references/release-verification.md) 获取真实作品 ID，区分审核中、已发布和失败；核对发布后的媒体，再更新项目进度。
+
+当前环境没有 Chrome DevTools MCP 时，可按用户浏览器偏好使用另一个实际可用、支持相应页面操作的浏览器工具，并遵守它的能力边界；没有上传能力就交接发布包。不得猜上传 API、照抄旧工具 UID 或迁移登录状态。
 
 ## 停止与恢复
 
@@ -38,4 +41,6 @@ description: Prepare, upload and publish Xiaohongshu image-text or video notes f
 
 2026-10-10 的六图笔记已实测 MCP 上传、草稿刷新重开、原创与 AI、动态话题活动、一次提交、已发布列表及六张远程图加载。视频通道提供独立核验流程；本次图文证据不代表小红书视频最终提交或声音已实测。页面规格、活动、UID 与工具参数每次重新读取，不把历史值当作永久能力。
 
-在本项目仓库可选复核 `剧本库/十二星座庇护所/05_发布归档/小红书/2026-10-10_天蝎_三方案对比/README.md` 与同目录 `manifest.json`。这些路径以当前项目仓库根目录为基准，仅是历史证据入口，不是安装目录依赖；其他项目没有该案例也可使用本 Skill。
+在 MyJuBen 项目仓库可选复核 `剧本库/十二星座庇护所/05_发布归档/小红书/2026-10-10_天蝎_三方案对比/README.md` 与同目录 `manifest.json`。这些路径以该项目根目录为基准，仅是历史证据入口，不是安装依赖；本 Skill 源码在 AISkills 维护，其他项目没有该案例也可使用。
+
+只读效果复盘不继承发布授权，也不把图文与视频合并统计。后台指标和账号资料保留在项目指定的本地目录，不写入可迁移 Skill 或默认推送 GitHub。

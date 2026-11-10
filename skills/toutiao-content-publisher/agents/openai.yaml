@@ -1,0 +1,4 @@
+interface:
+  display_name: "今日头条发布助手"
+  short_description: "头条号图文：正文插图与三图封面核验、按授权发布、离线归档与只读复盘"
+  default_prompt: "使用 $toutiao-content-publisher 整理我的今日头条图文素材，按本次请求准备、发布或只读复盘，并保留真实状态。"
