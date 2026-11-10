@@ -202,6 +202,11 @@ def run_checks(manifest, pages) -> dict:
         page_id = entry["page"].id
         record = compose.get(page_id)
         if entry["page"].bubbles:
+            if record and record.get("errors"):
+                # The last compose run failed for this page, so the file on disk is an older version.
+                errors.extend(f"{page_id}: compose failed, page on disk is not the current manifest: {e}"
+                              for e in record["errors"])
+                continue
             if not record or record.get("sha256") != entry["sha256"] or not record.get("bubbles"):
                 warnings.append(f"{page_id}: compose report missing or stale for this file; bubble font/contrast not checked")
                 continue
@@ -209,7 +214,6 @@ def run_checks(manifest, pages) -> dict:
                 fonts.append(bubble["font_px_at_reading_width"])
                 for w in bubble.get("warnings", []):
                     warnings.append(f"{page_id} bubble[{bubble['index']}]: {w}")
-            errors.extend(f"{page_id}: {e}" for e in record.get("errors", []))
 
     last = manifest.pages[-1]
     if not any(marker in b.text for b in last.bubbles for marker in ENDING_MARKERS):
@@ -231,7 +235,15 @@ def hash_manifest(manifest, pages, out_dir: Path, previous: Path | None) -> dict
     if source and source.is_file():
         prev_data = json.loads(source.read_text(encoding="utf-8"))
         if source == current_path:
-            shutil.copy2(current_path, out_dir / "hashes.prev.json")
+            now = {pid: e.get("sha256") for pid, e in pages.items()}
+            before = {pid: p.get("sha256") for pid, p in prev_data.get("pages", {}).items()}
+            kept = out_dir / "hashes.prev.json"
+            if now == before and prev_data.get("order") == list(pages) and kept.is_file():
+                # Nothing changed since the last run: keep the older baseline so `recheck` survives a rerun.
+                prev_data = json.loads(kept.read_text(encoding="utf-8"))
+                source = kept
+            else:
+                shutil.copy2(current_path, kept)
     current = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "manifest": str(manifest.path),

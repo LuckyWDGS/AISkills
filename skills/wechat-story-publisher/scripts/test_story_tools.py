@@ -80,6 +80,31 @@ class ManifestTests(StoryFixture):
         self.assertEqual(self.data["pages"][0]["base"], "base/p01.png")
         self.assertEqual(self.data["pages"][0]["image"], "pages/p01.png")
 
+    def test_init_without_base_keeps_the_real_file_names(self):
+        finals = self.root / "finals"
+        finals.mkdir()
+        Image.new("RGB", (390, 600)).save(finals / "p01.jpg")
+        out_path = self.root / "finals.json"
+        self.assertEqual(run(sm.main, "init", "--pages-dir", str(finals), "--out", str(out_path))[0], 0)
+        self.assertEqual(json.loads(out_path.read_text(encoding="utf-8"))["pages"][0]["image"], "finals/p01.jpg")
+        self.assertEqual(run(sm.main, "validate", "--manifest", str(out_path))[0], 0)
+
+    def test_validate_exit_code(self):
+        # Before composing, a missing final page with a base is expected, not an error.
+        code, out, _ = run(sm.main, "validate", "--manifest", str(self.manifest_path))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(json.loads(out)["not_composed_yet"], ["p01", "p02", "p03"])
+        (self.root / "base" / "p02.png").unlink()
+        code, out, _ = run(sm.main, "validate", "--manifest", str(self.manifest_path))
+        self.assertEqual(code, 1)
+        self.assertFalse(json.loads(out)["ok"])
+        self.data["settings"]["max_pages"] = 2
+        self.data["pages"][1].pop("base")
+        self.save()
+        result = json.loads(run(sm.main, "validate", "--manifest", str(self.manifest_path))[1])
+        self.assertTrue(result["over_page_limit"])
+        self.assertEqual(result["missing_files"][0]["field"], "image")
+
     def test_validation_errors(self):
         cases = (
             ({"speaker": "A", "text": "x", "box": [0.1, 0.1, 0.2, 0.1]}, "tail"),
@@ -204,6 +229,32 @@ class QaPreviewTests(StoryFixture):
         im.save(self.root / "pages" / "p01.png")
         _, out, _ = run(qa.main, "--manifest", str(self.manifest_path), "--only", "check")
         self.assertIn("p01: compose report missing or stale", json.dumps(json.loads(out)["warnings"]))
+
+    def test_recheck_survives_a_rerun_without_changes(self):
+        self.assertEqual(run(cb.main, "--manifest", str(self.manifest_path))[0], 0)
+        run(qa.main, "--manifest", str(self.manifest_path), "--only", "hashes")
+        Image.new("RGB", (390, 600), (9, 9, 9)).save(self.root / "pages" / "p03.png")
+        for _ in range(2):
+            _, out, _ = run(qa.main, "--manifest", str(self.manifest_path), "--only", "hashes")
+            self.assertEqual(json.loads(out)["recheck"], ["p02", "p03"])
+
+    def test_failed_compose_is_a_qa_error_and_dry_run_keeps_the_report(self):
+        self.data["pages"][0]["bubbles"] = [self.bubble()]
+        self.save()
+        self.assertEqual(run(cb.main, "--manifest", str(self.manifest_path))[0], 0)
+        self.assertEqual(run(cb.main, "--manifest", str(self.manifest_path), "--dry-run")[0], 0)
+        self.assertTrue((self.root / "qa" / "compose-report.dry-run.json").is_file())
+        code, out, _ = run(qa.main, "--manifest", str(self.manifest_path), "--only", "check")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("stale", out)
+
+        # The new text overflows: compose refuses to write, the old p01 stays on disk, QA must fail.
+        self.data["pages"][0]["bubbles"] = [self.bubble(text="A VERY LONG LINE " * 12, box=[0.1, 0.1, 0.2, 0.04])]
+        self.save()
+        self.assertEqual(run(cb.main, "--manifest", str(self.manifest_path))[0], 1)
+        code, out, _ = run(qa.main, "--manifest", str(self.manifest_path), "--only", "check")
+        self.assertEqual(code, 1)
+        self.assertIn("compose failed", json.dumps(json.loads(out)["errors"]))
 
     def test_page_limit_and_missing_files_are_errors(self):
         self.data["settings"]["max_pages"] = 2

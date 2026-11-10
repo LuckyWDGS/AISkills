@@ -235,7 +235,9 @@ def init_manifest(args) -> int:
 
     pages = []
     for image in images:
-        entry = {"id": image.stem, "image": rel(pages_dir / f"{image.stem}.png"), "bubbles": [], "review_regions": []}
+        # With base images the final page is composited as PNG; without them the listed file is the final page.
+        final = pages_dir / f"{image.stem}.png" if base_dir else image
+        entry = {"id": image.stem, "image": rel(final), "bubbles": [], "review_regions": []}
         if base_dir:
             entry["base"] = rel(image)
         pages.append(entry)
@@ -247,22 +249,27 @@ def init_manifest(args) -> int:
 
 def validate(args) -> int:
     manifest = load_manifest(args.manifest)
-    missing = []
+    missing, not_composed = [], []
     for page in manifest.pages:
         if page.base is not None and not page.base.is_file():
             missing.append({"page": page.id, "field": "base", "path": str(page.base)})
         if not page.image.is_file():
-            missing.append({"page": page.id, "field": "image", "path": str(page.image)})
+            if page.base is not None:
+                not_composed.append(page.id)  # expected before compose_bubbles.py has run
+            else:
+                missing.append({"page": page.id, "field": "image", "path": str(page.image)})
+    over_limit = len(manifest.pages) > manifest.setting("max_pages")
     result = {
-        "ok": True,
+        "ok": not missing and not over_limit,
         "manifest": str(manifest.path),
         "pages": len(manifest.pages),
         "bubbles": sum(len(p.bubbles) for p in manifest.pages),
         "missing_files": missing,
-        "over_page_limit": len(manifest.pages) > manifest.setting("max_pages"),
+        "not_composed_yet": not_composed,
+        "over_page_limit": over_limit,
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
+    return 0 if result["ok"] else 1
 
 
 def main(argv=None) -> int:

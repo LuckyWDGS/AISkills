@@ -13,7 +13,7 @@ description: "Research, write, illustrate and prepare WeChat Official Account st
 - 沿用会话中已确定的账号、方向、素材和授权；只有缺失信息会改变结果时才澄清。不要把每页生成、修图、存草稿都变成单独的审批点。
 - 用户说“下次标题……”时，将规则用于后续作品；未经请求不回改已经交付的草稿。
 - 用户交由自己发布时，完成草稿保存和回读验证；未要求具体发布时默认交付草稿。已明确授权本篇发布则执行该请求，不重复询问同一授权；授权只覆盖这一篇、这个账号和这次动作，工具自身的确认规则仍然适用。平台要求本人扫码、登录或确认时，请用户完成该步骤，再核对结果。
-- 新选题/账号复盘读取 [调研与故事审读](references/research-and-story.md)；标题设计读取 [标题钩子](references/title-hooks.md)；制作、上传、继续发布读取 [画面与草稿验证](references/visual-and-draft.md)；操作公众号后台前读取 [公众号后台操作](references/wechat-backend.md)；合成对白、生成联系表/窄屏预览或做版本对比时读取 [页表数据与 QA 脚本](references/story-tools.md)。
+- 新选题读取 [调研与故事审读](references/research-and-story.md)；看账号数据、复盘或判断方向是否调整读取 [账号数据复盘](references/account-review.md)；标题设计读取 [标题钩子](references/title-hooks.md)；制作、上传、继续发布读取 [画面与草稿验证](references/visual-and-draft.md)；操作公众号后台前读取 [公众号后台操作](references/wechat-backend.md)；合成对白、生成联系表/窄屏预览或做版本对比时读取 [页表数据与 QA 脚本](references/story-tools.md)。
 
 ## 技能分工
 

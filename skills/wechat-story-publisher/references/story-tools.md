@@ -72,7 +72,7 @@ python $S/qa_preview.py --manifest story_manifest.json
 `compose_bubbles.py`
 
 - 成品写入 `image`；内容变化时旧版保存在 `pages/_versions/<id>-<旧哈希前8位>.png`，内容未变则不重写。`--save-overlay` 另存气泡层到 `_overlays/`。
-- 报告 `qa/compose-report.json`（部分页运行时与其他页记录合并）：每个气泡的行、字号、阅读宽度下字号、填充不透明度、背景均值/纹理、最低对比度、告警。
+- 报告 `qa/compose-report.json`（部分页运行时与其他页记录合并；`--dry-run` 另写 `compose-report.dry-run.json`，不覆盖正式报告）：每个气泡的行、字号、阅读宽度下字号、填充不透明度、背景均值/纹理、最低对比度、告警。
 - 错误（不写文件，退出码 1）：文字溢出、缺底图、含中文却找不到中文字体。告警：`low_contrast`、`textured_background_shows_through`（背景花纹透出）、`overlaps_watermark_zone`、`covers_avoid_region:*`、`bubbles_overlap`、`tail_inside_bubble`。
 - 透明实现：气泡框和尾巴共用一个蒙版一次合成，外框沿合并轮廓描边；文字最后以不透明颜色绘制。最终 PNG 可能是 RGB，但已合成的半透明效果仍在。
 - 字体：页表 `font` 或 `--font` 优先，否则依次查找 Noto Sans SC、思源黑体、微软雅黑、黑体及 macOS/Linux 常见中文字体；报告记录实际使用的字体。
@@ -82,7 +82,11 @@ python $S/qa_preview.py --manifest story_manifest.json
 - `contact-sheet.png`：全篇顺序、页码与短哈希，用于看整体节奏与连续性，不能代替逐页检查。
 - `narrow/<id>.png`、`narrow/strip-NN.png`：按阅读宽度（默认 390px）缩放的单页和连续长图；`reader.html` 以 390px 栏宽显示原图。均为本地模拟，不是实体手机测试。
 - `crops/`：每个气泡与复核区域带上下文的局部图，从当前成品重新截取，只缩小不放大。
-- `qa-report.json` 的 `check`：页数是否超过上限、文件缺失/损坏、尺寸或比例不一致、合成报告是否与当前文件哈希匹配（不匹配说明页面在合成后被改过，字号/对比度结论失效）、末页是否有“本篇完/未完待续”。
-- `hashes.json` 与 `hashes.prev.json`：与上次运行比较，`recheck` 列出改动页及其相邻页。旧的审读结论不适用于这些页，须重新查看。
+- `qa-report.json` 的 `check`：页数是否超过上限、文件缺失/损坏、尺寸或比例不一致、合成报告是否与当前文件哈希匹配（不匹配说明页面在合成后被改过，字号/对比度结论失效）、末页是否有“本篇完/未完待续”。某页最近一次合成失败时报错并退出码 1：此时磁盘上的成品还是旧版，不能拿来验收。
+- `hashes.json` 与 `hashes.prev.json`：与上次运行比较，`recheck` 列出改动页及其相邻页。旧的审读结论不适用于这些页，须重新查看。页面没有新改动时重复运行，`recheck` 保持不变，直到下一次改动。
+
+`story_manifest.py validate`：缺底图、无底图页缺成品或超过页数上限时 `ok: false`、退出码 1；有底图但尚未合成的页列在 `not_composed_yet`，不算错误。`init` 不带 `--base-dir` 时按成品的实际文件名（含 jpg/webp）登记。
+
+脚本测试：`python -m unittest test_story_tools`（在 `scripts/` 下运行，不需要 pytest）。
 
 复核记录写明所查看的 `hashes.json` 时间与页面哈希，结论只对应这些文件。

@@ -357,7 +357,8 @@ def main(argv=None) -> int:
     parser.add_argument("--fill-alpha", type=int, help="Override bubble fill alpha 0-255 for this run.")
     parser.add_argument("--save-overlay", action="store_true", help="Also save the bubble layer to _overlays/.")
     parser.add_argument("--dry-run", action="store_true", help="Lay out and report without writing pages.")
-    parser.add_argument("--report", help="Report path; default <manifest dir>/qa/compose-report.json.")
+    parser.add_argument("--report", help="Report path; default <manifest dir>/qa/compose-report.json "
+                                         "(compose-report.dry-run.json with --dry-run).")
     args = parser.parse_args(argv)
     try:
         manifest = load_manifest(args.manifest)
@@ -382,7 +383,9 @@ def main(argv=None) -> int:
         "pages": reports,
         "note": "Layout and pixel checks only. Verify speaker attribution, tails and anatomy in the real composites.",
     }
-    report_path = Path(args.report) if args.report else manifest.root / "qa" / "compose-report.json"
+    # A dry run never replaces the real report: qa_preview matches that one against the written files.
+    default_name = "compose-report.dry-run.json" if args.dry_run else "compose-report.json"
+    report_path = Path(args.report) if args.report else manifest.root / "qa" / default_name
     report_path.parent.mkdir(parents=True, exist_ok=True)
     if wanted and not args.dry_run and report_path.is_file():
         # Partial run: keep other pages' records so qa_preview can still match them by hash.
