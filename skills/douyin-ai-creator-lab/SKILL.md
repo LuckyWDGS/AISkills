@@ -11,6 +11,7 @@ description: Research Douyin and Bilibili AI-video works, authors' series, refer
 
 - 对标、主页、相似作者、广告筛除、跨平台比较、为什么高赞：读[案例研究](references/case-study-method.md)；音效/BGM研究按其声音字段记录，用户要求不影响工作时按后台研究方式执行。
 - 用户给喜欢的作品、要求更多样本或深挖作者其他作品：读[作者系列与原创转译](references/author-series-and-transfer.md)，从[案例库索引](references/case-library/index.md)检索现有证据，再补会改变判断的新样本；不要只解释用户给的几条。
+- 雨窗小窝、第一人称夜林、微恐列车/商场的体验区别与同号对照：读[实片比较](references/case-library/evolution-studies.md)；空间可使用性、相反评论和游戏/招生来源边界见作者系列参考。
 - 批量拆片、组织并行研究、维护案例库或沉淀本轮有效方法：读[研究执行与证据复核](references/research-execution-and-review.md)，沿时间轴追踪观看任务，核对实看记录、导出字段与汇总结论。
 - 按作者、方向、证据或实际标签找案例：运行 `python -X utf8 scripts/search_cases.py --summary`；按需用 `--author/--family/--tag/--grade/--query/--id`，研究层、观看任务、时效和密审对照筛选见[案例库](references/case-library/index.md)。案例快照不代表当前热度，原链接失效也不删除既有观察范围。
 - 研究原作标签、标题机制或准备接发布：读[标签与发布交接](references/tags-and-release-handoff.md)，区分实际标签、研究分类、建议标签和当天热点。
