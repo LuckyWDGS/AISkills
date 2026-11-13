@@ -8,21 +8,33 @@ import json
 import mimetypes
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
-DEFAULT_MODEL = "gpt-image-2.5-sunburst"
+from cm_image_formats import (OUTPUT_FORMATS, add_media_arguments, detect_format,
+                              extra_image_fields, inspect_media, validate_markup,
+                              validate_media_outputs, validate_size_option)
+import cm_job_ledger as jobs
+
+DEFAULT_MODEL = "gpt-image-2.6-sunburst"
 DEFAULT_API = "images"
 DEFAULT_IMAGE_QUALITY = "max"
+DEFAULT_IMAGE_COMPLEXITY = "high"
 LEGACY_MODEL = "gpt-image-2"
 
-# Official GPT Image 2.5 is published as two model families. Keep the short
-# aliases explicit so `image2.5` never expands to the invalid generic ID
-# `gpt-image-2.5`; callers can still pass an exact model or snapshot unchanged.
+# GPT Image 2.5 and 2.6 each have two families. Keep version aliases explicit;
+# callers can still pass an exact model or snapshot unchanged.
 IMAGE_MODEL_ALIASES = {
+    "image2.6": "gpt-image-2.6-sunburst",
+    "gpt2.6": "gpt-image-2.6-sunburst",
+    "image2.6-sunburst": "gpt-image-2.6-sunburst",
+    "gpt2.6-sunburst": "gpt-image-2.6-sunburst",
+    "image2.6-flare": "gpt-image-2.6-flare",
+    "gpt2.6-flare": "gpt-image-2.6-flare",
     "image2.5": "gpt-image-2.5-sunburst",
     "gpt2.5": "gpt-image-2.5-sunburst",
     "image2.5-sunburst": "gpt-image-2.5-sunburst",
@@ -32,7 +44,9 @@ IMAGE_MODEL_ALIASES = {
 }
 DEFAULT_RESPONSES_MODEL = "gpt-5.4"
 DEFAULT_SIZE = "1024x1024"
-DEFAULT_RESPONSE_FORMAT = "b64_json"
+# GPT Image returns base64 without this legacy parameter. Keep an explicit
+# override for gateways that document it, but do not send it automatically.
+DEFAULT_RESPONSE_FORMAT = None
 PRIMARY_EXTRA_RETRY_ATTEMPTS = 2
 PRIMARY_RETRY_DELAYS_SECONDS = (5, 15)
 ERROR_BODY_PREVIEW_CHARS = 500
@@ -343,6 +357,8 @@ def response_is_image_bytes(raw_bytes: bytes, headers, *, allow_partial: bool) -
         raw_bytes.startswith(b"\x89PNG\r\n\x1a\n")
         or raw_bytes.startswith(b"\xff\xd8")
         or (raw_bytes.startswith(b"RIFF") and b"WEBP" in raw_bytes[:16])
+        or raw_bytes.startswith((b"GIF87a", b"GIF89a"))
+        or detect_format(raw_bytes) == "svg"
     )
 
 
@@ -625,6 +641,30 @@ def controller_defaults() -> dict:
     return {key: profile[key] for key in ("api", "responses_model", "responses_reasoning") if key in profile}
 
 
+def local_image_models(provider: ImageApiProvider) -> list[str]:
+    """Read explicitly registered image IDs for this provider, not entitlements."""
+    path = codex_home() / LOCAL_CONFIG_DIR_NAME / "models.json"
+    if not path.exists():
+        return []
+    try:
+        catalog = json.loads(path.read_text(encoding="utf-8-sig"))
+        if not isinstance(catalog, dict):
+            raise ValueError("expected a JSON object")
+        base_url = catalog.get("base_url")
+        if not isinstance(base_url, str) or not base_url.strip():
+            raise ValueError("base_url is required")
+        if base_url.strip().rstrip("/") != provider.base_url.rstrip("/"):
+            return []
+        models = catalog.get("image_models")
+        if not isinstance(models, list) or any(
+                not isinstance(model, str) or not model.strip() or "*" in model
+                for model in models):
+            raise ValueError("image_models must contain exact model IDs")
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"Invalid local image catalog: {path} ({type(exc).__name__})") from exc
+    return sorted({model.strip() for model in models})
+
+
 def parse_sse_events(text: str) -> list[dict]:
     events = []
     event_name = None
@@ -787,7 +827,8 @@ def parse_sse_json_payloads(text: str) -> tuple[list[dict], dict]:
             invalid_json_count += 1
             continue
         if isinstance(value, dict):
-            if not value.get("type") and event_name in {"error", "response.completed", "response.failed", "response.incomplete", "response.cancelled"}:
+            if not value.get("type") and (event_name in {"error", "response.completed", "response.failed", "response.incomplete", "response.cancelled"}
+                                           or event_name.startswith(("image_generation.", "image_edit."))):
                 value = {**value, "type": event_name}
             payloads.append(value)
         else:
@@ -814,6 +855,8 @@ def parsed_sse_image_response(text: str) -> tuple[dict | None, dict]:
     items = []
     seen = set()
     for payload in payloads:
+        if "partial_image" in str(payload.get("type", "")):
+            continue  # Intermediate previews must never be reported as final outputs.
         for item in response_image_items(payload):
             kind = "b64_json" if item.get("b64_json") else "url"
             identity = (kind, hashlib.sha256(item[kind].strip().encode("utf-8")).hexdigest())
@@ -1257,6 +1300,14 @@ def maybe_poll_async_result(
     )
     if not initial_shape.get("likely_async_or_polling_response") and not initial_candidates:
         return data
+    jobs.safe_call(
+        "note_polling",
+        endpoint=endpoint,
+        transport=transport,
+        request_url=request_url,
+        candidates=initial_candidates,
+        base_url=provider.base_url,
+    )
 
     interval_seconds = async_poll_interval_seconds()
     deadline = time.time() + async_poll_window_seconds(timeout)
@@ -1531,7 +1582,7 @@ def request_json(provider: ImageApiProvider, endpoint: str, payload: dict, timeo
         headers={
             "Authorization": f"Bearer {provider.api_key}",
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            "Accept": "text/event-stream, application/json" if payload.get("stream") else "application/json",
         },
         method="POST",
     )
@@ -1688,7 +1739,7 @@ def multipart_body(fields: dict, files: list[dict]) -> tuple[bytes, str]:
             continue
         chunks.append(f"--{boundary}\r\n".encode("ascii"))
         chunks.append(f'Content-Disposition: form-data; name="{key}"\r\n\r\n'.encode("utf-8"))
-        chunks.append(str(value).encode("utf-8"))
+        chunks.append(multipart_field_value(value).encode("utf-8"))
         chunks.append(b"\r\n")
     for file_item in files:
         image = file_item["image"]
@@ -1707,6 +1758,12 @@ def multipart_body(fields: dict, files: list[dict]) -> tuple[bytes, str]:
     return b"".join(chunks), boundary
 
 
+def multipart_field_value(value) -> str:
+    if isinstance(value, (bool, dict, list)):
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return str(value)
+
+
 def request_multipart(
     provider: ImageApiProvider,
     endpoint: str,
@@ -1722,7 +1779,7 @@ def request_multipart(
         headers={
             "Authorization": f"Bearer {provider.api_key}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "Accept": "application/json",
+            "Accept": "text/event-stream, application/json" if fields.get("stream") else "application/json",
         },
         method="POST",
     )
@@ -1876,7 +1933,7 @@ def request_multipart_requests_stream(
 ) -> dict:
     requests = load_requests_module()
     url = f"{provider.base_url}{endpoint}"
-    data_fields = {key: value for key, value in fields.items() if value is not None}
+    data_fields = {key: multipart_field_value(value) for key, value in fields.items() if value is not None}
     file_parts = []
     for file_item in files:
         image = file_item["image"]
@@ -2001,10 +2058,12 @@ def request_compat_with_provider(
     failures = []
     for attempt in range(1, retry_attempts + 2):
         try:
+            jobs.safe_call("note_submission", attempt, endpoint)
             result = request_provider(provider, command, endpoint, payload, timeout, multipart)
             require_image_result(result, provider)
             return result.data, provider, result.endpoint, result.transport, result.request_url, failures
         except ImageApiError as exc:
+            note_job_attempt_error(attempt, exc, will_retry=attempt <= retry_attempts and should_retry_primary_transport(exc))
             failures.append(
                 failure_record(
                     provider.name,
@@ -2077,10 +2136,12 @@ def request_responses_with_retry(
     endpoint = "/responses"
     for attempt in range(1, max_attempts + 1):
         try:
+            jobs.safe_call("note_submission", attempt, endpoint)
             result = request_responses_provider(provider, payload, timeout)
             require_image_result(result, provider)
             return result.data, provider, result.endpoint, result.transport, result.request_url, failures
         except ImageApiError as exc:
+            note_job_attempt_error(attempt, exc, will_retry=attempt < max_attempts and should_retry_primary_transport(exc))
             failures.append(
                 failure_record(
                     provider.name,
@@ -2105,8 +2166,28 @@ def request_responses_with_retry(
 def load_input_image(path: Path, label: str) -> InputImage:
     if not path.exists() or not path.is_file():
         raise SystemExit(f"{label} not found: {path}")
+    raw = path.read_bytes()
+    if path.suffix.lower() == ".svg" or detect_format(raw) == "svg":
+        raise SystemExit("SVG is an output format, not a supported raster image-edit input.")
     mime_type = mimetypes.guess_type(str(path))[0] or "image/png"
-    return InputImage(path.resolve(), path.name, mime_type, path.read_bytes())
+    return InputImage(path.resolve(), path.name, mime_type, raw)
+
+
+def image_edit_uploads(args: argparse.Namespace, input_images: list[InputImage]) -> list[dict]:
+    files = [{"field": "image", "image": image} for image in input_images]
+    mask = getattr(args, "mask", None)
+    markup = getattr(args, "markup", None)
+    if mask and markup:
+        raise SystemExit("--markup and --mask cannot be combined.")
+    if mask:
+        if getattr(args, "api", "images") != "images":
+            raise SystemExit("Mask edits require --api images.")
+        files.append({"field": "mask", "image": load_input_image(Path(mask).expanduser(), "Mask image")})
+    if markup:
+        overlay = load_input_image(Path(markup).expanduser(), "Markup image")
+        validate_markup(overlay, input_images[0])
+        files.append({"field": "markup", "image": overlay})
+    return files
 
 
 def download_url_image(url: str, provider: ImageApiProvider | None) -> bytes:
@@ -2203,6 +2284,12 @@ def parse_image_dimensions(raw: bytes) -> tuple[int, int] | None:
     if not isinstance(raw, (bytes, bytearray, memoryview)):
         return None
     data = bytes(raw)
+    if detect_format(data) == "svg":
+        info = inspect_media(data)
+        dimensions = info.get("dimensions")
+        if info["readable"] and dimensions and all(float(x).is_integer() for x in dimensions):
+            return tuple(int(x) for x in dimensions)
+        return None
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         # PNG IHDR is always first, has 13 data bytes and a 4-byte CRC.
         if len(data) < 33 or data[8:12] != b"\x00\x00\x00\x0d" or data[12:16] != b"IHDR":
@@ -2285,13 +2372,12 @@ def save_image_from_item(
         raw = download_url_image(url.strip(), provider)
     else:
         raise SystemExit("Response item has neither b64_json nor url.")
-    ext = ".png"
-    if raw.startswith(b"\xff\xd8"):
-        ext = ".jpg"
-    elif raw.startswith(b"RIFF") and b"WEBP" in raw[:16]:
-        ext = ".webp"
+    fmt = detect_format(raw)
+    ext = ".jpg" if fmt == "jpeg" else f".{fmt}" if fmt else ".bin"
     base = sanitize_filename(filename or f"codexmanager-image-{int(time.time())}")
-    if not base.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+    if Path(base).suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".bin"):
+        base = Path(base).stem + ext
+    else:
         base = f"{base}{ext}"
     if index > 0:
         stem = Path(base).stem
@@ -2331,7 +2417,8 @@ def image_quality(args: argparse.Namespace, model: str) -> str | None:
     explicit = getattr(args, "quality", None)
     if explicit:
         return explicit
-    for family in ("gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
+    for family in ("gpt-image-2.5-sunburst", "gpt-image-2.5-flare",
+                   "gpt-image-2.6-sunburst", "gpt-image-2.6-flare"):
         if model == family or model.startswith(family + "-"):
             return DEFAULT_IMAGE_QUALITY
     # Preserve provider defaults for other models; older GPT Image models do
@@ -2339,8 +2426,24 @@ def image_quality(args: argparse.Namespace, model: str) -> str | None:
     return None
 
 
-def model_catalog_check(provider: ImageApiProvider, model: str) -> dict:
-    """Read-only preflight: never generate or silently substitute another model."""
+def image_complexity(args: argparse.Namespace, model: str) -> str | None:
+    """Send image planning strength explicitly on the documented Images route."""
+    explicit = getattr(args, "complexity", None)
+    if getattr(args, "api", DEFAULT_API) != "images":
+        if explicit:
+            raise SystemExit("--complexity is supported only with --api images.")
+        return None
+    if explicit:
+        return explicit
+    for family in ("gpt-image-2.6-sunburst", "gpt-image-2.6-flare"):
+        if model == family or model.startswith(family + "-"):
+            return DEFAULT_IMAGE_COMPLEXITY
+    return None
+
+
+def model_catalog_check(provider: ImageApiProvider, model: str, *, allow_local: bool = True) -> dict:
+    """Check remote listing plus explicit local image registrations; never generate."""
+    local_models = local_image_models(provider) if allow_local else []
     url = f"{provider.base_url}/models"
     req = urllib.request.Request(url, headers={
         "Authorization": f"Bearer {provider.api_key}", "Accept": "application/json",
@@ -2357,10 +2460,16 @@ def model_catalog_check(provider: ImageApiProvider, model: str) -> dict:
         # Do not expose response bodies, authorization headers or credentials.
         return {"ok": False, "model": model, "status": "catalog_unavailable",
                 "error": f"Model catalog check failed ({type(exc).__name__}); no image request sent."}
-    found = model in ids
-    result = {"ok": found, "model": model, "status": "listed" if found else "not_listed",
-              "listed_models": ids}
-    if not found:
+    remote_listed = model in ids
+    local_registered = model in local_models
+    result = {"ok": remote_listed or local_registered, "model": model,
+              "status": "listed" if remote_listed else "locally_registered" if local_registered else "not_listed",
+              "remote_listed": remote_listed, "local_registered": local_registered,
+              "listed_models": ids, "local_models": local_models,
+              "generation_verified": False}
+    if local_registered and not remote_listed:
+        result["note"] = "Explicitly registered locally; upstream listing and successful generation are not verified."
+    if not result["ok"]:
         result["error"] = f"Image model {model!r} is not listed by this provider; no image request sent."
     return result
 
@@ -2374,9 +2483,31 @@ def is_loopback_provider(provider: ImageApiProvider) -> bool:
     return host in {"127.0.0.1", "localhost", "::1"}
 
 
-def image_payload(args: argparse.Namespace) -> tuple[dict, str]:
+def image_request_fields(args: argparse.Namespace, model: str, operation: str) -> dict:
+    api = getattr(args, "api", "images")
+    extra = extra_image_fields(args, operation, api)
+    size = getattr(args, "size", DEFAULT_SIZE)
+    validate_size_option(size, model, exact=getattr(args, "require_exact_size", False))
+    payload = {"model": model, "prompt": getattr(args, "prompt", ""), "size": size}
+    for field in ("response_format", "n", "background", "output_format"):
+        value = getattr(args, field, None)
+        if value is not None:
+            payload[field] = value
+    quality = image_quality(args, model)
+    if quality:
+        payload["quality"] = quality
+    complexity = image_complexity(args, model)
+    if complexity:
+        payload["complexity"] = complexity
+    payload.update(extra)
+    return payload
+
+
+def image_payload(args: argparse.Namespace, operation: str | None = None) -> tuple[dict, str]:
     selection = image_model_selection(args)
     model = selection["image_model"]
+    operation = operation or getattr(args, "operation", None) or getattr(args, "command", None) or "generate"
+    payload = image_request_fields(args, model, operation)
     # The Images API exposes the image model as its top-level `model`, so its
     # catalog can be checked before submission. Responses is different: the
     # top-level model is the mainline controller and the image model lives in
@@ -2394,21 +2525,6 @@ def image_payload(args: argparse.Namespace) -> tuple[dict, str]:
             check = model_catalog_check(provider, model)
             if not check["ok"]:
                 raise SystemExit(check["error"])
-    payload = {
-        "model": model,
-        "prompt": args.prompt,
-        "size": args.size,
-        "response_format": args.response_format,
-    }
-    if args.n is not None:
-        payload["n"] = args.n
-    quality = image_quality(args, model)
-    if quality:
-        payload["quality"] = quality
-    if args.background:
-        payload["background"] = args.background
-    if args.output_format:
-        payload["output_format"] = args.output_format
     return payload, model
 
 
@@ -2435,6 +2551,7 @@ def route_preview(base_url: str, api: str, operation: str) -> dict:
 
 def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, model: str) -> dict:
     prompt_present = bool(getattr(args, "prompt", None))
+    common_fields = image_request_fields(args, model, operation)
     if api == "responses":
         shape = {
             "operation": operation,
@@ -2463,16 +2580,9 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
                 shape["tool_fields"][field] = value
         return shape
 
-    common_fields = {
-        "model": model,
-        "prompt": "<redacted>" if prompt_present else "<provided at request time>",
-        "size": getattr(args, "size", DEFAULT_SIZE),
-        "response_format": getattr(args, "response_format", DEFAULT_RESPONSE_FORMAT),
-    }
-    for field in ("n", "quality", "background", "output_format"):
-        value = image_quality(args, model) if field == "quality" else getattr(args, field, None)
-        if value is not None:
-            common_fields[field] = value
+    common_fields["prompt"] = "<redacted>" if prompt_present else "<provided at request time>"
+    if "safety_identifier" in common_fields:
+        common_fields["safety_identifier"] = "<redacted>"
     if operation == "edit":
         return {
             "operation": operation,
@@ -2481,6 +2591,7 @@ def payload_shape_preview(args: argparse.Namespace, api: str, operation: str, mo
             "form_fields": common_fields,
             "image_file_parts": "<redacted>",
             "mask_file_part": "<redacted if provided>",
+            "markup_file_part": "<redacted if provided>",
         }
     return {
         "operation": operation,
@@ -2512,6 +2623,8 @@ def doctor(args: argparse.Namespace) -> int:
     operations = operation_names(args.operation)
     selection = image_model_selection(args)
     model = selection["image_model"]
+    for operation in operations:
+        image_request_fields(args, model, operation)
     show_payload_shape = bool(getattr(args, "show_payload_shape", False))
     result = {
         "ok": True,
@@ -2524,6 +2637,7 @@ def doctor(args: argparse.Namespace) -> int:
         "commands": operations,
         "image_model": model,
         "requested_quality": image_quality(args, model),
+        "requested_complexity": image_complexity(args, model),
         **selection,
         "model_semantics": "Image model requested by the CLI; gateway Responses controller and actual upstream execution are separate.",
         "payload_shape_included": show_payload_shape,
@@ -2546,6 +2660,9 @@ def doctor(args: argparse.Namespace) -> int:
             api=args.api,
             operations=operations,
         )
+        if args.api == "images":
+            result["local_image_models"] = local_image_models(primary)
+            result["image_model_registered_locally"] = model in result["local_image_models"]
         if getattr(args, "check_model", False):
             result["network_call_performed"] = True
             # For Responses, validate the top-level controller model. The
@@ -2556,7 +2673,8 @@ def doctor(args: argparse.Namespace) -> int:
                 if args.api == "responses"
                 else model
             )
-            result["model_catalog_check"] = model_catalog_check(primary, catalog_model)
+            result["model_catalog_check"] = model_catalog_check(
+                primary, catalog_model, allow_local=args.api == "images")
             result["model_catalog_check"]["image_tool_model"] = model
             result["ok"] = result["model_catalog_check"]["ok"]
     except SystemExit as exc:
@@ -2673,21 +2791,8 @@ def transport_probe(args: argparse.Namespace) -> int:
             raise SystemExit("--image is required for transport-probe --operation edit.")
         image_paths = [Path(value).expanduser() for value in args.image]
         input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
-        mask_path = Path(args.mask).expanduser() if args.mask else None
-        mask_image = load_input_image(mask_path, "Mask image") if mask_path else None
-        multipart_fields = {
-            "model": model,
-            "prompt": args.prompt,
-            "size": args.size,
-            "response_format": args.response_format,
-            "n": args.n,
-            "quality": payload.get("quality"),
-            "background": args.background,
-            "output_format": args.output_format,
-        }
-        multipart_files = [{"field": "image", "image": image} for image in input_images]
-        if mask_image:
-            multipart_files.append({"field": "mask", "image": mask_image})
+        multipart_fields = dict(payload)
+        multipart_files = image_edit_uploads(args, input_images)
         multipart = {"fields": multipart_fields, "files": multipart_files}
 
     clients = transport_probe_client_names(args.client)
@@ -2723,6 +2828,13 @@ def transport_probe(args: argparse.Namespace) -> int:
                     saved_paths=saved_paths,
                 )
             )
+            if saved_paths:
+                media_check = validate_media_outputs(saved_paths, args)
+                size_check = validate_output_sizes(saved_paths, args.size,
+                    require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)))
+                probes[-1].update(media_check)
+                probes[-1].update(size_check)
+                probes[-1]["ok"] = not (media_check["media_validation_failed"] or size_check["size_validation_failed"])
         except (ImageApiError, SystemExit) as exc:
             probes.append(
                 summarize_probe_failure(
@@ -2755,8 +2867,328 @@ def transport_probe(args: argparse.Namespace) -> int:
     return 0 if result["ok"] else 1
 
 
+def note_job_attempt_error(attempt: int, exc: ImageApiError, *, will_retry: bool) -> None:
+    diagnostics = exc.diagnostics or {}
+    jobs.safe_call(
+        "note_attempt_error",
+        attempt,
+        exc.message,
+        exc.status,
+        will_retry=will_retry,
+        error_kind=diagnostics.get("error_kind"),
+        pending=bool(diagnostics.get("pending_image_result")),
+    )
+
+
+def file_digest_record(value: str | None) -> dict | None:
+    if not value:
+        return None
+    path = Path(value).expanduser()
+    return {"path": str(path.resolve()), "sha256": jobs.sha256_file(path)}
+
+
+def start_image_job(
+    args: argparse.Namespace,
+    command: str,
+    payload: dict,
+    model: str,
+    input_images: list[InputImage] | None = None,
+) -> Path:
+    """Create the job ledger before any chargeable submission; return the output directory."""
+    out_dir = Path(args.out_dir) if getattr(args, "out_dir", None) else output_dir()
+    jobs.set_active(None)
+    if getattr(args, "no_job_record", False):
+        return out_dir
+    prompt = getattr(args, "prompt", None) or ""
+    fields = {
+        "command": command,
+        "api": getattr(args, "api", DEFAULT_API),
+        "model": model,
+        "requested_quality": payload.get("quality"),
+        "requested_complexity": payload.get("complexity"),
+        "size": getattr(args, "size", None),
+        "n": getattr(args, "n", None),
+        "output_format": getattr(args, "output_format", None),
+        "frame_count": getattr(args, "frame_count", None),
+        "frame_duration_ms": getattr(args, "frame_duration_ms", None),
+        "require_exact_size": bool(getattr(args, "require_exact_size", False)),
+        "filename": getattr(args, "filename", None),
+        "prompt": prompt,
+        "prompt_sha256": jobs.sha256_bytes(prompt.encode("utf-8")),
+        "prompt_file": str(Path(args.prompt_file).resolve()) if getattr(args, "prompt_file", None) else None,
+        "max_attempts": getattr(args, "max_attempts", PRIMARY_EXTRA_RETRY_ATTEMPTS + 1),
+        "started_epoch": time.time(),
+    }
+    if input_images:
+        fields["input_images"] = [
+            {"path": str(image.path), "sha256": jobs.sha256_bytes(image.data)} for image in input_images
+        ]
+    for option in ("mask", "markup"):
+        record = file_digest_record(getattr(args, option, None))
+        if record:
+            fields[option] = record
+    try:
+        ledger = jobs.JobLedger.start(out_dir, job_file=getattr(args, "job_file", None), **fields)
+    except OSError as exc:
+        print(f"cm-imagegen: job ledger unavailable ({type(exc).__name__}); continuing without it.", file=sys.stderr)
+        return out_dir
+    jobs.set_active(ledger)
+    print(f"cm-imagegen job ledger: {ledger.path.resolve()}", file=sys.stderr, flush=True)
+    return out_dir
+
+
+def finish_image_job(args: argparse.Namespace, result: dict) -> None:
+    ledger = jobs.active()
+    if ledger is None:
+        return
+    try:
+        outputs = jobs.output_records([Path(path) for path in result.get("paths", [])])
+        ledger.update(
+            state="completed",
+            finished_at=jobs.now_iso(),
+            ok=result.get("ok"),
+            error_kind=result.get("error_kind"),
+            outputs=outputs,
+            provider=result.get("provider"),
+            base_url=result.get("base_url"),
+            request_url=result.get("request_url"),
+            endpoint=result.get("endpoint"),
+            transport=result.get("transport"),
+            attempt_count=result.get("attempt_count"),
+            async_poll_used=bool(result.get("async_poll_used")),
+            usage=result.get("usage"),
+            created=result.get("created"),
+        )
+        result["job_file"] = str(ledger.path.resolve())
+        result["sidecars"] = [] if getattr(args, "no_sidecar", False) else jobs.write_sidecars(ledger.record, outputs)
+    except Exception as exc:
+        result["job_record_warning"] = f"{type(exc).__name__}: {compact_text_preview(str(exc), 200)}"
+
+
+def run_image_job(args: argparse.Namespace, runner) -> int:
+    ledger = jobs.active()
+    try:
+        return runner()
+    except SystemExit as exc:
+        if ledger is not None and ledger.record.get("state") != "completed":
+            try:
+                ledger.finish_failed(str(exc.code))
+                print(
+                    f"cm-imagegen job state: {ledger.record.get('state')} ({ledger.path.resolve()})",
+                    file=sys.stderr,
+                    flush=True,
+                )
+            except Exception:
+                pass
+        raise
+    finally:
+        jobs.set_active(None)
+
+
 def generate(args: argparse.Namespace) -> int:
     payload, model = image_payload(args)
+    out_dir = start_image_job(args, "generate", payload, model)
+    return run_image_job(args, lambda: _generate(args, payload, model, out_dir))
+
+
+def edit(args: argparse.Namespace) -> int:
+    image_paths = [Path(value).expanduser() for value in args.image]
+    input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
+    multipart_files = image_edit_uploads(args, input_images)
+    payload, model = image_payload(args, "edit")
+    out_dir = start_image_job(args, "edit", payload, model, input_images)
+    return run_image_job(args, lambda: _edit(args, payload, model, out_dir, input_images, multipart_files))
+
+
+RESUBMIT_ADVICE = {
+    "already_completed": "Do not resubmit: the outputs already exist and match the ledger.",
+    "recovered": "Do not resubmit: the pending job finished and its outputs were saved.",
+    "pending": "Do not resubmit yet: the provider still reports the job as running. Run recover again later.",
+    "uncertain": (
+        "Do not resubmit automatically: the request reached the provider but the CLI lost the response. "
+        "Check the provider's usage/logs or ask the user before another chargeable request."
+    ),
+    "in_flight": (
+        "Do not resubmit: the ledger shows a submission without a final state and no pollable handle. "
+        "If the original process may still be running, wait for it; otherwise treat it as uncertain."
+    ),
+    "failed": "The job ended with a classified failure and no outstanding provider job; follow the retry rules before any new request.",
+    "provider_mismatch": "Do not poll: the configured provider differs from the one that accepted this job.",
+}
+
+
+def recover_media_args(record: dict) -> argparse.Namespace:
+    return argparse.Namespace(
+        size=record.get("size"),
+        n=record.get("n"),
+        output_format=record.get("output_format"),
+        frame_count=record.get("frame_count"),
+        frame_duration_ms=record.get("frame_duration_ms"),
+    )
+
+
+def recover(args: argparse.Namespace) -> int:
+    if not args.job_file:
+        out_dir = Path(args.out_dir) if args.out_dir else output_dir()
+        listed = jobs.list_jobs(out_dir)
+        result = {
+            "ok": True,
+            "operation": "recover",
+            "out_dir": str(out_dir.resolve()),
+            "unfinished": [job for job in listed if not job.get("terminal")],
+            "jobs": listed[: max(1, args.limit)],
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+
+    job_path = Path(args.job_file).expanduser()
+    if not job_path.is_file():
+        raise SystemExit(f"Job file not found: {job_path}")
+    ledger = jobs.JobLedger.load(job_path)
+    record = ledger.record
+    state = record.get("state")
+    result = {
+        "operation": "recover",
+        "job_file": str(job_path.resolve()),
+        "job_id": record.get("job_id"),
+        "command": record.get("command"),
+        "state_before": state,
+        "submissions": record.get("submissions"),
+        "started_at": record.get("started_at"),
+        "updated_at": record.get("updated_at"),
+    }
+
+    def emit(status: str, ok: bool, **extra) -> int:
+        result.update(ok=ok, recovery_status=status, resubmit_advice=RESUBMIT_ADVICE[status], **extra)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if ok else 1
+
+    if state == "completed":
+        checks = []
+        for output in record.get("outputs") or []:
+            path = Path(output.get("path", ""))
+            checks.append(
+                {
+                    "path": str(path),
+                    "exists": path.is_file(),
+                    "sha256_matches": path.is_file() and jobs.sha256_file(path) == output.get("sha256"),
+                }
+            )
+        ok = bool(checks) and all(check["exists"] and check["sha256_matches"] for check in checks)
+        return emit("already_completed", ok, paths=[check["path"] for check in checks], output_checks=checks)
+
+    if state == "failed":
+        return emit("failed", False, exit_error=record.get("exit_error"), attempts=record.get("attempts"))
+
+    candidates = record.get("poll_candidates") or []
+    if state in {"polling", "pending"} and candidates:
+        provider, _provider_name = configured_provider()
+        if record.get("base_url") and normalize_image_base_url(record["base_url"]) != provider.base_url:
+            return emit("provider_mismatch", False)
+        if args.no_poll:
+            return emit("pending", False, poll_candidate_count=len(candidates))
+        jobs.set_active(ledger)
+        try:
+            seed = {"status": "in_progress", "_cm_recover": [{"poll_url": url} for url in candidates]}
+            data = maybe_poll_async_result(
+                provider,
+                record.get("endpoint") or image_endpoint_path(record.get("command") or "generate"),
+                "recover_poll",
+                record.get("request_url") or candidates[0],
+                seed,
+                args.timeout,
+            )
+            items = response_image_items(data)
+            if not items:
+                ledger.update(state="pending", last_recover_at=jobs.now_iso())
+                return emit("pending", False, async_poll_diagnostics=data.get("_cm_async_poll_diagnostics"))
+            out_dir = Path(record.get("out_dir") or output_dir())
+            paths = [
+                save_image_from_item(item, out_dir, record.get("filename"), index, provider)
+                for index, item in enumerate(items)
+            ]
+            media_args = recover_media_args(record)
+            size_check = validate_output_sizes(
+                paths,
+                record.get("size"),
+                require_exact=exact_size_is_required(record.get("size"), record.get("require_exact_size", False)),
+            )
+            media_check = validate_media_outputs(paths, media_args)
+            recovered = {
+                "ok": not (size_check["size_validation_failed"] or media_check["media_validation_failed"]),
+                "paths": [str(path.resolve()) for path in paths],
+                "provider": provider.name,
+                "base_url": provider.base_url,
+                "endpoint": record.get("endpoint"),
+                "transport": "recover_poll",
+                "attempt_count": record.get("submissions"),
+                "async_poll_used": True,
+                "usage": data.get("usage"),
+                "created": data.get("created"),
+            }
+            finish_image_job(args, recovered)
+            return emit(
+                "recovered",
+                recovered["ok"],
+                paths=recovered["paths"],
+                sidecars=recovered.get("sidecars"),
+                **size_check,
+                **media_check,
+            )
+        finally:
+            jobs.set_active(None)
+
+    found = jobs.candidate_outputs(record)
+    if state in {"uncertain", "pending", "polling"}:
+        return emit("uncertain", False, possible_outputs=found, attempts=record.get("attempts"))
+    return emit(
+        "in_flight",
+        False,
+        possible_outputs=found,
+        pid=record.get("pid"),
+        last_state=state,
+        attempts=record.get("attempts"),
+    )
+
+
+def read_prompt_file(args: argparse.Namespace) -> None:
+    prompt_file = getattr(args, "prompt_file", None)
+    if not prompt_file:
+        return
+    path = Path(prompt_file).expanduser()
+    if not path.is_file():
+        raise SystemExit(f"Prompt file not found: {path}")
+    text = path.read_text(encoding="utf-8-sig").strip()
+    if not text:
+        raise SystemExit(f"Prompt file is empty: {path}")
+    args.prompt = text
+
+
+def add_prompt_arguments(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--prompt")
+    group.add_argument(
+        "--prompt-file",
+        help="UTF-8 text file holding the prompt; avoids shell quoting problems with long or Chinese prompts.",
+    )
+
+
+def add_job_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--job-file",
+        help="Ledger path for this run (default: <out-dir>/.cm-jobs/<job-id>.json). Use it with `recover`.",
+    )
+    parser.add_argument(
+        "--no-sidecar", action="store_true",
+        help="Do not write <image>.cm.json provenance next to saved images.",
+    )
+    parser.add_argument(
+        "--no-job-record", action="store_true",
+        help="Disable the job ledger and sidecars (recover will not be possible for this run).",
+    )
+
+
+def _generate(args: argparse.Namespace, payload: dict, model: str, out_dir: Path) -> int:
     responses_model = None
     if args.api == "responses":
         responses_payload_data, responses_model = responses_payload(args, model)
@@ -2785,17 +3217,19 @@ def generate(args: argparse.Namespace) -> int:
                 data=data,
             )
         )
-    out_dir = Path(args.out_dir) if args.out_dir else output_dir()
-    paths = [save_image_from_item(item, out_dir, args.filename, index, provider) for index, item in enumerate(items)]
+    jobs.safe_call("update", state="saving")
+    paths = [save_image_from_item(item, out_dir, getattr(args, "filename", None), index, provider) for index, item in enumerate(items)]
     size_check = validate_output_sizes(
         paths,
         args.size,
         require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)),
     )
+    media_check = validate_media_outputs(paths, args)
     result = {
-        "ok": not size_check["size_validation_failed"],
+        "ok": not (size_check["size_validation_failed"] or media_check["media_validation_failed"]),
         "operation": "generate",
         "requested_quality": payload.get("quality"),
+        "requested_complexity": payload.get("complexity"),
         "attempt_count": len(previous_errors) + 1,
         **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
@@ -2810,11 +3244,15 @@ def generate(args: argparse.Namespace) -> int:
         "model": model,
         "paths": [str(path.resolve()) for path in paths],
         "usage": data.get("usage"),
+        "svg_usage": data.get("svg_usage"),
         "created": data.get("created"),
         **size_check,
+        **media_check,
     }
     if size_check["size_validation_failed"]:
         result["error_kind"] = "image_size_mismatch"
+    if media_check["media_validation_failed"]:
+        result["error_kind"] = "image_media_mismatch"
     if responses_model:
         result["responses_model"] = responses_model
         result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
@@ -2830,33 +3268,23 @@ def generate(args: argparse.Namespace) -> int:
         result["async_poll_diagnostics"] = data.get("_cm_async_poll_diagnostics")
     if previous_errors:
         result["previous_errors"] = previous_errors
+    finish_image_job(args, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["ok"] else 1
 
 
-def edit(args: argparse.Namespace) -> int:
-    image_paths = [Path(value).expanduser() for value in args.image]
-    input_images = [load_input_image(image_path, "Input image") for image_path in image_paths]
-    mask_path = Path(args.mask).expanduser() if args.mask else None
-    mask_image = load_input_image(mask_path, "Mask image") if mask_path else None
-    payload, model = image_payload(args)
-    multipart_fields = {
-        "model": model,
-        "prompt": args.prompt,
-        "size": args.size,
-        "response_format": args.response_format,
-        "n": args.n,
-        "quality": payload.get("quality"),
-        "background": args.background,
-        "output_format": args.output_format,
-    }
-    multipart_files = [{"field": "image", "image": image} for image in input_images]
-    if mask_image:
-        multipart_files.append({"field": "mask", "image": mask_image})
+def _edit(
+    args: argparse.Namespace,
+    payload: dict,
+    model: str,
+    out_dir: Path,
+    input_images: list[InputImage],
+    multipart_files: list[dict],
+) -> int:
+    multipart_fields = dict(payload)
     responses_model = None
     if args.api == "responses":
-        response_images = input_images + ([mask_image] if mask_image else [])
-        responses_payload_data, responses_model = responses_payload(args, model, response_images)
+        responses_payload_data, responses_model = responses_payload(args, model, input_images)
         data, provider, endpoint, transport, request_url, previous_errors = request_responses_with_retry(
             responses_payload_data,
             args.timeout,
@@ -2883,17 +3311,19 @@ def edit(args: argparse.Namespace) -> int:
                 data=data,
             )
         )
-    out_dir = Path(args.out_dir) if args.out_dir else output_dir()
-    paths = [save_image_from_item(item, out_dir, args.filename, index, provider) for index, item in enumerate(items)]
+    jobs.safe_call("update", state="saving")
+    paths = [save_image_from_item(item, out_dir, getattr(args, "filename", None), index, provider) for index, item in enumerate(items)]
     size_check = validate_output_sizes(
         paths,
         args.size,
         require_exact=exact_size_is_required(args.size, getattr(args, "require_exact_size", False)),
     )
+    media_check = validate_media_outputs(paths, args)
     result = {
-        "ok": not size_check["size_validation_failed"],
+        "ok": not (size_check["size_validation_failed"] or media_check["media_validation_failed"]),
         "operation": "edit",
         "requested_quality": payload.get("quality"),
+        "requested_complexity": payload.get("complexity"),
         "attempt_count": len(previous_errors) + 1,
         **image_model_selection(args),
         "skill_primary_channel": "cm_image_gen_cli",
@@ -2909,11 +3339,15 @@ def edit(args: argparse.Namespace) -> int:
         "source_images": [str(image.path) for image in input_images],
         "paths": [str(path.resolve()) for path in paths],
         "usage": data.get("usage"),
+        "svg_usage": data.get("svg_usage"),
         "created": data.get("created"),
         **size_check,
+        **media_check,
     }
     if size_check["size_validation_failed"]:
         result["error_kind"] = "image_size_mismatch"
+    if media_check["media_validation_failed"]:
+        result["error_kind"] = "image_media_mismatch"
     if responses_model:
         result["responses_model"] = responses_model
         result["responses_reasoning"] = getattr(args, "responses_reasoning", None)
@@ -2929,6 +3363,7 @@ def edit(args: argparse.Namespace) -> int:
         result["async_poll_diagnostics"] = data.get("_cm_async_poll_diagnostics")
     if previous_errors:
         result["previous_errors"] = previous_errors
+    finish_image_job(args, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["ok"] else 1
 
@@ -2937,7 +3372,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate and edit images through the configured Sub2API/OpenAI-compatible provider.")
     sub = parser.add_subparsers(dest="command", required=True)
     gen = sub.add_parser("generate")
-    gen.add_argument("--prompt", required=True)
+    add_prompt_arguments(gen)
     gen.add_argument(
         "--api",
         choices=["images", "responses"],
@@ -2956,7 +3391,7 @@ def main() -> int:
     gen.add_argument("--n", type=int)
     gen.add_argument("--quality", help="Image quality; default max for Sunburst/Flare. Separate from Responses reasoning.")
     gen.add_argument("--background")
-    gen.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    gen.add_argument("--output-format", choices=OUTPUT_FORMATS)
     gen.add_argument(
         "--require-exact-size", action="store_true",
         help="Fail when decoded output dimensions do not equal --size (4K requests are strict automatically).",
@@ -2966,9 +3401,10 @@ def main() -> int:
                      help="Maximum image submissions, including the first (1-5; default 3).")
     gen.set_defaults(func=generate)
     edit_parser = sub.add_parser("edit")
-    edit_parser.add_argument("--prompt", required=True)
+    add_prompt_arguments(edit_parser)
     edit_parser.add_argument("--image", action="append", required=True)
     edit_parser.add_argument("--mask")
+    edit_parser.add_argument("--markup", help="Transparent PNG annotation overlay matching the first input image.")
     edit_parser.add_argument(
         "--api",
         choices=["images", "responses"],
@@ -2987,7 +3423,7 @@ def main() -> int:
     edit_parser.add_argument("--n", type=int)
     edit_parser.add_argument("--quality", help="Image quality; default max for Sunburst/Flare. Separate from Responses reasoning.")
     edit_parser.add_argument("--background")
-    edit_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    edit_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     edit_parser.add_argument(
         "--require-exact-size", action="store_true",
         help="Fail when decoded output dimensions do not equal --size (4K requests are strict automatically).",
@@ -3006,7 +3442,7 @@ def main() -> int:
     doctor_parser.add_argument("--n", type=int)
     doctor_parser.add_argument("--quality")
     doctor_parser.add_argument("--background")
-    doctor_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    doctor_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     doctor_parser.add_argument("--show-payload-shape", action="store_true")
     doctor_parser.set_defaults(func=doctor)
     check_parser = sub.add_parser("check-config")
@@ -3019,15 +3455,16 @@ def main() -> int:
     check_parser.add_argument("--n", type=int)
     check_parser.add_argument("--quality")
     check_parser.add_argument("--background")
-    check_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    check_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     check_parser.add_argument("--show-payload-shape", action="store_true")
     check_parser.set_defaults(func=doctor)
     probe_parser = sub.add_parser("transport-probe")
     probe_parser.add_argument("--operation", choices=["generate", "edit"], required=True)
     probe_parser.add_argument("--client", choices=["urllib", "requests", "both"], default="both")
-    probe_parser.add_argument("--prompt", required=True)
+    add_prompt_arguments(probe_parser)
     probe_parser.add_argument("--image", action="append")
     probe_parser.add_argument("--mask")
+    probe_parser.add_argument("--markup")
     probe_parser.add_argument("--model")
     probe_parser.add_argument("--size", default=DEFAULT_SIZE)
     probe_parser.add_argument("--response-format", default=DEFAULT_RESPONSE_FORMAT, choices=["b64_json", "url"])
@@ -3036,19 +3473,40 @@ def main() -> int:
     probe_parser.add_argument("--n", type=int)
     probe_parser.add_argument("--quality")
     probe_parser.add_argument("--background")
-    probe_parser.add_argument("--output-format", choices=["png", "jpeg", "webp"])
+    probe_parser.add_argument("--output-format", choices=OUTPUT_FORMATS)
     probe_parser.add_argument("--timeout", type=int, default=600)
     probe_parser.add_argument("--save-images", action="store_true")
     probe_parser.set_defaults(func=transport_probe)
+    recover_parser = sub.add_parser(
+        "recover",
+        help="Inspect or resume a job ledger instead of resubmitting after an interrupted or uncertain run.",
+    )
+    recover_parser.add_argument("--job-file", help="Ledger to inspect/resume. Omit to list jobs in --out-dir.")
+    recover_parser.add_argument("--out-dir")
+    recover_parser.add_argument("--timeout", type=int, default=600, help="Polling window seconds (minimum 180).")
+    recover_parser.add_argument("--no-poll", action="store_true", help="Report the ledger state without contacting the provider.")
+    recover_parser.add_argument("--limit", type=int, default=20, help="Maximum jobs listed without --job-file.")
+    recover_parser.set_defaults(func=recover)
+    for command_parser in (gen, edit_parser):
+        add_job_arguments(command_parser)
+    for command_parser in (doctor_parser, check_parser):
+        command_parser.add_argument("--mask")
+        command_parser.add_argument("--markup")
     for command_parser in (gen, edit_parser, doctor_parser, check_parser, probe_parser):
+        add_media_arguments(command_parser)
+        command_parser.add_argument(
+            "--complexity", choices=["low", "medium", "high"],
+            help="Image planning strength on Images API; default high for GPT Image 2.6. Independent of quality.",
+        )
         command_parser.add_argument(
             "--check-model", action="store_true",
-            help="Read GET /models and require the image model to be listed before sending an image request.",
+            help="Read GET /models and check the model against remote entries and provider-scoped local image registrations.",
         )
     for command_parser in (gen, edit_parser, doctor_parser, check_parser):
         command_parser.add_argument("--responses-reasoning", choices=["low", "medium", "high", "xhigh", "max", "ultra"])
         command_parser.set_defaults(**controller_defaults())
     args = parser.parse_args()
+    read_prompt_file(args)
     return args.func(args)
 
 

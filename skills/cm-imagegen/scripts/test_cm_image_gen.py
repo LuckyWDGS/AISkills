@@ -1,4 +1,5 @@
 import argparse
+import base64
 import contextlib
 import io
 import json
@@ -8,7 +9,9 @@ import tempfile
 import unittest
 from unittest import mock
 
-import cm_image_gen as cm
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import cm_image_gen as cm  # noqa: E402
 
 
 PRIMARY = cm.ImageApiProvider("primary", "https://primary.example/v1", "primary-key")
@@ -126,7 +129,7 @@ class CmImageGenOfflineTests(unittest.TestCase):
     def test_image_model_is_independent_of_conversation_model(self):
         with mock.patch.dict(cm.os.environ, {}, clear=True):
             with mock.patch.object(cm, "load_codex_config", return_value={"model": "gpt-5.4-mini"}):
-                self.assertEqual(cm.image_model_selection(argparse.Namespace(model=None))["image_model"], "gpt-image-2.5-sunburst")
+                self.assertEqual(cm.image_model_selection(argparse.Namespace(model=None))["image_model"], "gpt-image-2.6-sunburst")
 
     def test_explicit_image_model_and_shorthand_precedence(self):
         with mock.patch.dict(cm.os.environ, {"CODEXMANAGER_IMAGE_MODEL": "gpt-image-1"}):
@@ -139,6 +142,10 @@ class CmImageGenOfflineTests(unittest.TestCase):
             self.assertTrue(selected["model_alias_applied"])
             flare = cm.image_model_selection(argparse.Namespace(model="image2.5-flare"))
             self.assertEqual(flare["image_model"], "gpt-image-2.5-flare")
+            selected26 = cm.image_model_selection(argparse.Namespace(model="image2.6"))
+            self.assertEqual(selected26["image_model"], "gpt-image-2.6-sunburst")
+            flare26 = cm.image_model_selection(argparse.Namespace(model="image2.6-flare"))
+            self.assertEqual(flare26["image_model"], "gpt-image-2.6-flare")
             snapshot = cm.image_model_selection(argparse.Namespace(model="gpt-image-2.5-sunburst-2026-09-08"))
             self.assertEqual(snapshot["image_model"], "gpt-image-2.5-sunburst-2026-09-08")
             self.assertFalse(snapshot["model_alias_applied"])
@@ -160,6 +167,91 @@ class CmImageGenOfflineTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "not listed"):
                 cm.generate(argparse.Namespace(model="gpt2.5"))
             send.assert_not_called()
+
+    def write_local_image_models(self, models, base_url=PRIMARY.base_url):
+        path = cm.codex_home() / cm.LOCAL_CONFIG_DIR_NAME / "models.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"base_url": base_url, "image_models": models}), encoding="utf-8")
+        return path
+
+    def test_local_image_models_preserve_exact_json_and_multipart_ids(self):
+        models = ["gpt-image-2.6-flare", "gpt-image-2.6-sunburst"]
+        self.write_local_image_models(models)
+        def catalog_response(*args, **kwargs):
+            return FakeResponse([json.dumps({"data": [{"id": "text-model"}]}).encode()])
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), \
+             mock.patch.object(cm.urllib.request, "urlopen", side_effect=catalog_response):
+            for model in models:
+                with self.subTest(model=model):
+                    check = cm.model_catalog_check(PRIMARY, model)
+                    self.assertTrue(check["ok"])
+                    self.assertEqual(check["status"], "locally_registered")
+                    self.assertFalse(check["remote_listed"])
+                    self.assertTrue(check["local_registered"])
+                    self.assertFalse(check["generation_verified"])
+                    self.assertNotIn(model, check["listed_models"])
+                    args = argparse.Namespace(model=model, api="images", check_model=True,
+                        prompt="test", size="1024x1024", response_format="b64_json", n=None,
+                        quality=None, background=None, output_format=None)
+                    payload, selected = cm.image_payload(args)
+                    self.assertEqual((selected, json.loads(json.dumps(payload))["model"]), (model, model))
+                    self.assertEqual(payload["quality"], "max")
+                    self.assertEqual(payload["complexity"], "high")
+                    body, _ = cm.multipart_body(payload, [])
+                    self.assertIn(f'name="model"\r\n\r\n{model}\r\n'.encode(), body)
+
+    def test_local_image_models_do_not_apply_to_another_provider(self):
+        model = "gpt-image-2.6-flare"
+        self.write_local_image_models([model])
+        other = cm.ImageApiProvider("other", "https://other.example/v1", "other-key")
+        response = FakeResponse([b'{"data": []}'])
+        with mock.patch.object(cm.urllib.request, "urlopen", return_value=response):
+            check = cm.model_catalog_check(other, model)
+        self.assertFalse(check["ok"])
+        self.assertFalse(check["local_registered"])
+
+    def test_local_registration_does_not_mask_catalog_auth_failure(self):
+        model = "gpt-image-2.6-flare"
+        self.write_local_image_models([model])
+        error = cm.urllib.error.HTTPError(PRIMARY.base_url + "/models", 401, "Unauthorized", {}, None)
+        with mock.patch.object(cm.urllib.request, "urlopen", side_effect=error):
+            check = cm.model_catalog_check(PRIMARY, model)
+        self.assertFalse(check["ok"])
+        self.assertEqual(check["status"], "catalog_unavailable")
+
+    def test_responses_doctor_does_not_accept_a_local_image_as_controller(self):
+        model = "gpt-image-2.6-flare"
+        self.write_local_image_models([model])
+        args = argparse.Namespace(api="responses", operation="all", model=model,
+            responses_model=model, responses_reasoning=None, check_model=True)
+        output = io.StringIO()
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), \
+             mock.patch.object(cm.urllib.request, "urlopen", return_value=FakeResponse([b'{"data": []}'])), \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(cm.doctor(args), 1)
+        check = json.loads(output.getvalue())["model_catalog_check"]
+        self.assertFalse(check["local_registered"])
+        self.assertEqual(check["status"], "not_listed")
+
+    def test_offline_doctor_shows_local_registration_without_network(self):
+        model = "gpt-image-2.6-sunburst"
+        self.write_local_image_models([model])
+        output = io.StringIO()
+        args = argparse.Namespace(api="images", operation="all", model=model)
+        with mock.patch.object(cm, "configured_provider", return_value=(PRIMARY, "primary")), \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(cm.doctor(args), 0)
+        result = json.loads(output.getvalue())
+        self.assertFalse(result["network_call_performed"])
+        self.assertTrue(result["image_model_registered_locally"])
+        self.assertEqual(result["local_image_models"], [model])
+
+    def test_invalid_local_catalog_stops_before_network(self):
+        self.write_local_image_models(["gpt-image-2.6-*"])
+        with mock.patch.object(cm.urllib.request, "urlopen") as request:
+            with self.assertRaisesRegex(SystemExit, "Invalid local image catalog"):
+                cm.model_catalog_check(PRIMARY, "gpt-image-2.6-flare")
+        request.assert_not_called()
 
     def test_explicit_model_roundtrips_json_multipart_and_responses_tool(self):
         args = argparse.Namespace(model="gpt-image-2.5-sunburst", prompt="test", size="1024x1024",
@@ -431,17 +523,22 @@ class CmImageGenOfflineTests(unittest.TestCase):
         shape = data["payload_shapes"][0]
         self.assertEqual(shape["content_type"], "multipart/form-data")
         self.assertEqual(shape["form_fields"]["model"], cm.DEFAULT_MODEL)
+        self.assertEqual(shape["form_fields"]["quality"], "max")
+        self.assertEqual(shape["form_fields"]["complexity"], "high")
         self.assertEqual(shape["image_file_parts"], "<redacted>")
 
     def test_edit_sends_default_model_in_multipart_fields(self) -> None:
         captured = {}
+        from PIL import Image
+        valid_png = io.BytesIO()
+        Image.new("RGB", (1024, 1024), "blue").save(valid_png, format="PNG")
 
         def fake_request_with_retry(command, compat_payload, timeout, multipart=None, *, max_attempts=3):
             captured["command"] = command
             captured["payload"] = compat_payload
             captured["multipart"] = multipart
             return (
-                {"data": [{"b64_json": "ZmFrZQ=="}]},
+                {"data": [{"b64_json": base64.b64encode(valid_png.getvalue()).decode()}]},
                 PRIMARY,
                 "/images/edits",
                 "images_multipart",
@@ -480,10 +577,71 @@ class CmImageGenOfflineTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(captured["command"], "edit")
         self.assertEqual(captured["multipart"]["fields"]["model"], cm.DEFAULT_MODEL)
+        self.assertEqual(captured["multipart"]["fields"]["quality"], "max")
+        self.assertEqual(captured["multipart"]["fields"]["complexity"], "high")
         self.assertEqual(captured["multipart"]["fields"]["prompt"], "change background")
         self.assertEqual(captured["multipart"]["fields"]["size"], cm.DEFAULT_SIZE)
-        self.assertEqual(captured["multipart"]["fields"]["response_format"], cm.DEFAULT_RESPONSE_FORMAT)
+        self.assertNotIn("response_format", captured["multipart"]["fields"])
         self.assertEqual(captured["multipart"]["files"][0]["field"], "image")
+
+
+    def test_cli_quality_and_complexity_reach_json_and_multipart_wire(self):
+        from email.parser import BytesParser
+        from email.policy import default
+        from PIL import Image
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "reference.png"
+            Image.new("RGB", (16, 16), "blue").save(source)
+            reply = json.dumps({"data": [{"b64_json": base64.b64encode(source.read_bytes()).decode()}]}).encode()
+            settings = [([], "gpt-image-2.6-sunburst", "max", "high"),
+                        (["--model", "gpt-image-2.6-flare", "--quality", "high", "--complexity", "low"],
+                         "gpt-image-2.6-flare", "high", "low"),
+                        (["--model", "gpt-image-2.5-sunburst"], "gpt-image-2.5-sunburst", "max", None)]
+            for operation in ("generate", "edit"):
+                for flags, model, quality, complexity in settings:
+                    with self.subTest(operation=operation, model=model, complexity=complexity):
+                        captured = []
+                        def send(request, **kwargs):
+                            captured.append(request)
+                            return FakeResponse([reply])
+                        argv = ["cm_image_gen.py", operation, "--api", "images", "--prompt", "one blue mug",
+                                "--size", "16x16", "--require-exact-size", "--max-attempts", "1",
+                                "--out-dir", tmp, *flags]
+                        if operation == "edit":
+                            argv += ["--image", str(source)]
+                        output = io.StringIO()
+                        with mock.patch.object(cm.urllib.request, "urlopen", side_effect=send), \
+                             mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+                            self.assertEqual(cm.main(), 0)
+                        self.assertEqual(len(captured), 1)
+                        request = captured[0]
+                        self.assertEqual(request.get_method(), "POST")
+                        self.assertTrue(request.full_url.endswith("/images/edits" if operation == "edit" else "/images/generations"))
+                        if operation == "generate":
+                            fields = json.loads(request.data)
+                        else:
+                            content_type = request.get_header("Content-type")
+                            envelope = b"Content-Type: " + content_type.encode() + b"\r\nMIME-Version: 1.0\r\n\r\n" + request.data
+                            message = BytesParser(policy=default).parsebytes(envelope)
+                            fields = {part.get_param("name", header="content-disposition"): part.get_payload(decode=True).decode()
+                                      for part in message.iter_parts() if not part.get_filename()}
+                        self.assertEqual(fields["model"], model)
+                        self.assertEqual(fields["quality"], quality)
+                        if complexity is None:
+                            self.assertNotIn("complexity", fields)
+                        else:
+                            self.assertEqual(fields["complexity"], complexity)
+                        self.assertNotIn("reasoning", fields)
+                        result = json.loads(output.getvalue())
+                        self.assertEqual(result["requested_complexity"], complexity)
+
+    def test_responses_cannot_silently_drop_explicit_image_complexity(self):
+        argv = ["cm_image_gen.py", "generate", "--api", "responses", "--prompt", "one blue mug", "--complexity", "high"]
+        with mock.patch.object(sys, "argv", argv), mock.patch.object(cm, "request_responses_with_retry") as send:
+            with self.assertRaisesRegex(SystemExit, "only with --api images"):
+                cm.main()
+            send.assert_not_called()
 
 
 class OutputSizeValidationTests(unittest.TestCase):

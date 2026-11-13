@@ -25,3 +25,9 @@ Thumbs.db
 generated-images/
 transport-probes/
 *.log
+
+# Job ledgers may hold provider addresses and poll URLs
+.cm-jobs/
+
+# Third-party gateway source copied for diagnostics; keep local, do not redistribute
+local-tests/**/source/

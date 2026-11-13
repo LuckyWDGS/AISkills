@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "operation": "generate",
+  "requested_quality": "max",
+  "requested_complexity": "high",
+  "attempt_count": 1,
+  "requested_model": "gpt-image-2.6-sunburst",
+  "image_model": "gpt-image-2.6-sunburst",
+  "image_model_source": "cli",
+  "model_alias_applied": false,
+  "skill_primary_channel": "cm_image_gen_cli",
+  "execution_channel": "cm_image_gen_cli",
+  "api_channel": "configured_provider",
+  "api_provider": "cm",
+  "request_url": "https://209.87.95.5:18081/v1/images/generations",
+  "provider": "cm",
+  "base_url": "https://209.87.95.5:18081/v1",
+  "endpoint": "/images/generations",
+  "transport": "images_json",
+  "model": "gpt-image-2.6-sunburst",
+  "paths": [
+    "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\landscape.png"
+  ],
+  "usage": {
+    "input_tokens": 140,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 140
+    },
+    "output_tokens": 1372,
+    "output_tokens_details": {
+      "image_tokens": 1372,
+      "text_tokens": 0
+    },
+    "total_tokens": 1512
+  },
+  "svg_usage": null,
+  "created": 1794062396,
+  "requested_size": "1536x1024",
+  "output_dimensions": [
+    "1536x1024"
+  ],
+  "size_verified": true,
+  "size_validation_warnings": [],
+  "size_validation_strict": true,
+  "size_validation_failed": false,
+  "requested_output_format": "png",
+  "media_outputs": [
+    {
+      "format": "png",
+      "readable": true,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\landscape.png"
+    }
+  ],
+  "media_validation_failed": false,
+  "media_validation_warnings": []
+}

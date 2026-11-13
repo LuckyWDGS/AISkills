@@ -1,0 +1,53 @@
+{
+  "ok": false,
+  "operation": "generate",
+  "requested_quality": "max",
+  "attempt_count": 1,
+  "requested_model": "gpt-image-2.5-flare",
+  "image_model": "gpt-image-2.5-flare",
+  "image_model_source": "cli",
+  "model_alias_applied": false,
+  "skill_primary_channel": "cm_image_gen_cli",
+  "execution_channel": "cm_image_gen_cli",
+  "api_channel": "configured_provider",
+  "api_provider": "cm",
+  "request_url": "https://209.87.95.5:18081/v1/images/generations",
+  "provider": "cm",
+  "base_url": "https://209.87.95.5:18081/v1",
+  "endpoint": "/images/generations",
+  "transport": "images_json",
+  "model": "gpt-image-2.5-flare",
+  "paths": [
+    "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png"
+  ],
+  "usage": {
+    "input_tokens": 480,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 480
+    },
+    "output_tokens": 5488,
+    "output_tokens_details": {
+      "image_tokens": 5488,
+      "text_tokens": 0
+    },
+    "total_tokens": 5968
+  },
+  "created": 1794059766,
+  "requested_size": "2560x1440",
+  "output_dimensions": [
+    "1536x1024"
+  ],
+  "size_verified": false,
+  "size_validation_warnings": [
+    {
+      "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png",
+      "warning": "image_size_mismatch",
+      "expected": "2560x1440",
+      "actual": "1536x1024"
+    }
+  ],
+  "size_validation_strict": true,
+  "size_validation_failed": true,
+  "error_kind": "image_size_mismatch"
+}

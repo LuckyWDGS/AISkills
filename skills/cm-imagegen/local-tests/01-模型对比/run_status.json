@@ -1,0 +1,537 @@
+{
+  "updated_at_utc": "2026-11-07T13:57:47.647357+00:00",
+  "completed": 8,
+  "total": 8,
+  "cases": [
+    {
+      "case": "T1_A",
+      "requested_model": "gpt-image-2.5-sunburst",
+      "operation": "generate",
+      "started_at_utc": "2026-11-07T13:50:27.655805+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+      "prompt_sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": null,
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 112.91,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:52:20.557003+00:00",
+      "result": {
+        "ok": false,
+        "operation": "generate",
+        "requested_quality": "max",
+        "attempt_count": 1,
+        "requested_model": "gpt-image-2.5-sunburst",
+        "image_model": "gpt-image-2.5-sunburst",
+        "image_model_source": "cli",
+        "model_alias_applied": false,
+        "skill_primary_channel": "cm_image_gen_cli",
+        "execution_channel": "cm_image_gen_cli",
+        "api_channel": "configured_provider",
+        "api_provider": "cm",
+        "request_url": "https://209.87.95.5:18081/v1/images/generations",
+        "provider": "cm",
+        "base_url": "https://209.87.95.5:18081/v1",
+        "endpoint": "/images/generations",
+        "transport": "images_json",
+        "model": "gpt-image-2.5-sunburst",
+        "paths": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png"
+        ],
+        "usage": {
+          "input_tokens": 480,
+          "input_tokens_details": {
+            "image_tokens": 0,
+            "text_tokens": 480
+          },
+          "output_tokens": 5488,
+          "output_tokens_details": {
+            "image_tokens": 5488,
+            "text_tokens": 0
+          },
+          "total_tokens": 5968
+        },
+        "created": 1794059529,
+        "requested_size": "2560x1440",
+        "output_dimensions": [
+          "1536x1024"
+        ],
+        "size_verified": false,
+        "size_validation_warnings": [
+          {
+            "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+            "warning": "image_size_mismatch",
+            "expected": "2560x1440",
+            "actual": "1536x1024"
+          }
+        ],
+        "size_validation_strict": true,
+        "size_validation_failed": true,
+        "error_kind": "image_size_mismatch"
+      },
+      "images": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+          "size": [
+            1536,
+            1024
+          ],
+          "mode": "RGB",
+          "sha256": "49837edf8a9539f92a028572082767532bb4d2e96862efe4cd9429046b6b8085",
+          "readable": true
+        }
+      ],
+      "has_readable_image": true,
+      "meets_2k": false
+    },
+    {
+      "case": "T1_B",
+      "requested_model": "gpt-image-2.6-sunburst",
+      "operation": "generate",
+      "started_at_utc": "2026-11-07T13:52:20.588002+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+      "prompt_sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": null,
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 125.73,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:54:26.325778+00:00",
+      "result": {
+        "ok": false,
+        "operation": "generate",
+        "requested_quality": "max",
+        "attempt_count": 1,
+        "requested_model": "gpt-image-2.6-sunburst",
+        "image_model": "gpt-image-2.6-sunburst",
+        "image_model_source": "cli",
+        "model_alias_applied": false,
+        "skill_primary_channel": "cm_image_gen_cli",
+        "execution_channel": "cm_image_gen_cli",
+        "api_channel": "configured_provider",
+        "api_provider": "cm",
+        "request_url": "https://209.87.95.5:18081/v1/images/generations",
+        "provider": "cm",
+        "base_url": "https://209.87.95.5:18081/v1",
+        "endpoint": "/images/generations",
+        "transport": "images_json",
+        "model": "gpt-image-2.6-sunburst",
+        "paths": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\T1_B.png"
+        ],
+        "usage": {
+          "input_tokens": 480,
+          "input_tokens_details": {
+            "image_tokens": 0,
+            "text_tokens": 480
+          },
+          "output_tokens": 5488,
+          "output_tokens_details": {
+            "image_tokens": 5488,
+            "text_tokens": 0
+          },
+          "total_tokens": 5968
+        },
+        "created": 1794059654,
+        "requested_size": "2560x1440",
+        "output_dimensions": [
+          "1536x1024"
+        ],
+        "size_verified": false,
+        "size_validation_warnings": [
+          {
+            "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\T1_B.png",
+            "warning": "image_size_mismatch",
+            "expected": "2560x1440",
+            "actual": "1536x1024"
+          }
+        ],
+        "size_validation_strict": true,
+        "size_validation_failed": true,
+        "error_kind": "image_size_mismatch"
+      },
+      "images": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\T1_B.png",
+          "size": [
+            1536,
+            1024
+          ],
+          "mode": "RGB",
+          "sha256": "655ce417b1c80aa1286cf3f642d11a4c8e4681cde7e41d8b39c84b97fc858730",
+          "readable": true
+        }
+      ],
+      "has_readable_image": true,
+      "meets_2k": false
+    },
+    {
+      "case": "T1_C",
+      "requested_model": "gpt-image-2.5-flare",
+      "operation": "generate",
+      "started_at_utc": "2026-11-07T13:54:26.357527+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+      "prompt_sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": null,
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 105.7,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:56:12.062648+00:00",
+      "result": {
+        "ok": false,
+        "operation": "generate",
+        "requested_quality": "max",
+        "attempt_count": 1,
+        "requested_model": "gpt-image-2.5-flare",
+        "image_model": "gpt-image-2.5-flare",
+        "image_model_source": "cli",
+        "model_alias_applied": false,
+        "skill_primary_channel": "cm_image_gen_cli",
+        "execution_channel": "cm_image_gen_cli",
+        "api_channel": "configured_provider",
+        "api_provider": "cm",
+        "request_url": "https://209.87.95.5:18081/v1/images/generations",
+        "provider": "cm",
+        "base_url": "https://209.87.95.5:18081/v1",
+        "endpoint": "/images/generations",
+        "transport": "images_json",
+        "model": "gpt-image-2.5-flare",
+        "paths": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png"
+        ],
+        "usage": {
+          "input_tokens": 480,
+          "input_tokens_details": {
+            "image_tokens": 0,
+            "text_tokens": 480
+          },
+          "output_tokens": 5488,
+          "output_tokens_details": {
+            "image_tokens": 5488,
+            "text_tokens": 0
+          },
+          "total_tokens": 5968
+        },
+        "created": 1794059766,
+        "requested_size": "2560x1440",
+        "output_dimensions": [
+          "1536x1024"
+        ],
+        "size_verified": false,
+        "size_validation_warnings": [
+          {
+            "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png",
+            "warning": "image_size_mismatch",
+            "expected": "2560x1440",
+            "actual": "1536x1024"
+          }
+        ],
+        "size_validation_strict": true,
+        "size_validation_failed": true,
+        "error_kind": "image_size_mismatch"
+      },
+      "images": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png",
+          "size": [
+            1536,
+            1024
+          ],
+          "mode": "RGB",
+          "sha256": "54892a37048a910bd680d91f1d7e9aa2d6b72bd092a59e569b7b1a7976c9d777",
+          "readable": true
+        }
+      ],
+      "has_readable_image": true,
+      "meets_2k": false
+    },
+    {
+      "case": "T1_D",
+      "requested_model": "gpt-image-2.6-flare",
+      "operation": "generate",
+      "started_at_utc": "2026-11-07T13:56:12.093652+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+      "prompt_sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": null,
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 3.8,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:56:15.887020+00:00",
+      "result": {
+        "ok": false,
+        "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=503: HTTP 503 from cm Images API: type=api_error message=No available compatible accounts diagnostics=[error_kind=http_error_response status=503 content_type=application/json; charset=utf-8 content_length=75 body_bytes=75 body_class=json_like request_id=d4feecc1-52de-4169-b3fc-59c31b891ffb body_preview={\"error\":{\"message\":\"No available compatible accounts\",\"type\":\"api_error\"}}]"
+      },
+      "images": [],
+      "has_readable_image": false,
+      "meets_2k": false
+    },
+    {
+      "case": "I1_A",
+      "requested_model": "gpt-image-2.5-sunburst",
+      "operation": "edit",
+      "started_at_utc": "2026-11-07T13:56:15.887020+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+      "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 42.75,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:56:58.631706+00:00",
+      "result": {
+        "ok": false,
+        "operation": "edit",
+        "requested_quality": "max",
+        "attempt_count": 1,
+        "requested_model": "gpt-image-2.5-sunburst",
+        "image_model": "gpt-image-2.5-sunburst",
+        "image_model_source": "cli",
+        "model_alias_applied": false,
+        "skill_primary_channel": "cm_image_gen_cli",
+        "execution_channel": "cm_image_gen_cli",
+        "api_channel": "configured_provider",
+        "api_provider": "cm",
+        "request_url": "https://209.87.95.5:18081/v1/images/edits",
+        "provider": "cm",
+        "base_url": "https://209.87.95.5:18081/v1",
+        "endpoint": "/images/edits",
+        "transport": "images_multipart",
+        "model": "gpt-image-2.5-sunburst",
+        "source_images": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\references\\edit_control_2k.png"
+        ],
+        "paths": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png"
+        ],
+        "usage": {
+          "input_tokens": 2025,
+          "input_tokens_details": {
+            "image_tokens": 1508,
+            "text_tokens": 517
+          },
+          "output_tokens": 1158,
+          "output_tokens_details": {
+            "image_tokens": 1158,
+            "text_tokens": 0
+          },
+          "total_tokens": 3183
+        },
+        "created": 1794059812,
+        "requested_size": "2560x1440",
+        "output_dimensions": [
+          "1672x941"
+        ],
+        "size_verified": false,
+        "size_validation_warnings": [
+          {
+            "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png",
+            "warning": "image_size_mismatch",
+            "expected": "2560x1440",
+            "actual": "1672x941"
+          }
+        ],
+        "size_validation_strict": true,
+        "size_validation_failed": true,
+        "error_kind": "image_size_mismatch"
+      },
+      "images": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png",
+          "size": [
+            1672,
+            941
+          ],
+          "mode": "RGB",
+          "sha256": "b436f3762671ed7e4447585b4102ef398ec9a929ffebc688e7922cbc6e341cbd",
+          "readable": true
+        }
+      ],
+      "has_readable_image": true,
+      "meets_2k": false
+    },
+    {
+      "case": "I1_B",
+      "requested_model": "gpt-image-2.6-sunburst",
+      "operation": "edit",
+      "started_at_utc": "2026-11-07T13:56:58.661235+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+      "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 2.36,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:57:01.017593+00:00",
+      "result": {
+        "ok": false,
+        "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/edits) status=503: HTTP 503 from cm Images API: type=api_error message=No available compatible accounts diagnostics=[error_kind=http_error_response status=503 content_type=application/json; charset=utf-8 content_length=75 body_bytes=75 body_class=json_like request_id=f067ddc7-0c83-448b-b46c-8f98e1735dc6 body_preview={\"error\":{\"message\":\"No available compatible accounts\",\"type\":\"api_error\"}}]"
+      },
+      "images": [],
+      "has_readable_image": false,
+      "meets_2k": false
+    },
+    {
+      "case": "I1_C",
+      "requested_model": "gpt-image-2.5-flare",
+      "operation": "edit",
+      "started_at_utc": "2026-11-07T13:57:01.019595+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+      "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 43.14,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:57:44.162668+00:00",
+      "result": {
+        "ok": false,
+        "operation": "edit",
+        "requested_quality": "max",
+        "attempt_count": 1,
+        "requested_model": "gpt-image-2.5-flare",
+        "image_model": "gpt-image-2.5-flare",
+        "image_model_source": "cli",
+        "model_alias_applied": false,
+        "skill_primary_channel": "cm_image_gen_cli",
+        "execution_channel": "cm_image_gen_cli",
+        "api_channel": "configured_provider",
+        "api_provider": "cm",
+        "request_url": "https://209.87.95.5:18081/v1/images/edits",
+        "provider": "cm",
+        "base_url": "https://209.87.95.5:18081/v1",
+        "endpoint": "/images/edits",
+        "transport": "images_multipart",
+        "model": "gpt-image-2.5-flare",
+        "source_images": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\references\\edit_control_2k.png"
+        ],
+        "paths": [
+          "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\I1_C.png"
+        ],
+        "usage": {
+          "input_tokens": 2025,
+          "input_tokens_details": {
+            "image_tokens": 1508,
+            "text_tokens": 517
+          },
+          "output_tokens": 1158,
+          "output_tokens_details": {
+            "image_tokens": 1158,
+            "text_tokens": 0
+          },
+          "total_tokens": 3183
+        },
+        "created": 1794059857,
+        "requested_size": "2560x1440",
+        "output_dimensions": [
+          "1672x941"
+        ],
+        "size_verified": false,
+        "size_validation_warnings": [
+          {
+            "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\I1_C.png",
+            "warning": "image_size_mismatch",
+            "expected": "2560x1440",
+            "actual": "1672x941"
+          }
+        ],
+        "size_validation_strict": true,
+        "size_validation_failed": true,
+        "error_kind": "image_size_mismatch"
+      },
+      "images": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\I1_C.png",
+          "size": [
+            1672,
+            941
+          ],
+          "mode": "RGB",
+          "sha256": "b22ccbc8d6fb61dc063f62b19549adfe8fde3001dd51f9698a644542532aa4c3",
+          "readable": true
+        }
+      ],
+      "has_readable_image": true,
+      "meets_2k": false
+    },
+    {
+      "case": "I1_D",
+      "requested_model": "gpt-image-2.6-flare",
+      "operation": "edit",
+      "started_at_utc": "2026-11-07T13:57:44.193063+00:00",
+      "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\I1.txt",
+      "prompt_sha256": "b888f84091a1e1b42df91bd9f6e874f82f23e694b773eda61a9a90bd8f2d94d7",
+      "requested_size": [
+        2560,
+        1440
+      ],
+      "quality": "max",
+      "complexity": "omitted",
+      "seed": "not exposed by CLI",
+      "max_attempts": 1,
+      "reference_sha256": "c9bd88afe5f43a1e66752b2bf3cae6140db0df2eff19ab9076b55a9e332cb21a",
+      "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+      "duration_seconds": 3.45,
+      "exit_code": 1,
+      "completed_at_utc": "2026-11-07T13:57:47.647357+00:00",
+      "result": {
+        "ok": false,
+        "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/edits) status=503: HTTP 503 from cm Images API: type=api_error message=No available compatible accounts diagnostics=[error_kind=http_error_response status=503 content_type=application/json; charset=utf-8 content_length=75 body_bytes=75 body_class=json_like request_id=b8681000-7fe3-4026-be37-d7c0df6ee9ea body_preview={\"error\":{\"message\":\"No available compatible accounts\",\"type\":\"api_error\"}}]"
+      },
+      "images": [],
+      "has_readable_image": false,
+      "meets_2k": false
+    }
+  ]
+}

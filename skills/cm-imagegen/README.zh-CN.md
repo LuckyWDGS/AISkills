@@ -6,7 +6,7 @@
 
 把整个 `cm-imagegen` 文件夹复制到 `$CODEX_HOME/skills/`，未设置 `CODEX_HOME` 时为 `~/.codex/skills/`。新开 Codex 会话使用 `$cm-imagegen`。现有 Codex 已配置 Sub2API 时可直接复用配置，无需复制任何人的密钥。
 
-核心请求仅使用 Python 标准库。安装 `Pillow` 可检查 JPEG/WebP 尺寸并运行完整测试；`requests` 仅用于可选的传输诊断。
+核心请求仅使用 Python 标准库。安装 `Pillow` 可完整解码位图、检查 GIF 帧数和时长、校验标注 PNG；本地 GIF 合成和对应测试还需要 `NumPy`，推荐安装 `FFmpeg`；`requests` 仅用于可选的传输诊断。
 
 安装可选依赖：`python -m pip install -r requirements-optional.txt`。
 
@@ -27,9 +27,37 @@ $env:CODEXMANAGER_IMAGE_API_KEY = '<your-own-primary-key>'
 
 默认使用 Images API，命令中显式写 `--api images`：文生图调用 `/v1/images/generations`（JSON），图生图/参考图调用 `/v1/images/edits`（multipart 上传）。这些路径以服务 base URL 已包含 `/v1` 为前提；脚本会保留服务自己的 base 前缀。
 
-默认图片模型为 `gpt-image-2.5-sunburst`，最高画质为 `quality=max`。Sunburst/Flare 未指定画质时也使用 `max`；可用 `--model`、`--quality` 显式覆盖。其他模型不自动套用 `max`。Images 没有独立的 `reasoning.effort` 参数，最高画质不能等同于已验证的最高推理强度。
+默认图片模型为 `gpt-image-2.6-sunburst`，显式传递最高画质 `quality=max` 和最高图片规划复杂度 `complexity=high`。省略参数时，两条 Images 路径也会自动加入这些字段；可用 `--model`、`--quality`、`--complexity low|medium|high` 显式覆盖。2.5 Sunburst/Flare 保留 `quality=max`，不自动添加 complexity；其他模型不自动套用 `max`。图片规划复杂度与渲染画质独立，Images 使用 `complexity` 而不是 `reasoning.effort`；请求值不等于已验证的上游执行值。尺寸和张数按具体任务指定。
+
+现支持 GIF 参数、SVG 文生图及可选编写模型、标注引导编辑、JPEG/WebP 压缩和 Images 流式参数。使用方法、互斥条件、方图/横图/竖图测试命令见 [格式与尺寸规则](references/formats-and-sizes.md)。这些是客户端能力，网关是否支持仍以实际返回文件为准；格式降级、假动图和尺寸不符不会被包装成成功。
+
+GIF 默认按 [原生优先与回退规则](references/gif-routing.md) 执行：先请求官方原生 GIF，成功则保留原文件；明确不支持时自动用同一服务生成 PNG 素材并本地合成，无需再次确认。超时、任务未结束、鉴权/额度错误和安全拒绝不属于能力不支持。`cm_animate.py` 可处理周期摇摆、漂移、上下浮动和水面效果，复杂动作需额外姿势帧或专用脚本。合成产物明确写入 `native_gif_request=false`。
 
 可选的 `$CODEX_HOME/cm-imagegen/controller.json` 只存路由和控制器偏好，不存地址/key；缺少它仍可工作。使用 Images 时将 `api` 设为 `images`，最小配置为 `{"api":"images"}`；旧 Responses 配置仍可读取，显式 `--api images` 优先于配置。失败时不会自动切换接口。
+
+## 语言控制模型
+
+如需保存 **GPT-6 Astra / max** 偏好，在本机 `$CODEX_HOME/cm-imagegen/controller.json` 中配置（未设置 `CODEX_HOME` 时是 `~/.codex/cm-imagegen/controller.json`）：
+
+```json
+{
+  "api": "images",
+  "responses_model": "gpt-6-astra",
+  "responses_reasoning": "max"
+}
+```
+
+`api=images` 保持默认图片直调；只有选用 `--api responses` 时，语言控制模型才参与请求。`max` 是 GPT-6 Astra 的最高 `reasoning.effort`，图片仍由图片工具生成。未创建配置文件的安装会沿用已配置的语言模型，不能把本机偏好当成所有安装的默认值。
+
+以下命令只检查配置及待发送字段，不调用服务：
+
+```powershell
+python scripts/cm_image_gen.py doctor --api responses --responses-model gpt-6-astra --responses-reasoning max --show-payload-shape
+```
+
+应看到 `outer_model=gpt-6-astra`、`reasoning_effort=max`；省略两个 `--responses-*` 参数可验证本机保存的偏好。完整优先级见 [CLI 说明](references/cli.md#responses-controller-profile)。不要为设置图片控制器改动 Codex 聊天模型。
+
+SVG 编写模型独立使用 `--svg-model` 和 `--svg-reasoning`，不会继承上述控制器配置。只有上游启用了 SVG model selection 才传这两个参数。原生 GIF 需要所选模型的 GIF preview 权限；模型白名单、账号等级和目录同步不授予这种权限。遇到 `GIF output is not enabled for this request.` 应停止原生请求并自动进入本地动画流程，不继续更换参数重试；用户明确要求仅原生时则停止。SVG 请求返回 PNG 时会保留 PNG 并判定格式不符。
 
 仅在明确需要 Responses 时使用 `--api responses`；其 `--responses-model` 和 `--responses-reasoning` 与图片模型/画质独立，服务接受的推理档位可能不同。不要为此修改聊天模型或全局推理设置。
 
@@ -45,11 +73,15 @@ python scripts/cm_image_gen.py doctor --api images --show-payload-shape
 python scripts/cm_image_gen.py doctor --api images --check-model
 
 # 真实生图，会使用该服务额度；诊断时只请求一次
-python scripts/cm_image_gen.py generate --api images --model gpt-image-2.5-sunburst --quality max --prompt 'A blue ceramic mug on a plain white background. No text.' --max-attempts 1 --out-dir './generated-images'
+python scripts/cm_image_gen.py generate --api images --model gpt-image-2.6-sunburst --quality max --complexity high --prompt 'A blue ceramic mug on a plain white background. No text.' --max-attempts 1 --out-dir './generated-images'
 
 # 使用自己的参考图
-python scripts/cm_image_gen.py edit --api images --model gpt-image-2.5-sunburst --quality max --image './reference.png' --prompt 'Change only the mug color to orange.' --out-dir './generated-images'
+python scripts/cm_image_gen.py edit --api images --model gpt-image-2.6-sunburst --quality max --complexity high --image './reference.png' --prompt 'Change only the mug color to orange.' --out-dir './generated-images'
 ```
+
+长提示词或中文提示词建议写进 UTF-8 文本文件，用 `--prompt-file ./prompts/p01.txt` 代替 `--prompt`，避免命令行引号把内容截断或转义。`--filename p01` 固定输出文件名（扩展名按实际返回格式）。
+
+每次生成/编辑都会在 `--out-dir` 下写 `.cm-jobs/<任务>.json` 任务台账，并在每张图旁写 `<图片>.cm.json` 来源记录（提示词、参考图哈希、请求参数、输出哈希）。台账可能含服务地址和临时轮询链接，只留在本地；来源记录不含这些内容，可随成品交付。
 
 成功标准是 `ok=true` 且 `paths[]` 指向可打开的图片。目录检查通过、HTTP 200、模型输出了一段文字，都不能代替实际图片结果。
 
@@ -57,7 +89,7 @@ python scripts/cm_image_gen.py edit --api images --model gpt-image-2.5-sunburst 
 
 - 主 key 有效、余额/配额可用，绑定正确的 OpenAI 分组。
 - 分组允许图片生成（`allow_image_generation`），并有支持相应图片工具的健康上游账号。
-- 服务的 Images 接口可用，支持请求的图片模型和 `quality=max`。仅 Responses 模式还需支持对应控制模型。
+- 服务的 Images 接口可用，支持请求的图片模型、`quality=max` 和 2.6 的 `complexity=high`。仅 Responses 模式还需支持对应控制模型。
 - HTTPS 证书可验证，网络和反向代理允许长时间流式响应。
 
 默认请求直接调用 Images 接口，不需要依赖服务端给普通聊天自动注入工具。只有文本转发能力的上游不能通过安装 skill 获得生图能力。
@@ -66,4 +98,13 @@ python scripts/cm_image_gen.py edit --api images --model gpt-image-2.5-sunburst 
 
 默认最多请求 3 次（间隔 5/15 秒），缺配置、鉴权、参数、权限和策略问题不盲目重试。流中断但任务尚未结束时不重复提交。详细规则见 `SKILL.md`。
 
-安装 Pillow 后可运行离线测试：`python -m unittest discover -s scripts -p "test_*.py"`。离线测试不证明真实服务可用；实测成功仅证明当时的配置与请求可用，不能承诺所有用户每次成功。
+命令被超时杀掉、输出丢失或结果不明时，先恢复再决定是否重发：
+
+```powershell
+python scripts/cm_image_gen.py recover --out-dir './generated-images'   # 列出未结束的任务
+python scripts/cm_image_gen.py recover --job-file './generated-images/.cm-jobs/<任务>.json'
+```
+
+按返回的 `recovery_status` 处理：`already_completed`/`recovered` 直接使用；`pending` 稍后再查；`uncertain`/`in_flight` 表示服务可能已经生成并计费，先查服务端用量或询问用户，不自动重发。状态说明见 [cli.md](references/cli.md#job-ledger-and-recovery)。
+
+安装可选依赖后可运行离线测试：`python -m unittest discover -s scripts -p "test_*.py"`，也可单独运行 `python -I scripts/test_job_ledger.py` 等文件。离线测试不证明真实服务可用；实测成功仅证明当时的配置与请求可用，不能承诺所有用户每次成功。

@@ -8,7 +8,9 @@
 
 - 文生图、图生图和多张参考图。
 - 默认显式调用 Images API：文生图 `/v1/images/generations`，图生图 `/v1/images/edits`。
-- 默认模型 `gpt-image-2.5-sunburst`，最高画质 `quality=max`；Images 接口没有独立的推理强度参数。
+- 默认模型 `gpt-image-2.6-sunburst`，显式传递最高画质 `quality=max` 与最高图片规划复杂度 `complexity=high`。
+- 可请求原生 GIF 和 SVG；可用性取决于上游权限，按实际文件格式、动画帧和矢量结构验收。
+- GIF 默认先请求官方原生输出，明确不支持时自动回退到 PNG 素材与本地动画合成；原生和合成结果分别标注。
 - 只使用一个主服务，没有备用 API/key，也不会自动切换其他服务。
 - 同一请求最多尝试 3 次，保留失败原因；未结束的任务和流中断不会盲目重复提交。
 - 保存图片到本地，去除 SSE 重复结果，并检查输出尺寸。
@@ -37,7 +39,7 @@ ln -s "$PWD/skills/cm-imagegen" "${CODEX_HOME:-$HOME/.codex}/skills/cm-imagegen"
 
 已有同名技能目录时，先备份再安装；Windows 安装脚本可加 `-Replace` 自动备份现有实体目录。也可下载压缩包，只把 `cm-imagegen` 文件夹复制到自己的 Codex skills 目录。保留仓库目录以免符号链接失效。重新启动 Codex 后可用 `$cm-imagegen` 调用。
 
-核心 API 请求只依赖 Python 标准库。完整离线测试和 JPEG/WebP 尺寸检查需要 Pillow，可选的 requests 传输诊断需要 requests。先进入 `skills/cm-imagegen`；以下使用、诊断和测试命令都在该技能目录运行：
+核心 API 请求只依赖 Python 标准库。完整位图解码、GIF 帧检查和标注 PNG 校验需要 Pillow；本地 GIF 合成及其测试还需要 NumPy，推荐安装 FFmpeg；可选的 requests 传输诊断需要 requests。先进入 `skills/cm-imagegen`；以下使用、诊断和测试命令都在该技能目录运行：
 
 ```bash
 cd skills/cm-imagegen
@@ -56,15 +58,23 @@ python scripts/cm_image_gen.py doctor --api images --show-payload-shape
 python scripts/cm_image_gen.py doctor --api images --check-model
 
 # 真实生成，会使用服务额度
-python scripts/cm_image_gen.py generate --api images --model gpt-image-2.5-sunburst --quality max --prompt "A blue ceramic mug on a plain white background" --out-dir ./generated-images
+python scripts/cm_image_gen.py generate --api images --model gpt-image-2.6-sunburst --quality max --complexity high --prompt "A blue ceramic mug on a plain white background" --out-dir ./generated-images
 
 # 图生图
-python scripts/cm_image_gen.py edit --api images --model gpt-image-2.5-sunburst --quality max --image ./reference.png --prompt "Change only the mug color to orange" --out-dir ./generated-images
+python scripts/cm_image_gen.py edit --api images --model gpt-image-2.6-sunburst --quality max --complexity high --image ./reference.png --prompt "Change only the mug color to orange" --out-dir ./generated-images
 ```
 
-`--model` 选择图片模型，`--quality` 可覆盖画质。显式选择其他模型时，仅 Sunburst/Flare 默认使用 `max`，其他模型保留服务默认画质。`--api responses` 仅供明确需要 Responses 的工作流使用，其控制模型和推理设置不作用于 Images。没有外部 `controller.json` 也能运行。
+`--model` 选择图片模型，`--quality`、`--complexity low|medium|high` 可覆盖画质和图片规划复杂度。省略参数时，2.6 Sunburst/Flare 也会显式传递 `quality=max`、`complexity=high`。2.5 保留 `quality=max`，不自动添加 complexity；其他模型保留服务默认画质。`--api responses` 仅供明确需要 Responses 的工作流使用，其控制模型和推理设置不作用于 Images，不能搭配 `--complexity`。没有外部 `controller.json` 也能运行。
+
+GIF、SVG 文生图、标注编辑、压缩、流式参数，以及方图/横图/竖图测试方案见 [格式与尺寸规则](references/formats-and-sizes.md)。GIF/SVG 是否可用须检查实际格式、动画帧或矢量结构，不能只看 HTTP 成功状态。
+
+GIF 按 [原生优先与回退规则](references/gif-routing.md) 执行。原生成功就使用原文件；明确不支持才自动进入 [PNG 生图→本地动画合成](references/local-animation.md)。简单循环可生成背景与透明主体图，配置周期运动后运行 `python scripts/cm_animate.py --scene ./assets/scene.json --out ./boat.gif`；复杂动作需要姿势帧、遮罩或专用动画脚本。超时、鉴权失败和安全拒绝不会触发回退。
+
+语言控制模型可以在本机 `controller.json` 中设为 `gpt-6-astra`、`responses_reasoning=max`，配置示例见 [中文使用说明](README.zh-CN.md#语言控制模型)。它只作用于 Responses 模式；默认 Images 直调不额外调用语言模型。SVG 编写模型使用独立的 `--svg-model` / `--svg-reasoning`，还需要上游授予模型选择权限。
 
 ## 验证与边界
+
+已归档的模型对比、画幅测试、SVG/GIF 请求及网关排查见 [测试归档](local-tests/README.md)，统一浏览入口为 [index.html](local-tests/index.html)。这些记录反映测试当时的服务行为，保留原图和请求证据；当前可用性仍需实际验证。
 
 运行离线测试：
 

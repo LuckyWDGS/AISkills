@@ -1,0 +1,88 @@
+{
+  "case": "T1_A",
+  "requested_model": "gpt-image-2.5-sunburst",
+  "operation": "generate",
+  "started_at_utc": "2026-11-07T13:50:27.655805+00:00",
+  "prompt_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\prompts\\T1.txt",
+  "prompt_sha256": "eb7ea1bbf8a693eea514636e287a8dc4aacfde86cd088146b5d8e898cf82cc5e",
+  "requested_size": [
+    2560,
+    1440
+  ],
+  "quality": "max",
+  "complexity": "omitted",
+  "seed": "not exposed by CLI",
+  "max_attempts": 1,
+  "reference_sha256": null,
+  "script_sha256": "028c3fe67b63ee5e343f7d5b0063a5a9ef2e111b913a0cb15b5a49f4aaed2d04",
+  "duration_seconds": 112.91,
+  "exit_code": 1,
+  "completed_at_utc": "2026-11-07T13:52:20.557003+00:00",
+  "result": {
+    "ok": false,
+    "operation": "generate",
+    "requested_quality": "max",
+    "attempt_count": 1,
+    "requested_model": "gpt-image-2.5-sunburst",
+    "image_model": "gpt-image-2.5-sunburst",
+    "image_model_source": "cli",
+    "model_alias_applied": false,
+    "skill_primary_channel": "cm_image_gen_cli",
+    "execution_channel": "cm_image_gen_cli",
+    "api_channel": "configured_provider",
+    "api_provider": "cm",
+    "request_url": "https://209.87.95.5:18081/v1/images/generations",
+    "provider": "cm",
+    "base_url": "https://209.87.95.5:18081/v1",
+    "endpoint": "/images/generations",
+    "transport": "images_json",
+    "model": "gpt-image-2.5-sunburst",
+    "paths": [
+      "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png"
+    ],
+    "usage": {
+      "input_tokens": 480,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 480
+      },
+      "output_tokens": 5488,
+      "output_tokens_details": {
+        "image_tokens": 5488,
+        "text_tokens": 0
+      },
+      "total_tokens": 5968
+    },
+    "created": 1794059529,
+    "requested_size": "2560x1440",
+    "output_dimensions": [
+      "1536x1024"
+    ],
+    "size_verified": false,
+    "size_validation_warnings": [
+      {
+        "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+        "warning": "image_size_mismatch",
+        "expected": "2560x1440",
+        "actual": "1536x1024"
+      }
+    ],
+    "size_validation_strict": true,
+    "size_validation_failed": true,
+    "error_kind": "image_size_mismatch"
+  },
+  "images": [
+    {
+      "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGB",
+      "sha256": "49837edf8a9539f92a028572082767532bb4d2e96862efe4cd9429046b6b8085",
+      "readable": true
+    }
+  ],
+  "has_readable_image": true,
+  "meets_2k": false
+}

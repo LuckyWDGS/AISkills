@@ -1,0 +1,292 @@
+{
+  "published_at_utc": "2026-11-07T14:09:14.322136+00:00",
+  "requested_size": [
+    2560,
+    1440
+  ],
+  "quality": "max",
+  "samples": [
+    {
+      "case": "T1_A",
+      "model": "gpt-image-2.5-sunburst",
+      "task": "T1",
+      "score": 95,
+      "breakdown": [
+        40,
+        18,
+        18,
+        14,
+        5
+      ],
+      "strengths": [
+        "四位人物、站位、单只打开怀表的交接、三只茶杯、灯壶左右关系、柜下猫及 10:10 时钟均可辨认。",
+        "拾光修理铺、REPAIR 24 两处指定文字正确；雨滴、金属反射、皮肤、木柜划痕和袖口纹理表现丰富。"
+      ],
+      "deductions": [
+        "近看细小机芯和齿轮的咬合仍偏装饰化，部分玻璃柜反射层次较繁杂。",
+        "茶汽不明显，背景人物略有摆拍感；画质分不包含尺寸达标情况。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "seconds": 112.91,
+      "recovered": false,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\result.json"
+    },
+    {
+      "case": "T1_B",
+      "model": "gpt-image-2.6-sunburst",
+      "task": "T1",
+      "score": 96,
+      "breakdown": [
+        40,
+        18,
+        19,
+        14,
+        5
+      ],
+      "strengths": [
+        "四位主角的位置、怀表交接、三个茶杯、柜下猫、时钟时间和两处指定文字均完成。",
+        "茶汽清晰，柜内分格工具、玻璃反射、皮革和雨衣表面细节丰富，主次清楚。"
+      ],
+      "deductions": [
+        "近看接触区域的手指遮挡关系略含混，微小机芯部件不完全符合真实机械装配。",
+        "人物表情和正面摆位稍显刻意，局部金属高光略密。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\T1_B.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "seconds": 125.73,
+      "recovered": false,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\result.json"
+    },
+    {
+      "case": "T1_C",
+      "model": "gpt-image-2.5-flare",
+      "task": "T1",
+      "score": 92,
+      "breakdown": [
+        36,
+        18,
+        19,
+        14,
+        5
+      ],
+      "strengths": [
+        "主角、单只打开怀表、三只茶杯、猫、10:10 时钟及指定文字基本准确。",
+        "雨滴、织物、茶汽和木柜抽屉层次出色，柜内工具有较好空间分离。"
+      ],
+      "deductions": [
+        "背景站台明显多出路人，违反只有四个人的明确约束，指令项扣 4 分。",
+        "交接手指细节略生硬，微小机械结构仍有装饰性；整体人物关系稍显摆拍。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "seconds": 105.7,
+      "recovered": false,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\result.json"
+    },
+    {
+      "case": "T1_D",
+      "model": "gpt-image-2.6-flare",
+      "task": "T1",
+      "score": 92,
+      "breakdown": [
+        36,
+        18,
+        19,
+        14,
+        5
+      ],
+      "strengths": [
+        "交接怀表、三只白茶杯、猫、时钟和中英指定文字均完成；工具与抽屉分层清楚。",
+        "茶汽、雨衣水滴、灯罩与金属材质表现较好，主角的表情自然。"
+      ],
+      "deductions": [
+        "站台远处多出路人，违反只有四人的条件，指令项扣 4 分。",
+        "怀表交接处的手指边界略含混，微小齿轮机构更像视觉装饰；部分高光较强。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\T1_D.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "seconds": 108.81,
+      "recovered": true,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\result.json"
+    },
+    {
+      "case": "I1_A",
+      "model": "gpt-image-2.5-sunburst",
+      "task": "I1",
+      "score": 95,
+      "breakdown": [
+        35,
+        33,
+        18,
+        9
+      ],
+      "strengths": [
+        "正确把大标题改为雾林档案、只将 02 瓶改为钴蓝色，并加入一只蝴蝶的透明展示盒。",
+        "六瓶位置、01–06 编号、330 mL、瓶身山间来信及副标题保留，侧边植物、书本天平和桌面物品齐全。"
+      ],
+      "deductions": [
+        "瓶颈与肩部比例相对参考有一定重塑，保持项扣 2 分。",
+        "近看玻璃展示盒边缘与微小书写纹理略含混，暖色光线统一但层次稍平。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png",
+      "size": [
+        1672,
+        941
+      ],
+      "seconds": 42.75,
+      "recovered": false,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\result.json"
+    },
+    {
+      "case": "I1_B",
+      "model": "gpt-image-2.6-sunburst",
+      "task": "I1",
+      "score": 96,
+      "breakdown": [
+        35,
+        33,
+        19,
+        9
+      ],
+      "strengths": [
+        "换标题、02 瓶钴蓝色和新增单只蝴蝶展示盒准确，六瓶编号及容量文字全部可读。",
+        "玻璃折射、金属底座、蕨叶和木纹层次丰富，暖光下不同材质区分清楚。"
+      ],
+      "deductions": [
+        "瓶颈比例有小幅变化，底部外框被前景桌面占用，未完整保持原图边框。",
+        "个别玻璃高光偏密、书页极小字不清晰，整体色调略偏统一的金黄色。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\I1_B.png",
+      "size": [
+        1672,
+        941
+      ],
+      "seconds": 44.83,
+      "recovered": true,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\result.json"
+    },
+    {
+      "case": "I1_C",
+      "model": "gpt-image-2.5-flare",
+      "task": "I1",
+      "score": 96,
+      "breakdown": [
+        35,
+        33,
+        19,
+        9
+      ],
+      "strengths": [
+        "三处指定修改准确，六瓶标签、编号、容量和其余颜色均保留。",
+        "玻璃厚度、木材接缝、灯罩纹理和展示盒底座较清楚；参考布局整体稳定。"
+      ],
+      "deductions": [
+        "瓶颈与局部轮廓仍有小幅变化，且底部外框被前景桌面占用，参考保持扣 2 分。",
+        "书本装饰和极细纹理不能当作可读的真实内容；光照与构图优秀但较对称和静态。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\I1_C.png",
+      "size": [
+        1672,
+        941
+      ],
+      "seconds": 43.14,
+      "recovered": false,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\result.json"
+    },
+    {
+      "case": "I1_D",
+      "model": "gpt-image-2.6-flare",
+      "task": "I1",
+      "score": 96,
+      "breakdown": [
+        35,
+        34,
+        18,
+        9
+      ],
+      "strengths": [
+        "三处指定修改和六组瓶身文字全部完成，保留两排布局、周边物品与底部外框。",
+        "木架空间关系、天平刻度、玻璃展示盒和暖光投影清楚，画面完整。"
+      ],
+      "deductions": [
+        "瓶颈、瓶肩和桌面高度相对输入仍略有变化，保持项扣 1 分。",
+        "相比其他样本，部分玻璃与细小材质纹理稍平，书页小字仍属纹理；整体色调略单一。"
+      ],
+      "image": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\I1_D.png",
+      "size": [
+        1672,
+        941
+      ],
+      "seconds": 91.91,
+      "recovered": true,
+      "meets_2k": false,
+      "attempts": 1,
+      "result_path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\result.json"
+    }
+  ],
+  "summary": [
+    {
+      "model": "gpt-image-2.5-flare",
+      "T1": 92,
+      "I1": 96,
+      "mean": 94.0,
+      "T1_seconds": 105.7,
+      "I1_seconds": 43.14,
+      "meets_2k": false
+    },
+    {
+      "model": "gpt-image-2.5-sunburst",
+      "T1": 95,
+      "I1": 95,
+      "mean": 95.0,
+      "T1_seconds": 112.91,
+      "I1_seconds": 42.75,
+      "meets_2k": false
+    },
+    {
+      "model": "gpt-image-2.6-flare",
+      "T1": 92,
+      "I1": 96,
+      "mean": 94.0,
+      "T1_seconds": 108.81,
+      "I1_seconds": 91.91,
+      "meets_2k": false
+    },
+    {
+      "model": "gpt-image-2.6-sunburst",
+      "T1": 96,
+      "I1": 96,
+      "mean": 96.0,
+      "T1_seconds": 125.73,
+      "I1_seconds": 44.83,
+      "meets_2k": false
+    }
+  ]
+}

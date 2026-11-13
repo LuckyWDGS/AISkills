@@ -1,0 +1,316 @@
+[
+  {
+    "case": "square",
+    "requested_size": "1024x1024",
+    "requested_format": "png",
+    "elapsed_seconds": 55.53,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "operation": "generate",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "attempt_count": 1,
+      "requested_model": "gpt-image-2.6-sunburst",
+      "image_model": "gpt-image-2.6-sunburst",
+      "image_model_source": "cli",
+      "model_alias_applied": false,
+      "skill_primary_channel": "cm_image_gen_cli",
+      "execution_channel": "cm_image_gen_cli",
+      "api_channel": "configured_provider",
+      "api_provider": "cm",
+      "request_url": "https://209.87.95.5:18081/v1/images/generations",
+      "provider": "cm",
+      "base_url": "https://209.87.95.5:18081/v1",
+      "endpoint": "/images/generations",
+      "transport": "images_json",
+      "model": "gpt-image-2.6-sunburst",
+      "paths": [
+        "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\square.png"
+      ],
+      "usage": {
+        "input_tokens": 140,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 140
+        },
+        "output_tokens": 1372,
+        "output_tokens_details": {
+          "image_tokens": 1372,
+          "text_tokens": 0
+        },
+        "total_tokens": 1512
+      },
+      "svg_usage": null,
+      "created": 1794062347,
+      "requested_size": "1024x1024",
+      "output_dimensions": [
+        "1536x1024"
+      ],
+      "size_verified": false,
+      "size_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\square.png",
+          "warning": "image_size_mismatch",
+          "expected": "1024x1024",
+          "actual": "1536x1024"
+        }
+      ],
+      "size_validation_strict": true,
+      "size_validation_failed": true,
+      "requested_output_format": "png",
+      "media_outputs": [
+        {
+          "format": "png",
+          "readable": true,
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\square\\square.png"
+        }
+      ],
+      "media_validation_failed": false,
+      "media_validation_warnings": [],
+      "error_kind": "image_size_mismatch"
+    }
+  },
+  {
+    "case": "landscape",
+    "requested_size": "1536x1024",
+    "requested_format": "png",
+    "elapsed_seconds": 47.8,
+    "exit_code": 0,
+    "result": {
+      "ok": true,
+      "operation": "generate",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "attempt_count": 1,
+      "requested_model": "gpt-image-2.6-sunburst",
+      "image_model": "gpt-image-2.6-sunburst",
+      "image_model_source": "cli",
+      "model_alias_applied": false,
+      "skill_primary_channel": "cm_image_gen_cli",
+      "execution_channel": "cm_image_gen_cli",
+      "api_channel": "configured_provider",
+      "api_provider": "cm",
+      "request_url": "https://209.87.95.5:18081/v1/images/generations",
+      "provider": "cm",
+      "base_url": "https://209.87.95.5:18081/v1",
+      "endpoint": "/images/generations",
+      "transport": "images_json",
+      "model": "gpt-image-2.6-sunburst",
+      "paths": [
+        "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\landscape.png"
+      ],
+      "usage": {
+        "input_tokens": 140,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 140
+        },
+        "output_tokens": 1372,
+        "output_tokens_details": {
+          "image_tokens": 1372,
+          "text_tokens": 0
+        },
+        "total_tokens": 1512
+      },
+      "svg_usage": null,
+      "created": 1794062396,
+      "requested_size": "1536x1024",
+      "output_dimensions": [
+        "1536x1024"
+      ],
+      "size_verified": true,
+      "size_validation_warnings": [],
+      "size_validation_strict": true,
+      "size_validation_failed": false,
+      "requested_output_format": "png",
+      "media_outputs": [
+        {
+          "format": "png",
+          "readable": true,
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\landscape\\landscape.png"
+        }
+      ],
+      "media_validation_failed": false,
+      "media_validation_warnings": []
+    }
+  },
+  {
+    "case": "portrait",
+    "requested_size": "1024x1536",
+    "requested_format": "png",
+    "elapsed_seconds": 55.28,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "operation": "generate",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "attempt_count": 1,
+      "requested_model": "gpt-image-2.6-sunburst",
+      "image_model": "gpt-image-2.6-sunburst",
+      "image_model_source": "cli",
+      "model_alias_applied": false,
+      "skill_primary_channel": "cm_image_gen_cli",
+      "execution_channel": "cm_image_gen_cli",
+      "api_channel": "configured_provider",
+      "api_provider": "cm",
+      "request_url": "https://209.87.95.5:18081/v1/images/generations",
+      "provider": "cm",
+      "base_url": "https://209.87.95.5:18081/v1",
+      "endpoint": "/images/generations",
+      "transport": "images_json",
+      "model": "gpt-image-2.6-sunburst",
+      "paths": [
+        "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\portrait.png"
+      ],
+      "usage": {
+        "input_tokens": 140,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 140
+        },
+        "output_tokens": 1372,
+        "output_tokens_details": {
+          "image_tokens": 1372,
+          "text_tokens": 0
+        },
+        "total_tokens": 1512
+      },
+      "svg_usage": null,
+      "created": 1794062447,
+      "requested_size": "1024x1536",
+      "output_dimensions": [
+        "1536x1024"
+      ],
+      "size_verified": false,
+      "size_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\portrait.png",
+          "warning": "image_size_mismatch",
+          "expected": "1024x1536",
+          "actual": "1536x1024"
+        }
+      ],
+      "size_validation_strict": true,
+      "size_validation_failed": true,
+      "requested_output_format": "png",
+      "media_outputs": [
+        {
+          "format": "png",
+          "readable": true,
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\portrait\\portrait.png"
+        }
+      ],
+      "media_validation_failed": false,
+      "media_validation_warnings": [],
+      "error_kind": "image_size_mismatch"
+    }
+  },
+  {
+    "case": "gif",
+    "requested_size": "auto",
+    "requested_format": "gif",
+    "elapsed_seconds": 2.11,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=400: HTTP 400 from cm Images API: type=invalid_request_error message=GIF output is not enabled for this request. diagnostics=[error_kind=http_error_response status=400 content_type=application/json; charset=utf-8 content_length=98 body_bytes=98 body_class=json_like request_id=7a49ba1b-9bc2-4913-a2e0-2a137ed83edf body_preview={\"error\":{\"message\":\"GIF output is not enabled for this request.\",\"type\":\"invalid_request_error\"}}]"
+    }
+  },
+  {
+    "case": "svg",
+    "requested_size": "1024x1024",
+    "requested_format": "svg",
+    "elapsed_seconds": 34.19,
+    "exit_code": 1,
+    "result": {
+      "ok": false,
+      "operation": "generate",
+      "requested_quality": "max",
+      "requested_complexity": "high",
+      "attempt_count": 1,
+      "requested_model": "gpt-image-2.6-sunburst",
+      "image_model": "gpt-image-2.6-sunburst",
+      "image_model_source": "cli",
+      "model_alias_applied": false,
+      "skill_primary_channel": "cm_image_gen_cli",
+      "execution_channel": "cm_image_gen_cli",
+      "api_channel": "configured_provider",
+      "api_provider": "cm",
+      "request_url": "https://209.87.95.5:18081/v1/images/generations",
+      "provider": "cm",
+      "base_url": "https://209.87.95.5:18081/v1",
+      "endpoint": "/images/generations",
+      "transport": "images_json",
+      "model": "gpt-image-2.6-sunburst",
+      "paths": [
+        "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png"
+      ],
+      "usage": {
+        "input_tokens": 63,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 63
+        },
+        "output_tokens": 1372,
+        "output_tokens_details": {
+          "image_tokens": 1372,
+          "text_tokens": 0
+        },
+        "total_tokens": 1435
+      },
+      "svg_usage": null,
+      "created": 1794062490,
+      "requested_size": "1024x1024",
+      "output_dimensions": [
+        "1536x1024"
+      ],
+      "size_verified": false,
+      "size_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png",
+          "warning": "image_size_mismatch",
+          "expected": "1024x1024",
+          "actual": "1536x1024"
+        }
+      ],
+      "size_validation_strict": false,
+      "size_validation_failed": false,
+      "requested_output_format": "svg",
+      "media_outputs": [
+        {
+          "format": "png",
+          "readable": true,
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png"
+        }
+      ],
+      "media_validation_failed": true,
+      "media_validation_warnings": [
+        {
+          "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\svg\\svg.png",
+          "warning": "output_format_mismatch",
+          "expected": "svg",
+          "actual": "png"
+        }
+      ],
+      "error_kind": "image_media_mismatch"
+    }
+  }
+]

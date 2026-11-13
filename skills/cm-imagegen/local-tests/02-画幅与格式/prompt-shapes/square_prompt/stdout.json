@@ -1,0 +1,69 @@
+{
+  "ok": false,
+  "operation": "generate",
+  "requested_quality": "max",
+  "requested_complexity": "high",
+  "attempt_count": 1,
+  "requested_model": "gpt-image-2.6-sunburst",
+  "image_model": "gpt-image-2.6-sunburst",
+  "image_model_source": "cli",
+  "model_alias_applied": false,
+  "skill_primary_channel": "cm_image_gen_cli",
+  "execution_channel": "cm_image_gen_cli",
+  "api_channel": "configured_provider",
+  "api_provider": "cm",
+  "request_url": "https://209.87.95.5:18081/v1/images/generations",
+  "provider": "cm",
+  "base_url": "https://209.87.95.5:18081/v1",
+  "endpoint": "/images/generations",
+  "transport": "images_json",
+  "model": "gpt-image-2.6-sunburst",
+  "paths": [
+    "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\square_prompt.png"
+  ],
+  "usage": {
+    "input_tokens": 192,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 192
+    },
+    "output_tokens": 2058,
+    "output_tokens_details": {
+      "image_tokens": 2058,
+      "text_tokens": 0
+    },
+    "total_tokens": 2250
+  },
+  "svg_usage": null,
+  "created": 1794062559,
+  "requested_size": "1024x1024",
+  "output_dimensions": [
+    "1254x1254"
+  ],
+  "size_verified": false,
+  "size_validation_warnings": [
+    {
+      "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\square_prompt.png",
+      "warning": "image_size_mismatch",
+      "expected": "1024x1024",
+      "actual": "1254x1254"
+    }
+  ],
+  "size_validation_strict": true,
+  "size_validation_failed": true,
+  "requested_output_format": "png",
+  "media_outputs": [
+    {
+      "format": "png",
+      "readable": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "path": "E:\\GitHubProject\\imagegen-formats-2026-11-07\\prompt-shapes\\square_prompt\\square_prompt.png"
+    }
+  ],
+  "media_validation_failed": false,
+  "media_validation_warnings": [],
+  "error_kind": "image_size_mismatch"
+}

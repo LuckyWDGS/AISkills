@@ -1,0 +1,31 @@
+{
+  "version": "v0.2.20",
+  "public_commit": "dab829a4e9b7d1cc307189aea8b0319eb29e29d0",
+  "deployed_commit_verified": false,
+  "files": [
+    {
+      "path": "backend/internal/service/openai_images.go",
+      "url": "https://raw.githubusercontent.com/Wei-Shaw/sub2api/dab829a4e9b7d1cc307189aea8b0319eb29e29d0/backend/internal/service/openai_images.go",
+      "sha256": "c1b51a5167280f24b2227188f5f68f3719bb8debcaf4e8c6db5da1cfd6e1541a",
+      "bytes": 61144
+    },
+    {
+      "path": "backend/internal/service/openai_images_direct.go",
+      "url": "https://raw.githubusercontent.com/Wei-Shaw/sub2api/dab829a4e9b7d1cc307189aea8b0319eb29e29d0/backend/internal/service/openai_images_direct.go",
+      "sha256": "1afb9d18a84bbc252de25060ed9423ba672405addd81324c6de73b1d54f9e561",
+      "bytes": 10167
+    },
+    {
+      "path": "backend/internal/service/openai_images_responses.go",
+      "url": "https://raw.githubusercontent.com/Wei-Shaw/sub2api/dab829a4e9b7d1cc307189aea8b0319eb29e29d0/backend/internal/service/openai_images_responses.go",
+      "sha256": "c09b06fe7c7b4fb3b2799e1601fbf3561cc3e15215e50806cc2cb322e38d8494",
+      "bytes": 76995
+    },
+    {
+      "path": "backend/internal/pkg/openai/constants.go",
+      "url": "https://raw.githubusercontent.com/Wei-Shaw/sub2api/dab829a4e9b7d1cc307189aea8b0319eb29e29d0/backend/internal/pkg/openai/constants.go",
+      "sha256": "3ea34045c767e672857b1b05502472e516e20a8c1d6154c17ec13d8a5373a8e6",
+      "bytes": 12067
+    }
+  ]
+}

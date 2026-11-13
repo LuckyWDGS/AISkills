@@ -1,0 +1,74 @@
+[
+  {
+    "case": "T1_A",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_A\\T1_A.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "seconds": 112.91
+  },
+  {
+    "case": "T1_B",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_B\\T1_B.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "seconds": 125.73
+  },
+  {
+    "case": "T1_C",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\T1_C\\T1_C.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "seconds": 105.7
+  },
+  {
+    "case": "T1_D",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\T1_D\\T1_D.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "seconds": 108.81
+  },
+  {
+    "case": "I1_A",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_A\\I1_A.png",
+    "size": [
+      1672,
+      941
+    ],
+    "seconds": 42.75
+  },
+  {
+    "case": "I1_B",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_B\\I1_B.png",
+    "size": [
+      1672,
+      941
+    ],
+    "seconds": 44.83
+  },
+  {
+    "case": "I1_C",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\results\\I1_C\\I1_C.png",
+    "size": [
+      1672,
+      941
+    ],
+    "seconds": 43.14
+  },
+  {
+    "case": "I1_D",
+    "path": "E:\\GitHubProject\\imagegen-benchmark-2026-11-07\\recovery_20261107\\I1_D\\I1_D.png",
+    "size": [
+      1672,
+      941
+    ],
+    "seconds": 91.91
+  }
+]

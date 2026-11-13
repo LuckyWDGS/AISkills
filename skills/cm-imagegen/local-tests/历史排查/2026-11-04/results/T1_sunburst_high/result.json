@@ -1,0 +1,19 @@
+{
+  "case": "T1",
+  "requested_model": "gpt-image-2.6-sunburst",
+  "api": "images",
+  "quality": "max",
+  "complexity": "high",
+  "requested_size": "1536x1024",
+  "operation": "generate",
+  "prompt_file": "E:\\GitHubProject\\imagegen-benchmark-2026-11-04\\prompts\\T1_cinematic.txt",
+  "prompt_sha256": "a017ef8cb71d4e69d2087fac6294e903b786c04eae6fba0b65dfc1c88dc8d3d9",
+  "references": [],
+  "skill_script": "C:\\Users\\miaoyin\\.codex\\skills\\cm-imagegen\\scripts\\cm_image_gen.py",
+  "catalog_gate": "explicit user model tested despite stale/omitting catalog; no substitution",
+  "started_at_utc": "2026-11-05T01:43:15.257108+00:00",
+  "ok": false,
+  "error_type": "SystemExit",
+  "error": "Image request failed: cm/configured_provider attempt 1 (https://209.87.95.5:18081/v1/images/generations) status=400: HTTP 400 from cm Images API: type=image_generation_user_error code=invalid_value message=Complexity 'medium' is not supported for this image model. diagnostics=[error_kind=http_error_response status=400 content_type=application/json; charset=utf-8 content_length=163 body_bytes=163 body_class=json_like request_id=d7ef6b94-bc4c-4350-b236-3b51d0eeb2a8 body_preview={\"error\":{\"code\":\"invalid_value\",\"message\":\"Complexity 'medium' is not supported for this image model.\",\"param\":\"complexity\",\"type\":\"image_generation_user_error\"}}]",
+  "duration_seconds": 10.359
+}
