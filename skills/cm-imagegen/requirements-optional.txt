@@ -1,4 +1,6 @@
 # Raster decoding, GIF/markup checks and complete offline tests
 Pillow>=10
+# Local PNG-layer GIF composition (cm_animate.py); not needed for API requests
+numpy>=1.24
 # Optional transport-probe --client requests
 requests>=2.31

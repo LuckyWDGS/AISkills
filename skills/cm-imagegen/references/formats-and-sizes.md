@@ -28,9 +28,13 @@ Use this reference when the task calls for GIF/SVG, annotated editing, output en
 
 The advanced options in this table are Images-only in the CLI. They fail clearly on Responses rather than being silently dropped. No arbitrary Images JSON override is exposed. `--response-format` is a legacy compatibility override and is not sent by default; GPT Image already returns base64.
 
-## GIF generation and reference animation
+## GIF process selection
 
-The selected model and upstream credential must have GIF preview access. A model catalog entry, account tier, gateway whitelist or local registration does not grant it. An upstream `GIF output is not enabled for this request.` is a capability rejection; stop and report it. Do not keep changing frame/quality parameters or retrying an HTTP 400 to obtain access.
+The default is native GIF first, followed automatically by PNG assets and local animation only after an explicit native GIF capability rejection; see [gif-routing.md](gif-routing.md). An explicit local-only or native-only request overrides this order. For simple rocking, floating, drifting and water loops, [local-animation.md](local-animation.md) provides a ready-made compositor. It does not need native GIF preview access; native API frame limits below do not apply to that helper.
+
+## Native GIF generation and reference animation
+
+The selected model and upstream credential must have GIF preview access. A model catalog entry, account tier, gateway whitelist or local registration does not grant it. An upstream `GIF output is not enabled for this request.` is a capability rejection: stop native submissions, preserve/report the reason, and automatically continue with local animation unless the user requested native-only output. Do not keep changing frame/quality parameters or retrying an HTTP 400 to obtain access.
 
 Describe one scene, the moving subject, camera behavior, and loop. Ask for an animation, not a contact sheet. Do not maximize frame count and canvas size together: the frame dimensions, frame count and number of animations share a service pixel budget. For a first capability check use a modest frame count and `size=auto`.
 

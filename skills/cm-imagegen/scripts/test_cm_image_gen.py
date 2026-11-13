@@ -9,7 +9,9 @@ import tempfile
 import unittest
 from unittest import mock
 
-import cm_image_gen as cm
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import cm_image_gen as cm  # noqa: E402
 
 
 PRIMARY = cm.ImageApiProvider("primary", "https://primary.example/v1", "primary-key")

@@ -1,9 +1,9 @@
 interface:
   display_name: "CM Image Gen"
-  short_description: "Generate images; request native GIF/SVG via your provider"
+  short_description: "Generate images; native GIF first with local animation fallback"
   icon_small: "./assets/cm-imagegen-small.png"
   icon_large: "./assets/cm-imagegen.png"
-  default_prompt: "Use $cm-imagegen to generate or edit images, or request native GIF/SVG through the configured provider and verify the returned files."
+  default_prompt: "Use $cm-imagegen to generate or edit images through the configured provider; for GIFs, try native output first and automatically compose PNG assets locally only when native GIF is explicitly unsupported."
 
 policy:
   allow_implicit_invocation: true

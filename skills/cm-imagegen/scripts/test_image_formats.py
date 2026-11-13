@@ -14,7 +14,9 @@ from unittest import mock
 
 from PIL import Image, ImageDraw
 
-import cm_image_gen as cm
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import cm_image_gen as cm  # noqa: E402
 import cm_image_formats as formats
 from test_cm_image_gen import FakeResponse
 
