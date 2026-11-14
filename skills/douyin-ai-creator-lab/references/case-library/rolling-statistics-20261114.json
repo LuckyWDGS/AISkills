@@ -1,0 +1,522 @@
+{
+  "batch": {
+    "batch_id": "20261114-douyin-rolling-research",
+    "raw_utc_observation_date": "2026-11-14",
+    "baseline_douyin_unique_works": 2454,
+    "profile_work_card_rows": 18,
+    "new_unique_works": 19,
+    "new_full_date_works": 3,
+    "old_ids_new_full_dates": 0,
+    "retested_old_unique_works": 2,
+    "profiles_this_batch": 1,
+    "new_canonical_profiles": 1,
+    "new_dense_review_unique_works": 2,
+    "new_dense_4fps_samples_reviewed": 80,
+    "new_dense_4fps_pages_reviewed": 2,
+    "new_original_rate_tail_samples": 12,
+    "individual_sample_reinspections": 2,
+    "full_source_width_true_last_inspections": 2,
+    "all_image_inspection_events": 96,
+    "direct_audio_reviewed": 0,
+    "new_ids": [
+      "7697526636791987577",
+      "7697957074589155450",
+      "7698674037169902075",
+      "7699050861116670137",
+      "7699420703233372773",
+      "7699792464844573669",
+      "7700184735226216841",
+      "7700426752115558138",
+      "7700561295930647409",
+      "7700837197390841723",
+      "7700936387478853562",
+      "7701319060566782835",
+      "7701593721699529466",
+      "7702386630821159867",
+      "7702733492891137403",
+      "7703696604763252089",
+      "7704637938621091098",
+      "7704979614401105190",
+      "7706150138238047417"
+    ],
+    "date_windows": {
+      "as_of": "2026-11-14",
+      "thirty_calendar_days": [
+        "2026-10-16",
+        "2026-11-14"
+      ],
+      "seven_calendar_days": [
+        "2026-11-08",
+        "2026-11-14"
+      ],
+      "publication_timezone": "not established; displayed full dates only; date rolling does not refresh old external data"
+    },
+    "sampling_frame": "targeted convenience sample plus same-ID public-counter panel; no representative growth or recommendation inference",
+    "current_external_revalidated_work_ids": [
+      "7698674037169902075",
+      "7699050861116670137",
+      "7706150138238047417",
+      "7703121504159320805",
+      "7703214952157423225"
+    ]
+  },
+  "source_library_before_sha256": "2ddaabd92829a0f1b5493146966c19e1e92f4fdec3ee7e3effd8eb67bda4f03d",
+  "source_library_after_sha256": "c39a5607decbdbf32be1fe079c15989125935ec799daec46f7e106f75708f04e",
+  "all_douyin": {
+    "unique_works": 2473,
+    "evidence_grades": {
+      "B": 40,
+      "C": 2433
+    },
+    "author_display_names": 71,
+    "recorded_canonical_author_profiles": 56,
+    "author_unestablished_works": 23,
+    "dense_4fps_reviewed_works": 29,
+    "dense_4fps_reviewed_samples": 9924,
+    "dense_4fps_reviewed_pages": 216,
+    "research_layers": {
+      "finished_content_reference": 1233,
+      "adjacent_other_series": 303,
+      "legacy_reference_unclassified": 64,
+      "adjacent_ambience_companion_ai_origin_unverified": 219,
+      "production_tutorial_or_tool_claim": 33,
+      "production_tutorial": 90,
+      "adjacent_game_commentary_ai_origin_unverified": 88,
+      "cross_medium_image_note_ai_origin_unverified": 107,
+      "cross_medium_video_ai_origin_unverified": 317,
+      "ambient_video_ai_origin_unverified": 19
+    },
+    "freshness_current": {
+      "historical": 50,
+      "within_30_calendar_days_outside_7": 116,
+      "unknown": 2257,
+      "date_unverified": 23,
+      "within_7_calendar_days": 27
+    },
+    "tag_coverage_unique_works": 2026,
+    "actual_tags_nonempty": 2017,
+    "explicit_ordinary_control_works": 3,
+    "direct_audio_reviewed_works": 0
+  },
+  "within_30_days": {
+    "unique_works": 143,
+    "evidence_grades": {
+      "B": 28,
+      "C": 115
+    },
+    "author_display_names": 43,
+    "recorded_canonical_author_profiles": 42,
+    "author_unestablished_works": 1,
+    "dense_4fps_reviewed_works": 23,
+    "dense_4fps_reviewed_samples": 6989,
+    "dense_4fps_reviewed_pages": 152,
+    "research_layers": {
+      "finished_content_reference": 128,
+      "adjacent_other_series": 1,
+      "production_tutorial_or_tool_claim": 2,
+      "production_tutorial": 2,
+      "cross_medium_video_ai_origin_unverified": 7,
+      "ambient_video_ai_origin_unverified": 3
+    },
+    "freshness_current": {
+      "within_30_calendar_days_outside_7": 116,
+      "within_7_calendar_days": 27
+    },
+    "tag_coverage_unique_works": 143,
+    "actual_tags_nonempty": 142,
+    "explicit_ordinary_control_works": 3,
+    "direct_audio_reviewed_works": 0
+  },
+  "within_7_days": {
+    "unique_works": 27,
+    "evidence_grades": {
+      "C": 26,
+      "B": 1
+    },
+    "author_display_names": 21,
+    "recorded_canonical_author_profiles": 21,
+    "author_unestablished_works": 0,
+    "dense_4fps_reviewed_works": 1,
+    "dense_4fps_reviewed_samples": 29,
+    "dense_4fps_reviewed_pages": 1,
+    "research_layers": {
+      "finished_content_reference": 25,
+      "cross_medium_video_ai_origin_unverified": 1,
+      "ambient_video_ai_origin_unverified": 1
+    },
+    "freshness_current": {
+      "within_7_calendar_days": 27
+    },
+    "tag_coverage_unique_works": 27,
+    "actual_tags_nonempty": 27,
+    "explicit_ordinary_control_works": 0,
+    "direct_audio_reviewed_works": 0
+  },
+  "old_snapshot_rolled_before_new_data": {
+    "all_douyin": 2454,
+    "within_30_days": 140,
+    "within_7_days": 26
+  },
+  "date_windows": {
+    "as_of": "2026-11-14",
+    "thirty_calendar_days": [
+      "2026-10-16",
+      "2026-11-14"
+    ],
+    "seven_calendar_days": [
+      "2026-11-08",
+      "2026-11-14"
+    ],
+    "publication_timezone": "not established; displayed full dates only; date rolling does not refresh old external data"
+  },
+  "retests": [
+    {
+      "work_id": "7703121504159320805",
+      "baseline": {
+        "observed_at": "2026-11-12T01:59:17.342Z",
+        "metrics": {
+          "likes_raw": "538",
+          "comments_raw": "14",
+          "favorites_raw": "131",
+          "shares_raw": "52"
+        },
+        "source": {
+          "source_id": "root/sources/detail-7703121504159320805.json",
+          "source_record_sha256": "13ab005149667ce6be97d484845ccd05d4da99fd1dee87c77cc14b2a3d03f17c",
+          "source_url": "https://www.douyin.com/video/7703121504159320805",
+          "observed_at": "2026-11-12T01:59:17.342Z",
+          "scope": "ID-matched current-work h1, author link and named unique interaction controls",
+          "batch_id": "20261111-douyin-creative-evolution",
+          "source_kind": "public_work_detail",
+          "evidence_grade": "C",
+          "published_at_raw": "发布时间：2026-11-01 01:45",
+          "title_excerpt": "下雨天，洗完澡，吹干头发，换一身家居服，钻进被窝，手机满格，追的剧也更新了，此刻，幸福感爆棚。#温馨小窝",
+          "actual_hashtags": [
+            "温馨小窝"
+          ],
+          "metrics": {
+            "likes_raw": "538",
+            "comments_raw": "14",
+            "favorites_raw": "131",
+            "shares_raw": "52"
+          },
+          "metric_semantics": "unique visible page controls after matching current work region ID: heart/video-player-digg; comments/feed-comment-icon; star/video-player-collect; share/video-player-share; not views; multiple controls kept null",
+          "audio_review": "not_listened"
+        }
+      },
+      "current_observations": [
+        {
+          "source_id": "creator-heartbeat-20261114/browser/low-pair-current.json",
+          "source_record_sha256": "65df2fc43ff7d8a86aec0821e57b43ea362b02a58660d37a23013d7b412a5888",
+          "source_url": "https://www.douyin.com/video/7703121504159320805",
+          "observed_at": "2026-11-14T02:13:08.352Z",
+          "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region",
+          "batch_id": "20261114-douyin-rolling-research",
+          "source_kind": "public_counter_retest",
+          "metrics": {
+            "likes_raw": "600",
+            "comments_raw": "14",
+            "favorites_raw": "145",
+            "shares_raw": "59"
+          },
+          "metric_semantics": "same named public detail controls for likes/comments/favorites/shares, not playback; raw 万 precision retained",
+          "identity_binding_note": "current work URL and one matching work region plus one named page-level counter group; counter ancestry is not asserted",
+          "audio_review": "not_listened"
+        },
+        {
+          "source_id": "creator-heartbeat-20261114/browser/low-pair-bound.json",
+          "source_record_sha256": "0bcaed11e27888f94cf30080330ff34411ea40f927f76b058244323042a442cc",
+          "source_url": "https://www.douyin.com/video/7703121504159320805",
+          "observed_at": "2026-11-14T02:21:38.145Z",
+          "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region",
+          "batch_id": "20261114-douyin-rolling-research",
+          "source_kind": "public_counter_retest",
+          "metrics": {
+            "likes_raw": "600",
+            "comments_raw": "14",
+            "favorites_raw": "145",
+            "shares_raw": "59"
+          },
+          "metric_semantics": "same named public detail controls for likes/comments/favorites/shares, not playback; raw 万 precision retained",
+          "identity_binding_note": "current work URL and one matching work region plus one named page-level counter group; counter ancestry is not asserted",
+          "audio_review": "not_listened"
+        }
+      ],
+      "limits": "counter changes are not playback growth; same caption/tag/length does not establish layout, sound or hashtag causation"
+    },
+    {
+      "work_id": "7703214952157423225",
+      "baseline": {
+        "observed_at": "2026-11-12T01:56:55.108Z",
+        "metrics": {
+          "likes_raw": "8.8万",
+          "comments_raw": "3642",
+          "favorites_raw": "1.6万",
+          "shares_raw": "4.5万"
+        },
+        "source": {
+          "source_id": "root/sources/detail-7703214952157423225.json",
+          "source_record_sha256": "ac4eaa7b8f2f6aed3633a2aab94883e11b8711341b1ed60f3d1038c9f8f186c7",
+          "source_url": "https://www.douyin.com/video/7703214952157423225",
+          "observed_at": "2026-11-12T01:56:55.108Z",
+          "scope": "ID-matched current-work h1, author link and named unique interaction controls",
+          "batch_id": "20261111-douyin-creative-evolution",
+          "source_kind": "public_work_detail",
+          "evidence_grade": "C",
+          "published_at_raw": "发布时间：2026-11-01 06:48",
+          "title_excerpt": "下雨天，洗完澡，吹干头发，换一身家居服，钻进被窝，手机满格，追的剧也更新了，此刻，幸福感爆棚。#温馨小窝",
+          "actual_hashtags": [
+            "温馨小窝"
+          ],
+          "metrics": {
+            "likes_raw": "8.8万",
+            "comments_raw": "3642",
+            "favorites_raw": "1.6万",
+            "shares_raw": "4.5万"
+          },
+          "metric_semantics": "unique visible page controls after matching current work region ID: heart/video-player-digg; comments/feed-comment-icon; star/video-player-collect; share/video-player-share; not views; multiple controls kept null",
+          "audio_review": "not_listened"
+        }
+      },
+      "current_observations": [
+        {
+          "source_id": "creator-heartbeat-20261114/browser/high-pair-current.json",
+          "source_record_sha256": "83cf06ba87d4caf565f1bbd67c07955ebb3eb50913990c535c7f9e7f73cb928e",
+          "source_url": "https://www.douyin.com/video/7703214952157423225",
+          "observed_at": "2026-11-14T02:11:41.940Z",
+          "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region",
+          "batch_id": "20261114-douyin-rolling-research",
+          "source_kind": "public_counter_retest",
+          "metrics": {
+            "likes_raw": "10.1万",
+            "comments_raw": "3842",
+            "favorites_raw": "1.6万",
+            "shares_raw": "4.7万"
+          },
+          "metric_semantics": "same named public detail controls for likes/comments/favorites/shares, not playback; raw 万 precision retained",
+          "identity_binding_note": "current work URL and one matching work region plus one named page-level counter group; counter ancestry is not asserted",
+          "audio_review": "not_listened"
+        },
+        {
+          "source_id": "creator-heartbeat-20261114/browser/detail-7703214952157423225.json",
+          "source_record_sha256": "a436c74ef22cd032bdfcac2f4fa170c1def33b30a24089be3393d1282cec033f",
+          "source_url": "https://www.douyin.com/video/7703214952157423225",
+          "observed_at": "2026-11-14T02:23:01.089Z",
+          "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region",
+          "batch_id": "20261114-douyin-rolling-research",
+          "source_kind": "public_counter_retest",
+          "metrics": {
+            "likes_raw": "10.1万",
+            "comments_raw": "3844",
+            "favorites_raw": "1.6万",
+            "shares_raw": "4.7万"
+          },
+          "metric_semantics": "same named public detail controls for likes/comments/favorites/shares, not playback; raw 万 precision retained",
+          "identity_binding_note": "current work URL and one matching work region plus one named page-level counter group; counter ancestry is not asserted",
+          "audio_review": "not_listened"
+        }
+      ],
+      "limits": "counter changes are not playback growth; same caption/tag/length does not establish layout, sound or hashtag causation"
+    }
+  ],
+  "profile_coverage": {
+    "source_id": "creator-heartbeat-20261114/browser/profile-rv.json",
+    "source_record_sha256": "b93984ae6b275e843f7479d2bfeddc70789ede88b7d96083a9ae2981faab26b0",
+    "source_url": "https://www.douyin.com/user/MS4wLjABAAAAEdFPIwQ1y_BbqVNg6xyp9C0-7F_YdUPDwG7tZAMNOJ7Qiq7o_1lpBxlbSkWEjyZL",
+    "observed_at": "2026-11-14T02:22:14.518Z",
+    "scope": "18 loaded author work cards; header says 25; login gate, no list-end proof; card counter semantics unverified",
+    "canonical_profile": "https://www.douyin.com/user/MS4wLjABAAAAEdFPIwQ1y_BbqVNg6xyp9C0-7F_YdUPDwG7tZAMNOJ7Qiq7o_1lpBxlbSkWEjyZL",
+    "author": "哈尔的移动房车",
+    "displayed_total": 25,
+    "loaded_unique_work_cards": 18,
+    "list_end_observed": false,
+    "login_gate": "登录后查看更多作品",
+    "works": [
+      "7704979614401105190",
+      "7704637938621091098",
+      "7703696604763252089",
+      "7702733492891137403",
+      "7702386630821159867",
+      "7701593721699529466",
+      "7701319060566782835",
+      "7700936387478853562",
+      "7700837197390841723",
+      "7700561295930647409",
+      "7700426752115558138",
+      "7700184735226216841",
+      "7699792464844573669",
+      "7699420703233372773",
+      "7699050861116670137",
+      "7698674037169902075",
+      "7697957074589155450",
+      "7697526636791987577"
+    ]
+  },
+  "current_native_hot_snapshot": {
+    "source": {
+      "source_id": "creator-heartbeat-20261114/browser/hot-current-final.json",
+      "source_record_sha256": "04c5bb7b97766dfb046059890fc7f1e49084e777892aaf77f42b62b731228ecf",
+      "source_url": "https://www.douyin.com/hot",
+      "observed_at": "2026-11-14T02:18:53.038Z",
+      "scope": "51 native hot-page rows: 50 ranked entries plus one unranked leading row; first three ranks absent in extracted row text, not invented"
+    },
+    "row_count": 51,
+    "ranked_entries": 50,
+    "unranked_leading_rows": 1,
+    "related_entities": [
+      {
+        "entity_id": "2743514",
+        "name": "课本里的逍遥游有画面了",
+        "rank_raw": "4",
+        "heat_raw": "1108.4万热度"
+      },
+      {
+        "entity_id": "2743977",
+        "name": "被毛茸茸裹住的秋冬",
+        "rank_raw": "44",
+        "heat_raw": "764.0万热度"
+      }
+    ]
+  },
+  "private_backend_and_index": {
+    "status": "login_landing_observed; no current authenticated metrics, current category period or platform/30-day topic-index selection verified",
+    "private_records_exported": false
+  },
+  "public_sources": [
+    {
+      "source_id": "creator-heartbeat-20261114/browser/profile-rv.json",
+      "source_record_sha256": "b93984ae6b275e843f7479d2bfeddc70789ede88b7d96083a9ae2981faab26b0",
+      "source_url": "https://www.douyin.com/user/MS4wLjABAAAAEdFPIwQ1y_BbqVNg6xyp9C0-7F_YdUPDwG7tZAMNOJ7Qiq7o_1lpBxlbSkWEjyZL",
+      "observed_at": "2026-11-14T02:22:14.518Z",
+      "scope": "18 loaded author work cards; header says 25; login gate, no list-end proof; card counter semantics unverified"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/detail-7698674037169902075.json",
+      "source_record_sha256": "768e762d74e1fe0ac2da3ed1b3bc8026290c86919bb6a28b0e34b6ad12fa2c83",
+      "source_url": "https://www.douyin.com/video/7698674037169902075",
+      "observed_at": "2026-11-14T02:23:01.064Z",
+      "scope": "current-work ID/URL, caption, publisher and named unique page-level interaction controls; not a native hotspot association audit"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/detail-7699050861116670137.json",
+      "source_record_sha256": "349e008a93876c36cc1e0e7820539f1504c9c3aa93108933aa6bff648a9f8e21",
+      "source_url": "https://www.douyin.com/video/7699050861116670137",
+      "observed_at": "2026-11-14T02:30:27.947Z",
+      "scope": "current-work ID/URL, caption, publisher and named unique page-level interaction controls; not a native hotspot association audit",
+      "observation_time_note": "DOM read immediately before this save in the same browser session"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/detail-7706150138238047417.json",
+      "source_record_sha256": "3188fd2b3ceaf9969917e805880570f988c72064753535fea83114a593513546",
+      "source_url": "https://www.douyin.com/video/7706150138238047417",
+      "observed_at": "2026-11-14T02:31:55.163Z",
+      "scope": "current-work ID/URL, caption, publisher and named unique page-level interaction controls; not a native hotspot association audit"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/dynamic/visual-reviews.json",
+      "source_record_sha256": "780831838083ffcbdfb9ca71fa5254e564d5f96e7a3e98a219df6e0d95da0570",
+      "source_url": null,
+      "observed_at": null,
+      "scope": "independent manual inspection record; sampling manifests remain pending, not auto-promoted"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/low-pair-current.json",
+      "source_record_sha256": "65df2fc43ff7d8a86aec0821e57b43ea362b02a58660d37a23013d7b412a5888",
+      "source_url": "https://www.douyin.com/video/7703121504159320805",
+      "observed_at": "2026-11-14T02:13:08.352Z",
+      "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/low-pair-bound.json",
+      "source_record_sha256": "0bcaed11e27888f94cf30080330ff34411ea40f927f76b058244323042a442cc",
+      "source_url": "https://www.douyin.com/video/7703121504159320805",
+      "observed_at": "2026-11-14T02:21:38.145Z",
+      "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/high-pair-current.json",
+      "source_record_sha256": "83cf06ba87d4caf565f1bbd67c07955ebb3eb50913990c535c7f9e7f73cb928e",
+      "source_url": "https://www.douyin.com/video/7703214952157423225",
+      "observed_at": "2026-11-14T02:11:41.940Z",
+      "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/detail-7703214952157423225.json",
+      "source_record_sha256": "a436c74ef22cd032bdfcac2f4fa170c1def33b30a24089be3393d1282cec033f",
+      "source_url": "https://www.douyin.com/video/7703214952157423225",
+      "observed_at": "2026-11-14T02:23:01.089Z",
+      "scope": "same URL/work identity and same named interaction-control semantics; current counters page-unique, not all descendants of work region"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/hot-current-final.json",
+      "source_record_sha256": "04c5bb7b97766dfb046059890fc7f1e49084e777892aaf77f42b62b731228ecf",
+      "source_url": "https://www.douyin.com/hot",
+      "observed_at": "2026-11-14T02:18:53.038Z",
+      "scope": "51 native hot-page rows: 50 ranked entries plus one unranked leading row; first three ranks absent in extracted row text, not invented"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/hot-current.json",
+      "source_record_sha256": "132520d7104ea1fff3339a3d68be70785e4acd73ce2f8c7444da1d14fe18a569",
+      "source_url": "https://www.douyin.com/hot",
+      "observed_at": "2026-11-14T02:13:08.309Z",
+      "scope": "earlier same-day names, not final ranks"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/topic-xiaoyao-2743514.json",
+      "source_record_sha256": "30ab07ddb201f2fc7b8a1ed2f910de2b9c714e904ff7ca08756ef123aa015c61",
+      "source_url": "https://www.douyin.com/video/7706122856177907170",
+      "observed_at": "2026-11-14T02:21:02.512Z",
+      "scope": "one topic landing work, not topic composition or publisher association"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/topic-idol-current.json",
+      "source_record_sha256": "4fa4449ae25227f86b331df55595ff11658eb7b1f2f6fd18f0baee9296b4f9d1",
+      "source_url": "https://www.douyin.com/video/7707148696152018211",
+      "observed_at": "2026-11-14T02:20:27.043Z",
+      "scope": "one contextual landing from topic 2742996; entity absent in final saved 50 ranked rows"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/browser/topic-furry-2743977.ax.txt",
+      "source_record_sha256": "72ec6b1c00da95658cebce26a78e46695448d476ae56e581a0a872aecc0a0612",
+      "source_url": "https://www.douyin.com/video/7707298976659197235",
+      "observed_at": null,
+      "scope": "one AX work caption/hashtag/date probe; exact observation time not recorded; comments and everyone-searches do not verify media subject"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/dynamic/7698674037169902075/sampling.json",
+      "source_record_sha256": "e48198efac0925f56feb310e223e220d6db08f763ae5bc223273038c8706d75f",
+      "source_url": "https://www.douyin.com/video/7698674037169902075",
+      "observed_at": null,
+      "scope": "actual-media PTS sampling manifest; generated status remains pending, manual completion recorded separately"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/dynamic/7698674037169902075-tail/sampling.json",
+      "source_record_sha256": "6066709687084c9fac8815f60d6229fad722cff5078f64db9d5e0db8aefbd088",
+      "source_url": "https://www.douyin.com/video/7698674037169902075",
+      "observed_at": null,
+      "scope": "actual-media PTS sampling manifest; generated status remains pending, manual completion recorded separately"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/dynamic/7699050861116670137/sampling.json",
+      "source_record_sha256": "ef7b6218faa32be6d7070d6bbd4c811a54b0aecae14ea3cec56c2fc8724e905c",
+      "source_url": "https://www.douyin.com/video/7699050861116670137",
+      "observed_at": null,
+      "scope": "actual-media PTS sampling manifest; generated status remains pending, manual completion recorded separately"
+    },
+    {
+      "source_id": "creator-heartbeat-20261114/dynamic/7699050861116670137-tail/sampling.json",
+      "source_record_sha256": "cef400503e6990f7c06eb3b2e379c67ce906874f853b56ca5e3278bdea5ed138",
+      "source_url": "https://www.douyin.com/video/7699050861116670137",
+      "observed_at": null,
+      "scope": "actual-media PTS sampling manifest; generated status remains pending, manual completion recorded separately"
+    }
+  ],
+  "limitations": [
+    "19 new works include 16 date-unknown author cards, not 19 recent videos.",
+    "Only five competitor work IDs were revalidated in current detail/counter reads; rolling the date of old records does not update their external data.",
+    "3 hotspot probes stay outside competitor-work denominator.",
+    "All media inspections were silent; direct audio remains 0.",
+    "AI origin/tool chain is unverified for the new RV author.",
+    "Backend/index login gap prevents a current account-growth or topic-index conclusion."
+  ]
+}
