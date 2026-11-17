@@ -1,0 +1,1407 @@
+{
+  "schema_version": 1,
+  "batch": {
+    "batch_id": "creator-healing-20261116",
+    "raw_utc_observation_date": "2026-11-17",
+    "research_local_date": "2026-11-16",
+    "baseline_source_sha256": "c39a5607decbdbf32be1fe079c15989125935ec799daec46f7e106f75708f04e",
+    "baseline_douyin_unique_works": 2473,
+    "unique_observed_works": 336,
+    "profile_work_card_rows": 327,
+    "profiles_this_batch": 8,
+    "new_unique_works": 269,
+    "new_ids": [
+      "7490753536276417792",
+      "7553921680167734585",
+      "7564067627544841531",
+      "7564759564789861669",
+      "7605185449163189669",
+      "7629076488751929957",
+      "7631020303128202534",
+      "7632278442227165425",
+      "7648934579861070565",
+      "7655931820705678961",
+      "7656293144564457902",
+      "7657033877730512134",
+      "7657078921116106491",
+      "7657730393705106703",
+      "7657861260659315941",
+      "7657868436655539365",
+      "7657908871746589797",
+      "7658489324048559802",
+      "7658617506148654693",
+      "7659354114429766386",
+      "7659589153771965747",
+      "7659782011108718565",
+      "7660712611473902875",
+      "7661206766005825125",
+      "7661624859281640933",
+      "7661841133089197366",
+      "7661936193097007355",
+      "7662700805975182643",
+      "7663032904552828170",
+      "7664536774877678858",
+      "7664951802458098990",
+      "7665580360863927567",
+      "7665886416949366070",
+      "7665989782580841791",
+      "7667762580986809646",
+      "7668175000205151538",
+      "7670052010594471187",
+      "7670487225206127434",
+      "7670969550184208110",
+      "7671111827606015266",
+      "7671598447443102602",
+      "7673805728162794803",
+      "7675206027574267186",
+      "7675926799162952970",
+      "7676477922663796020",
+      "7676641823686806811",
+      "7677793725568879882",
+      "7678870622906207530",
+      "7680080491881549091",
+      "7680771601700228404",
+      "7681146140049427712",
+      "7681317906466049320",
+      "7681682469086661939",
+      "7682367908025994548",
+      "7682584352038948111",
+      "7682968911792360744",
+      "7683108264283868416",
+      "7683499988579536170",
+      "7683683932717485352",
+      "7684103845215046947",
+      "7684485404816411945",
+      "7684891913131986218",
+      "7685369487213727019",
+      "7685632933616504105",
+      "7686066126689766710",
+      "7686339072779914530",
+      "7687557201912696100",
+      "7687592562563075379",
+      "7688175015174409487",
+      "7688657892186000666",
+      "7688664861102646971",
+      "7689023278358269203",
+      "7689040766635607013",
+      "7689087079023660307",
+      "7689094477536972095",
+      "7689403802366521467",
+      "7689691271552520689",
+      "7690085702214289637",
+      "7690524264151944891",
+      "7690752072081313033",
+      "7690840753446178088",
+      "7690879496492696315",
+      "7691149543546588479",
+      "7691149863890734372",
+      "7691211864679796022",
+      "7691233827087322409",
+      "7691256145411409594",
+      "7691324412041153807",
+      "7691615969625962417",
+      "7691693739219209472",
+      "7692013758247341350",
+      "7692288985477041418",
+      "7692379251475074313",
+      "7692383283372330597",
+      "7693104081058348901",
+      "7693158990032784659",
+      "7693169979692535269",
+      "7693370699364273454",
+      "7693539334784073189",
+      "7693775052172545330",
+      "7693832231408885413",
+      "7693840402276764969",
+      "7694113220839165224",
+      "7694185478290984219",
+      "7694465874757045519",
+      "7694559288357899561",
+      "7694602644447326074",
+      "7694688321561283849",
+      "7694697277679537459",
+      "7694868818736221478",
+      "7694934248184139058",
+      "7694961257074882469",
+      "7695029736694730024",
+      "7695064202230189362",
+      "7695318010718635685",
+      "7695589999844003110",
+      "7695607858825579802",
+      "7695703034051747963",
+      "7695807069642919218",
+      "7695956516175711524",
+      "7695975145202109731",
+      "7696008742861562043",
+      "7696064238216891683",
+      "7696173478935809315",
+      "7696350576530967871",
+      "7696446018821826937",
+      "7696488523368779058",
+      "7696530887617416482",
+      "7696731325524495656",
+      "7696732586223186853",
+      "7696804796125436794",
+      "7696826137938349347",
+      "7696870284455894201",
+      "7697069845518601510",
+      "7697171569461808435",
+      "7697192966087036198",
+      "7697528237299223823",
+      "7697544953341283593",
+      "7697551926850271845",
+      "7697569349208444211",
+      "7697915177287142117",
+      "7698018379570875674",
+      "7698180169495891241",
+      "7698199208662240555",
+      "7698224820119193521",
+      "7698281891924888858",
+      "7698301505610304778",
+      "7698576695300738358",
+      "7698613454441155903",
+      "7698634271501651243",
+      "7698645284364094758",
+      "7698658660356082959",
+      "7698671383655545573",
+      "7698969343056416009",
+      "7699024988406282853",
+      "7699103009787120922",
+      "7699331471391132963",
+      "7699402546258906368",
+      "7699420217058856255",
+      "7699450931763906213",
+      "7699681428346326323",
+      "7699745649939467560",
+      "7699799714800411257",
+      "7699802942605364480",
+      "7700189076242140454",
+      "7700475360286389946",
+      "7700543165526330651",
+      "7700768055558753577",
+      "7700875811088505978",
+      "7701182174900374834",
+      "7701271959585164594",
+      "7701287153611839417",
+      "7701287770735611190",
+      "7701530136390159642",
+      "7701544490531589426",
+      "7701639429509629177",
+      "7701646004197526838",
+      "7701908311108504883",
+      "7701920743977651496",
+      "7701980697825895013",
+      "7702025871166672128",
+      "7702039798692859186",
+      "7702373383450692873",
+      "7702384060475198754",
+      "7702393249512146387",
+      "7702438202195903909",
+      "7702663744584797491",
+      "7702787531053567232",
+      "7703055131167739199",
+      "7703148418093100799",
+      "7703224521469605353",
+      "7703366356510461238",
+      "7703432472218964200",
+      "7703443301638163755",
+      "7703465887185079567",
+      "7703486080330682217",
+      "7703568024653336034",
+      "7703736166243861711",
+      "7703785897572994344",
+      "7703876848287533819",
+      "7703893060870098176",
+      "7704110016222989594",
+      "7704130903933679936",
+      "7704134226144387766",
+      "7704185316210380032",
+      "7704242551407233507",
+      "7704284562755787386",
+      "7704431887124548907",
+      "7704477654262598912",
+      "7704507829404058816",
+      "7704646277506982585",
+      "7704830917119023970",
+      "7704904449378110754",
+      "7704984172020679281",
+      "7705020148616334655",
+      "7705028421106182079",
+      "7705049605650107510",
+      "7705232738748858467",
+      "7705274313063245498",
+      "7705370237566225705",
+      "7705611175627167601",
+      "7705624921032765946",
+      "7705680620357605242",
+      "7705967383751558307",
+      "7705972695422403663",
+      "7705990282805906714",
+      "7706007490520976666",
+      "7706056474794954025",
+      "7706105544885650810",
+      "7706191768299536354",
+      "7706379876295968399",
+      "7706468146626833125",
+      "7706721152781403264",
+      "7706737723147547579",
+      "7706747033431854378",
+      "7706760146302651691",
+      "7706806255377009970",
+      "7706846336859586148",
+      "7706863525737661417",
+      "7707080099753439823",
+      "7707099641645549120",
+      "7707136049106438760",
+      "7707173422769458451",
+      "7707198843892272426",
+      "7707220602680692002",
+      "7707252578186234853",
+      "7707416461970923215",
+      "7707464885562837861",
+      "7707478821867441462",
+      "7707486950680226786",
+      "7707491766602335141",
+      "7707527215839235338",
+      "7707836610725548264",
+      "7707848674642558632",
+      "7707979979792018575",
+      "7707991451356073338",
+      "7708196705884610511",
+      "7708235466156280040",
+      "7708254588410940699",
+      "7708343413472496930",
+      "7708360774435868346",
+      "7708364827509508456",
+      "7708418405950426383",
+      "7708584105169437839",
+      "7708716105996586274",
+      "7708754594697313189",
+      "7708762494210350947",
+      "7708773046195384802",
+      "7708797052251161250"
+    ],
+    "reobserved_unique_works": 67,
+    "reobserved_ids": [
+      "7632308660072451362",
+      "7634507196990131471",
+      "7636403931354025270",
+      "7637486027958947091",
+      "7640672271715126570",
+      "7644107217850862884",
+      "7644872188314651947",
+      "7645980771101969706",
+      "7646700644774022426",
+      "7647538700259314986",
+      "7650452387131395347",
+      "7650843652335373609",
+      "7651562052770598178",
+      "7651938343978093833",
+      "7652249266399792394",
+      "7653052099048015808",
+      "7654152025952832802",
+      "7654915825622617382",
+      "7655643291895367906",
+      "7658227883172760895",
+      "7658983002689308751",
+      "7659400006486609178",
+      "7659712536039656758",
+      "7660845898305506595",
+      "7660891424442846491",
+      "7662003930511232271",
+      "7662289955372289290",
+      "7663121641081228587",
+      "7663470645790903558",
+      "7663806715137314058",
+      "7665715415498905526",
+      "7666760427782606106",
+      "7667090147732753691",
+      "7667191932430388531",
+      "7669008350390078756",
+      "7670454866875026726",
+      "7670461537483492618",
+      "7670482897916284202",
+      "7670552424968424740",
+      "7672258595773320511",
+      "7673063679079894318",
+      "7673723748356197658",
+      "7674297385870249268",
+      "7674852950853946639",
+      "7676810900677889320",
+      "7678360110170787108",
+      "7679361054924754222",
+      "7682647733064256794",
+      "7686456263911296271",
+      "7687212588354112806",
+      "7687511177232010515",
+      "7687525238984166683",
+      "7688700949992361266",
+      "7690494613743865142",
+      "7691210123561143578",
+      "7691307238321506280",
+      "7691307632581283122",
+      "7695396946168548635",
+      "7697261194997992754",
+      "7697881953906822451",
+      "7697975209642528050",
+      "7698604722483252499",
+      "7699784936013745417",
+      "7700204958720757018",
+      "7702393184927632683",
+      "7704552594571545910",
+      "7704941520671264036"
+    ],
+    "old_ids_new_full_dates": 2,
+    "old_ids_new_full_date_ids": [
+      "7697261194997992754",
+      "7697881953906822451"
+    ],
+    "current_detail_unique_works": 24,
+    "current_full_date_details": 24,
+    "current_detail_within30": 19,
+    "current_detail_within7": 9,
+    "current_detail_historical": 5,
+    "new_dense_review_unique_works": 6,
+    "new_dense_4fps_samples_reviewed": 1276,
+    "new_dense_4fps_pages_reviewed": 30,
+    "moving_photo_assets_reviewed": 1,
+    "moving_photo_4fps_samples": 10,
+    "moving_photo_4fps_pages": 1,
+    "additional_full_frame_inspections_including_overlap": 1,
+    "all_image_inspection_events": 1287,
+    "direct_audio_reviewed": 0,
+    "date_windows": {
+      "as_of": "2026-11-17",
+      "thirty_calendar_days": [
+        "2026-10-19",
+        "2026-11-17"
+      ],
+      "seven_calendar_days": [
+        "2026-11-11",
+        "2026-11-17"
+      ],
+      "publication_timezone": "not established; full displayed dates only; rolling dates does not refresh old counters"
+    },
+    "sampling_frame": "purposeful convenience sampling of user seeds, same-author ordinary works and title-level author expansion; not a platform probability sample"
+  },
+  "cumulative_douyin": {
+    "unique_works": 2742,
+    "evidence_grades": {
+      "B": 47,
+      "C": 2695
+    },
+    "author_display_names": 83,
+    "recorded_canonical_author_profiles": 68,
+    "author_unestablished_works": 23,
+    "dense_4fps_reviewed_works": 35,
+    "dense_4fps_reviewed_samples": 11200,
+    "dense_4fps_reviewed_pages": 246,
+    "research_layers": {
+      "finished_content_reference": 1244,
+      "adjacent_other_series": 303,
+      "legacy_reference_unclassified": 64,
+      "adjacent_ambience_companion_ai_origin_unverified": 219,
+      "production_tutorial_or_tool_claim": 33,
+      "production_tutorial": 90,
+      "adjacent_game_commentary_ai_origin_unverified": 88,
+      "cross_medium_image_note_ai_origin_unverified": 117,
+      "cross_medium_video_ai_origin_unverified": 424,
+      "ambient_video_ai_origin_unverified": 19,
+      "author_series_index": 141
+    },
+    "freshness_current": {
+      "historical": 61,
+      "within_30_calendar_days_outside_7": 145,
+      "unknown": 2502,
+      "date_unverified": 23,
+      "within_7_calendar_days": 11
+    },
+    "tag_coverage_unique_works": 2048,
+    "actual_tags_nonempty": 2037,
+    "explicit_ordinary_control_works": 4,
+    "direct_audio_reviewed_works": 0
+  },
+  "retained_bilibili_count": 27,
+  "baseline_rolled_to_same_as_of": {
+    "within30": 137,
+    "within7": 2
+  },
+  "within30": {
+    "unique_works": 156,
+    "evidence_grades": {
+      "B": 32,
+      "C": 124
+    },
+    "author_display_names": 53,
+    "recorded_canonical_author_profiles": 52,
+    "author_unestablished_works": 1,
+    "dense_4fps_reviewed_works": 27,
+    "dense_4fps_reviewed_samples": 7345,
+    "dense_4fps_reviewed_pages": 162,
+    "research_layers": {
+      "finished_content_reference": 131,
+      "adjacent_other_series": 1,
+      "production_tutorial_or_tool_claim": 2,
+      "production_tutorial": 2,
+      "cross_medium_video_ai_origin_unverified": 15,
+      "ambient_video_ai_origin_unverified": 3,
+      "cross_medium_image_note_ai_origin_unverified": 2
+    },
+    "freshness_current": {
+      "within_30_calendar_days_outside_7": 145,
+      "within_7_calendar_days": 11
+    },
+    "tag_coverage_unique_works": 156,
+    "actual_tags_nonempty": 153,
+    "explicit_ordinary_control_works": 4,
+    "direct_audio_reviewed_works": 0
+  },
+  "within7": {
+    "unique_works": 11,
+    "evidence_grades": {
+      "C": 8,
+      "B": 3
+    },
+    "author_display_names": 8,
+    "recorded_canonical_author_profiles": 8,
+    "author_unestablished_works": 0,
+    "dense_4fps_reviewed_works": 3,
+    "dense_4fps_reviewed_samples": 933,
+    "dense_4fps_reviewed_pages": 22,
+    "research_layers": {
+      "finished_content_reference": 6,
+      "cross_medium_video_ai_origin_unverified": 5
+    },
+    "freshness_current": {
+      "within_7_calendar_days": 11
+    },
+    "tag_coverage_unique_works": 11,
+    "actual_tags_nonempty": 10,
+    "explicit_ordinary_control_works": 0,
+    "direct_audio_reviewed_works": 0
+  },
+  "within30_work_ids": [
+    "7702777605813030310",
+    "7704971849511341339",
+    "7699569363954847011",
+    "7700326385901980954",
+    "7703247482943278378",
+    "7703513452468582747",
+    "7705085474487410289",
+    "7704552594571545910",
+    "7698604722483252499",
+    "7699784936013745417",
+    "7704941520671264036",
+    "7698720078413483273",
+    "7701652048495840554",
+    "7700123817322056994",
+    "7699528101109321003",
+    "7700194126381321487",
+    "7701723932960804137",
+    "7703571182288686346",
+    "7699105125658365194",
+    "7701992496888352027",
+    "7706063501114068264",
+    "7706171457789883977",
+    "7705789227112848538",
+    "7705385569937169382",
+    "7704314752415199834",
+    "7703552272542065353",
+    "7703167480730164810",
+    "7702810630323063910",
+    "7702472749584266674",
+    "7702393184927632683",
+    "7705809497205296399",
+    "7704600007147670799",
+    "7704552250294816050",
+    "7702445374857956608",
+    "7703537517405386186",
+    "7703009694587047204",
+    "7701353614056443176",
+    "7700817164072226058",
+    "7703193489249403466",
+    "7698708825016876507",
+    "7706131631127498034",
+    "7705404508137901375",
+    "7703885135308934400",
+    "7700618045470870847",
+    "7706230876073413914",
+    "7706482191106051338",
+    "7700533701670702362",
+    "7701720808783088931",
+    "7702826955921493298",
+    "7702839755041443115",
+    "7702106162430951625",
+    "7702250973024979849",
+    "7703015543586243699",
+    "7703742011178112922",
+    "7705093897954149286",
+    "7706164165903396851",
+    "7703592092777352499",
+    "7703909303391915279",
+    "7704278713004756275",
+    "7704651298167098687",
+    "7705457751018802475",
+    "7705764705587055923",
+    "7706135635731500324",
+    "7699061994703441167",
+    "7700948745378172175",
+    "7701262893966249250",
+    "7702011687695650102",
+    "7702745235343953188",
+    "7703544492132945167",
+    "7703834246531665195",
+    "7704226118848482611",
+    "7705771493027859739",
+    "7698331363816807589",
+    "7699443724517938299",
+    "7700929467871050681",
+    "7703525003874953586",
+    "7706131695459781924",
+    "7706146916179578131",
+    "7699163849773124906",
+    "7706357004029283610",
+    "7706194180573367571",
+    "7706110576921961701",
+    "7705922633741754873",
+    "7705707671487270153",
+    "7705333583350730038",
+    "7705274458575080730",
+    "7704979927694724392",
+    "7704870796347399354",
+    "7702829192904569690",
+    "7702487389281158521",
+    "7702384136945749288",
+    "7699598551994715435",
+    "7700214843873759631",
+    "7700561971363564834",
+    "7700961335940484379",
+    "7702348894792977698",
+    "7702753611440295203",
+    "7703196578202373411",
+    "7703528903721143571",
+    "7703705162308734250",
+    "7704040137189231912",
+    "7704163290598903050",
+    "7704609253852053238",
+    "7704981855166057754",
+    "7705397618330914751",
+    "7705457860372663590",
+    "7705694811969293594",
+    "7706094056891239690",
+    "7706231823302714090",
+    "7706464733590719763",
+    "7705436920582507826",
+    "7705666515244223744",
+    "7704925416485637426",
+    "7705293219818474787",
+    "7704563747335032114",
+    "7704303968087739675",
+    "7706927276223242673",
+    "7706878730785918218",
+    "7706468323004910898",
+    "7703214952157423225",
+    "7703121504159320805",
+    "7706380390365269298",
+    "7705694028188257577",
+    "7704900556904598799",
+    "7704205813119864073",
+    "7701685795148533019",
+    "7698742410368650506",
+    "7698675842087537947",
+    "7698710543351188774",
+    "7699826194032798543",
+    "7700099719771845219",
+    "7700873096823508657",
+    "7704377158550064394",
+    "7706754378417847794",
+    "7699050861116670137",
+    "7698674037169902075",
+    "7706150138238047417",
+    "7707991451356073338",
+    "7707252578186234853",
+    "7703785897572994344",
+    "7703432472218964200",
+    "7704134226144387766",
+    "7702438202195903909",
+    "7704984172020679281",
+    "7707979979792018575",
+    "7708716105996586274",
+    "7708418405950426383",
+    "7705028421106182079",
+    "7707478821867441462",
+    "7706747033431854378",
+    "7706007490520976666",
+    "7704904449378110754",
+    "7705370237566225705",
+    "7705020148616334655",
+    "7706806255377009970",
+    "7707527215839235338"
+  ],
+  "within7_work_ids": [
+    "7706927276223242673",
+    "7706878730785918218",
+    "7707991451356073338",
+    "7707252578186234853",
+    "7707979979792018575",
+    "7708716105996586274",
+    "7708418405950426383",
+    "7707478821867441462",
+    "7706747033431854378",
+    "7706806255377009970",
+    "7707527215839235338"
+  ],
+  "current_detail_works": [
+    {
+      "work_id": "7707991451356073338",
+      "url": "https://www.douyin.com/video/7707991451356073338",
+      "author": "𝐴𝑚𝑜𝑟.",
+      "published_at_raw": "发布时间：2026-11-14 03:43",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "旅行大玩家",
+        "抖音看世界"
+      ],
+      "metrics": {
+        "likes_raw": "5.0万",
+        "comments_raw": "477",
+        "favorites_raw": "8472",
+        "shares_raw": "1.2万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7707252578186234853",
+      "url": "https://www.douyin.com/video/7707252578186234853",
+      "author": "𝐴𝑚𝑜𝑟.",
+      "published_at_raw": "发布时间：2026-11-12 03:56",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "旅行大玩家",
+        "抖音看世界"
+      ],
+      "metrics": {
+        "likes_raw": "1816",
+        "comments_raw": "49",
+        "favorites_raw": "450",
+        "shares_raw": "400"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7703785897572994344",
+      "url": "https://www.douyin.com/video/7703785897572994344",
+      "author": "mousen",
+      "published_at_raw": "发布时间：2026-11-02 19:43",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "inmyfeeling",
+        "蓝调时刻",
+        "治愈",
+        "真实生活分享计划"
+      ],
+      "metrics": {
+        "likes_raw": "27.1万",
+        "comments_raw": "2072",
+        "favorites_raw": "2.3万",
+        "shares_raw": "9.8万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7703432472218964200",
+      "url": "https://www.douyin.com/video/7703432472218964200",
+      "author": "mousen",
+      "published_at_raw": "发布时间：2026-11-01 20:52",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "inmyfeeling",
+        "治愈系",
+        "蓝色系"
+      ],
+      "metrics": {
+        "likes_raw": "1.1万",
+        "comments_raw": "90",
+        "favorites_raw": "594",
+        "shares_raw": "1831"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison",
+        "ordinary_control"
+      ]
+    },
+    {
+      "work_id": "7704134226144387766",
+      "url": "https://www.douyin.com/note/7704134226144387766",
+      "author": "苏州市首富",
+      "published_at_raw": "发布时间：2026-11-03 18:15:31",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "普吉",
+        "斯米兰"
+      ],
+      "metrics": {
+        "likes_raw": "40.9万",
+        "comments_raw": "1189",
+        "favorites_raw": "1.7万",
+        "shares_raw": "7.6万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7702438202195903909",
+      "url": "https://www.douyin.com/note/7702438202195903909",
+      "author": "苏州市首富",
+      "published_at_raw": "发布时间：2026-10-30 05:34:04",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "斯米兰岛",
+        "Phuket",
+        "泰国"
+      ],
+      "metrics": {
+        "likes_raw": "432",
+        "comments_raw": "25",
+        "favorites_raw": "28",
+        "shares_raw": "129"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7704984172020679281",
+      "url": "https://www.douyin.com/video/7704984172020679281",
+      "author": "hdyyyy",
+      "published_at_raw": "发布时间：2026-11-06 01:13",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "樟宜机场瀑布",
+        "新加坡"
+      ],
+      "metrics": {
+        "likes_raw": "4377",
+        "comments_raw": "122",
+        "favorites_raw": "216",
+        "shares_raw": "812"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7707979979792018575",
+      "url": "https://www.douyin.com/video/7707979979792018575",
+      "author": "一直在路上",
+      "published_at_raw": "发布时间：2026-11-14 02:59",
+      "evidence_grade": "C",
+      "actual_hashtags": [],
+      "metrics": {
+        "likes_raw": "8.6万",
+        "comments_raw": "3128",
+        "favorites_raw": "1.2万",
+        "shares_raw": "1.9万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7708716105996586274",
+      "url": "https://www.douyin.com/video/7708716105996586274",
+      "author": "茗𝓓𝓮𝓫𝓾𝓼𝓼𝔂",
+      "published_at_raw": "发布时间：2026-11-16 05:51",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "梦核",
+        "做梦素材",
+        "氛围感",
+        "治愈系",
+        "ai创作浪潮计划"
+      ],
+      "metrics": {
+        "likes_raw": "2299",
+        "comments_raw": "104",
+        "favorites_raw": "239",
+        "shares_raw": "386"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7708418405950426383",
+      "url": "https://www.douyin.com/video/7708418405950426383",
+      "author": "青叶AI",
+      "published_at_raw": "发布时间：2026-11-15 07:20",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "古装群像",
+        "宿命感",
+        "AI创作浪潮计划"
+      ],
+      "metrics": {
+        "likes_raw": "1.4万",
+        "comments_raw": "706",
+        "favorites_raw": "2243",
+        "shares_raw": "1801"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7705028421106182079",
+      "url": "https://www.douyin.com/video/7705028421106182079",
+      "author": "秦傲雨",
+      "published_at_raw": "发布时间：2026-11-06 04:05",
+      "evidence_grade": "C",
+      "actual_hashtags": [],
+      "metrics": {
+        "likes_raw": "39.8万",
+        "comments_raw": "2015",
+        "favorites_raw": "3.2万",
+        "shares_raw": "14.0万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7707478821867441462",
+      "url": "https://www.douyin.com/video/7707478821867441462",
+      "author": "半生瓜怀旧动画",
+      "published_at_raw": "发布时间：2026-11-13 16:29",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "童年回忆",
+        "小时候味道",
+        "原创动画",
+        "治愈系动画"
+      ],
+      "metrics": {
+        "likes_raw": "2330",
+        "comments_raw": "112",
+        "favorites_raw": "237",
+        "shares_raw": "431"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7706747033431854378",
+      "url": "https://www.douyin.com/video/7706747033431854378",
+      "author": "半生瓜怀旧动画",
+      "published_at_raw": "发布时间：2026-11-11 16:29",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "童年回忆",
+        "小时候味道",
+        "治愈系动画",
+        "原创动画"
+      ],
+      "metrics": {
+        "likes_raw": "1.9万",
+        "comments_raw": "312",
+        "favorites_raw": "2347",
+        "shares_raw": "5087"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7706007490520976666",
+      "url": "https://www.douyin.com/video/7706007490520976666",
+      "author": "半生瓜怀旧动画",
+      "published_at_raw": "发布时间：2026-11-09 16:29",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "童年回忆",
+        "小时候味道",
+        "原创动画",
+        "治愈系动画"
+      ],
+      "metrics": {
+        "likes_raw": "8.2万",
+        "comments_raw": "1060",
+        "favorites_raw": "8918",
+        "shares_raw": "3.3万"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7704904449378110754",
+      "url": "https://www.douyin.com/video/7704904449378110754",
+      "author": "半生瓜怀旧动画",
+      "published_at_raw": "发布时间：2026-11-07 16:29",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "童年回忆",
+        "小时候",
+        "原创动画",
+        "治愈系动画"
+      ],
+      "metrics": {
+        "likes_raw": "1540",
+        "comments_raw": "102",
+        "favorites_raw": "134",
+        "shares_raw": "429"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7705370237566225705",
+      "url": "https://www.douyin.com/video/7705370237566225705",
+      "author": "Leon里昂SS",
+      "published_at_raw": "发布时间：2026-11-07 02:11",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "吃货",
+        "火锅",
+        "涮羊肉",
+        "美食"
+      ],
+      "metrics": {
+        "likes_raw": "1.2万",
+        "comments_raw": "159",
+        "favorites_raw": "1179",
+        "shares_raw": "4330"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7705020148616334655",
+      "url": "https://www.douyin.com/video/7705020148616334655",
+      "author": "Leon里昂SS",
+      "published_at_raw": "发布时间：2026-11-06 03:33",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "吃货",
+        "美食",
+        "美味",
+        "自助餐"
+      ],
+      "metrics": {
+        "likes_raw": "5509",
+        "comments_raw": "86",
+        "favorites_raw": "719",
+        "shares_raw": "1413"
+      },
+      "sample_roles": [
+        "same_author_recent_metadata_comparison"
+      ]
+    },
+    {
+      "work_id": "7693158990032784659",
+      "url": "https://www.douyin.com/video/7693158990032784659",
+      "author": "Leon里昂SS",
+      "published_at_raw": "发布时间：2026-10-05 05:26",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "吃货",
+        "美食",
+        "美味",
+        "羊肉汤"
+      ],
+      "metrics": {
+        "likes_raw": "19.3万",
+        "comments_raw": "4397",
+        "favorites_raw": "1.7万",
+        "shares_raw": "10.7万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7706806255377009970",
+      "url": "https://www.douyin.com/video/7706806255377009970",
+      "author": "解忧杂货店",
+      "published_at_raw": "发布时间：2026-11-11 02:00",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "ai",
+        "治愈",
+        "奇幻",
+        "梦幻"
+      ],
+      "metrics": {
+        "likes_raw": "8.8万",
+        "comments_raw": "1068",
+        "favorites_raw": "1.4万",
+        "shares_raw": "2.4万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7707527215839235338",
+      "url": "https://www.douyin.com/video/7707527215839235338",
+      "author": "云端避风港-Dream Shelter",
+      "published_at_raw": "发布时间：2026-11-13 00:00",
+      "evidence_grade": "B",
+      "actual_hashtags": [
+        "好家请就位",
+        "AI创作浪潮计划",
+        "冬季必备",
+        "治愈系",
+        "助眠"
+      ],
+      "metrics": {
+        "likes_raw": "2.6万",
+        "comments_raw": "271",
+        "favorites_raw": "1201",
+        "shares_raw": "1015"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7676477922663796020",
+      "url": "https://www.douyin.com/video/7676477922663796020",
+      "author": "幸存者刘坦克",
+      "published_at_raw": "发布时间：2026-08-21 06:35",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "庇护所",
+        "罐头",
+        "避难所生存"
+      ],
+      "metrics": {
+        "likes_raw": "3.6万",
+        "comments_raw": "396",
+        "favorites_raw": "4175",
+        "shares_raw": "7130"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7697261194997992754",
+      "url": "https://www.douyin.com/video/7697261194997992754",
+      "author": "非梦",
+      "published_at_raw": "发布时间：2026-10-16 06:44",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "末日生存",
+        "助眠",
+        "治愈系",
+        "温馨的小窝"
+      ],
+      "metrics": {
+        "likes_raw": "1.4万",
+        "comments_raw": "571",
+        "favorites_raw": "1719",
+        "shares_raw": "5927"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7681317906466049320",
+      "url": "https://www.douyin.com/video/7681317906466049320",
+      "author": "AIGC叙事集",
+      "published_at_raw": "发布时间：2026-09-03 21:00",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "ai创作",
+        "asmr",
+        "ai创作者计划",
+        "避难所生存",
+        "创作者流量扶持计划"
+      ],
+      "metrics": {
+        "likes_raw": "7.6万",
+        "comments_raw": "4083",
+        "favorites_raw": "3983",
+        "shares_raw": "3.0万"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    },
+    {
+      "work_id": "7697881953906822451",
+      "url": "https://www.douyin.com/video/7697881953906822451",
+      "author": "非梦",
+      "published_at_raw": "发布时间：2026-10-18 06:00",
+      "evidence_grade": "C",
+      "actual_hashtags": [
+        "庇护所",
+        "末日生存",
+        "治愈系",
+        "助眠"
+      ],
+      "metrics": {
+        "likes_raw": "1.0万",
+        "comments_raw": "475",
+        "favorites_raw": "1575",
+        "shares_raw": "3228"
+      },
+      "sample_roles": [
+        "user_seed"
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "author": "𝐴𝑚𝑜𝑟.",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAAgHLIPtIZBAC_1LEkDmvoMXmreJYio610VjOHDGMHURGzVXlL-9gbXFEDo9CzOWhl",
+      "observed_at": "2026-11-17T02:24:11.483Z",
+      "displayed_work_count_raw": "223",
+      "collected_unique_cards": 54,
+      "visible_end_marker": false,
+      "coverage_scope": "initial rendered work-list, no exhaustive scroll claim; metadata only",
+      "source": {
+        "source_id": "creator-healing-20261116/landscape/profile-amor.tool.json",
+        "source_record_sha256": "c9909f4f63c69ce374635e04b3550456bc75dfabeab21d38c6ed8712e37465c8",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAAgHLIPtIZBAC_1LEkDmvoMXmreJYio610VjOHDGMHURGzVXlL-9gbXFEDo9CzOWhl",
+        "observed_at": "2026-11-17T02:24:11.483Z",
+        "scope": "only li work cards under data-e2e scroll-list; unrelated recommendations and footer excluded"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "mousen",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAARiHEHxOEPk7YuHzzlxIq113tU9E40gqv3mx0E3a3GQxNnrPY9BxUwoFButx1lgju",
+      "observed_at": "2026-11-17T02:26:22.195Z",
+      "displayed_work_count_raw": "36",
+      "collected_unique_cards": 36,
+      "visible_end_marker": true,
+      "coverage_scope": "initial rendered work-list, no exhaustive scroll claim; metadata only",
+      "source": {
+        "source_id": "creator-healing-20261116/landscape/profile-mousen.tool.json",
+        "source_record_sha256": "0cfed93e4a8767c0bb5ba914cce220b4a002bdfe9c88a5f96171a067591ec5b8",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAARiHEHxOEPk7YuHzzlxIq113tU9E40gqv3mx0E3a3GQxNnrPY9BxUwoFButx1lgju",
+        "observed_at": "2026-11-17T02:26:22.195Z",
+        "scope": "only li work cards under data-e2e scroll-list; unrelated recommendations and footer excluded"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "苏州市首富",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAArjNgrvbbt4h982Ss0A87vGlyQvE9lH6XpKTu_R8Jb-MYLulb4GsS64VtSzM6oaI2",
+      "observed_at": "2026-11-17T02:27:29.888Z",
+      "displayed_work_count_raw": "22",
+      "collected_unique_cards": 22,
+      "visible_end_marker": true,
+      "coverage_scope": "initial rendered work-list, no exhaustive scroll claim; metadata only",
+      "source": {
+        "source_id": "creator-healing-20261116/landscape/profile-islander.tool.json",
+        "source_record_sha256": "254d8c8723a2007ae9cb8f37c11ea9767ebfb65b50f69170b511bc389333dc1d",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAArjNgrvbbt4h982Ss0A87vGlyQvE9lH6XpKTu_R8Jb-MYLulb4GsS64VtSzM6oaI2",
+        "observed_at": "2026-11-17T02:27:29.888Z",
+        "scope": "only li work cards under data-e2e scroll-list; unrelated recommendations and footer excluded"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "半生瓜怀旧动画",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAA5q-eIM_7nUdUpJxoor_U9C_VQCJdvMaZVLdVHDzbiDor5EJ3xGXOa-ZyOCByKrrD",
+      "observed_at": "2026-11-17T02:25:08.321Z",
+      "displayed_work_count_raw": "512",
+      "collected_unique_cards": 54,
+      "visible_end_marker": false,
+      "coverage_scope": "only li work cards under data-e2e scroll-list; footer and recommendation links excluded",
+      "source": {
+        "source_id": "creator-healing-20261116/shelter-food/sources/profile-nostalgia-tool.json",
+        "source_record_sha256": "a40362a06f6df5762642f59c6dbb3cd5019afba066271c9a62cfa6433fc7797d",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAA5q-eIM_7nUdUpJxoor_U9C_VQCJdvMaZVLdVHDzbiDor5EJ3xGXOa-ZyOCByKrrD",
+        "observed_at": "2026-11-17T02:25:08.321Z",
+        "scope": "author scroll-list li work cards only; metadata, not watched videos"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "Leon里昂SS",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAALKWBmfASzh9PT8cSqDs0x97ImUqYrCZImDE_uFjFgE3R9cXbdzEevzHhEGJAzz5G",
+      "observed_at": "2026-11-17T02:29:43.039Z",
+      "displayed_work_count_raw": "126",
+      "collected_unique_cards": 36,
+      "visible_end_marker": false,
+      "coverage_scope": "only li work cards under data-e2e scroll-list; footer and recommendation links excluded",
+      "source": {
+        "source_id": "creator-healing-20261116/shelter-food/sources/profile-soup-tool.json",
+        "source_record_sha256": "e8c1290f520eb31b55028825f0da9f5d5504aa969ddc67c7d3bcb611a76a6875",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAALKWBmfASzh9PT8cSqDs0x97ImUqYrCZImDE_uFjFgE3R9cXbdzEevzHhEGJAzz5G",
+        "observed_at": "2026-11-17T02:29:43.039Z",
+        "scope": "author scroll-list li work cards only; metadata, not watched videos"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "AIGC叙事集",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAAn0d3yZJxtI6aVA6yUqsovPl6pO7a7Q0tQ45aGEaELzo",
+      "observed_at": "2026-11-17T02:32:07.587Z",
+      "displayed_work_count_raw": "170",
+      "collected_unique_cards": 57,
+      "visible_end_marker": false,
+      "coverage_scope": "only li work cards under data-e2e scroll-list; footer and recommendation links excluded",
+      "source": {
+        "source_id": "creator-healing-20261116/shelter-food/sources/profile-food-tool.json",
+        "source_record_sha256": "d2b65ab80500a825b3d4164b00dfc7e0ed888b4fa3e7ba5d2e65e9efdd4aba56",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAAn0d3yZJxtI6aVA6yUqsovPl6pO7a7Q0tQ45aGEaELzo",
+        "observed_at": "2026-11-17T02:32:07.587Z",
+        "scope": "author scroll-list li work cards only; metadata, not watched videos"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "解忧杂货店",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAAr8bBYodX0QqLDZpkCa_f2H5WsKPTIMeR_JKmu5ZvaJJulEhrHqRGDlJ6OZW11S9t",
+      "observed_at": "2026-11-17T02:32:49.488Z",
+      "displayed_work_count_raw": "31",
+      "collected_unique_cards": 31,
+      "visible_end_marker": true,
+      "coverage_scope": "only li work cards under data-e2e scroll-list; footer and recommendation links excluded",
+      "source": {
+        "source_id": "creator-healing-20261116/shelter-food/sources/profile-floor-tool.json",
+        "source_record_sha256": "37f735fb691624ef3d9f1408fef857fb6ab597ed800d5938b6c8d0008b8d4334",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAAr8bBYodX0QqLDZpkCa_f2H5WsKPTIMeR_JKmu5ZvaJJulEhrHqRGDlJ6OZW11S9t",
+        "observed_at": "2026-11-17T02:32:49.488Z",
+        "scope": "author scroll-list li work cards only; metadata, not watched videos"
+      },
+      "batch_id": "creator-healing-20261116"
+    },
+    {
+      "author": "云端避风港-Dream Shelter",
+      "author_url": "https://www.douyin.com/user/MS4wLjABAAAACB4iUdGtmpdjGt7v9FEXmDr5Ds6sKnw99sY_a2C6M4o",
+      "observed_at": "2026-11-17T02:33:35.701Z",
+      "displayed_work_count_raw": "109",
+      "collected_unique_cards": 37,
+      "visible_end_marker": false,
+      "coverage_scope": "only li work cards under data-e2e scroll-list; footer and recommendation links excluded",
+      "source": {
+        "source_id": "creator-healing-20261116/shelter-food/sources/profile-shelter-tool.json",
+        "source_record_sha256": "c2e6a575325b1af27d56200576c53372654354cdf27a47cb42cbe1dab1b030d2",
+        "source_url": "https://www.douyin.com/user/MS4wLjABAAAACB4iUdGtmpdjGt7v9FEXmDr5Ds6sKnw99sY_a2C6M4o",
+        "observed_at": "2026-11-17T02:33:35.701Z",
+        "scope": "author scroll-list li work cards only; metadata, not watched videos"
+      },
+      "batch_id": "creator-healing-20261116"
+    }
+  ],
+  "comparisons": [
+    {
+      "comparison_id": "mousen-snow-companion-near-day",
+      "work_ids": [
+        "7703785897572994344",
+        "7703432472218964200"
+      ],
+      "evidence_scope": "both full 4fps, audio unreviewed",
+      "matched": [
+        "same canonical author",
+        "Nov 1/2",
+        "about 10 seconds",
+        "blue snow path, dog and companionship"
+      ],
+      "observed_likes_raw": [
+        "27.1万",
+        "1.1万"
+      ],
+      "confounds": [
+        "publication age",
+        "scene and action differences",
+        "sound, reach and paid distribution unknown"
+      ],
+      "supported_result": "Shared blue snow, dog and short duration are not sufficient explanations; companionship is a plausible viewer use, not a proven growth cause"
+    },
+    {
+      "comparison_id": "amor-same-caption-tags-duration",
+      "work_ids": [
+        "7707991451356073338",
+        "7707252578186234853"
+      ],
+      "evidence_scope": "metadata only",
+      "matched": [
+        "same author",
+        "Nov 12/14",
+        "22.639 seconds",
+        "same core caption and two native hashtags"
+      ],
+      "observed_likes_raw": [
+        "5.0万",
+        "1816"
+      ],
+      "confounds": [
+        "different visual/audio content not reviewed",
+        "unknown exposure and paid distribution"
+      ],
+      "supported_result": "Shared title, tags and duration do not guarantee comparable public likes"
+    },
+    {
+      "comparison_id": "islander-same-author-location",
+      "work_ids": [
+        "7704134226144387766",
+        "7702438202195903909"
+      ],
+      "evidence_scope": "high-like note moving asset only; lower-like note metadata",
+      "matched": [
+        "same author",
+        "Oct 30/Nov 3",
+        "Similan location wording"
+      ],
+      "observed_likes_raw": [
+        "40.9万",
+        "432"
+      ],
+      "confounds": [
+        "different formats or image choices",
+        "audience source and publication age",
+        "mostly fandom profile; not established travel series"
+      ],
+      "supported_result": "One scenic hit does not establish a repeatable travel follower engine"
+    },
+    {
+      "comparison_id": "nostalgia-recent-household-meals",
+      "work_ids": [
+        "7704904449378110754",
+        "7706007490520976666",
+        "7706747033431854378",
+        "7707478821867441462"
+      ],
+      "evidence_scope": "one full 4fps; three metadata",
+      "matched": [
+        "same author",
+        "Nov 7/9/11/13",
+        "winter family food captions"
+      ],
+      "observed_likes_raw": [
+        "1540",
+        "8.2万",
+        "1.9万",
+        "2330"
+      ],
+      "confounds": [
+        "different ages, stories, duration and sound",
+        "views and followers unknown"
+      ],
+      "supported_result": "Recurring winter meal format supplies a series engine but does not guarantee high interaction"
+    }
+  ],
+  "limits": [
+    "No directly listened audio; no view/retention/attributed-follower outcome inferred from public likes.",
+    "Date-unknown title cards are not current market evidence.",
+    "Hot-list entities, index search rows and category aggregate rows are not video sample IDs."
+  ]
+}
