@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_on": "2026-10-19",
+  "reviewed_on": "2026-11-15",
   "status": "historical_candidates_revalidate_before_use",
   "purpose": "用于按本次授权类别生成候选配置；不是自动安装脚本、完整白名单或永久有效的官方清单。",
   "scope_notes": [
@@ -9,7 +9,11 @@
     "共享登录/CDN/支付主机影响所有访问该主机的软件；不得扩大到整个共享云域名。",
     "不自动添加全中国 IP、整个浏览器、所有 UDP、fake-IP 或 CGNAT 直连。",
     "wanyiwan.top 与 alipay.com 的域名后缀规则覆盖主域及子域，不区分 HTTPS 路径、用户所在地或国内/海外业务；仅按本次授权选用。共享资源主机影响所有引用它们的页面；并未加入整个 alipayobjects.com、alicdn.com 或阿里云。",
-    "雷电规则按进程匹配，覆盖对应进程发出的域名/IP/协议；进程名随雷电版本可能变化，升级后需重新核对。它不等于所有 Android 模拟器、adb.exe 或宿主机浏览器直连。"
+    "雷电规则按进程匹配，覆盖对应进程发出的域名/IP/协议；进程名随雷电版本可能变化，升级后需重新核对。它不等于所有 Android 模拟器、adb.exe 或宿主机浏览器直连。",
+    "类别可以共享规则；只选授权组，合并后精确去重。旧有明确规则不因删除国内全量兜底而自动删掉。",
+    "公众号组包含 weixin.qq.com、wx.qq.com 等大于 mp.weixin.qq.com 的范围，以及 gtimg/qpic/qlogo 等共享主机；可按任务缩小为精确域名，不能声称仅影响公众号页面。",
+    "这些国内平台候选按域名而非 IP 地区匹配；CDN 位于国外时 DIRECT 仍表示不经过本机所选代理，并不保证目标或上游出口位于国内。",
+    "名单外按用户选定的默认代理处理，不新增查 IP 或 WebRTC 检测网站专用例外。CLI/WebRTC 保护优先级另见 traffic-privacy.md。"
   ],
   "source_notes": [
     "源自一次已授权的分流维护及保存的运行验证；并非每条规则都经过完整业务会话验收。",
@@ -17,7 +21,8 @@
     "后续需要新增或修改时，结合服务官方文档与实际连接，而非把社区清单整包导入。",
     "2026-10-14：公开抓取 https://www.wanyiwan.top/game/xjskp 与 https://www.alipay.com/，均引用支付宝接口及 alipayobjects.com 下的精确资源主机；render-intl 也是这两个国内页面实际引用的资源。",
     "2026-10-14：现场进程核对到 dnplayer.exe、ld10406.exe、ldplayerservice.exe、Ld9BoxHeadless.exe、Ld9BoxSVC.exe；只为这些进程添加 DIRECT。未将 adb.exe 或整个浏览器加入。",
-    "2026-10-19：用户指定 babigame.cn、hnycgames.cn、render.alipayobjects.com。现场浏览器连接中后两者经 Match 走代理；加入后以新连接验证三个域名均命中 DIRECT。游戏接口根路径响应不代表完整业务验证。"
+    "2026-10-19：用户指定 babigame.cn、hnycgames.cn、render.alipayobjects.com。现场浏览器连接中后两者经 Match 走代理；加入后以新连接验证三个域名均命中 DIRECT。游戏接口根路径响应不代表完整业务验证。",
+    "2026-11-16 整理 2026-11-15 最终持久脚本：补录抖音、B站、公众号、小红书、快手的 40 个后缀候选，未复制私有 LAN 主机、VPS 地址或凭据。该次实际 Chrome 新连接验证了抖音/B站/公众号主站 DIRECT；其余候选不是逐域名或完整业务实测。"
   ],
   "categories": {
     "previous_apps": {
@@ -244,6 +249,71 @@
         "DOMAIN-SUFFIX,babigame.cn,DIRECT",
         "DOMAIN-SUFFIX,hnycgames.cn,DIRECT",
         "DOMAIN,render.alipayobjects.com,DIRECT"
+      ]
+    },
+    "douyin": {
+      "label": "抖音主站、API 与视频/图片资源",
+      "rules": [
+        "DOMAIN-SUFFIX,douyin.com,DIRECT",
+        "DOMAIN-SUFFIX,douyincdn.com,DIRECT",
+        "DOMAIN-SUFFIX,douyinpic.com,DIRECT",
+        "DOMAIN-SUFFIX,douyinstatic.com,DIRECT",
+        "DOMAIN-SUFFIX,douyinvod.com,DIRECT",
+        "DOMAIN-SUFFIX,douyinfe.com,DIRECT",
+        "DOMAIN-SUFFIX,iesdouyin.com,DIRECT",
+        "DOMAIN-SUFFIX,amemv.com,DIRECT"
+      ]
+    },
+    "bilibili": {
+      "label": "B站主站、API、短链接与资源",
+      "rules": [
+        "DOMAIN-SUFFIX,bilibili.com,DIRECT",
+        "DOMAIN-SUFFIX,biliapi.com,DIRECT",
+        "DOMAIN-SUFFIX,biliapi.net,DIRECT",
+        "DOMAIN-SUFFIX,bilivideo.com,DIRECT",
+        "DOMAIN-SUFFIX,bilivideo.cn,DIRECT",
+        "DOMAIN-SUFFIX,bilivideo.net,DIRECT",
+        "DOMAIN-SUFFIX,biliimg.com,DIRECT",
+        "DOMAIN-SUFFIX,hdslb.com,DIRECT",
+        "DOMAIN-SUFFIX,hdslb.org,DIRECT",
+        "DOMAIN-SUFFIX,b23.tv,DIRECT",
+        "DOMAIN-SUFFIX,acgvideo.com,DIRECT"
+      ]
+    },
+    "wechat_public": {
+      "label": "公众号/微信与共享图片、登录、静态资源",
+      "rules": [
+        "DOMAIN-SUFFIX,mp.weixin.qq.com,DIRECT",
+        "DOMAIN-SUFFIX,weixin.qq.com,DIRECT",
+        "DOMAIN-SUFFIX,wx.qq.com,DIRECT",
+        "DOMAIN-SUFFIX,qpic.cn,DIRECT",
+        "DOMAIN-SUFFIX,qlogo.cn,DIRECT",
+        "DOMAIN-SUFFIX,weixin.com,DIRECT",
+        "DOMAIN-SUFFIX,weixinbridge.com,DIRECT",
+        "DOMAIN-SUFFIX,servicewechat.com,DIRECT",
+        "DOMAIN-SUFFIX,gtimg.com,DIRECT",
+        "DOMAIN-SUFFIX,gtimg.cn,DIRECT"
+      ]
+    },
+    "xiaohongshu": {
+      "label": "小红书主站、短链接与资源",
+      "rules": [
+        "DOMAIN-SUFFIX,xiaohongshu.com,DIRECT",
+        "DOMAIN-SUFFIX,xhscdn.com,DIRECT",
+        "DOMAIN-SUFFIX,xhscdn.net,DIRECT",
+        "DOMAIN-SUFFIX,xhsrcdn.com,DIRECT",
+        "DOMAIN-SUFFIX,xhslink.com,DIRECT"
+      ]
+    },
+    "kuaishou": {
+      "label": "快手主站、API 与资源",
+      "rules": [
+        "DOMAIN-SUFFIX,kuaishou.com,DIRECT",
+        "DOMAIN-SUFFIX,kuaishou.cn,DIRECT",
+        "DOMAIN-SUFFIX,ksapisrv.com,DIRECT",
+        "DOMAIN-SUFFIX,kwaicdn.com,DIRECT",
+        "DOMAIN-SUFFIX,kwimgs.com,DIRECT",
+        "DOMAIN-SUFFIX,yximgs.com,DIRECT"
       ]
     }
   }

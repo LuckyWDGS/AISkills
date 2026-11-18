@@ -15,6 +15,16 @@
 
 后续查询成功不能否认前一次间歇错误。若域名与固定 IP 都失败，DNS 可能只是其中一项；不要用更换 DNS 解释所有 TLS EOF。
 
+## Clash Verge 覆写与失效的 DNS 出口名
+
+先比对订阅原文、全局/当前订阅 DNS 覆写、生成配置和运行核心。检查 DNS URL 的 `#出口名` 是否在当前代理组/节点或合法接口中存在，不能因 `respect-rules:true` 就跳过显式出口检查。
+
+在 Mihomo v1.19.33 中，找不到指定代理时会把该名称作为接口名绑定；旧机场组名可导致 `interface not found`，而非自动选择当前 PROXY。用核心 `/dns/query` 对少量普通域名作只读复现，并核对[该版本源码](https://github.com/MetaCubeX/mihomo/blob/v1.19.33/tunnel/dns_dialer.go#L70-L77)。浏览器通过 HTTP 代理仍能上网，不代表这个核心解析路径正常。
+
+有授权修复时，改实际维护源（例如 `dns_config.yaml`）及对应覆写范围，再核对生成配置；不要只编辑会被重建的文件。不同订阅的 DNS 覆写开关可不同，不能把一个订阅的失效配置自动归因到另一个订阅。
+
+`tcp://127.0.0.1:端口#PROXY` 可能是借节点访问服务器私有 DNS。先证明代理端拨号位置，不因 loopback 字面量就改成本机 DNS；明确 `#PROXY` 的配置也不能只凭 `respect-rules:false` 判为直连。
+
 ## AdGuard Home 的最小修改
 
 按安装版本核对 API；例如 v0.107.79 支持 `GET /control/dns_info`、`POST /control/test_upstream_dns`、`POST /control/dns_config`。只通过已有受保护管理路径访问，凭据不出现在日志或命令输出。版本源码与 schema：[OpenAPI](https://github.com/AdguardTeam/AdGuardHome/blob/v0.107.79/openapi/openapi.yaml)、[DNS API 实现](https://github.com/AdguardTeam/AdGuardHome/blob/v0.107.79/internal/dnsforward/http.go)。
