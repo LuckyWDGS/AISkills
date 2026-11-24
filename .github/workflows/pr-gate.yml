@@ -1,0 +1,134 @@
+name: PR gate
+
+# The other workflows only run when a pull request touches their paths, so none
+# of them can be a required check: a pull request that does not touch those
+# paths would wait for it forever. This workflow runs on every pull request,
+# waits for whatever else runs on the same commit and passes only if all of it
+# passed. Branch protection requires this one check (`pr-gate`).
+#
+# After re-running a failed job in another workflow, re-run this job as well:
+# it reports the state it saw and does not start again by itself.
+
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  checks: read
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-gate:
+    name: pr-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Wait for the other checks on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # Seconds to let the other workflows register their runs before the first look.
+          SETTLE_SECONDS: '30'
+          POLL_SECONDS: '15'
+          # Give up after this long; keep it below the job timeout.
+          LIMIT_SECONDS: '2400'
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
+
+          API = os.environ.get("GITHUB_API_URL", "https://api.github.com")
+          REPO = os.environ["GITHUB_REPOSITORY"]
+          SHA = os.environ["HEAD_SHA"]
+          TOKEN = os.environ["GH_TOKEN"]
+          # "owner/repo/.github/workflows/pr-gate.yml@refs/pull/1/merge" -> ".github/workflows/pr-gate.yml"
+          OWN_PATH = os.environ["GITHUB_WORKFLOW_REF"].split("@")[0][len(REPO) + 1:]
+          PASSING = {"success", "skipped", "neutral"}
+
+
+          def get_all(path, key):
+              """Every item of a paginated list endpoint."""
+              items, page = [], 1
+              while True:
+                  joiner = "&" if "?" in path else "?"
+                  request = urllib.request.Request(
+                      f"{API}/repos/{REPO}/{path}{joiner}per_page=100&page={page}",
+                      headers={
+                          "Authorization": f"Bearer {TOKEN}",
+                          "Accept": "application/vnd.github+json",
+                          "X-GitHub-Api-Version": "2022-11-28",
+                      },
+                  )
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      batch = json.load(response)[key]
+                  items += batch
+                  if len(batch) < 100:
+                      return items
+                  page += 1
+
+
+          def snapshot():
+              """(pending, failed) names for everything on the commit except this workflow."""
+              runs = get_all(f"actions/runs?head_sha={SHA}", "workflow_runs")
+              # Leave out every run of this workflow, not only this one: two pull
+              # requests from one branch would otherwise wait for each other.
+              own_suites = {run["check_suite_id"] for run in runs if run["path"].split("@")[0] == OWN_PATH}
+              runs = [run for run in runs if run["check_suite_id"] not in own_suites]
+              checks = [
+                  check for check in get_all(f"commits/{SHA}/check-runs", "check_runs")
+                  if (check.get("check_suite") or {}).get("id") not in own_suites
+              ]
+              pending = sorted(
+                  {f"workflow {run['name']}" for run in runs if run["status"] != "completed"}
+                  | {check["name"] for check in checks if check["status"] != "completed"}
+              )
+              failed = sorted(
+                  {f"{check['name']}: {check['conclusion']}" for check in checks
+                   if check["status"] == "completed" and check["conclusion"] not in PASSING}
+                  # A run that never started its jobs (invalid workflow file) has no check run to report it.
+                  | {f"workflow {run['name']}: {run['conclusion']}" for run in runs
+                     if run["status"] == "completed" and run["conclusion"] not in PASSING}
+              )
+              return pending, failed, len(checks)
+
+
+          def main():
+              poll = float(os.environ["POLL_SECONDS"])
+              deadline = time.monotonic() + float(os.environ["LIMIT_SECONDS"])
+              time.sleep(float(os.environ["SETTLE_SECONDS"]))
+              quiet_polls, last_report = 0, None
+              while True:
+                  try:
+                      pending, failed, count = snapshot()
+                  except (urllib.error.URLError, TimeoutError) as exc:
+                      print(f"GitHub API request failed, retrying: {exc}", flush=True)
+                      pending, failed, count = ["GitHub API"], [], 0
+                  if failed:
+                      print("Failed on this commit:\n  " + "\n  ".join(failed))
+                      return 1
+                  if not pending:
+                      # Two quiet looks in a row, so a workflow that registers late is not missed.
+                      quiet_polls += 1
+                      if quiet_polls >= 2:
+                          print(f"All {count} other check(s) on {SHA[:7]} passed.")
+                          return 0
+                  else:
+                      quiet_polls = 0
+                      if pending != last_report:
+                          print("Waiting for:\n  " + "\n  ".join(pending), flush=True)
+                          last_report = pending
+                  if time.monotonic() > deadline:
+                      print("Gave up waiting for:\n  " + "\n  ".join(pending or ["a second quiet look"]))
+                      return 1
+                  time.sleep(poll)
+
+
+          sys.exit(main())
+          PY
