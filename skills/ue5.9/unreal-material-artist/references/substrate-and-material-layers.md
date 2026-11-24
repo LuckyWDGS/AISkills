@@ -1,8 +1,11 @@
 # Substrate And Material Layers
 
-Use this when a material is more complex than a single PBR stack: layered paint, armor, dirt, snow, wetness, cloth fuzz, clear coat, skin coatings, terrain blends, hero props, or reusable studio master materials.
+Use this when a material is more complex than a single PBR stack: layered paint,
+armor, dirt, snow, wetness, cloth fuzz, clear coat, skin coatings, terrain
+blends, hero props, or reusable studio master materials.
 
-This reference is about material authoring and review. Real VFX system wiring remains outside this skill.
+This reference is about material authoring and review. Real VFX system wiring
+remains outside this skill.
 
 ## Table Of Contents
 
@@ -27,20 +30,28 @@ This reference is about material authoring and review. Real VFX system wiring re
 
 ## Material Attributes Discipline
 
-`Use Material Attributes` is powerful because it lets whole material descriptions flow through functions and layer blends. It is also where unreadable master materials are born.
+`Use Material Attributes` is powerful because it lets whole material
+descriptions flow through functions and layer blends. It is also where
+unreadable master materials are born.
 
 Keep the route clean:
 
-- Use `MakeMaterialAttributes` at layer boundaries, not randomly in the middle of unrelated math.
-- Use `BreakMaterialAttributes` only when a layer genuinely needs to override specific attributes.
-- Keep layer masks named by art meaning: `SnowTopMask`, `WetnessCavityMask`, `PaintWearMask`.
+- Use `MakeMaterialAttributes` at layer boundaries, not randomly in the middle
+  of unrelated math.
+- Use `BreakMaterialAttributes` only when a layer genuinely needs to override
+  specific attributes.
+- Keep layer masks named by art meaning: `SnowTopMask`, `WetnessCavityMask`,
+  `PaintWearMask`.
 - Put repeated decode/remap/normal-blend logic into functions.
-- Record whether a mask is vertex color, texture channel, procedural, RVT, or runtime parameter.
-- Do not stack layers that each resample the same base textures unless the visual payoff is worth the cost.
+- Record whether a mask is vertex color, texture channel, procedural, RVT, or
+  runtime parameter.
+- Do not stack layers that each resample the same base textures unless the
+  visual payoff is worth the cost.
 
 ## Material Layers Asset Rules
 
-Material Layer and Material Layer Blend assets are useful when artists need editable stacks in the Material Instance editor.
+Material Layer and Material Layer Blend assets are useful when artists need
+editable stacks in the Material Instance editor.
 
 Review them for:
 
@@ -54,40 +65,55 @@ Review them for:
 
 ## Substrate Rules
 
-Substrate replaces much of the fixed legacy shading-model workflow with a more expressive BSDF-style material framework. In UE 5.7, new projects have Substrate enabled by default; existing upgraded projects keep the non-Substrate path unless the project opts in. Treat it as version-sensitive: first identify the project's engine version, Substrate project setting, and GBuffer format.
+Substrate replaces much of the fixed legacy shading-model workflow with a more
+expressive BSDF-style material framework. In UE 5.7, new projects have Substrate
+enabled by default; existing upgraded projects keep the non-Substrate path
+unless the project opts in. Treat it as version-sensitive: first identify the
+project's engine version, Substrate project setting, and GBuffer format.
 
 Use Substrate when:
 
 - the reference requires layered matter rather than a simple texture blend
-- clear coat, fuzz, thin film, transmission, or complex surface response is central to the look
+- clear coat, fuzz, thin film, transmission, or complex surface response is
+  central to the look
 - the target platform and engine version are known to support the feature safely
 - the team accepts the extra audit burden
-- the material will benefit from Substrate's slab/BSDF model rather than only from Material Layers parameter blending
+- the material will benefit from Substrate's slab/BSDF model rather than only
+  from Material Layers parameter blending
 
 Be cautious when:
 
-- the material could be normal `DefaultLit`, `ClearCoat`, `Cloth`, `Hair`, or `SingleLayerWater`
+- the material could be normal `DefaultLit`, `ClearCoat`, `Cloth`, `Hair`, or
+  `SingleLayerWater`
 - the material is for mobile, UI, cheap VFX, or large-screen terrain
 - the project has not enabled or standardized Substrate
 - the graph uses Substrate nodes but has no quality fallback or benchmark
-- the material was explicitly converted from a legacy root node; conversion is not a casual reversible preview step
-- the project could disable Substrate later; converted Substrate materials can render black when Substrate is disabled
+- the material was explicitly converted from a legacy root node; conversion is
+  not a casual reversible preview step
+- the project could disable Substrate later; converted Substrate materials can
+  render black when Substrate is disabled
 
 ## UE 5.7 Substrate Checks
 
 Before authoring or approving a Substrate material:
 
-- Check whether the project is a new UE 5.7+ project with Substrate enabled by default or an upgraded project that opted in.
+- Check whether the project is a new UE 5.7+ project with Substrate enabled by
+  default or an upgraded project that opted in.
 - Record GBuffer format:
   - `Blendable GBuffer`: speed and predictable memory first.
-  - `Adaptive GBuffer`: richer per-pixel complexity, higher cost, supported on current-generation/SM6-style targets, with simplification elsewhere.
-- Inspect the Substrate Stats panel for topology, features, simplification, closure count, and bytes-per-pixel pressure.
-- Prefer operator parameter blending when it preserves the visible look and reduces lighting/memory cost.
-- Record any automatic simplification risk as a platform fallback, not as a hidden success.
+  - `Adaptive GBuffer`: richer per-pixel complexity, higher cost, supported on
+    current-generation/SM6-style targets, with simplification elsewhere.
+- Inspect the Substrate Stats panel for topology, features, simplification,
+  closure count, and bytes-per-pixel pressure.
+- Prefer operator parameter blending when it preserves the visible look and
+  reduces lighting/memory cost.
+- Record any automatic simplification risk as a platform fallback, not as a
+  hidden success.
 
 ## Cost Review
 
-Layered materials usually fail because every layer feels cheap alone, but the stack is not cheap.
+Layered materials usually fail because every layer feels cheap alone, but the
+stack is not cheap.
 
 Audit:
 
@@ -97,16 +123,21 @@ Audit:
 - static switches that multiply shader permutations
 - branchy HLSL inside layer functions
 - large full-screen coverage such as landscapes, decals, UI, or post process
-- `FeatureLevelSwitch`, `QualitySwitch`, or separate low-cost masters for weaker platforms
-- Substrate closure count and whether multiple BSDFs are actually needed for the approved look
+- `FeatureLevelSwitch`, `QualitySwitch`, or separate low-cost masters for weaker
+  platforms
+- Substrate closure count and whether multiple BSDFs are actually needed for the
+  approved look
 - whether Adaptive GBuffer complexity will simplify on unsupported platforms
 
 ## Tool Hooks
 
-- `material_domain_audit.py`: confirm the domain, blend, shading model, output route, and high-level cost risks.
-- `material_function_linter.py`: inspect layer functions for missing inputs/outputs, preview defaults, and switch sprawl.
+- `material_domain_audit.py`: confirm the domain, blend, shading model, output
+  route, and high-level cost risks.
+- `material_function_linter.py`: inspect layer functions for missing
+  inputs/outputs, preview defaults, and switch sprawl.
 - `shader_permutation_report.py`: find static-switch groups that should be consolidated.
-- `texture_asset_report.py` and `texture_import_audit.py`: verify layer masks, normals, packed channels, and RVT-related textures before blaming graph math.
+- `texture_asset_report.py` and `texture_import_audit.py`: verify layer masks,
+  normals, packed channels, and RVT-related textures before blaming graph math.
 
 ## Delivery Contract
 

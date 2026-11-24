@@ -1,7 +1,7 @@
-# Porting a legacy writer to MCP
+# Writing an MCP executor for a plan
 
-Use this when a script that wrote through retired `UnrealBridge*Library` APIs
-must work again. Read-only collectors follow the audit pattern in
+Use this when a script must write to the editor through MCP. Read-only
+collectors follow the audit pattern in
 [builtin-mcp.md](builtin-mcp.md#programmatictoolset-batching); writers follow
 this one. Worked example:
 `skills/ue5.8/unreal-material-artist/scripts/unreal_material_tools/material_instance_batch.py`.
@@ -74,8 +74,7 @@ spec ──► collect_facts (live, read-only) ──► build_plan (pure) ─�
 
 ## Status
 
-Every UnrealBridge-era tool is now ported or removed, and the `BridgeClient`
-shim and retired-tool registry are gone. Executors that run plans operation by
+Every editor-connected tool runs on MCP. Executors that run plans operation by
 operation with per-write readback (when a step needs the result of the one before,
 such as a renderer index from AddRenderer): `niagara_asset_assistant apply`
 (Niagara mutation plans) and `graph_refactor_apply --execute` (material refactors
@@ -84,5 +83,4 @@ on a duplicated candidate).
 ## CLI conventions
 
 `<tool>.py <spec> [--execute] [--from-plan FILE] [--reuse-existing] [--project NAME]
-[--mcp-url URL] [--out FILE] [--markdown]`. Drop `--endpoint`; it addressed the
-retired TCP server.
+[--mcp-url URL] [--out FILE] [--markdown]`. 

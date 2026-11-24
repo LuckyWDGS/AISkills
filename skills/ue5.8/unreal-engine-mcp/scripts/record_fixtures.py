@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Re-record the report-contract fixtures from a running UE 5.8+ editor (read-only).
+"""Re-record the report-contract fixtures from a running UE 5.8 editor (read-only).
 
 The material and Niagara contract tests replay real collector output stored in
 ``<skill>/scripts/fixtures``. After an engine upgrade, re-record them, rerun the

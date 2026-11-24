@@ -1,22 +1,29 @@
 # UE 5.9 Preview：实测能力与版本边界
 
-2026-11-11 在 **5.9.0 Preview / CL 60351404** 的独立工程完成 MCP 实测。
-比较安装为 5.8.4 / CL 58902052。本页对应该构建和插件配置，不是全部 UE 5.9
-发布功能，也不是 UE 5.8 编辑器回归结论。
+UE 5.9.0 Preview / CL 60351404 上经 MCP 实测过的能力、已知引擎问题和尚未
+验证的范围。本页对应该构建及其插件配置：工具名、参数和行为在正式版可能变化，
+调用前以目标编辑器的实时 schema 为准。各轮实测的日期、数字和未执行项见文末
+[验证记录](#验证记录)。
 
-2026-11-11 实时发现 **98 个 toolset、1,803 个工具**。这是注册数量；仅下表代表路径完成
-实测，不能称为 1,803 项测试通过。大量工具只是迁移模块、命名或实现，不能全算
-新增。原始 schema、调用结果及机器路径存于忽略的 `.codex/session/`。
+注册数量不等于通过测试的数量：目标实例注册了约 100 个 toolset，只有验证记录
+中列出的代表路径完成过实测。原始 schema、调用结果和机器路径保存在被忽略的
+`.codex/session/`。
+
+## 目录
+
+- [连接、发现与脚本方式](#连接发现与脚本方式)
+- [已知问题](#已知问题)
+- [按需读取](#按需读取)
+- [验证记录](#验证记录)
 
 ## 连接、发现与脚本方式
 
 | 合同 | 本构建的实际行为与客户端支持 |
 |---|---|
 | 5.9 search mode | `list_toolsets`、`describe_toolsets`、`describe_tools`、`call_tool`；分别解析 `toolsets` / `tools` 字典及 `errors` |
-| 5.8 search mode | 保留 singular `describe_toolset` 路由 |
 | Native mode | 保留 qualified `tools/list` 及分页 |
 | 实例身份 | initialize 的 `com.epicgames.unrealengine/instance` 含 PID、版本/CL、engineDir 和绝对 projectFile；连接保护另核对当前监听进程 |
-| 协议 | 客户端默认 `2025-11-25`，本次可正常初始化和调用；协议支持不能代替工具 schema |
+| 协议 | 客户端默认 `2025-11-25`，可正常初始化和调用；协议支持不能代替工具 schema |
 | 官方 Python | `PythonScriptingTools` 提供 `read_me`、`execute_python`、`search_symbols`、`get_symbol`；支持 top-level await 与 `await call_tool(...)` |
 
 Plural discovery、单工具缓存与错误检查已进入共享客户端。搜索结果的说明性
@@ -24,17 +31,63 @@ bullet 不计为 toolset；schema 缺失或含 discovery error 时不 dispatch�
 工具错误、写入超时不会自动重放。明确 slow-task **Not run / This call made no
 changes** 与未知完成状态的超时分别处理。
 
-官方 Python 已验证中文返回、async composition、符号查询、编译后函数调用，
-以及阻塞 `time.sleep` 被拒绝。先读 `read_me` 并查符号；输入是 CodeBlock。
-旧 `run-script` 保留 5.8 ProgrammaticToolset 环境，不可只换工具名。
-域工具的窄缺口先查 5.9 官方 Python，再考虑 Remote。
+官方 Python 已验证中文返回、async composition、符号查询、编译后函数调用，以及阻
+塞 `time.sleep` 被拒绝。先读 `read_me` 并查符号；输入是 CodeBlock。`run-script`
+是 UE 5.8 的执行入口，本包会拒绝它。域工具的窄缺口先查官方 Python，再考虑 Remote
+Execution。
 
 公开 CLI 的 `python-readme`、`execute-python`、native `batch --dry-run` 与实际
 批次均已执行。批次完成中文变量提示写入/回读、编译和指定保存，最终资产 clean。
 dirty 查询先确认存在；查询错误不再当作“不存在/已保存”。写前失败会拒绝批次，
 写后失败保留步骤结果并报告 unknown，不重放写入。
 
-## 已验证的控制增强
+## 已知问题
+
+- **后台 Sequencer spawnable 仍失败。** 显式 sequence 的 AddSpawnableFromClass
+  返回零 GUID、sequence=null；GetBindings 为空。未标 isError 也不代表成功。改用
+  possessable 或带 tag 的空绑定。
+- **CSV profiler 文本读取数值错误。** 真实 10 帧 / 254 stats 录制，原文件
+  FrameTime 首值 23.2072，而 ReadStatValues 为十个零；原 EVENTS 全空但
+  ListEvents 返回 timing 数字，已复读确认。元数据可读、ReduceStat 与同一解析器
+  一致都不证明数值正确。分析前须用正常 CSV reader 对照；未改引擎，未测 csv.bin。
+- **StateTree 模板不能盲目 getter→setter。** 默认完整 JSON 含隐藏内部 enum，
+  原样回放被拒绝；setter 会替换结构体，不能删字段覆盖生产配置。
+- **Rewind 仅 session 查询通过。** inactive / duration=0，无真实录制，故事件、
+  属性、对象及 trace 读取未测。
+- **Knowledge bases 为空。** 注册 schema 不代表已有知识库；未执行条目查询/写入。
+- **独立进程采集需检查真实退出码。** 一次额外 CSV + 延迟 HighResShot 测试在
+  游戏日志正常收尾后返回 777003；本安装源码将其定义为 crash-reporting thread
+  自身异常。普通 1/12 秒退出、根启动器与 Agent 采集均返回 0，未复现该码；
+  尚不能据此断定 CSV 是原因。保留失败记录，未改引擎或关闭 crash handler 掩盖。
+
+## 按需读取
+
+- [完整小游戏制作](game-production.md)
+- [角色 AI、行为树与动画](gameplay-ai-animation.md)
+- [Canvas、生成动画、渲染与 Web 功能矩阵](ue-5.9-production-feature-matrix.md)
+- [Blueprint / 官方 Python](ue-5.9-blueprint-python.md)
+- [StateTree / PCG](ue-5.9-statetree-pcg.md)
+- [UMG / SceneCapture / profiling / files](ue-5.9-editor-tools.md)
+- [全部领域的升级与待补流程](ue-5.9-tool-coverage.md)
+- [材质](../../unreal-material-artist/references/ue-5.9-material-mcp.md)
+- [Niagara](../../niagara-vfx-artist/references/ue-5.9-niagara-mcp.md)
+- [Sequencer](../../unreal-sequencer/references/ue-5.9-sequencer.md)
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404，独立测试工程；对照安装为 5.8.4 / CL
+58902052。2026-11-11 首轮实时发现 98 个 toolset、1,803 个注册工具；2026-11-16
+Canvas 插件补验后为 100 个 toolset。未做 UE 5.8 编辑器回归。
+
+**已确认问题与未测部分**
+
+- 第二轮补了 Geometry transient box、CurveAtlas、枚举/结构体和 Dataflow 候选写
+  入，以及 MetaSound/Media/NavMesh/UI/Rig 等代表读取，见下节。Input 应用、
+  MetaSound 作者、TextureGraph 作者、MRQ 渲染、打包目标、真实 runtime 与 UE 5.8
+  live 回归在前两轮结束时仍未验收；第三阶段的具体 gameplay 结果见上节，不扩展为
+  其他域或版本的通过结论。
+
+### 已验证的控制增强
 
 以下表格是第一轮审计的历史结果：当时写入限于测试候选目录，未启动 PIE。
 后续小游戏阶段的运行结果单列在下一节，不能用来填补表内其他域的未测部分。
@@ -58,7 +111,7 @@ dirty 查询先确认存在；查询错误不再当作“不存在/已保存”�
 临时 PCG Actor 在 finally 精确移除；两次测试前后 actor 集合、选择及 dirty 包集合
 一致。固定测试资产按指定包保存，没有 Save All 或清除用户 dirty 标记。
 
-## 第三阶段：完整平台小游戏的运行验证
+### 第三阶段：完整平台小游戏的运行验证
 
 在独立新地图制作了原创 2.5D 平台 Demo，正式玩法由 Blueprint、
 CharacterMovement、Enhanced Input、BT/BB、AnimBlueprint、UMG 与 Sequencer
@@ -104,7 +157,7 @@ PIE。首次冷启动曾在 PSO 创建收尾耗时超过 45 秒的测试 deadlin
 该截图不含 UMG，且采集会临时冻结世界；短时、限帧样本不代表整关帧预算。路线及
 状态副作用见 [完整游戏制作](game-production.md)。
 
-## 2026-11-16：菜单、存档、事件和插件补验
+### 2026-11-16：菜单、存档、事件和插件补验
 
 后续在同一引擎构建补齐普通 UMG 菜单、共享 Manual MVVM、FieldNotify 通知、
 版本化存档、设置草稿和真实 Sequencer Trigger。HUD/菜单使用同一玩家持有的 VM；
@@ -134,31 +187,7 @@ UE 5.8 live 回归仍未验证。详细工作流见
 [UI](ue-5.9-ui-workflows.md)、[存档/设置](ue-5.9-game-systems.md) 和
 [独立包验收](game-production.md#后台独立包的输入存档与退出证据)。
 
-## 已确认问题与未测部分
-
-- **后台 Sequencer spawnable 仍失败。** 显式 sequence 的 AddSpawnableFromClass
-  返回零 GUID、sequence=null；GetBindings 为空。未标 isError 也不代表成功。
-  未扩大旧 5.8 fallback 的构建白名单。
-- **CSV profiler 文本读取数值错误。** 真实 10 帧 / 254 stats 录制，原文件
-  FrameTime 首值 23.2072，而 ReadStatValues 为十个零；原 EVENTS 全空但
-  ListEvents 返回 timing 数字，已复读确认。元数据可读、ReduceStat 与同一解析器
-  一致都不证明数值正确。分析前须用正常 CSV reader 对照；未改引擎，未测 csv.bin。
-- **StateTree 模板不能盲目 getter→setter。** 默认完整 JSON 含隐藏内部 enum，
-  原样回放被拒绝；setter 会替换结构体，不能删字段覆盖生产配置。
-- **Rewind 仅 session 查询通过。** inactive / duration=0，无真实录制，故事件、
-  属性、对象及 trace 读取未测。
-- **Knowledge bases 为空。** 注册 schema 不代表已有知识库；未执行条目查询/写入。
-- **独立进程采集需检查真实退出码。** 一次额外 CSV + 延迟 HighResShot 测试在
-  游戏日志正常收尾后返回 777003；本安装源码将其定义为 crash-reporting thread
-  自身异常。普通 1/12 秒退出、根启动器与 Agent 采集均返回 0，未复现该码；
-  尚不能据此断定 CSV 是原因。保留失败记录，未改引擎或关闭 crash handler 掩盖。
-- 第二轮补了 Geometry transient box、CurveAtlas、枚举/结构体和 Dataflow 候选
-  写入，以及 MetaSound/Media/NavMesh/UI/Rig 等代表读取，见下节。Input 应用、
-  MetaSound 作者、TextureGraph 作者、MRQ 渲染、打包目标、真实 runtime 与
-  UE 5.8 live 回归在前两轮结束时仍未验收；第三阶段的具体 gameplay 结果见上节，
-  不扩展为其他域或版本的通过结论。
-
-## 第二轮扩展与“尚未接入”的定义
+### 第二轮扩展与“尚未接入”的定义
 
 重新发现总量保持 98 / 1,803。通用 client 已动态支持这些注册 schema 的调用；
 没有逐项 wrapper 不等于不能调用。当前主要缺口是专项工作流、目标资源和验证
@@ -185,32 +214,7 @@ UE 5.8 live 回归仍未验证。详细工作流见
 原始失败断言与明确上下文错误保留在证据中，修正后继续未执行步骤，没有重放
 已成功的写入。
 
-## 技能与版本使用
-
-本分支重写 core 入口，并更新 material、Niagara、Sequencer、flipbook 的传输与
-版本路由。共享 client、Blueprint inspector/lint、capture 已适配所述 5.9 路径。
-**这不代表所有旧高层 builder/render/graph helper 已移植**；先查其版本覆盖，
-未移植部分走实时原生 schema 和官方 Python。
-
-5.8 与 5.9 现分别位于 `skills/ue5.8/`、`skills/ue5.9/`；五个 sibling 包须取自同一
-版本目录，避免 import 跨版本。8000 留给原设置，测试优先 8001；使用绝对
-`.uproject` guard、独立 UE_MCP_CACHE_DIR，初次发现可用 --no-cache --new-session。
-本次没有切换全局 junction 或发布远端。
-
-按需读取：
-
-- [完整小游戏制作](game-production.md)
-- [角色 AI、行为树与动画](gameplay-ai-animation.md)
-- [Canvas、生成动画、渲染与 Web 功能矩阵](ue-5.9-production-feature-matrix.md)
-- [Blueprint / 官方 Python](ue-5.9-blueprint-python.md)
-- [StateTree / PCG](ue-5.9-statetree-pcg.md)
-- [UMG / SceneCapture / profiling / files](ue-5.9-editor-tools.md)
-- [全部领域的升级与待补流程](ue-5.9-tool-coverage.md)
-- [材质](../../unreal-material-artist/references/ue-5.9-material-mcp.md)
-- [Niagara](../../niagara-vfx-artist/references/ue-5.9-niagara-mcp.md)
-- [Sequencer](../../unreal-sequencer/references/ue-5.9-sequencer.md)
-
-## 安装源码对比的限度
+### 安装源码对比的限度
 
 此前静态扫描仅计命名插件中的 AICallable / decorated tool 声明，排除测试：
 StateTree 9→49、Niagara 56→57、PCG 两个工具类合计 31→33；Experimental/Toolsets 子目录
@@ -220,5 +224,7 @@ StateTree 9→49、Niagara 56→57、PCG 两个工具类合计 31→33；Experim
 其零声明结果不能用于认定工具缺失。live PCG 主类 32 + spatial 1，原生 subsystem
 另有 42 项且与主类重叠，不能将它们当作彼此独立的新增功能。
 
-官方背景：[5.9 Preview release notes](https://dev.epicgames.com/documentation/unreal-engine/unreal-engine-5-9-release-notes?lang=en-US)
-与 [Preview announcement](https://forums.unrealengine.com/t/unreal-engine-5-9-megajam-preview/2852840)。
+官方背景：
+[5.9 Preview release notes](https://dev.epicgames.com/documentation/unreal-engine/unreal-engine-5-9-release-notes?lang=en-US)
+与
+[Preview announcement](https://forums.unrealengine.com/t/unreal-engine-5-9-megajam-preview/2852840)。

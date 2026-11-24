@@ -2,7 +2,8 @@
 
 ## 用途
 
-读取这份 reference 当任务需要统一材质参数名、Niagara/MI 绑定名、艺术家可读控制，或需要 PC/Android/低端平台的配方简化规则。
+读取这份 reference 当任务需要统一材质参数名、Niagara/MI 绑定名、艺术家可读控制，
+或需要 PC/Android/低端平台的配方简化规则。
 
 ## 目录
 
@@ -194,7 +195,8 @@
 
 ## Niagara 联动时的建议
 
-如果某些参数会被 Niagara Dynamic Parameter、User Parameter 或 Material Parameter Collection 驱动，命名可以进一步统一：
+如果某些参数会被 Niagara Dynamic Parameter、User Parameter 或 Material Parameter
+Collection 驱动，命名可以进一步统一：
 
 - `S_UserIntensity`
 - `S_UserOpacity`

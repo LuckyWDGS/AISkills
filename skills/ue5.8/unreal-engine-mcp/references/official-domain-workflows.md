@@ -7,6 +7,16 @@
 检索词：UMG、MVVM、FieldNotify、GeneratedClass、GAS、ASC、GameplayCue、
 DataRegistry、instanced、PhysicsAsset、PCG、中文节点、Dataflow、Automation。
 
+## 目录
+
+- [接入插件与后台操作](#接入插件与后台操作)
+- [UMG 与 MVVM：结构、类与运行实例](#umg-与-mvvm结构类与运行实例)
+- [Gameplay Tags 与 GAS：字典、定义与实际 ASC](#gameplay-tags-与-gas字典定义与实际-asc)
+- [DataTable 与 DataRegistry：创建、注册、缓存](#datatable-与-dataregistry创建注册缓存)
+- [PhysicsAsset：隔离共享模型改动](#physicsasset隔离共享模型改动)
+- [PCG 与 Dataflow：图编辑、执行与输出分开](#pcg-与-dataflow图编辑执行与输出分开)
+- [Automation：只运行经过审阅的目标案例](#automation只运行经过审阅的目标案例)
+
 ## 接入插件与后台操作
 
 - 先查 live inventory，再核对安装目录内 `.uplugin`、模块类型与依赖。
@@ -50,17 +60,18 @@ DataRegistry、instanced、PhysicsAsset、PCG、中文节点、Dataflow、Automa
 - ObjectTools 对 Blueprint 的属性操作通常解析到 CDO；UserWidget 默认实例属性
   不是 Widget Blueprint 的描述字段。运行时 Widget、WidgetTree 模板和 CDO
   也是不同对象，分别记录其完整路径。
-- ListWidgetViewModels / ListWidgetViewBindings 可能 RequestView 并创建扩展。
-  仅审计任意用户 Widget 时遵循[查询副作用规则](official-capability-map.md#mvvm-查询的副作用)。
+- ListWidgetViewModels / ListWidgetViewBindings 可能 RequestView 并创建扩展。仅
+  审计任意用户 Widget 时遵循
+  [查询副作用规则](official-capability-map.md#mvvm-查询的副作用)。
 - 实测 BlueprintTools 没有注释框创建接口。只对注释这一缺口用公共
-  BlueprintGraphEditor.add_comment_to_nodes，经后台 Epic Remote Execution；
-  回读中文文字/成员，并比较原有 K2 节点、位置、引脚、值和连接，随后回到 MCP 保存。
-  `node_details` 是 Unreal Text，写 JSON 报告时转为 `str`。
-  重载后 native 成员缓存可能为空；`blueprint_lint.py` 会只读导出框的可序列化坐标，
-  结合 UE 节点尺寸验证完整包含，并核对 MCP 快照的节点集合和位置。
-  这是模型几何验证，不是 Slate 像素测量，也不会填充原生缓存。
-  读取失败、捕获状态变化或入口仅部分相交，仍报告“成员未验证”；
-  明确在框外则报告缺少覆盖。细节见[注释读取](blueprint-programming-mcp.md#chinese-module-annotations)。
+  BlueprintGraphEditor.add_comment_to_nodes，经后台 Epic Remote Execution；回读
+  中文文字/成员，并比较原有 K2 节点、位置、引脚、值和连接，随后回到 MCP 保存。
+  `node_details` 是 Unreal Text，写 JSON 报告时转为 `str`。重载后 native 成员缓
+  存可能为空；`blueprint_lint.py` 会只读导出框的可序列化坐标，结合 UE 节点尺寸验
+  证完整包含，并核对 MCP 快照的节点集合和位置。这是模型几何验证，不是 Slate 像素
+  测量，也不会填充原生缓存。读取失败、捕获状态变化或入口仅部分相交，仍报告“成员
+  未验证”；明确在框外则报告缺少覆盖。细节见
+  [注释读取](blueprint-programming-mcp.md#chinese-module-annotations)。
 
 结构回读和编译不证明实时绑定更新、点击、焦点或布局通过。
 按 [UI.MVVM.Binding](runtime-acceptance.md#uimvvmbinding--实例数据与界面更新)验收。
@@ -81,7 +92,9 @@ DataRegistry、instanced、PhysicsAsset、PCG、中文节点、Dataflow、Automa
   遇到未配置 GameplayCueNotifyPaths 而扫描整个 `/Game` 的提示，记录原因。
   只有项目实际使用 GAS/Cue 且在任务范围内，才配置正确目录；不为消除测试警告改全局配置。
 - GA/GE 公开属性和蓝图逻辑仍用现有 Blueprint/Object 工具；检查工具不等于完整
-  GA/GE 编辑器。按 [GAS.ASC.Lifecycle](runtime-acceptance.md#gasasclifecycle--能力效果与属性)验收实际玩法。
+  GA/GE 编辑器。按
+  [GAS.ASC.Lifecycle](runtime-acceptance.md#gasasclifecycle--能力效果与属性)验收
+  实际玩法。
 
 ### GameplayCue 扫描目录与旧会话缓存
 
@@ -155,8 +168,10 @@ UE 5.8.4 实测的官方 JSON 是类的 **refPath**，例如：
   预缓存/获取与实际 ID；不能推断条目被删除。ListRuntimeSources 可能展开 MetaSource，
   不一定与编辑器 dataSources 一一对应。
 
-按 [DATA.Registry.Cache](runtime-acceptance.md#dataregistrycache--来源与缓存条目)记录来源、
-值和清理；独立表使用 GameplayTagTableRow 也不需要把它加入全局标签导入源。
+按
+[DATA.Registry.Cache](runtime-acceptance.md#dataregistrycache--来源与缓存条目)记
+录来源、值和清理；独立表使用 GameplayTagTableRow 也不需要把它加入全局标签导入
+源。
 
 ## PhysicsAsset：隔离共享模型改动
 
@@ -164,8 +179,10 @@ UE 5.8.4 实测的官方 JSON 是类的 **refPath**，例如：
   创建前查重；需要独立样例就先复制网格/资产，不让验证改写共享资源。
 - 设置 bAssignToMesh=false 可避免把新 PhysicsAsset 分配到原网格；操作前后仍核对
   原网格的绑定和 dirty 状态。新 Body/Shape 取唯一名称，并回读骨骼、尺寸和质量缩放。
-- 约束、碰撞模式和 Body 资产参数正常，不证明 Chaos 运行稳定，也不是物理投掷的验收。
-  正式改动按 [PHYS.Body.Runtime](runtime-acceptance.md#physbodyruntime--刚体与约束)检查实际 SkeletalMeshComponent。
+- 约束、碰撞模式和 Body 资产参数正常，不证明 Chaos 运行稳定，也不是物理投掷的验
+  收。正式改动按
+  [PHYS.Body.Runtime](runtime-acceptance.md#physbodyruntime--刚体与约束)检查实际
+  SkeletalMeshComponent。
 
 ## PCG 与 Dataflow：图编辑、执行与输出分开
 

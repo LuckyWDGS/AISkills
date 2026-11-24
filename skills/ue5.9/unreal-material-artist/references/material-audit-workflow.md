@@ -1,8 +1,15 @@
 # Material Audit Workflow
 
+> **UE 5.9 status.** The editor-connected steps described here use helpers that
+> are `unported`: they call UE 5.8 tool names and are refused on a UE 5.9
+> editor. Planning and report modes still run locally. Do the editor steps with
+> the native tools in [ue-5.9-material-mcp.md](ue-5.9-material-mcp.md).
+
 ## Goal
 
-Read the live material, understand what actually affects the output, verify the visual result, then identify cost and cleanup risks without weakening the approved look.
+Read the live material, understand what actually affects the output, verify the
+visual result, then identify cost and cleanup risks without weakening the
+approved look.
 
 ## Table Of Contents
 
@@ -13,36 +20,48 @@ Read the live material, understand what actually affects the output, verify the 
 
 ## Audit Order
 
-1. Resolve the asset.
-   Confirm the path loads and whether it is a `Material`, `MaterialInstance`, or `MaterialFunction`.
+1. Resolve the asset. Confirm the path loads and whether it is a `Material`,
+   `MaterialInstance`, or `MaterialFunction`.
 
-2. Read material metadata.
-   Capture domain, blend mode, shading model, `TwoSided`, usage flags, parent material, parameter lists, static switches, instruction count, sampler count, compile errors, and shader stat readiness.
+2. Read material metadata. Capture domain, blend mode, shading model,
+   `TwoSided`, usage flags, parent material, parameter lists, static switches,
+   instruction count, sampler count, compile errors, and shader stat readiness.
 
-3. Trace outputs backward.
-   Start from `BaseColor`, `EmissiveColor`, `Opacity`, `OpacityMask`, `Normal`, `WorldPositionOffset`, `PixelDepthOffset`, `Refraction`, or `MaterialAttributes`. Classify nodes as:
+3. Trace outputs backward. Start from `BaseColor`, `EmissiveColor`, `Opacity`,
+   `OpacityMask`, `Normal`, `WorldPositionOffset`, `PixelDepthOffset`,
+   `Refraction`, or `MaterialAttributes`. Classify nodes as:
    - live output chain
    - disconnected experiment branch
    - comment or organization-only
    - stale or unused parameter
 
-4. Inspect Material Instance overrides.
-   Compare MI overrides with parent parameters. Flag overrides whose parent parameter no longer exists, static switches that create expensive permutations, and inherited values that hide the real tuning layer.
+4. Inspect Material Instance overrides. Compare MI overrides with parent
+   parameters. Flag overrides whose parent parameter no longer exists, static
+   switches that create expensive permutations, and inherited values that hide
+   the real tuning layer.
 
-5. Review texture inputs.
-   Check sampler type, sRGB, compression, size, mips, channel packing, sampler source, duplicate samples, and whether the texture is a placeholder.
+5. Review texture inputs. Check sampler type, sRGB, compression, size, mips,
+   channel packing, sampler source, duplicate samples, and whether the texture
+   is a placeholder.
 
-6. Review HLSL and Custom nodes.
-   Prefer graph nodes for simple operations. For Custom nodes, check input names, output type, code body, includes, unsupported intrinsics, manual texture sampling, loops, branches, derivatives, and whether a feature/quality fallback is needed.
+6. Review HLSL and Custom nodes. Prefer graph nodes for simple operations. For
+   Custom nodes, check input names, output type, code body, includes,
+   unsupported intrinsics, manual texture sampling, loops, branches,
+   derivatives, and whether a feature/quality fallback is needed.
 
-7. Review visual context.
-   Ask what carrier uses this material: mesh, sprite, ribbon, decal, UI, post-process, landscape, or fullscreen plane. Cost changes dramatically with screen coverage and overdraw.
+7. Review visual context. Ask what carrier uses this material: mesh, sprite,
+   ribbon, decal, UI, post-process, landscape, or fullscreen plane. Cost changes
+   dramatically with screen coverage and overdraw.
 
-8. Verify.
-   Use compile results, material preview, controlled capture, or in-level capture. Do not accept a material based only on editor UI graph screenshots.
+8. Verify. Use compile results, material preview, controlled capture, or
+   in-level capture. Do not accept a material based only on editor UI graph
+   screenshots.
 
-9. Optimize from the verified look.
-   Once the effect reads correctly, classify cost issues into no-look-change fixes, acceptable prototype risks, and visual tradeoffs. Apply no-look-change fixes first. Do not replace the target look with a cheaper approximation unless the user or lead accepts that visible change.
+9. Optimize from the verified look. Once the effect reads correctly, classify
+   cost issues into no-look-change fixes, acceptable prototype risks, and visual
+   tradeoffs. Apply no-look-change fixes first. Do not replace the target look
+   with a cheaper approximation unless the user or lead accepts that visible
+   change.
 
 ## CLI
 
@@ -91,7 +110,8 @@ Treat these as high priority:
 - Compile errors.
 - Missing or wrong material domain.
 - Wrong blend mode for the carrier.
-- Missing renderer usage flag when the material must work with Niagara sprites/ribbons/mesh particles.
+- Missing renderer usage flag when the material must work with Niagara
+  sprites/ribbons/mesh particles.
 - Stale MI override that makes tuning confusing.
 - Dead branches connected to no output.
 - Manual texture sampling inside Custom HLSL without a concrete reason.
@@ -110,9 +130,14 @@ Treat these as tuning risks:
 
 Treat these as visual-regression risks:
 
-- Replacing a reference-specific mask, foam pattern, leaf cutout, rune shape, water ripple language, or painterly texture with generic noise because it is cheaper.
-- Lowering texture size until the important silhouette, brushwork, thin lines, edge breakup, or alpha shape no longer matches the target.
-- Removing a layer, motion path, refraction, translucency, subsurface, clear coat, WPO, or special shading model before proving an equivalent lower-cost route.
+- Replacing a reference-specific mask, foam pattern, leaf cutout, rune shape,
+  water ripple language, or painterly texture with generic noise because it is
+  cheaper.
+- Lowering texture size until the important silhouette, brushwork, thin lines,
+  edge breakup, or alpha shape no longer matches the target.
+- Removing a layer, motion path, refraction, translucency, subsurface, clear
+  coat, WPO, or special shading model before proving an equivalent lower-cost
+  route.
 - Passing shader budget while the preview no longer matches the material contract.
 
 ## Acceptance Criteria
@@ -127,4 +152,6 @@ A production material should have:
 - Known texture requirements and import settings.
 - Platform-appropriate instruction and sampler cost.
 - Preview or runtime capture checked in the intended visual context.
-- Visual target confirmed before final performance optimization, with any visible simplification labeled as a tradeoff variant rather than the default result.
+- Visual target confirmed before final performance optimization, with any
+  visible simplification labeled as a tradeoff variant rather than the default
+  result.

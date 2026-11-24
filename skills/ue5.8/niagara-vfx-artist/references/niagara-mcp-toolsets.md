@@ -7,8 +7,7 @@ Checked: 2026-10-28, installed UE 5.8.4 / CL 58902052.
 Use Epic's ModelContextProtocol server directly and inspect live Niagara
 toolsets. Official source is under
 `Engine/Plugins/Experimental/Toolsets/NiagaraToolsets/Source/NiagaraToolsets/Private/`.
-The earlier recommendation to keep UnrealBridge as the control spine and port
-Epic functions into custom C++ wrappers is superseded.
+
 
 Use the sibling `unreal-engine-mcp/scripts/builtin_mcp.py` for discovery and calls.
 Read ProgrammaticToolset's execution environment before batching registered
@@ -54,41 +53,44 @@ On first load of a previously unopened Epic template, GetSystemCompileState and
 GetStackIssues waited on pending compilation; a longer client request received
 the engine's own 120-second compile-wait timeout. Opening that asset through
 `EditorAppToolset.OpenEditorForAsset` let compilation finish. Both diagnostics
-then succeeded: UpToDate, no errors/warnings; the package remained clean. That is
-historical evidence of a UI side effect, not a permitted background recovery.
-For this symptom, inspect compilation/logs and a supported background load/compile
-route with a bounded deadline. Do not call OpenEditorForAsset unless the user
-requested that UI operation. If readiness cannot be established in the background,
-report the blocked diagnostic and preserve the package. A timeout is not proof that the HTTP parser failed.
-Do not blindly retry a state-changing operation after a timeout.
+then succeeded: UpToDate, no errors/warnings; the package remained clean. That
+is historical evidence of a UI side effect, not a permitted background recovery.
+For this symptom, inspect compilation/logs and a supported background
+load/compile route with a bounded deadline. Do not call OpenEditorForAsset
+unless the user requested that UI operation. If readiness cannot be established
+in the background, report the blocked diagnostic and preserve the package. A
+timeout is not proof that the HTTP parser failed. Do not blindly retry a
+state-changing operation after a timeout.
 
 Prefer official structural readback, compile state, and stack issues before
 visual tuning. Local reports still own composite roles, renderer/material
-contracts, accepted anchors, image QA, comparisons, and delivery. They can
-consume official evidence without making UnrealBridge mandatory.
+contracts, accepted anchors, image QA, comparisons, and delivery. They consume
+the official evidence.
 
-UnrealBridge (custom plugin + TCP) is retired and no tool constructs a plugin
-client any more. Ported to Epic MCP: `niagara_audit`, `niagara_material_integration_probe`,
-`live_asset_verify` and `ue_smoke` (texture/material reads plus `niagara_audit`
-renderer materials), `effect_control_schema` and `control_provenance_check`
-(user variables from `niagara_audit`), `asset_cleanup` and
-`delivery_finalize --promote-assets` (AssetTools / SceneTools batches). Previews use
-`unreal-engine-mcp/scripts/capture.py`. `niagara_asset_assistant apply` executes its plans. The
-plugin-only `controlled_preview`, `flipbook_ue_pipeline`, `niagara_param_sweep`,
-`runtime_control_probe` and `ue_write_helpers` were removed.
+Editor-connected tools on Epic MCP: `niagara_audit`,
+`niagara_material_integration_probe`, `live_asset_verify` and `ue_smoke`
+(texture/material reads plus `niagara_audit` renderer materials),
+`effect_control_schema` and `control_provenance_check` (user variables from
+`niagara_audit`), `asset_cleanup` and `delivery_finalize --promote-assets`
+(AssetTools / SceneTools batches). Previews use
+`unreal-engine-mcp/scripts/capture.py`. `niagara_asset_assistant apply` executes
+its plans. The plugin-only `controlled_preview`, `flipbook_ue_pipeline`,
+`niagara_param_sweep`, `runtime_control_probe` and `ue_write_helpers` were
+removed.
 
 `niagara_audit.py` is ported: one ProgrammaticToolset script reads the system
 summary/data/dependencies and each emitter's data, topology and renderer data,
 then maps them onto structured fields (`niagara_audit/3`: `system.fixed_bounds`,
-`effect_type`, warmup; per emitter `enabled`, `sim_target`, `stacks`, `event_stacks`,
-`simulation_stages` and `renderers` with class, index, materials and renderer data) that
-`delivery_package`, the integration probe and `repair-plan` read. Version 2 still
-synthesized UnrealBridge export-text `properties`; nothing reads those any more. Mesh renderers without override materials report the mesh's
+`effect_type`, warmup; per emitter `enabled`, `sim_target`, `stacks`,
+`event_stacks`, `simulation_stages` and `renderers` with class, index, materials
+and renderer data) that `delivery_package`, the integration probe and
+`repair-plan` read. Mesh renderers without override materials report the mesh's
 material slots (`material_source: mesh-slots`). Data-interface values such as a
-ParticleRead `EmitterBinding` are `StackInputData_Unsupported`, so attribute-reader
-roles come from module names and `data_interface_bindings` stays empty; the
-report lists this under `coverage_gaps`. `niagara_material_integration_probe`
-reads renderer bindings from the audit's renderer data instead of the plugin.
+ParticleRead `EmitterBinding` are `StackInputData_Unsupported`, so
+attribute-reader roles come from module names and `data_interface_bindings`
+stays empty; the report lists this under `coverage_gaps`.
+`niagara_material_integration_probe` reads renderer bindings from the audit's
+renderer data instead of the plugin.
 
 `niagara_asset_assistant apply` is the plan executor: it resolves emitter and renderer
 `StackItemReference`s from the topology tools at run time, writes with
@@ -114,5 +116,5 @@ introduce experimental MCP.
 [5.8.4 Hotfix Released](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775)
 lists an audio sampling DI shutdown assertion fix under Niagara, and no
 announced additional MCP tools. Source coverage and live counts must not be
-described as additions made specifically by 5.8.4 without an older-build
-schema comparison.
+described as additions made specifically by 5.8.4 without an older-build schema
+comparison.

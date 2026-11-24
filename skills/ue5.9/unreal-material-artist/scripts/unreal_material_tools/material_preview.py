@@ -6,7 +6,7 @@ carrier already placed in the level (EditorAppToolset). With a ``material_audit
 contract (``assets/material-preview-presets.json``). The report feeds the acceptance
 gate, regression baselines, readability score and delivery packager.
 
-The UnrealBridge-era ``render`` / ``sweep`` harnesses (temporary Niagara systems,
+The pre-MCP ``render`` / ``sweep`` harnesses (temporary Niagara systems,
 decal walls, post-process volumes, shader-complexity views) were retired; place the
 carrier with official SceneTools and capture it instead.
 """

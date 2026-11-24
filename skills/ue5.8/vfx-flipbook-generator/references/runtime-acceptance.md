@@ -2,7 +2,8 @@
 
 Local atlas QA is static evidence. These procedures verify the actual UE
 material/Niagara playback when that integration is requested; they are not
-recorded UE test results. Use the [shared result record](../../unreal-engine-mcp/references/shared-conventions.md#runtime-result-record)
+recorded UE test results. Use the
+[shared result record](../../unreal-engine-mcp/references/shared-conventions.md#runtime-result-record)
 and background official MCP first. Keep temporary diagnostic atlases/materials
 in the authorized candidate scope, then remove only those test assets.
 

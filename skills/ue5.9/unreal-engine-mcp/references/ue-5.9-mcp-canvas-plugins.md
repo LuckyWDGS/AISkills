@@ -1,17 +1,29 @@
 # UE 5.9 的 MCP 与 Canvas 插件分工
 
-源码与 live 核对：2026-11-16，**UE 5.9.0 Preview / CL 60351404**。下文“本次实测”
-单列实际发现、读取和标注写入结果；其他参数、注册入口和副作用说明仍是安装源码
-候选，调用前须匹配目标实例 schema。原生 Blueprint 元数据实测另见
-[ue-5.9-blueprint-python.md](ue-5.9-blueprint-python.md)；Canvas 的产品层分工、模型与
-服务要求见 [ue-5.9-production-feature-matrix.md](ue-5.9-production-feature-matrix.md)。
-2026-11-11 的 enabled=false 记录不能代表本次实例；本次也没有 UE 5.8 live 回归。
+区分 UE 5.9 中与 MCP、Canvas 相关的几个插件：各自的方向、注册入口、连接副作用和
+验证方法。参数、注册入口和副作用说明来自安装源码，调用前须与目标实例的 schema 核
+对。原生 Blueprint 元数据见
+[ue-5.9-blueprint-python.md](ue-5.9-blueprint-python.md)；Canvas 的产品层分工见
+[ue-5.9-production-feature-matrix.md](ue-5.9-production-feature-matrix.md)。实测
+结果见文末[验证记录](#验证记录)。
 
 同日后续已完成外部 Codex 图像生成、离屏 MRG 三通道静帧与原始深度检查，发现并
 规避了 actor 相机切换的时序问题。Canvas sidecar 后续目录为 132 项；原生生成模型
 仍无可执行 binding。按用户选择未配置/批准模型，详见
 [生成与实际渲染验收](ue-5.9-canvas-generation-render.md)。下文初始插件检查的
 “前端未 attach / 零项”保留为历史观察，不能代表后续可用状态。
+
+## 目录
+
+- [先区分五个名字](#先区分五个名字)
+- [方向与注册入口](#方向与注册入口)
+- [Metadata 在 5.9 的替代范围](#metadata-在-59-的替代范围)
+- [MCP Client Toolset 的连接副作用](#mcp-client-toolset-的连接副作用)
+- [Annotations 的本地能力与回滚](#annotations-的本地能力与回滚)
+- [Bridge 不只是工具开关](#bridge-不只是工具开关)
+- [原生 server 的最小验证](#原生-server-的最小验证)
+- [源码定位](#源码定位)
+- [验证记录](#验证记录)
 
 ## 先区分五个名字
 
@@ -51,12 +63,12 @@ identity 和工具目录也不等于 UE server。需要分别读取，不能互�
 Tool Search 模式用发现/派发 meta-tools 代替大量 registry 工具的顶层注册；插件直接
 注册的工具仍应从完整 `tools/list` 核对，不要因未出现在 toolset catalog 就判定缺失。
 
-同一编辑器实例中的 LateStartup、插件加载或外部连接也会增加工具。客户端可能保留
-启动 slow task 期间取得的目录，即使 PID 没变也会漏掉后注册的工具。先等启动完成，
-再用 `--refresh-schema` 或 `--no-cache --new-session` 重新取得完整 `list-tools` 和
-`list-toolsets`；持有 client 对象的脚本可用 `reinitialize()` 清除会话内目录/schema。
-`--no-cache` 单独只关闭磁盘 schema cache，不会禁止恢复已有 session 的目录。
-本次刷新后直接工具正常出现，无需修改编辑器的 Tool Search 设置。
+同一编辑器实例中的 LateStartup、插件加载或外部连接也会增加工具。客户端可能保留启
+动 slow task 期间取得的目录，即使 PID 没变也会漏掉后注册的工具。先等启动完成，再
+用 `--refresh-schema` 或 `--no-cache --new-session` 重新取得完整 `list-tools` 和
+`list-toolsets`；持有 client 对象的脚本可用 `reinitialize()` 清除会话内目录
+/schema。 `--no-cache` 单独只关闭磁盘 schema cache，不会禁止恢复已有 session 的
+目录。
 
 对完整目录中已发现的直接名称，5.9 的 `describe_tools` 也接受 bare name；
 `call_tool` 的参数只给 `tool_name` 与 `arguments`，省略 `toolset_name`。
@@ -73,32 +85,9 @@ Tool Search 模式用发现/派发 meta-tools 代替大量 registry 工具的顶
 ```
 
 使用已核实 identity 的共享 client 时，上述两步分别是
-`client.call_tool("describe_tools", 参数)` 与 `client.call_tool("call_tool", 参数)`。
-这是低层调用；按描述结果的 inputSchema 检查参数，并显式检查描述结果的 `errors`
-及两次工具结果的 `isError`，再解释返回值。不要把 bare name 拼成虚构 owner，或
-认为低层方法自带 `call_resolved_tool` 的参数检查；本次 fixture 验证了这条派发路线。
-
-## 本次实测：发现、读取和标注生命周期
-
-以下均为 2026-11-16 同一目标实例的记录。绝对工程路径、PID、端口、原始 schema、
-调用结果和启动日志保存在忽略的 session 目录；本表不替代下一次的 fresh identity。
-
-| 层次 | 实际结果 | 未覆盖的范围 |
-|---|---|---|
-| 插件状态 | 表中五个技术名的 `IsEnabled` 均为 true；PIE=false | enabled 不等于每项工具都执行过；兼容 Metadata 插件没有新增写测试 |
-| 完整发现 | 刷新 client 后 `tools/list` 为 70 项：66 个直接工具和 4 个 meta-tools；`list_toolsets` 为 100 个 owner，较旧配置多两个 Annotations owner | 这是本实例的注册规模，不是能力数或测试通过数；未重新统计全部 registry 工具总数 |
-| Bridge 直接读取 | `GetStatus`、`GetMRGPasses`、`GetMRGVariables`、`GetAssetsByType`、`GetActorsByType`、`ResolveRenderResolution` 均返回成功；分辨率回读 320×180 | 状态、预计 pass/capture、资产和 actor 列表不证明渲染或生成已完成 |
-| Annotations 读取/写入 | `List3DAnnotations` 初始为空；scratch 模式创建一个标注，回读位置/prompt/group，更新 prompt 和 group 后再次读回，gather 返回该 ID，按 ID 删除后列表恢复为空 | fixture 在视锥外，gather 的 visible=false 符合位置；未验 GBuffer/蒙版图像、持久化保存重载或渲染 |
-| 清理检查 | actor 集合、selection、dirty 包集合和编辑相机前后一致；visible groups、active group、labels、overlay、persist、capture stage 六项回读与测试前一致 | capture stage 未改变；这些状态检查不等于全部 setter 的行为覆盖 |
-| Canvas sidecar / MCP Client | bundled v0.21.0 本地安装并启动 ready，MCP Client 握手成功；前端未 attach 时远端 `tools/list` 返回零项，未出现动态 `UnrealCanvasBridge` owner | 未验证前端 attach 后的远端工具、图工作流、外部模型、导入或最终生成内容 |
-
-实测两个 registry owner 为
-`UnrealCanvasAnnotationsEditor.UnrealCanvasSpatialAnnotationToolset` 与
-`UnrealCanvasAnnotationsEditor.UnrealCanvasSpatialAnnotationEditorSubsystem`。
-这解释了为什么只找名为 `UnrealCanvasBridge` 的 toolset 会漏掉已可调用的 UE 侧工具。
-七项直接读取中六项属于 Bridge、一项是 Annotations；上述插件专项检查没有编译、
-PIE、渲染或生成验收。后续渲染证据另见本页开头链接；局部读写不能描述为完整
-Canvas 图工作流通过。
+`client.call_tool("describe_tools", 参数)` 与
+`client.call_tool("call_tool", 参数)`。这是低层调用；按描述结果的 inputSchema 检
+查参数，并显式检查描述结果的 `errors` 及两次工具结果的 `isError`，再解释返回值。
 
 ## Metadata 在 5.9 的替代范围
 
@@ -114,9 +103,8 @@ Set/Get。Setter 使用事务、Modify/MarkBlueprintAsModified 等编辑器操�
 - `Get/SetFunctionFlags(Graph, Flags)`：函数提示、类别和其他 detail-panel flags；只改
   明确设置的字段，写后重新编译。新建函数还可检查 `AddFunctionGraph` 的 flags。
 
-既有 5.9 记录已验证成员/函数中文描述往返；**本次局部变量覆盖来自源码，未新增 live
-验证**。目标 schema 暴露这些能力时优先原生 API。不要为普通 5.9 元数据任务自动重装、
-移除或禁用兼容插件；全局 skill junction 只由用户用 `tools/install.ps1 -UEVersion` 切换。
+目标 schema 暴露这些能力时使用原生 API。本技能包不附带该项目扩展；项目里已安装的
+扩展保持原状，不自动重装、移除或禁用。
 
 ## MCP Client Toolset 的连接副作用
 
@@ -137,14 +125,16 @@ Read；否则 destructiveHint（缺省 true）→ Execute；否则 Write。名�
 ## Annotations 的本地能力与回滚
 
 该插件不依赖 Bridge，也不要求 Canvas server 或生成账号。它包含三个 Editor 模块：
-`UnrealCanvasAnnotationsCapture`、`UnrealCanvasAnnotations`、`UnrealCanvasAnnotationsEditor`；
-插件依赖为 ModelContextProtocol 和 ToolsetRegistry。编辑器模块同时安装 viewport 绘制、
-周期 gather 和保存钩子；工具可用还需要实际 Level Editor/world。
+`UnrealCanvasAnnotationsCapture`、`UnrealCanvasAnnotations`、
+`UnrealCanvasAnnotationsEditor`；插件依赖为 ModelContextProtocol 和
+ToolsetRegistry。编辑器模块同时安装 viewport 绘制、周期 gather 和保存钩子；工具
+可用还需要实际 Level Editor/world。
 
 优先只读候选是 `ListAnnotations` / `GetAnnotations`、`FindAnnotation`、
 `GatherVisibleAnnotations`、`GetVisibleGroups`、`GetActiveGroup`、
-`ShouldPersistNewAnnotations`、`AreLabelsVisible`、`IsOverlayVisible`、`GetCaptureStage`。
-`GatherVisibleAnnotations` 中 visible=false 可表示视锥外或颜色组隐藏，不等于记录被删除。
+`ShouldPersistNewAnnotations`、`AreLabelsVisible`、`IsOverlayVisible`、
+`GetCaptureStage`。 `GatherVisibleAnnotations` 中 visible=false 可表示视锥外或颜
+色组隐藏，不等于记录被删除。
 
 写入边界：
 
@@ -164,13 +154,12 @@ Read；否则 destructiveHint（缺省 true）→ Execute；否则 Write。名�
   恢复可见组后再恢复 active group。overlay、labels、persist 开关也分别恢复。
 
 独立 fixture：在隔离测试关卡读取标注列表和状态 → 会话 scratch 模式并回读开关 →
-明确位置创建一个唯一提示的标注 → 读回 ID、prompt、group、位置和 gather → 修改
-该标注并读回 → 按该 ID 删除 → 恢复所有捕获的状态，确认原列表、选择和 dirty 状态
-未被无意改变。本次 `ListAnnotations` 的 JSON 没有 `persisted` 字段；不要从字段缺省
-推断持久化。以 `ShouldPersistNewAnnotations` 核对新建模式，逐对象持久化及保存重载
-另用目标 schema 实测。直接工具的 `prompt/group/location` 和 subsystem setter 的
-`bPersist` 属于不同合同，不能因功能相近就互换参数形状。
-这验证标注生命周期；不证明 GBuffer 图像、外部编辑或 AI 生成结果正确。渲染验证另列。
+明确位置创建一个唯一提示的标注 → 读回 ID、prompt、group、位置和 gather → 修改该
+标注并读回 → 按该 ID 删除 → 恢复所有捕获的状态，确认原列表、选择和 dirty 状态未
+被无意改变。以 `ShouldPersistNewAnnotations` 核对新建模式，逐对象持久化及保存重
+载另用目标 schema 实测。直接工具的 `prompt/group/location` 和 subsystem setter
+的 `bPersist` 属于不同合同，不能因功能相近就互换参数形状。这验证标注生命周期；不
+证明 GBuffer 图像、外部编辑或 AI 生成结果正确。渲染验证另列。
 
 ## Bridge 不只是工具开关
 
@@ -253,8 +242,6 @@ StartServer 可启动监听；仅启用插件不证明 server 已启动。服务
 1. fresh identity、精确引擎/项目/端口；5.9 使用独立缓存或 `--no-cache --new-session`。
 2. 启动完成或插件/外部连接变化后刷新 client；`list-tools` 和 `list-toolsets` 都保留
    完整结果。从 live schema 描述候选 owner/工具，直接名称不强加 toolset owner。
-3. `PluginToolset.PluginToolset` 的 `GetPluginInfo`、`IsEnabled`、依赖查询为源码候选；
-   本次 live 参数 `pluginName` 使用表中的技术名；其他构建先核对其 schema。
 4. 对出现的候选只做有限读取；独立记录 schema/read/write/compile/runtime/render 结果。
    Metadata 的写入另测 disposable Blueprint 的编译、保存和重新读取；Canvas 不能
    因 read 成功就记为完整工作流通过。
@@ -285,3 +272,61 @@ Plugins/Developer/UnrealCanvas/UnrealCanvasAnnotations/Source/UnrealCanvasAnnota
 Plugins/Developer/UnrealCanvas/UnrealCanvasAnnotations/Source/UnrealCanvasAnnotationsEditor/Private/UnrealCanvasSpatialAnnotationOps.cpp
 <Project>/Plugins/MCPBlueprintMetadata/Source/MCPBlueprintMetadata/Public/MCPBlueprintMetadataLibrary.h
 ```
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+- 源码与 live 核对：2026-11-16，**UE 5.9.0 Preview / CL 60351404**。下文“本次实
+  测” 单列实际发现、读取和标注写入结果；其他参数、注册入口和副作用说明仍是安装源
+  码候选，调用前须匹配目标实例 schema。原生 Blueprint 元数据实测另见
+  [ue-5.9-blueprint-python.md](ue-5.9-blueprint-python.md)；Canvas 的产品层分
+  工、模型与服务要求见
+  [ue-5.9-production-feature-matrix.md](ue-5.9-production-feature-matrix.md)。
+  2026-11-11 的 enabled=false 记录不能代表本次实例；本次也没有 UE 5.8 live 回
+  归。
+
+**方向与注册入口**
+
+- 本次刷新后直接工具正常出现，无需修改编辑器的 Tool Search 设置。
+- 不要把 bare name 拼成虚构 owner，或认为低层方法自带 `call_resolved_tool` 的参
+  数检查；本次 fixture 验证了这条派发路线。
+
+**Metadata 在 5.9 的替代范围**
+
+- 既有 5.9 记录已验证成员/函数中文描述往返；**本次局部变量覆盖来自源码，未新增
+  live 验证**。
+
+**Annotations 的本地能力与回滚**
+
+- 本次 `ListAnnotations` 的 JSON 没有 `persisted` 字段；不要从字段缺省推断持久
+  化。
+
+**原生 server 的最小验证**
+
+- `PluginToolset.PluginToolset` 的 `GetPluginInfo`、`IsEnabled`、依赖查询为源码
+  候选；本次 live 参数 `pluginName` 使用表中的技术名；其他构建先核对其 schema。
+
+### 本次实测：发现、读取和标注生命周期
+
+以下均为 2026-11-16 同一目标实例的记录。绝对工程路径、PID、端口、原始 schema、
+调用结果和启动日志保存在忽略的 session 目录；本表不替代下一次的 fresh identity。
+
+| 层次 | 实际结果 | 未覆盖的范围 |
+|---|---|---|
+| 插件状态 | 表中五个技术名的 `IsEnabled` 均为 true；PIE=false | enabled 不等于每项工具都执行过；兼容 Metadata 插件没有新增写测试 |
+| 完整发现 | 刷新 client 后 `tools/list` 为 70 项：66 个直接工具和 4 个 meta-tools；`list_toolsets` 为 100 个 owner，较旧配置多两个 Annotations owner | 这是本实例的注册规模，不是能力数或测试通过数；未重新统计全部 registry 工具总数 |
+| Bridge 直接读取 | `GetStatus`、`GetMRGPasses`、`GetMRGVariables`、`GetAssetsByType`、`GetActorsByType`、`ResolveRenderResolution` 均返回成功；分辨率回读 320×180 | 状态、预计 pass/capture、资产和 actor 列表不证明渲染或生成已完成 |
+| Annotations 读取/写入 | `List3DAnnotations` 初始为空；scratch 模式创建一个标注，回读位置/prompt/group，更新 prompt 和 group 后再次读回，gather 返回该 ID，按 ID 删除后列表恢复为空 | fixture 在视锥外，gather 的 visible=false 符合位置；未验 GBuffer/蒙版图像、持久化保存重载或渲染 |
+| 清理检查 | actor 集合、selection、dirty 包集合和编辑相机前后一致；visible groups、active group、labels、overlay、persist、capture stage 六项回读与测试前一致 | capture stage 未改变；这些状态检查不等于全部 setter 的行为覆盖 |
+| Canvas sidecar / MCP Client | bundled v0.21.0 本地安装并启动 ready，MCP Client 握手成功；前端未 attach 时远端 `tools/list` 返回零项，未出现动态 `UnrealCanvasBridge` owner | 未验证前端 attach 后的远端工具、图工作流、外部模型、导入或最终生成内容 |
+
+实测两个 registry owner 为
+`UnrealCanvasAnnotationsEditor.UnrealCanvasSpatialAnnotationToolset` 与
+`UnrealCanvasAnnotationsEditor.UnrealCanvasSpatialAnnotationEditorSubsystem`。
+这解释了为什么只找名为 `UnrealCanvasBridge` 的 toolset 会漏掉已可调用的 UE 侧工具。
+七项直接读取中六项属于 Bridge、一项是 Annotations；上述插件专项检查没有编译、
+PIE、渲染或生成验收。后续渲染证据另见本页开头链接；局部读写不能描述为完整
+Canvas 图工作流通过。
+
+

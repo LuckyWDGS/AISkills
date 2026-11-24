@@ -1,37 +1,46 @@
 ---
 name: unreal-engine-mcp
-description: Drive a running Unreal Engine 5.8+ editor through Epic's built-in MCP server (127.0.0.1:8000/mcp) and, for verified MCP gaps, Epic's Python Remote Execution. Use to inspect, implement and debug Blueprints, Animation Blueprints, state machines, PCG graphs and scatter tools, actors, assets and levels, and their C++ dependencies; for graph connections, source navigation, runtime/crash diagnosis and editor automation. Also the shared transport for the material, Niagara and flipbook UE skills.
+description: Drive a running Unreal Engine 5.8 editor through Epic's built-in MCP server to build, inspect and debug games. Use when the task involves Blueprints, Animation Blueprints and state machines, Behavior Trees, PCG graphs and scatter tools, UMG/MVVM UI, actors, assets or levels; when reading graph logic and pin connections, navigating engine or project source, or diagnosing compile, runtime and crash failures; and as the shared transport for the material, Niagara, Sequencer and flipbook skills.
 ---
 
-# Unreal Engine MCP
+# Unreal Engine MCP (UE 5.8)
 
-Use Epic's built-in MCP server (UE 5.8+) as the editor interface. The scripts need Python 3.10+. For an
-operation MCP does not cover, use public `unreal.*` APIs through Epic's
-[Python Remote Execution](references/official-python-remote.md). There is no
-custom plugin or TCP bridge: UnrealBridge is retired and must not be installed,
-started or suggested.
+> **Scope.** This skill targets UE 5.8 only (verified on UE 5.8.4). Read the
+> live schema before each first call. For a UE 5.9 editor the user links
+> `skills/ue5.9/` instead; the client refuses an editor of another engine line.
+
+Use Epic's built-in MCP server as the editor interface. The scripts need Python
+3.10+. For an operation MCP does not cover, use public `unreal.*` APIs through
+Epic's [Python Remote Execution](references/official-python-remote.md). A gap is
+reported with the operation, the toolsets checked and the engine version; a
+custom plugin or TCP bridge is never installed or suggested.
 
 Follow the [shared UE conventions](references/shared-conventions.md): background
 editor connections only (no window focus/move/resize, console keystrokes or UI
 automation unless the user asks for that UI operation, and never as a fallback),
 and Chinese annotations on modules you author or change.
 
-For implementation or repair, read [developer workflow](references/developer-workflow.md).
-For code lookup, errors or crashes, read [debugging and source navigation](references/debugging-and-source-navigation.md).
+For implementation or repair, read
+[developer workflow](references/developer-workflow.md). For code lookup, errors
+or crashes, read
+[debugging and source navigation](references/debugging-and-source-navigation.md).
 For capability discovery, plugin selection, Enhanced Input, UI/data/GAS/testing
-tasks, read the [official capability map](references/official-capability-map.md).
-For PCG graph authoring, scatter tools, Blueprint wrappers and evaluated outputs,
-read [PCG through official MCP](references/pcg-mcp.md). `scripts/pcg_inspect.py`
-reads real pins/edges and graph parameters without executing or generating content.
-For UMG/MVVM, GAS, DataRegistry, PhysicsAsset or Dataflow implementation,
-read the relevant section of [official domain workflows](references/official-domain-workflows.md).
-For programmer tasks, start with [Blueprint programming](references/blueprint-programming-mcp.md),
+tasks, read the
+[official capability map](references/official-capability-map.md). For PCG graph
+authoring, scatter tools, Blueprint wrappers and evaluated outputs, read
+[PCG through official MCP](references/pcg-mcp.md). `scripts/pcg_inspect.py`
+reads real pins/edges and graph parameters without executing or generating
+content. For UMG/MVVM, GAS, DataRegistry, PhysicsAsset or Dataflow
+implementation, read the relevant section of
+[official domain workflows](references/official-domain-workflows.md). For
+programmer tasks, start with
+[Blueprint programming](references/blueprint-programming-mcp.md),
 [logic and connection inspection](references/blueprint-graph-inspection.md), or
 [animation and state machines](references/animation-state-machines-mcp.md).
-`scripts/inspect_blueprint.py` captures existing nodes/pins and verifies both ends
-of each wire without authoring, compiling or saving the asset;
-`scripts/blueprint_lint.py` builds on it to check layout, debug leftovers, logging
-and Chinese annotations read-only. `scripts/blueprint_normalize.py` and
+`scripts/inspect_blueprint.py` captures existing nodes/pins and verifies both
+ends of each wire without authoring, compiling or saving the asset;
+`scripts/blueprint_lint.py` builds on it to check layout, debug leftovers,
+logging and Chinese annotations read-only. `scripts/blueprint_normalize.py` and
 `scripts/blueprint_layout.py` clean up and lay out authored graphs.
 
 ## Transport routing
@@ -91,20 +100,22 @@ python scripts/record_fixtures.py --project <ProjectName> --check   # after an e
 Toolset names may be given as the unique class suffix (`SceneTools`); the client
 resolves it against the live inventory. Use `--args-file` for non-trivial JSON
 on PowerShell. The CLI keeps its MCP session between runs, so a repeated `call`
-avoids repeated MCP handshakes; each run still verifies the current serving process.
-`--new-session` opts out. Mistyped toolset, tool or
-argument names are rejected locally with a did-you-mean suggestion; UE itself
-silently ignores unknown argument names. In Git Bash set
-`MSYS_NO_PATHCONV=1`, or `/Game/...` arguments are rewritten to filesystem paths. Parallel calls are
-serialized by the server, so batch with `run-script` instead. On Windows, write
-large or CJK output with the global `--out <file>` (UTF-8) instead of piping it, or set `PYTHONUTF8=1`
-for any Python that reads the pipe; a GBK console reader garbles UTF-8 text.
+avoids repeated MCP handshakes; each run still verifies the current serving
+process. `--new-session` opts out. Mistyped toolset, tool or argument names are
+rejected locally with a did-you-mean suggestion; UE itself silently ignores
+unknown argument names. In Git Bash set `MSYS_NO_PATHCONV=1`, or `/Game/...`
+arguments are rewritten to filesystem paths. Parallel calls are serialized by
+the server, so batch with `run-script` instead. On Windows, write large or CJK
+output with the global `--out <file>` (UTF-8) instead of piping it, or set
+`PYTHONUTF8=1` for any Python that reads the pipe; a GBK console reader garbles
+UTF-8 text.
 
 Choose the multi-step route by what failure must look like:
 
 - **Many reads** → `run-script`. One editor round trip, but one failing call
   fails the whole script; read the
-  [ProgrammaticToolset rules](references/builtin-mcp.md#programmatictoolset-batching) first.
+  [ProgrammaticToolset rules](references/builtin-mcp.md#programmatictoolset-batching)
+  first.
 - **Writes or ordered steps** → `batch <file.jsonl>`. One request per step in a
   shared session, each with its own result; validates every tool and required
   argument first, stops at the first failure, and can read back each step with
@@ -113,33 +124,55 @@ Choose the multi-step route by what failure must look like:
   (`AssetTools.save_assets` with the intended packages only) on its own line.
   See [batch](references/builtin-mcp.md#batch-ordered-steps-and-writes).
 
-Startup: enable `ModelContextProtocol` plus the needed domain toolset plugins and
-set `bAutoStartServer=true`, or launch with `-ModelContextProtocolStartServer
--ModelContextProtocolPort=8000` for an authorized launch. `ensure` only checks
-the endpoint and explains these routes; it never starts or relaunches an editor.
-Only one editor can own port 8000. `status` reports the listening process's
-`.uproject`, engine version and current level; on a multi-editor host pass
-`--expect-project <name-or-absolute.uproject>` (or set `UE_MCP_PROJECT`) so every command refuses an
-endpoint served by another project, and pass `--project` to `python_remote.py`.
-Use the full project path to distinguish same-named checkouts. A resumed token
-never substitutes for a fresh identity check; `--refresh-schema` refreshes both
-the inventory and tool schemas after plugin changes.
+Startup: enable `ModelContextProtocol` plus the needed domain toolset plugins
+and set `bAutoStartServer=true`, or launch with
+`-ModelContextProtocolStartServer -ModelContextProtocolPort=8000` for an
+authorized launch. `ensure` only checks the endpoint and explains these routes;
+it never starts or relaunches an editor. Only one editor can own port 8000.
+`status` reports the listening process's `.uproject`, engine version and current
+level; on a multi-editor host pass
+`--expect-project <name-or-absolute.uproject>` (or set `UE_MCP_PROJECT`) so
+every command refuses an endpoint served by another project, and pass
+`--project` to `python_remote.py`. Use the full project path to distinguish
+same-named checkouts. A resumed token never substitutes for a fresh identity
+check; `--refresh-schema` refreshes both the inventory and tool schemas after
+plugin changes.
 
 Common asset work that live UE 5.8 MCP covers:
 
-- Texture import: `TextureTools.import_file`, then `ObjectTools.set_properties` and `AssetTools.save_assets`.
-- Material graph authoring: `MaterialTools.create_material/add_expression/connect_*/recompile`; use `MaterialInstanceTools` for instance parameters.
-- Niagara: create from a system template, add Epic's `/Niagara/DefaultAssets/Templates/Emitters/LocationBasedRibbon.LocationBasedRibbon`, then use `GetRendererSchema`, `SetRendererData`, `SetStackInputData`, compile-state, and stack-issue tools. Find templates by the `RibbonRenderer=1` asset tag rather than name alone.
+- Texture import: `TextureTools.import_file`, then `ObjectTools.set_properties`
+  and `AssetTools.save_assets`.
+- Material graph authoring:
+  `MaterialTools.create_material/add_expression/connect_*/recompile`; use
+  `MaterialInstanceTools` for instance parameters.
+- Niagara: create from a system template, add Epic's
+  `/Niagara/DefaultAssets/Templates/Emitters/LocationBasedRibbon.LocationBasedRibbon`,
+  then use `GetRendererSchema`, `SetRendererData`, `SetStackInputData`,
+  compile-state, and stack-issue tools. Find templates by the `RibbonRenderer=1`
+  asset tag rather than name alone.
 
-Do not use the Project Settings **MCP Toolset Servers** entry as the agent-to-UE endpoint. That list makes UE act as an MCP client. The UE server uses `/mcp` with Streamable HTTP, not the root URL or legacy GET `/sse`.
+Do not use the Project Settings **MCP Toolset Servers** entry as the agent-to-UE
+endpoint. That list makes UE act as an MCP client. The UE server uses `/mcp`
+with Streamable HTTP, not the root URL or legacy GET `/sse`.
 
-Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection guidance, and [ue-5.8.4-audit.md](references/ue-5.8.4-audit.md) for the release/source audit. Runtime schema always wins over recorded tool counts.
+Read [builtin-mcp.md](references/builtin-mcp.md) for protocol and selection
+guidance, and [ue-5.8.4-audit.md](references/ue-5.8.4-audit.md) for the
+release/source audit. Runtime schema always wins over recorded tool counts.
 
 ## Shared material / Niagara routing
 
-The `unreal-material-artist`, `niagara-vfx-artist`, `vfx-flipbook-generator` and `unreal-sequencer` skills use this same routing (`unreal-sequencer` covers Level Sequences, cameras and cinematics through the Sequencer toolsets). Standard asset, material graph, MI, texture import/property, Niagara stack/renderer, compile/issue, scene, and capture operations go directly through Epic MCP. Image capture uses `scripts/capture.py` (`EditorAppToolset.CaptureViewport` / `CaptureAssetImage`, `mcp_capture/1` reports). Read `ProgrammaticToolset.get_execution_environment` before its first script.
+The `unreal-material-artist`, `niagara-vfx-artist`, `vfx-flipbook-generator` and
+`unreal-sequencer` skills use this same routing (`unreal-sequencer` covers Level
+Sequences, cameras and cinematics through the Sequencer toolsets). Standard
+asset, material graph, MI, texture import/property, Niagara stack/renderer,
+compile/issue, scene, and capture operations go directly through Epic MCP. Image
+capture uses `scripts/capture.py` (`EditorAppToolset.CaptureViewport` /
+`CaptureAssetImage`, `mcp_capture/1` reports). Read
+`ProgrammaticToolset.get_execution_environment` before its first script.
 
-Local image processing, reference locks, visual comparison, manifests, and report packaging stay local: they are workflow code. Their editor-connected tools all run on Epic MCP; none constructs a plugin client.
+Local image processing, reference locks, visual comparison, manifests, and
+report packaging stay local: they are workflow code. Their editor-connected
+tools all run on Epic MCP; none constructs a plugin client.
 
 ## Field-tested UE 5.8 MCP notes
 
@@ -201,7 +234,8 @@ Read [references/blueprint-programming-mcp.md](references/blueprint-programming-
 for official graph inspection, component/default edits, batching, compile/log
 verification, and the observed Chinese-editor DSL limitation.
 
-For a gameplay feature, follow [Blueprint delivery standards](references/blueprint-delivery-standards.md):
+For a gameplay feature, follow
+[Blueprint delivery standards](references/blueprint-delivery-standards.md):
 
 1. Write a feature brief (player-facing result, states, systems, tuning surface,
    edge cases, verification plan) and show it before wiring.
@@ -229,8 +263,8 @@ For a gameplay feature, follow [Blueprint delivery standards](references/bluepri
 For Animation Blueprints, animation state machines, BlendSpaces, Montages,
 StateTree and Behavior Trees, read
 [references/animation-state-machines-mcp.md](references/animation-state-machines-mcp.md).
-Treat these as normal programmer tasks. A Sequencer/Control Rig toolset does
-not imply complete gameplay animation graph or AI tree authoring coverage.
+Treat these as normal programmer tasks. A Sequencer/Control Rig toolset does not
+imply complete gameplay animation graph or AI tree authoring coverage.
 
 ## Blueprint review after authoring
 

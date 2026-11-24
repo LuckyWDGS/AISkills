@@ -20,19 +20,22 @@ Reports write under `<project>/.codex/session/material-delivery/`.
 ## Preview and readability
 
 - A preview that technically succeeds may still be empty or unreadable. Score it with
-  [preview-readability-score.md](preview-readability-score.md) /
+  [preview-tools.md](preview-tools.md#preview-readability-score) /
   `tools/preview_readability_score.py` (visibility, alpha coverage, center energy,
   background contrast, edge readability). Screenshot success alone is not proof for VFX.
-- When one preview is too narrow, plan a matrix across background, exposure, distance,
-  angle, time, parameter tier, quality, lighting and carrier with
-  [preview-matrix.md](preview-matrix.md) / `tools/preview_matrix.py`. `--execute` captures
-  the cells MCP can drive (carrier, parameter-tier instances as thumbnails, orbit angle and
-  distance around `--focus`); cells on other axes stay `pending_staging` until you stage them
-  and pass `--cell-report`.
-- To turn background, exposure or tier intent into concrete harness steps and variant
-  MIs: [preview-scene-harness-upgrade.md](preview-scene-harness-upgrade.md) /
+- When one preview is too narrow, plan a matrix across background, exposure,
+  distance, angle, time, parameter tier, quality, lighting and carrier with
+  [preview-tools.md](preview-tools.md#preview-matrix) / `tools/preview_matrix.py`.
+  `--execute` captures the cells MCP can drive (carrier, parameter-tier
+  instances as thumbnails, orbit angle and distance around `--focus`); cells on
+  other axes stay `pending_staging` until you stage them and pass
+  `--cell-report`.
+- To turn background, exposure or tier intent into concrete harness steps and
+  variant MIs:
+  [preview-tools.md](preview-tools.md#preview-scene-harness-upgrade) /
   `tools/preview_scene_harness_upgrade.py`, then
-  [preview-environment-executor.md](preview-environment-executor.md) (captures a staged environment; passes only with `--staged`).
+  [preview-tools.md](preview-tools.md#preview-environment-executor) (captures a
+  staged environment; passes only with `--staged`).
 - Translucent, additive, ribbon and decal routes: check DepthFade/SoftParticle evidence
   and optional sorting/bounds proof with
   [translucency-sorting-probe.md](translucency-sorting-probe.md) /
@@ -46,7 +49,8 @@ Reports write under `<project>/.codex/session/material-delivery/`.
   `tools/material_regression.py`; compare against it after optimization, texture swaps,
   tuning, refactors or rebuilds. Keep the same capture route and pose.
 - Many tiers, carriers or environments: manage baselines with
-  [regression-baseline-set.md](regression-baseline-set.md) / `tools/regression_baseline_set.py`.
+  [material-regression.md](material-regression.md#regression-baseline-set) /
+  `tools/regression_baseline_set.py`.
 - A failed comparison: diagnose route, output-chain, parameter, node, finding and budget
   changes with [graph-diff-refactor.md](graph-diff-refactor.md) /
   `tools/graph_diff_refactor.py` (before/after `material_audit.py` reports, optional
@@ -55,22 +59,26 @@ Reports write under `<project>/.codex/session/material-delivery/`.
 
 ## Variants and permutations
 
-- With a parameter contract in place, generate `default`, `low`, `high`, `extreme` and
-  `gameplay-safe` MI tiers plus `material_instance_batch.py` specs:
-  [material-variant-runner.md](material-variant-runner.md) / `tools/material_variant_runner.py`.
+- With a parameter contract in place, generate `default`, `low`, `high`,
+  `extreme` and `gameplay-safe` MI tiers plus `material_instance_batch.py`
+  specs:
+  [variant-and-cost-tools.md](variant-and-cost-tools.md#material-variant-runner)
+  / `tools/material_variant_runner.py`.
 - When static switches matter, cover switch space with
-  [static-switch-variant-expander.md](static-switch-variant-expander.md) /
-  `tools/static_switch_variant_expander.py`, then guard it with
-  [permutation-budget-guard.md](permutation-budget-guard.md) /
-  `tools/permutation_budget_guard.py` and `tools/shader_permutation_report.py` (realized
-  permutations per base material, from effective switch values). For master-material or
-  MI-family cleanup, also run Unreal's Material Analyzer when the editor is available.
+  [variant-and-cost-tools.md](variant-and-cost-tools.md#static-switch-variant-expander)
+  / `tools/static_switch_variant_expander.py`, then guard it with
+  [variant-and-cost-tools.md](variant-and-cost-tools.md#permutation-budget-guard)
+  / `tools/permutation_budget_guard.py` and `tools/shader_permutation_report.py`
+  (realized permutations per base material, from effective switch values). For
+  master-material or MI-family cleanup, also run Unreal's Material Analyzer when
+  the editor is available.
 
 ## Cost and platforms
 
-- Expensive but unclear why: build a heuristic cost map (texture samples, functions,
-  Custom HLSL, switches, expensive math, depth/scene reads) with
-  [shader-cost-attribution.md](shader-cost-attribution.md) / `tools/shader_cost_attribution.py`.
+- Expensive but unclear why: build a heuristic cost map (texture samples,
+  functions, Custom HLSL, switches, expensive math, depth/scene reads) with
+  [variant-and-cost-tools.md](variant-and-cost-tools.md#shader-cost-attribution) /
+  `tools/shader_cost_attribution.py`.
 - PC, Android or low-end guidance: convert audit, texture and route evidence into
   downgrade advice and fallback MI expectations with
   [platform-scalability-planner.md](platform-scalability-planner.md) /
@@ -83,10 +91,11 @@ Reports write under `<project>/.codex/session/material-delivery/`.
   regressions, unsafe refactors, parameter collisions, switch pressure and suspicious
   masters with [project-material-health.md](project-material-health.md) /
   `tools/project_material_health.py`.
-- Many Material Functions: reuse hotspots, large or switch-heavy functions, duplicate
-  names and missing ports with
-  [material-function-dependency-map.md](material-function-dependency-map.md) /
-  `tools/material_function_dependency_map.py` and `tools/material_function_linter.py`.
+- Many Material Functions: reuse hotspots, large or switch-heavy functions,
+  duplicate names and missing ports with
+  [project-material-health.md](project-material-health.md#material-function-dependency-map)
+  / `tools/material_function_dependency_map.py` and
+  `tools/material_function_linter.py`.
 
 ## Repeatable graph work
 
@@ -96,11 +105,13 @@ Reports write under `<project>/.codex/session/material-delivery/`.
   material through MCP. It only creates new materials, saves only when every step
   succeeded, leaves a failed build unsaved for inspection, and keeps missing referenced
   textures at their defaults with a warning.
-- Refactors: `refactor-plan` turns graph-diff findings into a guarded patch plan;
-  [graph-refactor-apply.md](graph-refactor-apply.md) / `tools/graph_refactor_apply.py`
-  duplicates the target to a backup and a candidate and, with `--execute`, applies the
-  whitelisted edits to the candidate only, reads each one back, saves on full success and
-  runs the audit/capture/regression validation. Keep the backup/candidate and that evidence.
+- Refactors: `refactor-plan` turns graph-diff findings into a guarded patch
+  plan; [graph-refactor-apply.md](graph-refactor-apply.md) /
+  `tools/graph_refactor_apply.py` duplicates the target to a backup and a
+  candidate and, with `--execute`, applies the whitelisted edits to the
+  candidate only, reads each one back, saves on full success and runs the
+  audit/capture/regression validation. Keep the backup/candidate and that
+  evidence.
 
 ## Reuse gates
 
@@ -111,17 +122,19 @@ Reports write under `<project>/.codex/session/material-delivery/`.
   `delivery_summary.approved_for_reuse=true` only when the material side is ready.
 - Stock-grade reuse adds parameter schema, provenance, preview matrix, readability and
   sorting as hard gates (`tools/material_acceptance_gate_v2.py`, same reference), then
-  [library-promotion-gate.md](library-promotion-gate.md) /
+  [material-asset-library.md](material-asset-library.md#library-promotion-gate) /
   `tools/library_promotion_gate.py` decides library promotion.
 
 ## End-to-end smoke
 
 To run the existing evidence as one chain, use
-[material-delivery-smoke.md](material-delivery-smoke.md) / `tools/material_delivery_smoke.py`.
-`--execute` runs the MCP steps: variant instances through `material_instance_batch`, then
-each tier's preview matrix captures its instance, so readability, regression and the gates
-run on that evidence. Cells needing manual staging keep the smoke at `risk`, not `pass`. Pair reruns with
-[smoke-resume-cache.md](smoke-resume-cache.md) / `tools/smoke_resume_cache.py`.
+[material-delivery-smoke.md](material-delivery-smoke.md) /
+`tools/material_delivery_smoke.py`. `--execute` runs the MCP steps: variant
+instances through `material_instance_batch`, then each tier's preview matrix
+captures its instance, so readability, regression and the gates run on that
+evidence. Cells needing manual staging keep the smoke at `risk`, not `pass`.
+Pair reruns with [material-delivery-smoke.md](material-delivery-smoke.md#resume-cache) /
+`tools/smoke_resume_cache.py`.
 
 ## Preview route and editor notes
 
@@ -135,10 +148,7 @@ run on that evidence. Cells needing manual staging keep the smoke at `risk`, not
 - Material previews are material-side evidence only. Real Niagara bindings, live
   parameter sources and runtime writebacks stay with `niagara-vfx-artist` and its
   `niagara_material_integration_probe.py`.
-- UE 5.8.4 source ships MaterialTools (22 tools), MaterialInstanceTools (13),
-  ObjectTools (6), TextureTools (2) and ProgrammaticToolset (2); the live inventory
-  decides availability. Graph readback and wiring use returned UObject references
-  (`get_expressions`, `get_expression_inputs`, `get_property_input`, pin-name tools); no
-  GUID wrapper is needed.
+- Graph readback and wiring use the returned UObject references; no GUID wrapper
+  is needed.
 - Approved library assets also emit a delivery report under
   `<project>/.codex/session/material-delivery/deliveries/`.

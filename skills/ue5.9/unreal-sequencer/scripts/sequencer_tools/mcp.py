@@ -16,4 +16,9 @@ if str(_SCRIPTS) not in sys.path:
 
 from ue_mcp import unwrap_result  # noqa: E402,F401
 from ue_mcp.remote import marker_json, run_python, stdout_of  # noqa: E402,F401
+from functools import partial  # noqa: E402
+
 from ue_mcp.skill_api import connect  # noqa: E402,F401
+
+# sequencer_tools.editor still calls UE 5.8 tool names; the shared client refuses it on a UE 5.9 editor.
+connect_legacy = partial(connect, contract="5.8")

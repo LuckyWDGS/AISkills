@@ -114,6 +114,23 @@ def same_editor_process(saved: dict[str, Any] | None, current: dict[str, Any]) -
             and saved.get("engine_version") == current.get("engine_version"))
 
 
+# This copy lives in skills/ue5.9/ and speaks the UE 5.9 MCP contract only.
+BUNDLE_ENGINE = "5.9"
+
+
+def check_bundle_engine(owner: dict[str, Any]) -> None:
+    """Refuse an editor of another engine line. An engine that cannot be identified is not refused."""
+    version = str(owner.get("engine_version") or "")
+    if not version or ".".join(version.split(".")[:2]) == BUNDLE_ENGINE:
+        return
+    raise McpError(
+        f"This is the UE {BUNDLE_ENGINE} skill bundle (skills/ue{BUNDLE_ENGINE}), but the MCP endpoint is served by "
+        f"UE {version} ({owner.get('uproject') or owner.get('executable') or 'unknown project'}). Its tool names and "
+        f"arguments differ, so no request was sent. Link the bundle for that engine with "
+        f"tools/install.ps1 -UEVersion {'.'.join(version.split('.')[:2])}, or point --url at a UE {BUNDLE_ENGINE} editor."
+    )
+
+
 def check_expected_project(owner: dict[str, Any], expected: str) -> None:
     if not owner.get("known"):
         raise McpError(f"Cannot confirm the MCP endpoint serves {expected!r}: {owner.get('reason')}")

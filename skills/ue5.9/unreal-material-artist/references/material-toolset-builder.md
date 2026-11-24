@@ -1,5 +1,10 @@
 # Material Toolset Builder
 
+> **UE 5.9 status.** The editor-connected steps described here use helpers that
+> are `unported`: they call UE 5.8 tool names and are refused on a UE 5.9
+> editor. Planning and report modes still run locally. Do the editor steps with
+> the native tools in [ue-5.9-material-mcp.md](ue-5.9-material-mcp.md).
+
 ## UE 5.8.4 transport boundary
 
 `recipe` and `refactor-plan` are offline planners. `build <spec> --execute` and
@@ -16,19 +21,33 @@ warning. The builder refuses a target that already exists.
 
 ## Use This When
 
-- You need a higher-level material recipe package instead of hand-writing a low-level MaterialTools graph spec.
-- You want a starter route for fire flipbooks, additive fire ribbons, decal stains, two-sided foliage, basic water, energy ribbons, or dissolve-edge materials.
-- `graph_diff_refactor.py` has explained a failed regression and you need a narrow, guarded refactor plan before touching the graph.
+- You need a higher-level material recipe package instead of hand-writing a
+  low-level MaterialTools graph spec.
+- You want a starter route for fire flipbooks, additive fire ribbons, decal
+  stains, two-sided foliage, basic water, energy ribbons, or dissolve-edge
+  materials.
+- `graph_diff_refactor.py` has explained a failed regression and you need a
+  narrow, guarded refactor plan before touching the graph.
 
 ## Purpose
 
 `material_toolset_builder.py` has three layers:
 
-- `recipe`: offline-first high-level recipe builder. It emits a material route, parameter table, texture requirements, preview plan, audit plan, and executable builder spec.
-- `build`: low-level spec executor. Without `--execute` it checks the target; with it, it creates the material through Epic MCP and wires expressions/outputs. Legacy direct `spec.json` invocation still works.
-- `refactor-plan`: graph-diff-aware patch planner. It converts likely causes or explicit operations into one-at-a-time refactor steps, guardrails, and validation commands.
+- `recipe`: offline-first high-level recipe builder. It emits a material route,
+  parameter table, texture requirements, preview plan, audit plan, and
+  executable builder spec.
+- `build`: low-level spec executor. Without `--execute` it checks the target;
+  with it, it creates the material through Epic MCP and wires
+  expressions/outputs. Legacy direct `spec.json` invocation still works.
+- `refactor-plan`: graph-diff-aware patch planner. It converts likely causes or
+  explicit operations into one-at-a-time refactor steps, guardrails, and
+  validation commands.
 
-The default posture is safe: `recipe` and `refactor-plan` write evidence and specs without mutating UE assets. Use `recipe --execute` once the generated route/spec has been reviewed and the editor's MCP endpoint is up. Use `graph_refactor_apply.py` after `refactor-plan` when a guarded candidate apply is needed.
+The default posture is safe: `recipe` and `refactor-plan` write evidence and
+specs without mutating UE assets. Use `recipe --execute` once the generated
+route/spec has been reviewed and the editor's MCP endpoint is up. Use
+`graph_refactor_apply.py` after `refactor-plan` when a guarded candidate apply
+is needed.
 
 ## Table Of Contents
 
@@ -84,13 +103,16 @@ Default outputs:
 
 The recipe report includes:
 
-- `route`: Material Domain, Blend Mode, Shading Model, Two Sided, expected outputs, and usage flags.
+- `route`: Material Domain, Blend Mode, Shading Model, Two Sided, expected
+  outputs, and usage flags.
 - `parameters`: recommended scalar/vector controls with defaults and purposes.
-- `texture_requirements`: slots, channels, size expectations, sRGB, compression, and required/optional state.
+- `texture_requirements`: slots, channels, size expectations, sRGB, compression,
+  and required/optional state.
 - `builder_spec_path`: the low-level spec that `build` or `recipe --execute` can use.
 - `preview_plan`, `audit_plan`, `texture_plan`, and `delivery_plan`.
 
-Use `--inline-build-spec` only when you want the executable spec duplicated inside the recipe report.
+Use `--inline-build-spec` only when you want the executable spec duplicated
+inside the recipe report.
 
 ## Execute A Generated Spec
 
@@ -106,13 +128,45 @@ or:
 python tools/material_toolset_builder.py recipe energy_ribbon --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --execute --project <Project> --markdown
 ```
 
-When a builder spec includes `route`, the tool uses the route-aware local material create path so domain, blend, shading model, and two-sided intent are created with the material. For legacy specs without `route`, it preserves the older official `MaterialTools.create` path.
+When a builder spec includes `route`, the tool uses the route-aware local
+material create path so domain, blend, shading model, and two-sided intent are
+created with the material. For legacy specs without `route`, it preserves the
+older official `MaterialTools.create` path.
 
-Sprite/ribbon VFX recipes include explicit `ParticleColor` and `DynamicParameter` nodes so preview contract scans can verify the material is prepared for Niagara-driven tint/alpha/control. `DynamicParameter.Param1` and `Param2` are wired into emissive and opacity scale branches with default-zero boost parameters, so the default recipe look stays unchanged while downstream Niagara or MI tuning has live control sockets. Niagara SubUV sprite recipes keep `Two Sided` off because the renderer is normally camera-facing; enable it only for a documented non-camera-facing mesh/card route. VFX texture requirement names end with `_VFX`, such as `T_FireFlipbook_VFX` or `T_FireRibbonMask_VFX`. Usage flags are recorded with audit names such as `NiagaraSprites` and `NiagaraRibbons`. During `--execute`, the builder applies only whitelisted usage flags through `MaterialEditingLibrary.set_base_material_usage`; do not bypass that path with direct `bUsedWith*` property writes.
+Sprite/ribbon VFX recipes include explicit `ParticleColor` and
+`DynamicParameter` nodes so preview contract scans can verify the material is
+prepared for Niagara-driven tint/alpha/control. `DynamicParameter.Param1` and
+`Param2` are wired into emissive and opacity scale branches with default-zero
+boost parameters, so the default recipe look stays unchanged while downstream
+Niagara or MI tuning has live control sockets. Niagara SubUV sprite recipes keep
+`Two Sided` off because the renderer is normally camera-facing; enable it only
+for a documented non-camera-facing mesh/card route. VFX texture requirement
+names end with `_VFX`, such as `T_FireFlipbook_VFX` or `T_FireRibbonMask_VFX`.
+Usage flags are recorded with audit names such as `NiagaraSprites` and
+`NiagaraRibbons`. During `--execute`, the builder applies only whitelisted usage
+flags through `MaterialEditingLibrary.set_base_material_usage`; do not bypass
+that path with direct `bUsedWith*` property writes.
 
-`fire_ribbon_additive` now builds a first-pass packed-mask additive graph: raw `TexCoord0` U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`, Time-driven main/noise Panners, a B-channel distortion sample, a distorted main mask sample, centered raw-V width falloff with Clamp + Power, `ParticleColor`, `DynamicParameter.Param1/Param2`, color/intensity/core/opacity controls, `EmissiveColor`, and `Opacity`. `Texture_Mask` defaults to the same folder's `T_FireRibbonMask_VFX` asset reference in both generated sample nodes; edit that property if the imported mask lives elsewhere. This is still an offline builder-spec scaffold: run live UE pin-name smoke, carrier preview, texture import QA, and an Android one-sample fallback review when those platforms are in scope.
+`fire_ribbon_additive` now builds a first-pass packed-mask additive graph: raw
+`TexCoord0` U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`,
+Time-driven main/noise Panners, a B-channel distortion sample, a distorted main
+mask sample, centered raw-V width falloff with Clamp + Power, `ParticleColor`,
+`DynamicParameter.Param1/Param2`, color/intensity/core/opacity controls,
+`EmissiveColor`, and `Opacity`. `Texture_Mask` defaults to the same folder's
+`T_FireRibbonMask_VFX` asset reference in both generated sample nodes; edit that
+property if the imported mask lives elsewhere. This is still an offline
+builder-spec scaffold: run live UE pin-name smoke, carrier preview, texture
+import QA, and an Android one-sample fallback review when those platforms are in
+scope.
 
-`fire_ribbon_additive_android` is the automatic low-tier fallback recipe. It keeps raw U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`, one Time-driven main Panner path, centered raw-V Clamp + Power width falloff, `ParticleColor`, `DynamicParameter.Param1/Param2`, and `EmissiveColor` / `Opacity`, but intentionally uses only one `Texture_Mask` sample and omits the secondary B-channel distortion/noise sample. Its defaults lower `Intensity`, `Core_Boost`, `OpacityScale`, and `Tiling_Length`; treat it as a platform fallback, not a visual-equivalent replacement for the deep route.
+`fire_ribbon_additive_android` is the automatic low-tier fallback recipe. It
+keeps raw U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`, one
+Time-driven main Panner path, centered raw-V Clamp + Power width falloff,
+`ParticleColor`, `DynamicParameter.Param1/Param2`, and `EmissiveColor` /
+`Opacity`, but intentionally uses only one `Texture_Mask` sample and omits the
+secondary B-channel distortion/noise sample. Its defaults lower `Intensity`,
+`Core_Boost`, `OpacityScale`, and `Tiling_Length`; treat it as a platform
+fallback, not a visual-equivalent replacement for the deep route.
 
 ## Generate A Refactor Plan From Graph Diff
 
@@ -151,10 +205,14 @@ Supported explicit operations:
 ## Refactor Safety Rules
 
 - Treat `refactor-plan` output as plan-only. It intentionally does not mutate UE assets.
-- Apply one operation at a time through `graph_refactor_apply.py`, then inspect the candidate material, preview, and regression evidence.
-- Use GUID-level `material_audit.py --include-raw-graph` before reconnecting output chains.
-- For route drift, restore domain/blend/shading/two-sided before tuning color, alpha, or budget.
-- For runtime-facing parameters, run `runtime_param_trace.py` before renaming or deleting controls.
+- Apply one operation at a time through `graph_refactor_apply.py`, then inspect
+  the candidate material, preview, and regression evidence.
+- Use GUID-level `material_audit.py --include-raw-graph` before reconnecting
+  output chains.
+- For route drift, restore domain/blend/shading/two-sided before tuning color,
+  alpha, or budget.
+- For runtime-facing parameters, run `runtime_param_trace.py` before renaming or
+  deleting controls.
 
 ## Apply A Refactor Plan
 
@@ -164,7 +222,10 @@ Dry run first:
 python tools/graph_refactor_apply.py --refactor-plan D:/path/material-toolset-refactor-plan.json --markdown
 ```
 
-The plan's `mcp_route` lists the backup/candidate duplicates and the whitelisted MaterialTools edits to run as a `builtin_mcp.py batch`; its `validation_plan` holds the before/after audit, capture and regression commands. The original material is never touched.
+The plan's `mcp_route` lists the backup/candidate duplicates and the whitelisted
+MaterialTools edits to run as a `builtin_mcp.py batch`; its `validation_plan`
+holds the before/after audit, capture and regression commands. The original
+material is never touched.
 
 ## Validation Loop
 
@@ -177,4 +238,5 @@ python tools/material_preview.py capture /Game/Materials/M_Foo --markdown
 python tools/material_regression.py compare --effect Foo --layer Surface --preview-report D:/path/new-preview.json --strict --markdown
 ```
 
-Then package the result with `delivery_packager.py` and rerun `project_material_health.py` when project-level triage matters.
+Then package the result with `delivery_packager.py` and rerun
+`project_material_health.py` when project-level triage matters.

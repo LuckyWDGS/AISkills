@@ -1,8 +1,23 @@
 # 效果层生产闸门：从参考图到 UE 可落地资产
 
+## 目录
+
+- [用途](#用途)
+- [1. 不要直接从概念图跳到纹理](#1-不要直接从概念图跳到纹理)
+- [2. 高清锚点优先](#2-高清锚点优先)
+- [3. 每一层先判定 UE 承载方式](#3-每一层先判定-ue-承载方式)
+- [4. 单层效果图闸门](#4-单层效果图闸门)
+- [4.1 动态预览闸门](#41-动态预览闸门)
+- [5. 拖尾类纹理的正确目标](#5-拖尾类纹理的正确目标)
+- [6. 金兜雁设计图的当前层级判断](#6-金兜雁设计图的当前层级判断)
+- [7. 官方资料提炼](#7-官方资料提炼)
+- [8. 交付格式](#8-交付格式)
+- [官方资料锚点](#官方资料锚点)
+
 ## 用途
 
-这份文档用于防止从设计图直接跳到“纹理图”，尤其适用于用户给了复杂设计图、要求拆层、要求 UE/Niagara 可实现、并且后续要生成纹理/材质/参数的任务。
+这份文档用于防止从设计图直接跳到“纹理图”，尤其适用于用户给了复杂设计图、要求拆
+层、要求 UE/Niagara 可实现、并且后续要生成纹理/材质/参数的任务。
 
 核心原则：
 
@@ -42,7 +57,8 @@
 - 先缓存原图。
 - 对目标视角/区域做单独裁切。
 - 小裁切保存到 `hq-crops/`，最长边建议至少 `1536px`，只做轻锐化，不重绘细节。
-- 如果仍然糊，可以用 `cm-imagegen edit` 从完整设计图 + 高清裁切生成一张更大的“层级细化参考图”，但它只能作为辅助，不能替代原始设计图。
+- 如果仍然糊，可以用 `cm-imagegen edit` 从完整设计图 + 高清裁切生成一张更大的“层
+  级细化参考图”，但它只能作为辅助，不能替代原始设计图。
 
 不要把多个小图压成低清拼图作为主锚点。
 
@@ -138,7 +154,8 @@
 单层效果图要求：
 
 - 只表现这一层，不混入整只角色和场景。
-- 明确 UE 承载方式，例如 `Ribbon trail material preview`、`curved mesh afterimage preview`、`Niagara spark atlas preview`。
+- 明确 UE 承载方式，例如 `Ribbon trail material preview`、
+  `curved mesh afterimage preview`、`Niagara spark atlas preview`。
 - 看起来像 UE 里能搭出来的效果，不追求电影级不可落地细节。
 - 可以包含简化 mesh/ribbon 形体，用来确认轮廓、长度、密度、亮度、颜色、节奏。
 
@@ -154,7 +171,8 @@
 
 ## 4.1 动态预览闸门
 
-如果静态单层效果图已经成立，但用户仍然担心“动起来会不会变形、太死、太空、太乱”，可以再补一个短动态预览。
+如果静态单层效果图已经成立，但用户仍然担心“动起来会不会变形、太死、太空、太乱”，
+可以再补一个短动态预览。
 
 推荐做法：
 
@@ -263,13 +281,21 @@
 
 ## 7. 官方资料提炼
 
-Epic 的 Ribbon 教程把 Ribbon 用于连续的 ribbon-style particle effect，并通过 Spawn Rate 形成连续粒子流；这说明拖尾层应优先先设计 Ribbon 形体和运动，而不是先生成一张静态漂亮图。
+Epic 的 Ribbon 教程把 Ribbon 用于连续的 ribbon-style particle effect，并通过
+Spawn Rate 形成连续粒子流；这说明拖尾层应优先先设计 Ribbon 形体和运动，而不是先
+生成一张静态漂亮图。
 
-Epic 的 Ribbon Renderer 属性包含宽度、UV、材质参数、Ribbon ID、Link Order、Tessellation 等绑定项；这说明拖尾材质需要考虑沿长度方向的 UV、宽度曲线、排序和材质动态参数。
+Epic 的 Ribbon Renderer 属性包含宽度、UV、材质参数、Ribbon ID、Link Order、
+Tessellation 等绑定项；这说明拖尾材质需要考虑沿长度方向的 UV、宽度曲线、排序和材
+质动态参数。
 
-Epic 的 Timed Niagara Effect Anim Notify 可以在动画 Notify 开始激活 Niagara、结束时关闭，并支持 Socket/Bone 绑定；这说明挥翅、尾部拖尾、觉醒阶段应该接入动画事件，而不是只在场景里常驻播放。
+Epic 的 Timed Niagara Effect Anim Notify 可以在动画 Notify 开始激活 Niagara、结
+束时关闭，并支持 Socket/Bone 绑定；这说明挥翅、尾部拖尾、觉醒阶段应该接入动画事
+件，而不是只在场景里常驻播放。
 
-Epic 的 Mesh Renderer 说明 Mesh particles 可以实例化 Static Mesh，Override Material 需要 Niagara Mesh Particles 标记；这支持用弧形 mesh 做翼波残影，而不是用大量 sprite 硬堆。
+Epic 的 Mesh Renderer 说明 Mesh particles 可以实例化 Static Mesh，Override
+Material 需要 Niagara Mesh Particles 标记；这支持用弧形 mesh 做翼波残影，而不是
+用大量 sprite 硬堆。
 
 ---
 
@@ -299,7 +325,15 @@ Epic 的 Mesh Renderer 说明 Mesh particles 可以实例化 Static Mesh，Overr
 
 ## 官方资料锚点
 
-- Ribbon 相关：Epic 的 [How to Create a Ribbon Effect in Niagara for Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-create-a-ribbon-effect-in-niagara-for-unreal-engine?application_version=5.6) 明确把 Ribbon Renderer 用于连续的 ribbon-style particle effect。
-- 多渲染器与性能：Epic 的 [Scalability and Best Practices for Niagara](https://dev.epicgames.com/documentation/en-us/unreal-engine/scalability-and-best-practices-for-niagara?application_version=5.6) 提到单个 emitter 可以挂多个 renderer，mesh arrays 也可减少重复 emitter。
-- 动画挂接：Epic 的 [`unreal.AnimNotify_PlayNiagaraEffect`](https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/class/AnimNotify_PlayNiagaraEffect.html?application_version=5.2) 暴露了 `attached`、`socket_name`、`template` 等属性，适合骨骼/Socket 触发。
-- 烘焙路径：Epic 的 [Niagara Fluids in Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/niagara-fluids-in-unreal-engine?application_version=5.6) 明确建议在需要时把重的 fluid 结果烘成 flipbook 再用。
+- Ribbon 相关：Epic 的
+  [How to Create a Ribbon Effect in Niagara for Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-create-a-ribbon-effect-in-niagara-for-unreal-engine?application_version=5.6)
+  明确把 Ribbon Renderer 用于连续的 ribbon-style particle effect。
+- 多渲染器与性能：Epic 的
+  [Scalability and Best Practices for Niagara](https://dev.epicgames.com/documentation/en-us/unreal-engine/scalability-and-best-practices-for-niagara?application_version=5.6)
+  提到单个 emitter 可以挂多个 renderer，mesh arrays 也可减少重复 emitter。
+- 动画挂接：Epic 的
+  [`unreal.AnimNotify_PlayNiagaraEffect`](https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/class/AnimNotify_PlayNiagaraEffect.html?application_version=5.2)
+  暴露了 `attached`、`socket_name`、`template` 等属性，适合骨骼/Socket 触发。
+- 烘焙路径：Epic 的
+  [Niagara Fluids in Unreal Engine](https://dev.epicgames.com/documentation/en-us/unreal-engine/niagara-fluids-in-unreal-engine?application_version=5.6)
+  明确建议在需要时把重的 fluid 结果烘成 flipbook 再用。

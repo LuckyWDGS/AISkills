@@ -1,8 +1,12 @@
 # Complex Water Material Playbook
 
-Use this when the user asks for custom water, ocean, pool, river, shallow tropical water, stylized anime water, oily liquid, magic water, wet shoreline, caustics, foam, or any material where "water" is the main visual subject.
+Use this when the user asks for custom water, ocean, pool, river, shallow
+tropical water, stylized anime water, oily liquid, magic water, wet shoreline,
+caustics, foam, or any material where "water" is the main visual subject.
 
-This file exists because "use Single Layer Water" is not enough. A water material is a stack of shading model, surface motion, color/depth response, normals, foam/caustics masks, carrier geometry, and preview conditions.
+This file exists because "use Single Layer Water" is not enough. A water
+material is a stack of shading model, surface motion, color/depth response,
+normals, foam/caustics masks, carrier geometry, and preview conditions.
 
 ## Table Of Contents
 
@@ -27,15 +31,22 @@ This file exists because "use Single Layer Water" is not enough. A water materia
 
 Official Epic references to keep in mind:
 
-- Single Layer Water uses a transparent-looking water surface while staying on the `Opaque` or `Masked` blend path.
-- The Single Layer Water material output defines `Scattering Coefficients`, `Absorption Coefficients`, `PhaseG`, and `Color Scale Behind Water`.
-- In Single Layer Water, main-material `Opacity` is not ordinary translucent alpha. It controls the ratio between the water volume BSDF and the surface BRDF, so audit it as a water response control rather than a generic fade.
+- Single Layer Water uses a transparent-looking water surface while staying on
+  the `Opaque` or `Masked` blend path.
+- The Single Layer Water material output defines `Scattering Coefficients`,
+  `Absorption Coefficients`, `PhaseG`, and `Color Scale Behind Water`.
+- In Single Layer Water, main-material `Opacity` is not ordinary translucent
+  alpha. It controls the ratio between the water volume BSDF and the surface
+  BRDF, so audit it as a water response control rather than a generic fade.
 
 Useful source anchors:
 
-- Epic Single Layer Water docs: `https://dev.epicgames.com/documentation/zh-cn/unreal-engine/single-layer-water-shading-model-in-unreal-engine`
-- Epic Shading Models docs: `https://dev.epicgames.com/documentation/en-us/unreal-engine/shading-models-in-unreal-engine`
-- Epic Material Properties docs: `https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-properties`
+- Epic Single Layer Water docs:
+  `https://dev.epicgames.com/documentation/zh-cn/unreal-engine/single-layer-water-shading-model-in-unreal-engine`
+- Epic Shading Models docs:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/shading-models-in-unreal-engine`
+- Epic Material Properties docs:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-properties`
 
 ## First Decision
 
@@ -54,12 +65,19 @@ Pick the water route from the target look, not from performance convenience:
 Before building, write a compact read of:
 
 - Water type: ocean, lake, river, pool, shallow shore, swamp, oil, magic, stylized.
-- Visual identity: foam shape, caustics shape, color bands, transparency, wave scale, ripple frequency, surface roughness, shoreline breakup, dirt/particles, brush strokes, glow.
-- Carrier: large plane, water-body mesh, river spline mesh, puddle decal, contained volume, post-process.
-- Motion: still, slow ripple, directional river flow, choppy waves, stylized loop, foam drift, caustics shimmer.
-- Required texture roles: normal, height, flow, foam mask, caustics, color ramp, packed data, dirt/particle mask.
+- Visual identity: foam shape, caustics shape, color bands, transparency, wave
+  scale, ripple frequency, surface roughness, shoreline breakup, dirt/particles,
+  brush strokes, glow.
+- Carrier: large plane, water-body mesh, river spline mesh, puddle decal,
+  contained volume, post-process.
+- Motion: still, slow ripple, directional river flow, choppy waves, stylized
+  loop, foam drift, caustics shimmer.
+- Required texture roles: normal, height, flow, foam mask, caustics, color ramp,
+  packed data, dirt/particle mask.
 
-If a reference image exists, asset-library results are only candidates. A generic water ripple may support the normal layer, but it cannot replace the visible foam/caustic/color identity unless it actually matches.
+If a reference image exists, asset-library results are only candidates. A
+generic water ripple may support the normal layer, but it cannot replace the
+visible foam/caustic/color identity unless it actually matches.
 
 ## Hero Single Layer Water Route
 
@@ -150,7 +168,9 @@ TextureCoordinate
 
 ### Node Route: Depth Color
 
-For Single Layer Water, prefer the engine water model for underwater color response. Use a depth term only when the node path is available and verified for the engine version:
+For Single Layer Water, prefer the engine water model for underwater color
+response. Use a depth term only when the node path is available and verified for
+the engine version:
 
 ```text
 SceneDepthWithoutWater - PixelDepth
@@ -163,7 +183,8 @@ Lerp(V_ShallowColor, V_DeepColor, WaterDepth01)
   -> BaseColor
 ```
 
-Fallbacks when `SceneDepthWithoutWater` is unavailable or the carrier does not support it:
+Fallbacks when `SceneDepthWithoutWater` is unavailable or the carrier does not
+support it:
 
 - Vertex color or mesh-painted depth mask for rivers/pools.
 - Landscape/RVT mask for shore zones.
@@ -189,7 +210,8 @@ S_SurfaceOpacity or depth-shaped opacity control
   -> main material Opacity
 ```
 
-Audit note: `Opacity` here is a water model control, not a normal translucent fade. Do not tune it with the same expectations as a `Translucent` material.
+Audit note: `Opacity` here is a water model control, not a normal translucent
+fade. Do not tune it with the same expectations as a `Translucent` material.
 
 ### Node Route: Foam
 
@@ -223,7 +245,9 @@ WaveHeightOrNormalDerivedMask
   -> add to FoamMask
 ```
 
-If no wave-height signal exists, do not fake crest foam from random noise and call it finished. Either add WPO/wave height, generate an authored foam mask, or label it as a prototype.
+If no wave-height signal exists, do not fake crest foam from random noise and
+call it finished. Either add WPO/wave height, generate an authored foam mask, or
+label it as a prototype.
 
 ### Node Route: Caustics
 
@@ -243,7 +267,9 @@ Multiply/Add two caustics samples
   -> ColorScaleBehindWater or Emissive/BaseColor overlay depending route
 ```
 
-Do not use a random cloudy noise as "caustics" when the reference has sharp dancing light nets. Generate or author a caustics mask/flipbook that matches the reference.
+Do not use a random cloudy noise as "caustics" when the reference has sharp
+dancing light nets. Generate or author a caustics mask/flipbook that matches the
+reference.
 
 ### Node Route: WPO Waves
 
@@ -263,11 +289,14 @@ Repeat 2-4 wave bands
   -> WorldPositionOffset
 ```
 
-Use this for modest surface motion. For real oceans, buoyancy, shoreline interaction, or large Gerstner stacks, treat material WPO as only one part of a water system and verify bounds, LOD, shadows, and Nanite/platform support.
+Use this for modest surface motion. For real oceans, buoyancy, shoreline
+interaction, or large Gerstner stacks, treat material WPO as only one part of a
+water system and verify bounds, LOD, shadows, and Nanite/platform support.
 
 ## Stylized Water Route
 
-Use this for anime/cel/painterly/magic water where reference style matters more than physical accuracy.
+Use this for anime/cel/painterly/magic water where reference style matters more
+than physical accuracy.
 
 Common settings:
 
@@ -302,13 +331,17 @@ Optional WPO sine/ripple
 Reference gate:
 
 - If the reference has brushy cyan-white foam, generate or author that foam shape.
-- If the reference has cel bands, build stepped color ramps instead of physical absorption.
-- If the reference has oily sci-fi liquid, use color-ramp/iridescence/roughness breakup instead of normal lake ripple.
-- If the reference has magical glow, route glow deliberately to `EmissiveColor`; do not hide it in a generic base-color tint.
+- If the reference has cel bands, build stepped color ramps instead of physical
+  absorption.
+- If the reference has oily sci-fi liquid, use color-ramp/iridescence/roughness
+  breakup instead of normal lake ripple.
+- If the reference has magical glow, route glow deliberately to `EmissiveColor`;
+  do not hide it in a generic base-color tint.
 
 ## Translucent Or Thin Glass Water Route
 
-Use this for small contained water, glass tanks, bottles, droplets, or water sheets where actual translucency/refraction is the visual target.
+Use this for small contained water, glass tanks, bottles, droplets, or water
+sheets where actual translucency/refraction is the visual target.
 
 Common settings:
 
@@ -337,7 +370,8 @@ Refraction input
 
 Audit warning:
 
-- This route pays translucent sorting/overdraw cost. Use it because the look needs it, not because "water is transparent."
+- This route pays translucent sorting/overdraw cost. Use it because the look
+  needs it, not because "water is transparent."
 - For large water bodies, try the Single Layer Water route first.
 
 ## Texture Generation Rules For Water
@@ -364,7 +398,8 @@ If generated output is used:
 2. Run `texture_asset_report.py`.
 3. Import masks/height/flow as data (`sRGB=false`, mask/data compression).
 4. Preview on the water carrier before approving.
-5. Register as `candidate` unless tiling, seams, channels, and visual style are verified.
+5. Register as `candidate` unless tiling, seams, channels, and visual style are
+   verified.
 
 Prompt pattern:
 
@@ -409,19 +444,23 @@ Must verify:
 - `Material Domain`, `Blend Mode`, and `Shading Model` match the chosen route.
 - `SingleLayerWaterMaterialOutput` exists for the Single Layer Water route.
 - Normal textures use normal compression and `sRGB=false`.
-- Mask/height/flow/packed data use data import settings and role-correct default textures.
+- Mask/height/flow/packed data use data import settings and role-correct default
+  textures.
 - Foam/caustics texture style matches the reference, not merely the category name.
 - `Opacity` is interpreted correctly for Single Layer Water.
-- WPO bounds, shadows, Nanite/platform support, and collision expectations are documented when WPO is used.
+- WPO bounds, shadows, Nanite/platform support, and collision expectations are
+  documented when WPO is used.
 - Generated normal/flow/vector textures are not approved without validation.
 
 ## Minimum Deliverable For A Custom Water Request
 
-When asked to make a water material, deliver these artifacts or explicitly mark what is still missing:
+When asked to make a water material, deliver these artifacts or explicitly mark
+what is still missing:
 
 - Material or master material with real node graph, not just constants.
 - Material instance with named controls.
 - Required texture assets or generated candidates with QA reports.
 - Preview on a water plane/carrier with at least one depth/shoreline context.
 - Audit report with visual-fidelity status and performance risks separated.
-- If optimized, note whether each optimization preserves the look or is a visible tradeoff.
+- If optimized, note whether each optimization preserves the look or is a
+  visible tradeoff.

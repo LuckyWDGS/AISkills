@@ -20,7 +20,7 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .mcp import DEFAULT_MCP_URL, run_tool_script
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "shader_permutation_report/2"
 
 

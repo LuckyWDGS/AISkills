@@ -419,7 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     from blueprint_geometry import logic_signature
 
     asset = args.blueprint if "." in args.blueprint.rsplit("/", 1)[-1] else f"{args.blueprint}.{args.blueprint.rsplit('/', 1)[-1]}"
-    client = connect(project=args.project)
+    client = connect(project=args.project, contract="5.8")  # not ported to UE 5.9
     call = lambda tool, **kw: unwrap_result(client.call_resolved_tool("BlueprintTools", tool, kw))  # noqa: E731
     order = {name: i for i, name in enumerate(filter(None, args.entry_order.split(",")))}
     frame_map = dict(pair.split("=", 1) for pair in filter(None, args.frame_map.split(",")))

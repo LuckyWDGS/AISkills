@@ -1,6 +1,6 @@
 interface:
   display_name: "Unreal Engine MCP"
-  short_description: "Build UE games with Blueprint, AI, UMG and Sequencer"
+  short_description: "Build and debug UE 5.9 games through Epic MCP"
   icon_small: "./assets/unreal-engine-mcp-small.png"
   icon_large: "./assets/unreal-engine-mcp.png"
-  default_prompt: "Use $unreal-engine-mcp to build or debug UE gameplay through Epic's MCP, following live version contracts and combining the sibling material, Niagara and Sequencer skills as needed. On UE 5.9 use official MCP Python for domain-tool gaps; retain the separate UE 5.8 routes and verify actual runtime behavior."
+  default_prompt: "Use $unreal-engine-mcp to build or debug UE 5.9 gameplay through Epic's MCP: discover live schemas, author with native tools and official MCP Python, and verify runtime behavior. Combine the sibling material, Niagara and Sequencer skills as needed."

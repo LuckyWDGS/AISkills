@@ -2,9 +2,13 @@
 
 ## Principle
 
-Unreal material nodes are visual authoring blocks that compile into shader code. Read them by intent: coordinates, texture/data fetch, shaping math, lighting/output, runtime control, and platform switching.
+Unreal material nodes are visual authoring blocks that compile into shader code.
+Read them by intent: coordinates, texture/data fetch, shaping math,
+lighting/output, runtime control, and platform switching.
 
-For exhaustive per-node behavior, use Epic's Material Expressions Reference. This file is a compact production map for deciding what category a node belongs to and what to inspect.
+For exhaustive per-node behavior, use Epic's Material Expressions Reference.
+This file is a compact production map for deciding what category a node belongs
+to and what to inspect.
 
 ## Output And Material Inputs
 
@@ -21,7 +25,8 @@ Common outputs:
 - `Refraction`: translucent distortion; use carefully.
 - `MaterialAttributes`: bundled route for layered/material-attribute workflows.
 
-Always check Material Domain, Blend Mode, Shading Model, and usage flags; not every input is meaningful for every material configuration.
+Always check Material Domain, Blend Mode, Shading Model, and usage flags; not
+every input is meaningful for every material configuration.
 
 ## Table Of Contents
 
@@ -33,54 +38,82 @@ Always check Material Domain, Blend Mode, Shading Model, and usage flags; not ev
 
 Coordinates:
 
-- `TextureCoordinate`, `Panner`, `Rotator`, `WorldPosition`, `ObjectPosition`, `CameraPositionWS`, `ScreenPosition`, `VertexNormalWS`, `Transform`, `ComponentMask`, `AppendVector`.
-- Use for UVs, world-space masks, camera distance, object-space projection, panning flows, and screen/post-process coordinates.
-- For low-poly cone/cylinder/shell VFX meshes, Fresnel can inherit visible faceting from `VertexNormalWS`. When mesh reauthoring is out of scope, a radial virtual normal can be tested as `LocalPosition -> ComponentMask RG -> Append Z=0 -> Normalize -> Transform Local to World`, but treat it as a look variant and revert if it changes the intended falloff.
+- `TextureCoordinate`, `Panner`, `Rotator`, `WorldPosition`, `ObjectPosition`,
+  `CameraPositionWS`, `ScreenPosition`, `VertexNormalWS`, `Transform`,
+  `ComponentMask`, `AppendVector`.
+- Use for UVs, world-space masks, camera distance, object-space projection,
+  panning flows, and screen/post-process coordinates.
+- For low-poly cone/cylinder/shell VFX meshes, Fresnel can inherit visible
+  faceting from `VertexNormalWS`. When mesh reauthoring is out of scope, a
+  radial virtual normal can be tested as
+  `LocalPosition -> ComponentMask RG -> Append Z=0 -> Normalize -> Transform Local to World`,
+  but treat it as a look variant and revert if it changes the intended falloff.
 
 Texture and data fetch:
 
-- `TextureSample`, `TextureSampleParameter2D`, `TextureObject`, `TextureObjectParameter`, `SceneTexture`, `VirtualTextureSample`, `RuntimeVirtualTextureSample`, `FontSample`.
-- Audit sampler type, sampler source, texture settings, channel use, duplicate samples, dependency visibility, and `MipValueMode`.
-- For stretched/panned noise on wrapped mesh carriers, `MipValueMode=Derivative` should use `DDX` / `DDY` nodes fed by clean `TextureCoordinate` when the goal is to keep mip selection independent from tiling/panner math.
+- `TextureSample`, `TextureSampleParameter2D`, `TextureObject`,
+  `TextureObjectParameter`, `SceneTexture`, `VirtualTextureSample`,
+  `RuntimeVirtualTextureSample`, `FontSample`.
+- Audit sampler type, sampler source, texture settings, channel use, duplicate
+  samples, dependency visibility, and `MipValueMode`.
+- For stretched/panned noise on wrapped mesh carriers, `MipValueMode=Derivative`
+  should use `DDX` / `DDY` nodes fed by clean `TextureCoordinate` when the goal
+  is to keep mip selection independent from tiling/panner math.
 
 Math and shaping:
 
-- `Add`, `Subtract`, `Multiply`, `Divide`, `DotProduct`, `CrossProduct`, `Power`, `Saturate`, `Clamp`, `Min`, `Max`, `Abs`, `Floor`, `Ceil`, `Frac`, `Fmod`, `Lerp`, `SmoothStep`, `Step`, `OneMinus`, `Normalize`, trigonometric nodes.
-- Use for cheap shaping when the pattern is simple. Watch repeated high-cost math and Custom nodes that duplicate basic operations.
+- `Add`, `Subtract`, `Multiply`, `Divide`, `DotProduct`, `CrossProduct`,
+  `Power`, `Saturate`, `Clamp`, `Min`, `Max`, `Abs`, `Floor`, `Ceil`, `Frac`,
+  `Fmod`, `Lerp`, `SmoothStep`, `Step`, `OneMinus`, `Normalize`, trigonometric
+  nodes.
+- Use for cheap shaping when the pattern is simple. Watch repeated high-cost
+  math and Custom nodes that duplicate basic operations.
 
 Masks and falloff:
 
-- `Fresnel`, `DepthFade`, `SphereMask`, radial gradients, distance math, vertex color, object bounds, camera distance.
+- `Fresnel`, `DepthFade`, `SphereMask`, radial gradients, distance math, vertex
+  color, object bounds, camera distance.
 - Common for shields, rims, soft particles, rings, impact masks, and distance fading.
 
 Color and remap:
 
-- Vector/scalar parameters, curves/ramps via textures, channel masks, desaturation, contrast remap, blackbody-style gradients, color lerps.
-- Prefer LUT/ramp textures when a complex art-directed color curve is easier to control as data.
+- Vector/scalar parameters, curves/ramps via textures, channel masks,
+  desaturation, contrast remap, blackbody-style gradients, color lerps.
+- Prefer LUT/ramp textures when a complex art-directed color curve is easier to
+  control as data.
 
 Runtime control:
 
-- `ParticleColor`, `DynamicParameter`, `PerInstanceRandom`, `MaterialParameterCollection`, scalar/vector/static switch parameters, vertex color.
-- Name controls by user intent: `EmissiveIntensity`, `OpacityScale`, `FlowSpeed`, `EdgeBreakup`, not `MultiplyA`.
+- `ParticleColor`, `DynamicParameter`, `PerInstanceRandom`,
+  `MaterialParameterCollection`, scalar/vector/static switch parameters, vertex
+  color.
+- Name controls by user intent: `EmissiveIntensity`, `OpacityScale`,
+  `FlowSpeed`, `EdgeBreakup`, not `MultiplyA`.
 
 Flow and animation:
 
-- `Panner`, time, sine/cosine, flipbook/SubUV setup, flow map UV offset, atlas cell selection, noise scroll.
-- Use flipbooks when shape changes over time; use panners/flow maps when a mostly stable texture needs motion.
+- `Panner`, time, sine/cosine, flipbook/SubUV setup, flow map UV offset, atlas
+  cell selection, noise scroll.
+- Use flipbooks when shape changes over time; use panners/flow maps when a
+  mostly stable texture needs motion.
 
 Switching and scalability:
 
 - `StaticSwitchParameter`, `FeatureLevelSwitch`, `QualitySwitch`, static bools.
-- Use for real platform variants. Avoid casual static switches in many MIs because each unique static combination creates shader permutations.
+- Use for real platform variants. Avoid casual static switches in many MIs
+  because each unique static combination creates shader permutations.
 
 Custom and HLSL:
 
-- Use Custom nodes for compact algorithms, shader intrinsics, repeated reusable math, or logic that would become unreadable as graph nodes.
+- Use Custom nodes for compact algorithms, shader intrinsics, repeated reusable
+  math, or logic that would become unreadable as graph nodes.
 - Avoid Custom nodes for trivial add/multiply/lerp/saturate work.
 - Keep inputs explicit and named.
 - Return the narrowest useful type: `Float1`, `Float2`, `Float3`, or `Float4`.
-- Prefer graph `TextureSample` nodes over manual `Texture2DSample` inside Custom HLSL unless there is a concrete dependency or sampling reason.
-- Gate SM-specific intrinsics or expensive branches with quality/feature switches when the material ships to weaker platforms.
+- Prefer graph `TextureSample` nodes over manual `Texture2DSample` inside Custom
+  HLSL unless there is a concrete dependency or sampling reason.
+- Gate SM-specific intrinsics or expensive branches with quality/feature
+  switches when the material ships to weaker platforms.
 
 ## VFX Material Types
 
@@ -101,17 +134,20 @@ Masked:
 
 Opaque or DefaultLit:
 
-- Good for physical surfaces, props, stylized meshes, decals that need lighting response.
+- Good for physical surfaces, props, stylized meshes, decals that need lighting
+  response.
 - Heavier than unlit VFX, but correct when the object must belong to scene lighting.
 
 Post Process:
 
-- Good for screen-space effects, outlines, color grading, distortion, fullscreen feedback.
+- Good for screen-space effects, outlines, color grading, distortion, fullscreen
+  feedback.
 - Fullscreen cost is high; audit scene texture samples and resolution.
 
 UI:
 
-- Good for UMG and render-target UI. Keep cost low and avoid scene-dependent assumptions.
+- Good for UMG and render-target UI. Keep cost low and avoid scene-dependent
+  assumptions.
 
 ## Read Graph Intent Fast
 

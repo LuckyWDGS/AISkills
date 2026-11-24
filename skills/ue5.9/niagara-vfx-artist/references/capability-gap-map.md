@@ -1,10 +1,20 @@
 # Capability Gap Map
 
-A workflow capability map, not a list of official MCP gaps: recheck any editor gap
-against live discovery and use Epic Python Remote Execution for a remaining one. See
-[niagara-mcp-toolsets.md](niagara-mcp-toolsets.md).
+A workflow capability map, not a list of official MCP gaps: recheck any editor
+gap against live discovery and use official Python through MCP for a remaining
+one. See [ue-5.9-niagara-mcp.md](ue-5.9-niagara-mcp.md).
 
-This map describes what is still missing to turn a reference image or text brief into a fully usable Niagara effect with minimal guesswork.
+This map describes what is still missing to turn a reference image or text brief
+into a fully usable Niagara effect with minimal guesswork.
+
+## Contents
+
+- [Already Covered](#already-covered)
+- [First-Pass Coverage Added](#first-pass-coverage-added)
+- [Still Needs Tightening](#still-needs-tightening)
+- [Priority Order](#priority-order)
+- [Automation Candidates](#automation-candidates)
+- [End Goal](#end-goal)
 
 ## Already Covered
 
@@ -17,9 +27,9 @@ This map describes what is still missing to turn a reference image or text brief
 - Asset cleanup
 - Parameter tuning log
 - End-to-end workflow docs
-- Safe local Niagara emitter authoring via UnrealBridge overlay APIs for add / duplicate / remove / enable emitter operations inside an existing Niagara system
-- First-pass upstream UnrealBridge baseline sync with local overlay preservation and generated-surface regeneration
-- Official Niagara fourth-wave closure is now live-proven:
+- Emitter authoring inside an existing system through the official tools: add,
+  duplicate, remove and enable
+- Official Niagara coverage:
   - emitter data read/write
   - renderer data read/write
   - system user variable add/remove/read
@@ -41,7 +51,8 @@ Current first-pass tool:
 - `tools/reference_acceptance.py`
 
 Why it matters:
-- without a strict anchor gate, later texture and preview generation can drift from the real target
+- without a strict anchor gate, later texture and preview generation can drift
+  from the real target
 
 ### 2. Layer Evidence Extraction
 
@@ -111,7 +122,8 @@ Why it matters:
 - audits alone do not complete the loop; we also need safe creation and repair tools
 
 Current first-pass route:
-- `builtin_mcp.py batch` with AssetTools / MaterialInstanceTools / NiagaraToolset_System steps and readbacks
+- `builtin_mcp.py batch` with `AssetToolset` / `MaterialInstanceToolset` /
+  `NiagaraToolset_System` steps and readbacks
 
 Current higher-level assistant:
 - `tools/niagara_asset_assistant.py`
@@ -122,7 +134,8 @@ What it adds:
 - MI creation and parameter override setup
 - missing Ribbon Renderer construction for receiver emitters
 - existing renderer material binding repair
-- plans whose operations map onto NiagaraToolset_System tools, applied through `builtin_mcp.py batch` with readbacks
+- plans whose operations map onto NiagaraToolset_System tools, applied through
+  `builtin_mcp.py batch` with readbacks
 
 ### 7. Visual Diff QA
 
@@ -147,7 +160,8 @@ Needed:
 - risk and limitation note
 
 Why it matters:
-- the next person should be able to find the active assets and reuse them without guessing
+- the next person should be able to find the active assets and reuse them
+  without guessing
 
 Current first-pass tool:
 - `tools/delivery_package.py`
@@ -168,17 +182,29 @@ Current first-pass tool:
 
 ## Still Needs Tightening
 
-- Reference acceptance should eventually reject drift automatically based on visual evidence, not only manual review.
-- Layer evidence should eventually understand motion arcs and multi-frame cues, not only still-image hotspots.
-- Preview approval should eventually integrate side-by-side visual diff automatically at review time.
-- Asset planning should eventually understand project-specific naming conventions and existing reusable masters.
-- Integration planning should eventually read real skeleton/socket/notify context from the target project.
-- `niagara_asset_assistant apply` executes plans over MCP; next come module-stack operations (AddModule / SetStackInputData routes), user-parameter authoring, source/event wiring and safe retirement of stale assets.
-- Live test result on 2026-05-13: writing `NiagaraSystem.EmitterHandles` via export-text was rejected and round-tripped unchanged. Raw `EmitterHandles` export-text is not a route for emitter authoring; use `AddEmitter` / `RemoveEmitter`.
-- Stack discovery goes through the MCP topology tools; `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters crashed UE 5.7 and stays off the route.
+- Reference acceptance should eventually reject drift automatically based on
+  visual evidence, not only manual review.
+- Layer evidence should eventually understand motion arcs and multi-frame cues,
+  not only still-image hotspots.
+- Preview approval should eventually integrate side-by-side visual diff
+  automatically at review time.
+- Asset planning should eventually understand project-specific naming
+  conventions and existing reusable masters.
+- Integration planning should eventually read real skeleton/socket/notify
+  context from the target project.
+- `niagara_asset_assistant apply` executes plans over MCP; next come
+  module-stack operations (AddModule / SetStackInputData routes), user-parameter
+  authoring, source/event wiring and safe retirement of stale assets.
+- Author emitters with `AddEmitter` / `RemoveEmitter`. The engine rejects a raw
+  `EmitterHandles` export-text write and round-trips the property unchanged.
+- Discover stacks with the MCP topology tools.
+  `NiagaraPythonEmitter.get_modules()` on arbitrary loaded emitters can crash
+  the editor.
 - Visual diff QA should eventually compare motion clips, not only still frames.
-- Delivery packaging should eventually pull final active assets directly from the project instead of relying on manual final lists.
-- Learning loop should eventually auto-build stronger case studies from shipped effects without manual curation.
+- Delivery packaging should eventually pull final active assets directly from
+  the project instead of relying on manual final lists.
+- Learning loop should eventually auto-build stronger case studies from shipped
+  effects without manual curation.
 
 ## Priority Order
 
@@ -197,16 +223,20 @@ Current first-pass tool:
 Automate a check when it repeats often, is costly to miss, and has rules that can be
 written down. Highest value first:
 
-1. Naming: materials, MIs, textures, Niagara systems and emitters; parameter prefixes `S_ / V_ / T_ / SS_`.
+1. Naming: materials, MIs, textures, Niagara systems and emitters; parameter
+   prefixes `S_ / V_ / T_ / SS_`.
 2. Effect Type and scalability assigned on every Niagara System.
 3. Low-end variants and per-platform versions present.
 4. Flipbook/atlas resolution, grid and naming.
 5. Exposed user-parameter count and naming.
-6. One-step template assets: standard MI, Niagara System and preset emitters, with batch Effect Type, naming and default user parameters.
+6. One-step template assets: standard MI, Niagara System and preset emitters,
+   with batch Effect Type, naming and default user parameters.
 
 Offline scans and reports suit Python tools; batch authoring close to the artist
 workflow suits Editor Utilities or `builtin_mcp.py batch`.
 
 ## End Goal
 
-The skill is complete only when a user can provide a reference or brief, approve a grounded UE-achievable preview, and then reach a shippable effect with minimal drift, clear cleanup, and a reusable delivery record.
+The skill is complete only when a user can provide a reference or brief, approve
+a grounded UE-achievable preview, and then reach a shippable effect with minimal
+drift, clear cleanup, and a reusable delivery record.

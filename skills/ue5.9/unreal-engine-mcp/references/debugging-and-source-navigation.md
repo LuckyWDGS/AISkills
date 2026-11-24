@@ -79,7 +79,7 @@ Choose the relevant checks; do not run every row for every bug.
 For animation multithreading, preserve the project's property-access/thread-safe
 update model. Do not add arbitrary UObject/actor calls to worker-thread evaluation
 as a quick diagnostic. Empty generic state-node enumeration is a known coverage
-limit; follow [animation inspection](animation-state-machines-mcp.md), not an
+limit; follow [animation inspection](ue-5.9-animation-ai-tools.md), not an
 assumption that the machine has no states.
 
 ## Preserve crash evidence before recovery
@@ -124,8 +124,9 @@ the evidenced layer and stay within the user's requested restart/setup scope.
 Keep a short evidence chain: observed failure → candidate cause → supporting
 node/value/source/log → discriminating check → result → scoped fix. Prefer a
 read-only observation or minimal reproduction over a broad speculative rewrite.
-If a check fails to support the explanation, update it before making more changes.
-For an uncertain write, apply the [timeout/readback rule](developer-workflow.md#make-changes-recoverable-and-unambiguous).
+If a check fails to support the explanation, update it before making more
+changes. For an uncertain write, apply the
+[timeout/readback rule](developer-workflow.md#make-changes-recoverable-and-unambiguous).
 
 Temporary diagnostics should identify the module ID, owner instance, relevant
 values and role/time when needed. Use supported official logs or instrumentation;

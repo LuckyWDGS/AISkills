@@ -3,12 +3,15 @@
 ## Use This When
 
 - A parameter table has names/defaults but lacks contract fields for runtime handoff.
-- Niagara, Blueprint, MID, or artist-facing controls need clear ownership before delivery.
-- Regression should know which parameters are allowed to vary and which should be frozen.
+- Niagara, Blueprint, MID, or artist-facing controls need clear ownership before
+  delivery.
+- Regression should know which parameters are allowed to vary and which should
+  be frozen.
 
 ## Purpose
 
-`material_parameter_schema.py` upgrades loose parameter rows into a contract-grade schema:
+`material_parameter_schema.py` upgrades loose parameter rows into a
+contract-grade schema:
 
 - name and type
 - unit
@@ -19,7 +22,8 @@
 - artist tunability
 - regression participation
 
-It reads existing package, contract, material audit, and runtime trace evidence. It does not mutate material parameters.
+It reads existing package, contract, material audit, and runtime trace evidence.
+It does not mutate material parameters.
 
 ## Typical Commands
 
@@ -41,13 +45,15 @@ Each parameter should explicitly provide:
 - `default`
 - `unit`
 - `range` for scalar parameters
-- discrete or seam-safe constraints for scalar parameters when required, such as wrapped-mesh noise `TileU = positive integer`
+- discrete or seam-safe constraints for scalar parameters when required, such as
+  wrapped-mesh noise `TileU = positive integer`
 - `runtime_owner`
 - `writable_by`
 - `artist_tunable`
 - `regression_participation`
 
-The tool may suggest units/ranges from names and types, but suggestions do not count as explicit contract fields under `--require-complete`.
+The tool may suggest units/ranges from names and types, but suggestions do not
+count as explicit contract fields under `--require-complete`.
 
 ## Output
 

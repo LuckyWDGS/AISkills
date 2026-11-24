@@ -4,6 +4,14 @@ Use this when asked what an existing Blueprint does, whether its connection
 lines can be obtained, or which exact branch/pin should change. This workflow
 reads graph topology; it does not run the gameplay or prove every path executes.
 
+## Contents
+
+- [Read-only capture](#read-only-capture)
+- [What the returned data means](#what-the-returned-data-means)
+- [Turn topology into an accurate explanation](#turn-topology-into-an-accurate-explanation)
+- [Animation and specialized graphs](#animation-and-specialized-graphs)
+- [Verified example and maintenance](#verified-example-and-maintenance)
+
 ## Read-only capture
 
 1. Identify the intended editor/project and asset. Use `builtin_mcp.py status`,

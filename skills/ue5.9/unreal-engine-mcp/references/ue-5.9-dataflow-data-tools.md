@@ -36,9 +36,9 @@ schema 中的示例 `FAddFloatsDataflowNode` 不保证已注册；本构建实�
 NodePath 主图形如 `AuditAdd`，子图形如 `Module/Node`；PinPath 形如 `AuditAdd.A`，
 不同于 UObject 的 `refPath`。使用工具返回的路径，不自行拼接生产对象引用。
 
-本轮验证**结构写入、属性、类型/连线回读和保存**。没有执行图数值求值、
-Cloth/Groom 解算或运行时接入。`ExecuteNodeFunction` 调用命名函数，不能据此
-推断任意图都存在通用求值器。子图、ForEach、图绑定尚无本分支实测用例。
+没有执行图数值求值、 Cloth/Groom 解算或运行时接入。`ExecuteNodeFunction` 调用命
+名函数，不能据此推断任意图都存在通用求值器。子图、ForEach、图绑定尚无本分支实测
+用例。
 
 ## CurveAtlas：渐变 RGB 与 alpha 分开
 
@@ -85,12 +85,10 @@ Atlas 采样区间是 0–1。这个结果证明 CPU 渐变求值和资产成员
 比较的 5.8 DeformerGraph 插件不含这个 OptimusScripting 子模块；这说明本接口
 是新增自动化表面，不能说 Deformer Graph 本身从 5.9 才存在。
 
-本轮 `ListDataTypes` 与 `ListComponentSources` 已返回真实类型/HLSL 对应及
-SkeletalMesh、Groom 等组件来源与 Vertex/Triangle 等执行域。类型返回的
-`bCanBeVariable` / `bCanBeResource` / `bCanBePin` 不同，不能仅凭 displayName
-选型。例如当前 `FloatProperty` 不可作 variable，`DoubleProperty` 可以。
-项目 `/Game` 搜索没有 deformer fixture，未创建图、写 kernel、编译或绑定角色。
-本分支尚无经过编译和真实变形验证的作者 helper；这属于可调用但流程未覆盖。
+类型返回的 `bCanBeVariable` / `bCanBeResource` / `bCanBePin` 不同，不能仅凭
+displayName 选型。例如当前 `FloatProperty` 不可作 variable，`DoubleProperty` 可
+以。项目 `/Game` 搜索没有 deformer fixture，未创建图、写 kernel、编译或绑定角
+色。本分支尚无经过编译和真实变形验证的作者 helper；这属于可调用但流程未覆盖。
 
 ## 验证器与编辑器信息
 
@@ -106,3 +104,16 @@ SkeletalMesh、Groom 等组件来源与 Vertex/Triangle 等执行域。类型返
   没有提交/checkout/revert/push；38 项源控注册接口不能算已连接仓库或已接入流程。
 
 按需从 [覆盖与待补清单](ue-5.9-tool-coverage.md) 回到整体版本判断。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+**Dataflow：两套合同同时存在**
+
+- 本轮验证**结构写入、属性、类型/连线回读和保存**。
+
+**Deformer Graph：已有注册面，作者流程待补**
+
+- 本轮 `ListDataTypes` 与 `ListComponentSources` 已返回真实类型/HLSL 对应及
+  SkeletalMesh、Groom 等组件来源与 Vertex/Triangle 等执行域。

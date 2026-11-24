@@ -2,13 +2,19 @@
 
 ## Use This When
 
-- A `material_preview.py` result has been visually accepted and should become the baseline.
-- You are about to optimize, change textures, tune parameters, rebuild a material, or refactor graph nodes.
-- A `delivery_packager.py` report contains preview evidence that should be locked for future comparisons.
+- A `material_preview.py` result has been visually accepted and should become
+  the baseline.
+- You are about to optimize, change textures, tune parameters, rebuild a
+  material, or refactor graph nodes.
+- A `delivery_packager.py` report contains preview evidence that should be
+  locked for future comparisons.
 
 ## Purpose
 
-`material_regression.py` protects accepted material previews from accidental visual drift. It locks a baseline preview, copies the preview images into the regression folder, and compares later `material_preview.py` reports against that baseline.
+`material_regression.py` protects accepted material previews from accidental
+visual drift. It locks a baseline preview, copies the preview images into the
+regression folder, and compares later `material_preview.py` reports against that
+baseline.
 
 It reports:
 
@@ -84,7 +90,10 @@ When a comparison fails, pair the regression report with before/after audit repo
 python tools/graph_diff_refactor.py diff --before-audit D:/reports/before/material-audit.json --after-audit D:/reports/after/material-audit.json --before-domain-audit D:/reports/before/material-domain-audit.json --after-domain-audit D:/reports/after/material-domain-audit.json --regression-report D:/reports/material-regression-comparison.json --effect WingEcho --layer RibbonTrail --label optimize-pass-01 --markdown
 ```
 
-This produces a likely-cause list for route, output-chain, parameter, graph, finding, and budget changes. Rerun `material_audit.py` with `--include-raw-graph` on both revisions when exact node and connection provenance matters.
+This produces a likely-cause list for route, output-chain, parameter, graph,
+finding, and budget changes. Rerun `material_audit.py` with
+`--include-raw-graph` on both revisions when exact node and connection
+provenance matters.
 
 ## Thresholds
 
@@ -98,22 +107,49 @@ Defaults are intentionally conservative:
 - `--max-centroid-shift 12.0`
 - `--max-complexity-mean-diff 8.0`
 
-Use tighter thresholds for locked final art. Use looser thresholds for noisy smoke, fire, or stochastic previews, but record why in the delivery notes.
+Use tighter thresholds for locked final art. Use looser thresholds for noisy
+smoke, fire, or stochastic previews, but record why in the delivery notes.
 
 ## Gate Meaning
 
-`gate.passed=true` means the new preview did not exceed configured drift thresholds. It does not mean the material is artistically approved. It only means the preview stayed close enough to the locked baseline for the measured dimensions.
+`gate.passed=true` means the new preview did not exceed configured drift
+thresholds. It does not mean the material is artistically approved. It only
+means the preview stayed close enough to the locked baseline for the measured
+dimensions.
 
-If a baseline has a complexity image and the current preview lacks one, the comparison records an error. That catches accidental loss of complexity evidence during optimization passes. MCP captures carry no complexity image, so a capture baseline compares cleanly against later captures.
+If a baseline has a complexity image and the current preview lacks one, the
+comparison records an error. That catches accidental loss of complexity evidence
+during optimization passes. MCP captures carry no complexity image, so a capture
+baseline compares cleanly against later captures.
 
 ## Recommended Flow
 
-1. Capture `material_preview.py capture` on the intended carrier (`--route thumbnail`, or `--route viewport --pose ...` for a placed carrier). Keep the same route and pose for every later comparison; a thumbnail and a viewport frame are not comparable.
+1. Capture `material_preview.py capture` on the intended carrier
+   (`--route thumbnail`, or `--route viewport --pose ...` for a placed carrier).
+   Keep the same route and pose for every later comparison; a thumbnail and a
+   viewport frame are not comparable.
 2. Visually accept the preview against the reference.
 3. Build or refresh `delivery_packager.py` with that preview report.
 4. Lock a regression baseline from the package.
 5. After any material edit, capture a new preview with the same route and pose.
 6. Run `material_regression.py compare --strict`.
 7. If the comparison fails, inspect the composite and heat images.
-8. Run `graph_diff_refactor.py diff` against before/after audits to identify likely material-side causes.
-9. Fix, revert, or intentionally accept a new baseline only after the visual and structural evidence agree.
+8. Run `graph_diff_refactor.py diff` against before/after audits to identify
+   likely material-side causes.
+9. Fix, revert, or intentionally accept a new baseline only after the visual and
+   structural evidence agree.
+
+## Regression baseline set
+
+Use `regression_baseline_set.py` once a material has more than one accepted
+baseline and the right one depends on parameter tier, carrier, background,
+exposure, lighting or quality.
+
+- `capture`: lock a baseline and register it in the set.
+- `register`: add an existing baseline JSON to the index.
+- `resolve`: pick the best baseline for a context.
+- `list`: show every baseline of an effect and layer.
+
+```powershell
+python tools/regression_baseline_set.py resolve --effect WingEcho --layer RibbonTrail --parameter-tier gameplay-safe --carrier ribbon --background busy --exposure high --require-match --markdown
+```

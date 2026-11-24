@@ -10,6 +10,18 @@
 任务蓝图、BT、BB 和独立 ABP 副本的创建、结构读回、编译、指定保存及重载。
 这不证明任意骨架、状态机作者、寻路或 multiplayer 已通过；运行证据单独记录。
 
+## 目录
+
+- [先明确 gameplay 合同](#先明确-gameplay-合同)
+- [原生 BT / BB 作者与读回](#原生-bt--bb-作者与读回)
+- [Task 生命周期与可观测行为](#task-生命周期与可观测行为)
+- [反射默认值、EditCondition 与碰撞](#反射默认值editcondition-与碰撞)
+- [Native Graph DSL 的实际参数陷阱](#native-graph-dsl-的实际参数陷阱)
+- [独立 ABP 与动画验收](#独立-abp-与动画验收)
+- [分层验收记录](#分层验收记录)
+- [Windows 打包前的静态检查](#windows-打包前的静态检查)
+- [验证记录](#验证记录)
+
 ## 先明确 gameplay 合同
 
 把行为数据、移动、决策和动画分开：
@@ -24,11 +36,9 @@
 | CharacterMovement / Capsule | 重力、地面、平面约束、移动模式、碰撞与 overlap |
 
 例如横版巡逻先约定 X 为前进轴、Y 平面、Z 高度，公开 `InitializePatrol()`、
-`PatrolStep()`、幂等 `Defeat()` 和 `bDefeated`。速度用 cm/s、范围用 cm；让
-范围/速度/调试开关可实例编辑。平台宽度要容纳角色尺寸和刹车距离。
-还须检查整段巡逻走廊的砖块和其他阻挡；本次一只 AI 的范围穿过跳跃砖块，
-BT 虽在 Running、tick 虽增长，实际速度却为零。修正关卡实例范围后，两只 AI
-均在带时间的采样中移动并转向；不能只凭 Brain 正在运行验收巡逻。
+`PatrolStep()`、幂等 `Defeat()` 和 `bDefeated`。速度用 cm/s、范围用 cm；让范围/
+速度/调试开关可实例编辑。平台宽度要容纳角色尺寸和刹车距离。修正关卡实例范围后，
+两只 AI 均在带时间的采样中移动并转向；不能只凭 Brain 正在运行验收巡逻。
 
 纯横版往返可以由 BT Task 调用 `AddMovementInput`，交给 CharacterMovement
 积分、重力和扫掠碰撞；这种方案没有路径规划，不能声称验证了 NavMesh。
@@ -143,12 +153,11 @@ canonical DSL，并读 native 两端连接；编译成功不能单独证明 Targ
 使用当前 revision 做范围编辑，拒绝根据旧文本覆盖整份生产图。
 
 DSL 自动布局也需复核。此构建的自动排版曾产生逆向线和节点重叠；
-`blueprint_lint.py` 的 native 读取可用，但旧 `blueprint_layout.py` 的 CLI 写路由
-仍是 5.8 `BlueprintTools`。不要直接改大小写重放。可复用其只读 `plan_layout`
-算法后，用实时 `SetNodePosition` 写坐标，并比较前后 node/pin/default/link
-签名。重新包围自己移动的模块时，原生 `AddCommentBox(nodes=...)` 会建立成员；
-验证新框的文本/成员后才移除旧框。重载后的空成员缓存只代表未知，不能为消除
-提示而打开编辑器或任意改生产注释框。
+`blueprint_lint.py` 的 native 读取可用，`blueprint_layout.py` 的写入为
+`unported`。可复用其只读 `plan_layout` 算法后，用实时 `SetNodePosition` 写坐标，
+并比较前后 node/pin/default/link 签名。重新包围自己移动的模块时，原生
+`AddCommentBox(nodes=...)` 会建立成员；验证新框的文本/成员后才移除旧框。重载后的
+空成员缓存只代表未知，不能为消除提示而打开编辑器或任意改生产注释框。
 
 原生 comment 对象的 `GetPropertySchema` 还暴露 `nodeDetails`、`commentColor`、
 `fontSize` 与 `moveMode`，本构建可由 `ObjectToolset` 写入并读回。使用短标题，
@@ -163,11 +172,9 @@ DSL 自动布局也需复核。此构建的自动排版曾产生逆向线和节�
 AnimClass、AnimationMode、相对位置/朝向/缩放，以及 EventGraph 取得的角色类别。
 同骨架不代表脚底高度正确；相对 Z 应结合实际胶囊 half-height 与模型原点调节。
 
-本次复用 ABP 的 native EventGraph 可见 Initialize/UpdateAnimation、
-`CastToCharacter`、CharacterMovement、velocity、GroundSpeed、ShouldMove、
-IsFalling 和 Direction 路线。旧 Python `read_graph_dsl` 对这份非空 EventGraph
-却返回空文本，native `FindNodes` / `GetNodeInfos` 可读其实际节点。因此空 DSL
-不授权重建 ABP；完整 state/transition 容器仍有已记录的可见性限制。
+旧 Python `read_graph_dsl` 对这份非空 EventGraph 却返回空文本，native
+`FindNodes` / `GetNodeInfos` 可读其实际节点。因此空 DSL 不授权重建 ABP；完整
+state/transition 容器仍有已记录的可见性限制。
 
 ABP 编译和 AnimClass 读回只证明配置。运行时必须取得当前 AnimInstance，读取
 速度/状态变量并检查可见姿态；角色移动而动画不动可能是动画更新、实例或 Pose
@@ -198,8 +205,7 @@ world、角色、触发、时间基准、预期/容差、样本和 cleanup。以
 
 编辑器启动和 PIE 通过不证明可以 cook/package。读取目标安装的
 `Engine/Config/Windows/Windows_SDK.json`、UAT/UBT runtimeconfig、已安装 compiler
-和 SDK，而不沿用旧 UE 的版本要求。本次 CL 60351404 的 UAT/UBT 使用 .NET 10，
-Windows SDK 最低 22621、主版本 26100；14.51 MSVC 在该构建被禁用。
+和 SDK，而不沿用旧 UE 的版本要求。
 
 MSVC 的目录 family 与实际 `cl.exe` 版本不同。此构建 UBT 用 family 排 preferred
 顺序，用实际版本检查 banned/minimum；例如 family 14.44.35207 内的已更新
@@ -216,10 +222,32 @@ precompiled manifest 仅是可用性证据，不授权跳过实际 build/cook。
 资源依赖与性能；把静态预检、build、cook、package 和 packaged runtime 分别记录。
 
 复制工程的旧 `Saved/Cooked/<Platform>/ue.projectstore` 可能指向已经不存在的 Zen
-oplog。本次 Cook 在所有本地地址得到 HTTP 404 后阻塞于旧 hostname；保留日志，
-核对并停止自己的 cook 进程，再隔离确认为旧缓存的单个 marker。若目标无需 Zen
-输出，当前 `CookCommandlet` 的官方 `SkipZenStore` 开关可经 UAT
-`-AdditionalCookerOptions=-SkipZenStore` 传入，选择 loose package writer；它会关闭
-Zen 依赖的 incremental cook 并做完整 Cook。不要为此删原 Content、重置全局 Zen
-服务、改引擎或把这项恢复措施设成所有工程的默认配置。后续 Stage/IoStore/Archive
-仍须实际完成并测试启动，进到 Cook 不等于打包通过。
+oplog。若目标无需 Zen 输出，当前 `CookCommandlet` 的官方 `SkipZenStore` 开关可经
+UAT `-AdditionalCookerOptions=-SkipZenStore` 传入，选择 loose package writer；它
+会关闭 Zen 依赖的 incremental cook 并做完整 Cook。不要为此删原 Content、重置全局
+Zen 服务、改引擎或把这项恢复措施设成所有工程的默认配置。后续
+Stage/IoStore/Archive 仍须实际完成并测试启动，进到 Cook 不等于打包通过。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+**先明确 gameplay 合同**
+
+- 还须检查整段巡逻走廊的砖块和其他阻挡；本次一只 AI 的范围穿过跳跃砖块， BT 虽在
+  Running、tick 虽增长，实际速度却为零。
+
+**独立 ABP 与动画验收**
+
+- 本次复用 ABP 的 native EventGraph 可见 Initialize/UpdateAnimation、
+  `CastToCharacter`、CharacterMovement、velocity、GroundSpeed、ShouldMove、
+  IsFalling 和 Direction 路线。
+
+**Windows 打包前的静态检查**
+
+- 本次 CL 60351404 的 UAT/UBT 使用 .NET 10， Windows SDK 最低 22621、主版本
+  26100；14.51 MSVC 在该构建被禁用。
+- 本次 Cook 在所有本地地址得到 HTTP 404 后阻塞于旧 hostname；保留日志，核对并停
+  止自己的 cook 进程，再隔离确认为旧缓存的单个 marker。
+
+

@@ -2,13 +2,16 @@
 
 ## Use This When
 
-- Texture origin, generation prompt, original file, import settings, or packed-channel history may be lost during delivery.
+- Texture origin, generation prompt, original file, import settings, or
+  packed-channel history may be lost during delivery.
 - A material should become reusable stock and needs source/rights/import metadata.
-- RMA/ORM/Opacity/Emissive inputs were generated, repaired, packed, or imported through several tools.
+- RMA/ORM/Opacity/Emissive inputs were generated, repaired, packed, or imported
+  through several tools.
 
 ## Purpose
 
-`material_source_provenance.py` builds a texture provenance manifest for material delivery. It combines:
+`material_source_provenance.py` builds a texture provenance manifest for
+material delivery. It combines:
 
 - material contract texture requirements
 - delivery package texture requirements

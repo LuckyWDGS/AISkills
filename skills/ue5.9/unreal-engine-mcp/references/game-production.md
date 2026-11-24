@@ -1,11 +1,21 @@
 # 从玩法到可玩 Demo：UE 5.9 制作流程
 
 用于制作完整的小型游戏、垂直切片或包含过场的关卡。共享 MCP client 是传输层，
-Blueprint / CharacterMovement / AI / UMG / Sequencer 等正式运行系统负责游戏逻辑；
-不能把编辑器 Python tick 或不断设置 Actor 位置的制作脚本当成游戏实现。
-本页操作合同针对 5.9；设计原则可复用，但 5.8 工具名、输入字段和 Python 环境
-须走该版本的参考，不能照抄本页调用。5.9 先读 [版本审计](ue-5.9-preview-audit.md)；评估 Canvas、生成动画、光照或 Web
-目标时读 [生产功能矩阵](ue-5.9-production-feature-matrix.md)。
+Blueprint / CharacterMovement / AI / UMG / Sequencer 等正式运行系统负责游戏逻
+辑；不能把编辑器 Python tick 或不断设置 Actor 位置的制作脚本当成游戏实现。本页操
+作合同针对 5.9；设计原则可复用，但 5.8 工具名、输入字段和 Python 环境须走该版本
+的参考，不能照抄本页调用。5.9 先读 [版本审计](ue-5.9-preview-audit.md)；评估
+Canvas、生成动画、光照或 Web 目标时读
+[生产功能矩阵](ue-5.9-production-feature-matrix.md)。
+
+## 目录
+
+- [制作顺序与资产合同](#制作顺序与资产合同)
+- [Enhanced Input 与角色配置](#enhanced-input-与角色配置)
+- [UMG、音频与交互](#umg音频与交互)
+- [过场、恢复与生命周期](#过场恢复与生命周期)
+- [运行测试与发布](#运行测试与发布)
+- [验证记录](#验证记录)
 
 ## 制作顺序与资产合同
 
@@ -86,19 +96,16 @@ SoundWaveToolset.ImportFile 可以把已准备的音频导入候选包。记录�
 
 ## 过场、恢复与生命周期
 
-序列可保留 tagged empty possessable，在 CreateLevelSequencePlayer 后用独立的
-LevelSequenceActor SetBindingByTag 绑定本次地图里的相机。CameraCut 必须绑定真实
-camera，保存关键帧不代表观众看到该镜头。自然结束 OnFinished 与显式 Stop 的
-OnStop 分别接入正常游玩中的共用 FinishIntro。保留幂等恢复：先置标记、解除自己的
-委托，再按该会话需要 Stop/Restore，恢复 ViewTarget、MovementMode、游戏输入与
-HUD。要覆盖自然完成、Skip、显式 Stop 和过场中重开。
+CameraCut 必须绑定真实 camera，保存关键帧不代表观众看到该镜头。自然结束
+OnFinished 与显式 Stop 的 OnStop 分别接入正常游玩中的共用 FinishIntro。保留幂等
+恢复：先置标记、解除自己的委托，再按该会话需要 Stop/Restore，恢复 ViewTarget、
+MovementMode、游戏输入与 HUD。要覆盖自然完成、Skip、显式 Stop 和过场中重开。
 
-世界 teardown 与正常 FinishIntro 分开。LevelSequenceActor 可先执行 EndPlay，
-其内部 Stop/TearDown 后 SequencePlayer 的 UObject 仍然有效；IsValid 不能证明
-MovieScene 内部共享状态仍可恢复。本次 5.9 独立包曾因玩家 EndPlay 再次调用
-RestoreState，在退出时触发 SharedPointer 断言。玩家 EndPlay 不重复 Stop/
-RestoreState，也不复用恢复玩法控制的 FinishIntro；只解除自己绑定的委托，移除
-自己的输入映射、HUD 等资源。播放器的内部 teardown 由拥有者处理。
+世界 teardown 与正常 FinishIntro 分开。LevelSequenceActor 可先执行 EndPlay，其内
+部 Stop/TearDown 后 SequencePlayer 的 UObject 仍然有效；IsValid 不能证明
+MovieScene 内部共享状态仍可恢复。玩家 EndPlay 不重复 Stop/ RestoreState，也不复
+用恢复玩法控制的 FinishIntro；只解除自己绑定的委托，移除自己的输入映射、HUD 等资
+源。播放器的内部 teardown 由拥有者处理。
 
 退出玩法时清理自己创建的 Widget、输入映射、timer、委托、AI 任务与临时对象。
 重开可以用受控的 OpenLevel 重建整个单局；在解除暂停后发起，不能只把玩家传回
@@ -110,13 +117,12 @@ MRQ 复用；另做有地图 possessable 的 render sequence 并验证绑定解�
 记录其 frame/drop 警告，不把低帧率录屏的观感当 GPU 性能。
 
 本构建的 viewport MP4 不含音轨。需要有声演示时，先查询
-`AudioMixerLibrary.start_recording_output/stop_recording_output`，录制同一个 game
-world 的主混音；WAV 导出目录相对 `Saved/BouncedWavFiles`，不是任意绝对路径。
-等待文件完成并检查时长、非零样本和峰值，再按游戏时间对齐并封装真实音轨。
-后台 realtime 音频可能被应用失焦静音：本次确实生成了全零 WAV。先查 live
-`au.DisableAppVolume`；为捕获临时改值时记录原值并在 finally 恢复，不改用户
-长期配置，也不以合成音效代替实际游戏录音。非零混音仍不等于五种事件音效都
-已逐一试听、空间化或混音预算通过。
+`AudioMixerLibrary.start_recording_output/stop_recording_output`，录制同一个
+game world 的主混音；WAV 导出目录相对 `Saved/BouncedWavFiles`，不是任意绝对路
+径。等待文件完成并检查时长、非零样本和峰值，再按游戏时间对齐并封装真实音轨。先查
+live `au.DisableAppVolume`；为捕获临时改值时记录原值并在 finally 恢复，不改用户
+长期配置，也不以合成音效代替实际游戏录音。非零混音仍不等于五种事件音效都已逐一试
+听、空间化或混音预算通过。
 
 ## 运行测试与发布
 
@@ -160,25 +166,20 @@ Development 回归驱动应同时要求开发构建和显式 QA 参数，用单�
 两帧，再 `Input.-key`；清理日志记录起止帧，并在退出前确认没有未完成的释放。
 这是测试驱动的输入状态处理，不应通过改变生产 CharacterMovement 来掩盖。
 
-每个进程保留已核对范围的包文件哈希、启动参数、创建/退出时间、最终状态与对应日志，拒绝任何
-failed check、Blueprint runtime error、ensure、超时或强杀。退出码 0 单独不足以通过。
-本次清单覆盖运行 exe 与 PAK/UTOC/UCAS，不是每个散装 DLL/文件；需要完整发行物
-完整性验收时另列全包 manifest，不把一个 exe 的 SHA 当作整个包的身份。
-跨进程存档要求第二进程复用同一个隔离 UserDir，核对磁盘哈希、设置、检查点和金币 ID；
-OpenLevel、内存对象和 fixture 字节往返不能替代。设置 Apply/Discard/Defaults、保存失败
-提示、保存后退出与退出不保存应按产品分别验收。
+每个进程保留已核对范围的包文件哈希、启动参数、创建/退出时间、最终状态与对应日
+志，拒绝任何 failed check、Blueprint runtime error、ensure、超时或强杀。退出码 0
+单独不足以通过。跨进程存档要求第二进程复用同一个隔离 UserDir，核对磁盘哈希、设
+置、检查点和金币 ID； OpenLevel、内存对象和 fixture 字节往返不能替代。设置
+Apply/Discard/Defaults、保存失败提示、保存后退出与退出不保存应按产品分别验收。
 
 路线验收使用产品行为，不要求测试脚本执行恰好某个次数的跳跃。此次修正了过度
 固定的跳跃次数断言，保留旧失败记录；最终额外匹配同帧的 SpaceBar keydown 与
 跳跃事件，以及后续 Playing 状态的 jumpcount=2 样本。每项证据应位于本 case 的
 boot 与 result 之间，不能用旧日志、另一个 case 或退出后的记录满足断言。
 
-2026-11-16 的最终同一 Windows Development 包，实际通过正式映射输入通关
-（3 命、6 金币、真实落地检查点、胜利保存）、菜单重开、设置保存退出及独立
-进程读档。两个模拟轴释放均经过两帧零值；各进程自然退出 0，未出现本轮 runtime
-error 或 ensure。完整路线、设置写/读、重开分别验收，不将成功退出单独当通关。
-过场中 1 秒主动结束的独立用例仅验 teardown，保留 phase=Intro 和 EndPlay 记录，
-不要求它产出通关 result，也不能用这种定时结束代替正常玩家退出路径。
+完整路线、设置写/读、重开分别验收，不将成功退出单独当通关。过场中 1 秒主动结束的
+独立用例仅验 teardown，保留 phase=Intro 和 EndPlay 记录，不要求它产出通关
+result，也不能用这种定时结束代替正常玩家退出路径。
 
 首次 D3D12 PSO 清理可能在正式退出请求后继续较久。区分带时间戳的 QA 成功、退出动作、
 `RequestExitWithStatus`、`PreExit` 与真实进程终止；完整证据可解释较长 teardown。
@@ -186,10 +187,9 @@ error 或 ensure。完整路线、设置写/读、重开分别验收，不将成
 标记、缺少动作/请求顺序或失败检查仍拒绝通过；不要为了绿灯放宽运行时错误检查。
 
 此次 UAT 曾尝试重建被编辑器加载的项目插件 DLL，失败后按已单独编译成功的 Editor
-模块使用 `-nocompileeditor`。Cook 的 Zen store 还出现失效 oplog；本构建官方参数是
-`-SkipZenStore`，可经 UAT 的 `-AdditionalCookerOptions=-SkipZenStore` 传递，而不是
-猜测 `-NoZenStore`。保留失败日志，仅处理已核对归属的 cook 进程与本次生成的 store
-描述文件；不修改引擎或全局缓存，不将这种本地恢复方式作为每次打包的默认清理。
+模块使用 `-nocompileeditor`。Cook 的 Zen store 还出现失效 oplog；本构建官方参数
+是 `-SkipZenStore`，可经 UAT 的 `-AdditionalCookerOptions=-SkipZenStore` 传递，
+而不是猜测 `-NoZenStore`。
 
 ### 独立进程的原生 Agent 采集
 
@@ -202,13 +202,11 @@ error 或 ensure。完整路线、设置写/读、重开分别验收，不将成
 ```
 
 导出 `Saved/Agent/<name>.png`、环境 `.json` 和 `.perf.json`；后者含 frame/game/
-render/GPU 的 avg/p50/p95/p99/max。检查文件、实际图片、上下文、采样数与进程退出码。
-另外读取 `LogAgentBarrier` / `UE_RUN BARRIER` 的 `complete`、shader jobs 和
-streaming left；当前 capture 实现忽略 barrier 的完成返回值，退出 0 / PNG 存在
-只证明截图写入，不能单独证明资源已稳定。本次 barrier 明确 complete=true，
-shader jobs / streaming left 均为 0。
-本次独立包生成 960×540 图、D3D12/SM6/map/GameMode 上下文及 60 帧/2 秒统计，
-正常返回 0。30 fps limiter 下的短样本不是整关性能或目标平台预算。
+render/GPU 的 avg/p50/p95/p99/max。检查文件、实际图片、上下文、采样数与进程退出
+码。另外读取 `LogAgentBarrier` / `UE_RUN BARRIER` 的 `complete`、shader jobs 和
+streaming left；当前 capture 实现忽略 barrier 的完成返回值，退出 0 / PNG 存在只
+证明截图写入，不能单独证明资源已稳定。30 fps limiter 下的短样本不是整关性能或目
+标平台预算。
 
 `Agent.Capture` 会把全局 time dilation 暂改为 0.0001，等待异步工作，再恢复为
 1.0；它不是无状态截图，也不保留任意原始 dilation。用于新起的测试进程，不能
@@ -219,3 +217,29 @@ Fade 中；不能代替 HUD、连续动画或完整游玩验收。其异步 barr
 交付应包含启动/控制说明、地图或包、可见截图/视频、已验收用例和明确缺口。
 本机脚本、schema、日志和绝对路径放 ignored session；可复用的合同与陷阱进入技能，
 实验资产不提交进技能仓库。5.9 测试不能冒称 5.8 runtime 回归。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+**过场、恢复与生命周期**
+
+- 序列可保留 tagged empty possessable，在 CreateLevelSequencePlayer 后用独立的
+  LevelSequenceActor SetBindingByTag 绑定本次地图里的相机。
+- 本次 5.9 独立包曾因玩家 EndPlay 再次调用 RestoreState，在退出时触发
+  SharedPointer 断言。
+- 后台 realtime 音频可能被应用失焦静音：本次确实生成了全零 WAV。
+
+**运行测试与发布**
+
+- 本次清单覆盖运行 exe 与 PAK/UTOC/UCAS，不是每个散装 DLL/文件；需要完整发行物完
+  整性验收时另列全包 manifest，不把一个 exe 的 SHA 当作整个包的身份。
+- 2026-11-16 的最终同一 Windows Development 包，实际通过正式映射输入通关（3 命、
+  6 金币、真实落地检查点、胜利保存）、菜单重开、设置保存退出及独立进程读档。两个
+  模拟轴释放均经过两帧零值；各进程自然退出 0，未出现本轮 runtime error 或
+  ensure。
+- 保留失败日志，仅处理已核对归属的 cook 进程与本次生成的 store 描述文件；不修改
+  引擎或全局缓存，不将这种本地恢复方式作为每次打包的默认清理。
+- 本次 barrier 明确 complete=true， shader jobs / streaming left 均为 0。本次独
+  立包生成 960×540 图、D3D12/SM6/map/GameMode 上下文及 60 帧/2 秒统计，正常返回
+  0。

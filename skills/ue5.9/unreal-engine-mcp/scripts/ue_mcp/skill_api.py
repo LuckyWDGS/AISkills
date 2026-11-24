@@ -11,8 +11,9 @@ from typing import Any
 from . import remote as _remote
 from .capture import capture_report, parse_pose  # noqa: F401  (re-exported for sibling skills)
 from .client import UnrealMcpClient
+from .editor import BUNDLE_ENGINE
 from .paths import default_cache_dir, default_session_dir
-from .protocol import DEFAULT_PROTOCOL, DEFAULT_URL, _decode_text_value
+from .protocol import DEFAULT_PROTOCOL, DEFAULT_URL, McpError, _decode_text_value
 
 
 DEFAULT_MCP_URL = os.environ.get("UNREAL_MCP_URL", DEFAULT_URL)
@@ -38,10 +39,29 @@ def python_remote(skill_root: Path | None = None) -> ModuleType:
     return _remote
 
 
+def refuse_unported(client: UnrealMcpClient, helper: str = "") -> None:
+    """Stop a helper that still calls UE 5.8 tool names before it sends anything to a UE 5.9 editor.
+
+    Some of those helpers mix owners that still exist on 5.9 with names that do
+    not, so letting one run could write first and fail afterwards.
+    """
+    names = {item["name"].rsplit(".", 1)[-1] for item in client.list_toolsets()}
+    version = str(client.editor_owner().get("engine_version") or "")
+    if version.startswith(f"{BUNDLE_ENGINE}.") or "PythonScriptingTools" in names:
+        raise McpError(
+            f"{helper or 'This helper'} is not ported to UE {BUNDLE_ENGINE}: it still calls UE 5.8 tool names and "
+            "argument shapes. No tool call was sent. Use the native route in this skill's "
+            f"references/ue-{BUNDLE_ENGINE}-*.md, or link skills/ue5.8 for a UE 5.8 editor "
+            "(tools/install.ps1 -UEVersion 5.8)."
+        )
+
+
 def connect(skill_root: Path | None = None, *, url: str = DEFAULT_MCP_URL, timeout: float = 180,
-            project: str | None = None) -> UnrealMcpClient:
+            project: str | None = None, contract: str = BUNDLE_ENGINE) -> UnrealMcpClient:
     """An opened client with the CLI's defaults: schema cache, resumed session, optional project guard.
 
+    ``contract`` is the tool contract the caller was written for. A helper that
+    is still on the UE 5.8 names passes ``"5.8"`` and is refused on a 5.9 editor.
     Call ``close()`` when done; it keeps the session for the next run.
     """
     del skill_root
@@ -50,13 +70,21 @@ def connect(skill_root: Path | None = None, *, url: str = DEFAULT_MCP_URL, timeo
         cache_dir=default_cache_dir(), session_dir=default_session_dir(),
         expected_project=project or os.environ.get("UE_MCP_PROJECT"),
     )
-    return client.open()
+    client.open()
+    if contract != BUNDLE_ENGINE:
+        try:
+            refuse_unported(client)
+        except McpError as exc:
+            client.close()
+            # A helper's own error handling expects editor failures, not this; end the run with one clear line.
+            raise SystemExit(f"error: {exc}") from None
+    return client
 
 
 def run_tool_script(skill_root: Path | None, script: str, *, url: str = DEFAULT_MCP_URL, timeout: float = 180,
-                    project: str | None = None) -> Any:
-    """Run one ProgrammaticToolset script; any failing tool call fails the whole script."""
-    client = connect(skill_root, url=url, timeout=timeout, project=project)
+                    project: str | None = None, contract: str = "5.8") -> Any:
+    """Run one UE 5.8 ProgrammaticToolset script; refused on a UE 5.9 editor (use ``execute_python``)."""
+    client = connect(skill_root, url=url, timeout=timeout, project=project, contract=contract)
     try:
         return client.run_tool_script(script)
     finally:
@@ -64,9 +92,10 @@ def run_tool_script(skill_root: Path | None, script: str, *, url: str = DEFAULT_
 
 
 def call_tool(skill_root: Path | None, toolset: str, tool: str, arguments: dict[str, Any], *,
-              url: str = DEFAULT_MCP_URL, timeout: float = 60, project: str | None = None) -> Any:
+              url: str = DEFAULT_MCP_URL, timeout: float = 60, project: str | None = None,
+              contract: str = BUNDLE_ENGINE) -> Any:
     """Call one tool and return the decoded result."""
-    client = connect(skill_root, url=url, timeout=timeout, project=project)
+    client = connect(skill_root, url=url, timeout=timeout, project=project, contract=contract)
     try:
         return _decode_text_value(client.call_resolved_tool(toolset, tool, arguments))
     finally:
@@ -75,7 +104,7 @@ def call_tool(skill_root: Path | None, toolset: str, tool: str, arguments: dict[
 
 def execute_python(skill_root: Path | None, script: str, *, url: str = DEFAULT_MCP_URL,
                    timeout: float = 180, project: str | None = None) -> Any:
-    """5.9 官方执行入口；调用方先读 read_me 并查过所用 Unreal symbol。"""
+    """Run a script through UE 5.9 ``PythonScriptingTools``; read ``read_me`` and look up the symbols first."""
     client = connect(skill_root, url=url, timeout=timeout, project=project)
     try:
         return client.execute_python(script)

@@ -1,8 +1,32 @@
-# Shared conventions for the UE skills
+# Shared conventions for the UE 5.8 skills
 
 `unreal-engine-mcp`, `unreal-sequencer`, `unreal-material-artist`,
-`niagara-vfx-artist` and `vfx-flipbook-generator` follow these rules. Each skill adds only its
-domain-specific details.
+`niagara-vfx-artist` and `vfx-flipbook-generator` follow these rules. Each skill
+adds only its domain-specific details.
+
+## Contents
+
+- [Engine version and tool status](#engine-version-and-tool-status)
+- [Requirements](#requirements)
+- [Editor connection](#editor-connection)
+- [Execution boundaries](#execution-boundaries)
+- [Evidence and logs](#evidence-and-logs)
+- [Chinese module annotations](#chinese-module-annotations)
+- [Documentation conventions](#documentation-conventions)
+
+## Engine version and tool status
+
+This bundle (`skills/ue5.8/`) targets **UE 5.8 only** and was verified on UE
+5.8.4. The live schema always wins over a name written here. The shared client
+refuses an editor of another engine line before it sends a request. For a UE
+5.9 editor the user links `skills/ue5.9/` with
+`tools/install.ps1 -UEVersion 5.9`; never switch the linked bundle yourself and
+never mix files from the two bundles.
+
+Every script and tool in these skills is either `local` (runs without an
+editor: planning, image QA, packing, manifests, reports) or `5.8`
+(editor-connected through the UE 5.8 toolsets). Each skill lists its tools
+with this label.
 
 ## Requirements
 
@@ -14,7 +38,7 @@ domain-specific details.
 - `python skills/ue5.8/unreal-engine-mcp/scripts/run_offline_tests.py` runs all five
   offline suites with non-loopback networking blocked; CI runs it on Ubuntu and
   Windows with Python 3.10 and 3.12.
-- A UE 5.8+ editor with Epic's `ModelContextProtocol` plugin; Python Remote
+- A UE 5.8 editor with Epic's `ModelContextProtocol` plugin; Python Remote
   Execution enabled in the target project for MCP-gap operations.
 
 ## Editor connection
@@ -113,5 +137,28 @@ timer expiry, state restoration or object destruction.
   keyed by asset/graph/module ID as the complete default delivery. The bundled
   MCPBlueprintMetadata plugin is an optional project extension for explicitly
   requested hover metadata; do not install or require it automatically.
-- Details and naming: [Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations)
-  and [Blueprint delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules).
+- Details and naming:
+  [Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations)
+  and
+  [Blueprint delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules).
+
+## Documentation conventions
+
+These rules keep the five skills consistent. `tools/ue_docs_lint.py` checks the
+mechanical ones.
+
+- **Language.** `SKILL.md`, tool documentation and rules are written in
+  English. Verification records are written in Chinese under a final
+  `## 验证记录` heading. A reference file uses one language for its prose.
+- **Rules and records are separate.** A reference states rules and known
+  limits first, in the present tense. Dated observations, measured numbers and
+  the list of what was not run go under `## 验证记录`.
+- **Contents.** A reference longer than 150 lines starts with a `## Contents`
+  list.
+- **Line width.** Prose wraps at 80 columns (CJK characters count as two).
+  Tables, code blocks, headings and link targets are exempt.
+- **Descriptions.** A skill's `description` says what the skill does and then
+  when to use it ("Use when ..."), names the trigger words a user would type,
+  and does not name an assistant.
+- **One home per fact.** `SKILL.md` routes to references and does not repeat
+  them. Tool commands live in the skill's tool reference.

@@ -14,7 +14,7 @@ if sys.version_info < (3, 10):  # dataclass(slots=True), str.removesuffix
 
 from .batch import _expectation_met, load_batch, run_batch, validate_batch
 from .client import UnrealMcpClient
-from .editor import check_expected_project, endpoint_owner
+from .editor import BUNDLE_ENGINE, check_bundle_engine, check_expected_project, endpoint_owner
 from .paths import default_cache_dir, default_session_dir, default_state_dir
 from .protocol import (
     DEFAULT_PROTOCOL, DEFAULT_URL, McpError, SessionExpired, _check_tool_result, _decode_text_value, _extract_text,
@@ -23,6 +23,7 @@ from .protocol import (
 from .schema import _schema_tools, brief_tools, render_brief
 
 __all__ = [
+    "BUNDLE_ENGINE", "check_bundle_engine",
     "DEFAULT_PROTOCOL", "DEFAULT_URL", "McpError", "SessionExpired", "UnrealMcpClient", "brief_tools",
     "check_expected_project", "default_cache_dir", "default_session_dir", "default_state_dir", "endpoint_owner",
     "load_batch", "render_brief", "run_batch", "unwrap_result", "validate_batch",

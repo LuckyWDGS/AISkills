@@ -1,25 +1,32 @@
-# UE 5.9 Niagara control and script descriptions
+# UE 5.9 native Niagara control
 
-Verified on UE 5.9.0 Preview, CL 60351404, on 2026-11-11. All writes used
-isolated candidate assets and background Epic MCP. No Niagara editor was
-opened and no PIE simulation or visual acceptance was performed.
+Background authoring and readback of Niagara systems through the native MCP
+tools. Structural edits, compile state and runtime behaviour are separate
+[evidence levels](../../unreal-engine-mcp/references/shared-conventions.md#evidence-levels);
+what was run is listed under [验证记录](#验证记录).
 
-## Route from the real schemas
+## Contents
 
-Read the core [5.9 audit](../../unreal-engine-mcp/references/ue-5.9-preview-audit.md).
-The five `NiagaraToolsets.NiagaraToolset_*` toolsets remain present; most
-System method names are retained. Asset operations now come from native
+- [Route from the live schemas](#route-from-the-live-schemas)
+- [Script descriptions](#script-descriptions)
+- [Background control](#background-control)
+- [Limits](#limits)
+- [Small one-shot gameplay feedback](#small-one-shot-gameplay-feedback)
+- [验证记录](#验证记录)
+
+## Route from the live schemas
+
+Discover the five `NiagaraToolsets.NiagaraToolset_*` toolsets (`System`,
+`Assets`, `Component`, `Blueprint`, `Info`). Asset operations come from
 `EditorToolset.AssetToolset` with signatures such as `FindAssets`, `Duplicate`,
-`SaveAsset` and `IsDirty`. Discover every used schema, including nested value
-variants, instead of translating only old toolset names.
+`SaveAsset` and `IsDirty`. Describe every tool you call, including nested value
+variants.
 
-On 5.9 compose registered calls through `PythonScriptingTools` after reading
-`read_me` and looking up the full tool signatures. Use `await call_tool(...)`;
-put public `unreal.*` APIs there only for a native-tool gap. The older bundled
-audit/assistant scripts assume the 5.8 `ProgrammaticToolset` and asset-tool
-contracts. Their offline tests do not prove that they execute on a 5.9 editor.
+Compose registered calls through `PythonScriptingTools` after reading `read_me`
+and looking up the full tool signatures. Use `await call_tool(...)`, and reach
+a public `unreal.*` API there for a native-tool gap.
 
-## New native script-description write
+## Script descriptions
 
 `NiagaraToolset_Assets.SetNiagaraScriptDescription` takes:
 
@@ -37,17 +44,14 @@ out the asset. The result's `bSuccess` and `versionsUpdated` describe the
 metadata write. Check the selected policy against the script's actual version
 history before choosing `All`.
 
-The acceptance test duplicated an Epic SpawnRate script into the candidate
-folder, wrote Chinese text to `Exposed`, and received `bSuccess=true` with one
-version updated. `GetNiagaraScriptDigest(objectPath).description` matched
-exactly. After an explicit scoped save and `ReloadAsset`, the digest still
-matched. `Latest` / `All` across a multi-version script were not tested.
+Read the description back with `GetNiagaraScriptDigest(objectPath).description`.
+It survives a scoped save and `ReloadAsset`. `Latest` and `All` across a
+multi-version script are untested.
 
-Use this official write for module explanations before considering a custom
-metadata extension. Keep the stable module ID in the explanation and preserve
-parameter namespaces and bindings.
+Use this write for module explanations. Keep the stable module ID in the text
+and preserve parameter namespaces and bindings.
 
-## Background control that was exercised
+## Background control
 
 Template-first `CreateNiagaraSystem(assetName, assetPath, templateSystem)`
 returned a real system reference. The candidate contained a CPU sprite emitter
@@ -94,26 +98,21 @@ a static switch, re-query topology before touching dependent inputs. Compile
 success alone does not prove that a user parameter is bound to the intended
 effect or that runtime output looks correct.
 
-## Boundaries
+## Limits
 
-The source comparison found one added Niagara decorated declaration, the
-script-description setter. Existing renderer/stack/user-variable control is
-verified retained capability, not evidence that those operations first arrived
-in 5.9. No activation/completion/pooling, dynamic-input rewrite, GPU simulation,
-material visual integration, mobile performance or engine 5.8 runtime regression
-was covered here.
+Activation, completion, pooling, dynamic-input rewrites, GPU simulation,
+material visual integration and mobile performance are unverified here.
 
-During a save, this editor sometimes refused a following call with `Not run ...
-made no changes` because a slow task was active. Wait and retry only that
-explicitly unexecuted operation. For a timeout, reconcile the actual asset
-state before considering a write retry.
+During a save the editor can refuse the following call with `Not run ... made
+no changes` because a slow task is active. Wait and retry only that operation.
+After a timeout, reconcile the actual asset state before another write.
 
 ## Small one-shot gameplay feedback
 
-A separate 5.9 authoring pass created two short CPU sprite bursts from
+Two short CPU sprite bursts were authored from
 `/Niagara/DefaultAssets/Templates/Systems/DirectionalBurst.DirectionalBurst`.
-Do not infer topology from this template's human description: the live template
-contained both `DirectionalBurst` sprites and `LocationBasedRibbon`.
+Read a template's topology instead of trusting its description: this one
+contains both `DirectionalBurst` sprites and `LocationBasedRibbon`.
 
 The validated authoring sequence, on new candidate copies only, was:
 
@@ -161,6 +160,26 @@ Integration candidates are the native Niagara spawn-at-location API or a
 NiagaraComponent with the intended system assigned and a reset activation.
 Discover their exact live signature before use. Test the actual trigger,
 visibility, completion/auto-destroy, repeated activation and owner lifecycle in
-the game. A Once enum plus clean compilation does not itself prove these
-runtime behaviours, pooling safety, visual quality or frame cost. This authoring
-pass did not start PIE, alter a map or move the user's camera.
+the game. A Once enum plus a clean compile leaves those runtime behaviours,
+pooling safety, visual quality and frame cost to be tested.
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404；所有写入只针对独立候选资产，未打开
+Niagara 编辑器。
+
+- 2026-11-11：脚本说明写入。复制 Epic SpawnRate 脚本到候选目录，向 `Exposed`
+  写入中文，返回 `bSuccess=true`、更新 1 个版本；digest 回读一致，指定保存并
+  `ReloadAsset` 后仍一致。
+- 同日：后台控制。模板创建系统（CPU sprite + CPU ribbon），system 注释、user
+  float（默认 0.75、中文描述）、`SubImageSize` 1×1→2×2→还原、`Spawn Time`
+  0→0.125→还原均回读一致；编译 UpToDate、0 errors / 0 warnings；
+  `GetStackIssues` 为 0 错误、0 警告、5 条版本提示；保存后 `IsDirty=false`。
+- 源码对比：5.9 仅新增一个 Niagara 声明（脚本说明 setter）；renderer / stack /
+  user variable 控制为延续能力。
+- 小型一次性反馈：两个 CPU sprite burst 完成移除 ribbon、关闭事件源、
+  `Loop Duration`=0.12 s、burst 数量 16 / 40、寿命、颜色、尺寸、锥形速度等
+  写入；编译 UpToDate，stack issues 为 0 错误、0 警告、2 条版本提示；只保存
+  这两个系统。
+- 未执行：PIE 模拟与视觉验收、激活/完成/池化、动态输入链保留、GPU 模拟、
+  材质视觉整合、移动端性能。

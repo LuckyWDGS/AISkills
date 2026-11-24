@@ -4,22 +4,31 @@ Use this when asked what an existing Blueprint does, whether its connection
 lines can be obtained, or which exact branch/pin should change. This workflow
 reads graph topology; it does not run the gameplay or prove every path executes.
 
+## Contents
+
+- [Read-only capture](#read-only-capture)
+- [What the returned data means](#what-the-returned-data-means)
+- [Turn topology into an accurate explanation](#turn-topology-into-an-accurate-explanation)
+- [Animation and specialized graphs](#animation-and-specialized-graphs)
+- [Maintenance](#maintenance)
+- [验证记录](#验证记录)
+
 ## Read-only capture
 
 1. Identify the intended editor/project and asset. Use `builtin_mcp.py status`,
-   discover the live toolsets and inspect BlueprintTools, AssetTools and
-   EditorAppToolset schemas. Do not start a custom bridge to do these reads.
+   discover the live toolsets and inspect the `BlueprintToolset`,
+   `AssetToolset` and `EditorAppToolset` schemas.
 2. Resolve asset searches to a package path, such as `/Game/Blueprints/BP_Player`.
    Blueprint UObject parameters use the object path
    `/Game/Blueprints/BP_Player.BP_Player`. Prefer a returned ref over constructing
    one. A generated class ending `_C` is not the Blueprint asset.
-3. Check `IsPIERunning`. The tested `AssetTools.is_dirty` must run outside PIE
-   and takes a **package path**. Do not stop the user's PIE automatically for
+3. Check `IsPIERunning`. `AssetToolset.IsDirty` runs outside PIE and takes a
+   **package path**. Do not stop the user's PIE automatically for
    inspection. Preserve an existing dirty state; never save or clear it to make
    a report appear clean.
-4. Read parent, member variables, dispatchers and `list_graphs`. For each returned
-   graph, `find_nodes` with `title: ""` and no class/entry filter lists the
-   supported nodes; batch `get_node_infos` for their actual refs. Entry-only
+4. Read parent, member variables, dispatchers and `ListGraphs`. For each returned
+   graph, `FindNodes` with `title: ""` and no class/entry filter lists the
+   supported nodes; batch `GetNodeInfos` for their actual refs. Entry-only
    filtering misses pure data nodes and is unsuitable for a full wire inventory.
 5. Build and validate edges as below. Recheck editor state and dirty status.
    An optional second snapshot detects observed edits during capture. Multiple
@@ -40,17 +49,22 @@ return nonzero; a valid partial API view is not a claim of universal coverage.
 For other locales, repeat `--exec-type <actual-type-id>` to add execution types.
 Defaults are `Exec` and `执行`. Run `--help` for endpoint, timeout and batch size.
 
-Avoid `find_node_types`, `find_node_categories` and `get_node_type_pins` on the
-authored asset during read-only capture: the tested implementation creates and
-removes temporary nodes and can dirty the package. Do not compile, arrange,
-connect, set defaults, invoke construction/gameplay, or use DSL writes merely to
-inspect. An empty localized DSL is not permission to rebuild the graph.
+Keep the node-type discovery tools (node types, categories, type pins) away
+from the authored asset during a read-only capture: they create and remove
+temporary nodes and can dirty the package. A capture never compiles, arranges,
+connects, sets defaults, invokes construction or gameplay, or writes DSL. A DSL
+read that reports `bDslOmitted` is a partial view, not grounds to rebuild the
+graph.
 
 ## What the returned data means
 
-`get_node_infos` returns node refs, `type_id` (`Category|Title`), graph positions,
-and `input_pins` / `output_pins`. Each pin includes `name`, `value`, `type_id`,
-`pin_id` and `connected_pins`. A PinID has this structure:
+`GetNodeInfos` returns node refs, a type ID (`Category|Title`), graph positions
+and input/output pins. The native fields are camelCase (`typeId`, `inputPins`,
+`outputPins`, `pinId`, `connectedPins`, `indexId`). The exporter writes them
+as `type_id`, `input_pins`, `output_pins`, `pin_id`, `connected_pins` and
+`index_id` in its reports; use those report names for reading only and pass
+the native shape back to a tool. Each pin includes `name`, `value`, its type ID,
+pin ID and connected pins. A report PinID has this structure:
 
 ```json
 {
@@ -126,27 +140,28 @@ gameplay, pose and transition-rule nodes, but excludes some UEdGraphNode branche
 including animation state/entry/transition nodes and comments. Therefore a
 state-machine container can return zero nodes even while its pose and transition
 graphs are available. Counts describe **returned nodes and their wires**.
-`get_node_infos` supplies logical endpoints and node positions, not the UI's
+`GetNodeInfos` supplies logical endpoints and node positions, not the UI's
 Bézier control points, wire routing pixels or runtime debugger trace.
 
-Use [animation-state-machines-mcp.md](animation-state-machines-mcp.md) to inspect
+Use [animation and AI tools](ue-5.9-animation-ai-tools.md) to inspect
 pose output, transition booleans, skeleton/slot compatibility and the exact
 state-topology gap. Discover dedicated StateTree, BehaviorTree and ControlRig
 tools independently. A generic Blueprint graph export is not proof of complete
 specialized state/tree topology or write coverage.
 
-## Verified example and maintenance
-
-A UE 5.8.4 first-person character read returned four graphs and 30 nodes, with
-125 pins and 35 unique wire segments (13 exec, 22 data). Independently derived
-input/output sets matched, all endpoints resolved, and the package stayed clean.
-Move and Aim were called from input events; their axis values passed through
-data wires and reroutes, while Jump/StopJumping used distinct input phases.
-These are fixture-specific counts, not templates to impose on another project.
+## Maintenance
 
 Keep actual asset paths, raw captures and crash/PIE evidence in the project's
-ignored session directory. After an engine upgrade, rerun discovery and a small
-read-only fixture check; revisit localized DSL, node enumeration and package-path
-semantics. Do not freeze a historical tool count or patch engine files to make
-an old client appear compatible. Schema changes should fail visibly and prompt
-a narrow exporter update.
+ignored session directory. After an engine update, rerun discovery and a small
+read-only fixture check, then revisit node enumeration and package-path
+semantics. A schema change should fail visibly and prompt a narrow exporter
+update.
+
+## 验证记录
+
+- 2026-11-11，UE 5.9.0 Preview / CL 60351404：`inspect_blueprint.py` 走原生
+  `BlueprintToolset` 读取拓扑、注释成员和变量分类；重复快照一致，资产 dirty
+  状态不变；`blueprint_lint.py` 不经 Remote Execution。
+- 同一构建：`AnimationStateMachineGraph` 容器图 `FindNodes` 返回空，状态、
+  入口和过渡节点未被枚举；pose 图与 transition-rule 图中的 K2 节点可读。
+- 未执行：编辑进行中的并发快照、中英文以外 locale 的 exec 类型。

@@ -2,9 +2,11 @@
 
 ## Use This When
 
-- 你已经有 audit / texture / acceptance evidence，想系统地产出 PC / Android / low-end 材质降级计划。
+- 你已经有 audit / texture / acceptance evidence，想系统地产出 PC / Android /
+  low-end 材质降级计划。
 - 你不想临交付时才拍脑袋决定“移动端先砍什么”。
-- 你还没有 evidence，但任务一开始就要求 PC / Android / low-end 路线，需要先写可验证的预算假设。
+- 你还没有 evidence，但任务一开始就要求 PC / Android / low-end 路线，需要先写可
+  验证的预算假设。
 
 ## Purpose
 
@@ -16,7 +18,8 @@
 - 透明 overdraw 风险
 - 推荐 fallback MI / switch / 贴图降级策略
 
-没有 evidence 时，不要假装已经验证过平台性能。先写 `planning assumptions`，然后在 material contract / parameter schema / preview plan 里标记为待验证。
+没有 evidence 时，不要假装已经验证过平台性能。先写 `planning assumptions`，然后
+在 material contract / parameter schema / preview plan 里标记为待验证。
 
 ## Pre-Evidence Planning
 
@@ -32,10 +35,14 @@
 Record mobile-specific material risks:
 
 - `Full Precision Mode` can fix precision artifacts but costs more.
-- `Mobile High Quality BRDF`, forward reflections, planar reflections, and some reflection paths can consume extra GPU cost or samplers.
-- Translucent/additive materials are often limited by overdraw and screen coverage before instruction count.
-- Unsupported or platform-qualified shading models/features must be checked against the active engine version and target renderer.
-- Static switches can create permutation pressure; prefer dynamic parameters or separate explicit MIs unless a static branch is proven valuable.
+- `Mobile High Quality BRDF`, forward reflections, planar reflections, and some
+  reflection paths can consume extra GPU cost or samplers.
+- Translucent/additive materials are often limited by overdraw and screen
+  coverage before instruction count.
+- Unsupported or platform-qualified shading models/features must be checked
+  against the active engine version and target renderer.
+- Static switches can create permutation pressure; prefer dynamic parameters or
+  separate explicit MIs unless a static branch is proven valuable.
 
 ## Typical Command
 

@@ -17,7 +17,9 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .editor import check_expected_project, connection_hint, endpoint_owner, same_editor_process
+from .editor import (
+    check_bundle_engine, check_expected_project, connection_hint, endpoint_owner, same_editor_process,
+)
 from .protocol import (
     McpError, SessionExpired, _check_tool_result, _decode_response, _decode_text_value,
     _extract_text, _parse_toolsets, unwrap_result,
@@ -515,6 +517,7 @@ class UnrealMcpClient:
         return self._owner
 
     def _check_expected_project(self) -> None:
+        check_bundle_engine(self.editor_owner())
         if self.expected_project:
             check_expected_project(self.editor_owner(), self.expected_project)
 

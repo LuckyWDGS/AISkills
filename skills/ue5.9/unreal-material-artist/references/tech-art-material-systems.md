@@ -2,14 +2,16 @@
 
 ## Goal
 
-Extend `unreal-material-artist` beyond single-material graph craft into the technical-art layer where materials become a reusable runtime system.
+Extend `unreal-material-artist` beyond single-material graph craft into the
+technical-art layer where materials become a reusable runtime system.
 
 This reference is for decisions like:
 
 - when to use a Master Material versus a Material Function versus a Material Layer
 - how to split authored look from runtime controls
 - how MPC, MID, Niagara, Blueprint, C++, and actor state should divide responsibility
-- how to keep a project's material system scalable instead of becoming a pile of one-off instances
+- how to keep a project's material system scalable instead of becoming a pile of
+  one-off instances
 
 ## Table Of Contents
 
@@ -66,7 +68,8 @@ Use Material Functions for:
 
 - reusable logic chunks
 - math or surface logic shared across multiple masters
-- world-aligned / triplanar / blending / packed-mask decode / normal blending / UV utilities
+- world-aligned / triplanar / blending / packed-mask decode / normal blending /
+  UV utilities
 
 Use Material Instances for:
 
@@ -91,7 +94,8 @@ Use MID for:
 Expect Niagara-owned bindings for:
 
 - per-particle values
-- renderer-driven material semantics like sprite color, dynamic material parameter, ribbon width, or SubUV index
+- renderer-driven material semantics like sprite color, dynamic material
+  parameter, ribbon width, or SubUV index
 
 ## Anti-Patterns
 
@@ -110,10 +114,14 @@ When a look is wrong, trace in this order:
 2. What does the MI override?
 3. Is there an MPC involved?
 4. Is a MID or Blueprint changing it?
-5. If the material expects Niagara-fed values, has Niagara explicitly declared ownership of them?
+5. If the material expects Niagara-fed values, has Niagara explicitly declared
+   ownership of them?
 6. Which carrier actually renders it?
 
-That is why material-side trace and preview-contract checks exist. The hard part is often not "what does the graph do?" but "what inputs does this material expect, and which runtime system is supposed to own them?" The answer to live Niagara ownership itself belongs to `niagara-vfx-artist`.
+That is why material-side trace and preview-contract checks exist. The hard part
+is often not "what does the graph do?" but "what inputs does this material
+expect, and which runtime system is supposed to own them?" The answer to live
+Niagara ownership itself belongs to `niagara-vfx-artist`.
 
 ## Project-Level Design Rule
 
@@ -122,7 +130,8 @@ Every exposed material parameter should answer these questions:
 - Who writes it?
 - At author time or runtime?
 - One asset, one actor, one effect, or whole world?
-- Is it stable enough to live in MI defaults, or dynamic enough to require MID / Niagara / MPC?
+- Is it stable enough to live in MI defaults, or dynamic enough to require MID /
+  Niagara / MPC?
 - What system is allowed to own it?
 
 If those answers are unclear, the material system is already drifting.

@@ -2,6 +2,15 @@
 
 Checked 2026-10-28 (America/Los_Angeles).
 
+## Contents
+
+- [Version and release evidence](#version-and-release-evidence)
+- [Installed Epic source](#installed-epic-source)
+- [Live validation](#live-validation)
+- [Broader developer-capability audit (2026-11-04)](#broader-developer-capability-audit-2026-11-04)
+- [Maintenance boundary](#maintenance-boundary)
+- [Refresh procedure](#refresh-procedure)
+
 ## Version and release evidence
 
 The installed engine's `Engine/Build/Build.version` reports UE 5.8.4,
@@ -10,10 +19,11 @@ Use Build.version rather than directory names as version evidence.
 
 - [UE 5.8 release notes](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-8-release-notes)
   introduce the experimental Unreal MCP server and mention an animation
-  assistant toolset. These are 5.8 release features, not demonstrated 5.8.4 additions.
+  assistant toolset. These are 5.8 release features, not demonstrated 5.8.4
+  additions.
 - [5.8.4 Hotfix Released](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775)
-  was published 2026-10-20. Its published changes do not announce additional
-  MCP tools. They do include material Usage Flags cache refresh, root-pin undo,
+  was published 2026-10-20. Its published changes do not announce additional MCP
+  tools. They do include material Usage Flags cache refresh, root-pin undo,
   shader compiler fixes, and a Niagara audio sampling DI shutdown assertion fix.
 - No 5.8.5 hotfix announcement was returned by the official forum search in
   this audit. This is a dated search result, not a permanent latest-version claim.
@@ -48,10 +58,11 @@ aggregator merely to hide one missing domain dependency.
 
 The same-day live audit enabled Epic's ModelContextProtocol, EditorToolset,
 NiagaraToolsets and ConfigSettingsToolset in a Blueprint project. The editor
-restarted normally and auto-started `http://127.0.0.1:8000/mcp`; official settings
-readback confirmed `/mcp`, port 8000, auto-start and search mode. No UnrealBridge
-plugin was installed or used. Inventory: **25 toolsets / 319 tools**, including
-BlueprintTools 53 and the five Niagara domains 56. These are project counts.
+restarted normally and auto-started `http://127.0.0.1:8000/mcp`; official
+settings readback confirmed `/mcp`, port 8000, auto-start and search mode. No
+custom plugin was installed or used. Inventory: **25 toolsets / 319 tools**,
+including BlueprintTools 53 and the five Niagara domains 56. These are project
+counts.
 
 Successful read-only checks included Blueprint parent/member/functions/graphs,
 CDO and components, actual nodes/pins/connections, official sandboxed batching,
@@ -184,9 +195,7 @@ diagnostic option. Offline tests do not establish a live gameplay pass.
    MCP gap through public `unreal.*` APIs. Record the operation, live tools
    checked, version, and readback. Recheck the gap after engine upgrades.
 
-UnrealBridge has been retired: no custom editor plugin or TCP transport is
-supported. Legacy material/Niagara scripts that call `UnrealBridge*Library`
-fail fast until they are ported to MCP tools.
+No custom editor plugin or TCP transport is supported.
 
 ## Refresh procedure
 

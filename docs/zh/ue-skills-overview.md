@@ -39,16 +39,32 @@ PCG、动画蓝图和状态机已归入 `unreal-engine-mcp`，不需要另装同
 3. 修改前核对目标 `.uproject`、资产和 PIE 状态。写入超时先回读，保护用户未保存内容，只保存本次目标包。
 4. 新建或修改的模块添加中文说明、稳定可搜索 ID、入口与参数注释；保留既有运行时标识符及绑定。
 5. 把静态结构、编译、编辑器采样、实际运行和视觉验收分开记录；未运行的案例不能记成通过。
-6. 官方路由仍有缺口时报告具体边界。已停用的 UnrealBridge 不作为后备；可选元数据扩展也不自动安装。
+6. 官方路由仍有缺口时报告具体边界，不安装自定义插件或 bridge 来补缺口。
 
 ## 版本目录与切换
 
 | 目录 | 对应引擎 | 说明 |
 |---|---|---|
 | `skills/ue5.8/` | UE 5.8（审计于 5.8.4 / CL 58902052） | 稳定基线，首次安装默认使用 |
-| `skills/ue5.9/` | UE 5.9（实测于 5.9.0 Preview / CL 60351404） | 重写共享 client，支持 5.9 原生工具与官方 Python；未做 UE 5.8 live 回归。使用前读 [5.9 审计](../../skills/ue5.9/unreal-engine-mcp/references/ue-5.9-preview-audit.md) 和 [工具覆盖与缺口](../../skills/ue5.9/unreal-engine-mcp/references/ue-5.9-tool-coverage.md) |
+| `skills/ue5.9/` | UE 5.9（实测于 5.9.0 Preview / CL 60351404） | 只使用 5.9 原生工具与官方 MCP Python；正式版的工具名和参数可能变化，调用前以实时 schema 为准。使用前读 [5.9 审计](../../skills/ue5.9/unreal-engine-mcp/references/ue-5.9-preview-audit.md) 和 [工具覆盖与缺口](../../skills/ue5.9/unreal-engine-mcp/references/ue-5.9-tool-coverage.md) |
 
-两套技能名相同，`$unreal-engine-mcp` 等写法不变；Codex 同一时间只链接其中一套：
+每套只对应自己的引擎版本：5.8 包只调用 5.8 的 MCP 工具，5.9 包只调用 5.9 的。
+共享 client 会在发出任何请求前拒绝另一版本的编辑器，并提示应链接哪一套。
+
+每个脚本和工具都带一个状态标签，各技能 `SKILL.md` 的工具表按此标注：
+
+| 标签 | 含义 |
+|---|---|
+| `local` | 不需要编辑器：规划、图像检查、打包、清单、报告 |
+| `5.8` / `5.9` | 连接编辑器，已在对应版本验证 |
+| `untested` | 连接编辑器的版本无关路线，尚未在该构建上运行（仅 5.9 包） |
+| `unported` | 仍按 5.8 工具名编写；在 5.9 编辑器上会在发出调用前被拒绝，改用该技能 `ue-5.9-*.md` 中的原生工具（仅 5.9 包） |
+
+5.9 包中材质、Niagara 的编辑器 helper 和 Sequencer 的旧 builder / 采样 / 预览脚本目前都是
+`unported`，迁移步骤见
+[移植 helper](../../skills/ue5.9/unreal-engine-mcp/references/porting-helpers.md)。
+
+两套技能名相同，`$unreal-engine-mcp` 等写法不变；同一时间只链接其中一套：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\install.ps1 -UEVersion 5.9   # 切到 5.9
@@ -96,7 +112,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\install.ps1
   本包不重复附送 FFmpeg 程序、第三方下载压缩包和本机缓存。
 - 新图生成使用宿主的 `imagegen`，或另装并配置 `cm-imagegen`。
   它们属于可选创作能力；普通蓝图、已有材质、已有特效检查和本地帧图打包不依赖生成服务。
-- `MCPBlueprintMetadata` 源码随基础技能保留，仅用于明确要求的悬浮元数据扩展，默认不编译、不安装。
+- `MCPBlueprintMetadata` 源码只保留在 5.8 包，仅用于明确要求的悬浮元数据扩展，默认不编译、不安装；5.9 包使用原生元数据工具，不附带该扩展。
 
 ## 连接与离线检查
 
@@ -119,7 +135,10 @@ python skills/ue5.8/unreal-engine-mcp/scripts/run_offline_tests.py
 ## 更新与交付边界
 
 - 五个目录尽量作为同一版本整体更新，避免专项技能导入旧版共享客户端。
-- UE 5.8+ 是目标接口范围；记录的 5.8.4 能力和工具数是历史审计结果，不是所有后续版本都已通过的承诺。
+- 每套只面向自己的引擎版本；记录的能力和工具数是对应构建的实测结果，不是对后续版本的承诺。
+- 文档规范（规则与验证记录分开、长文档带目录、80 列换行、description 写明何时使用等）写在各包的
+  `unreal-engine-mcp/references/shared-conventions.md`，用 `python tools/ue_docs_lint.py` 检查，
+  `--reflow` 可自动补目录并重排超宽段落。
 - Sequencer 的部分后台兼容代码有严格引擎版本限制和 Epic 弃用风险；升级时先读当前源码与 schema，再执行相应验证。
 - 图集就绪不等于特效已接入；预览 PNG 或逐帧视频不等于 MRQ/Movie Render Graph 正式出片。
 - 本次打包只整理文档和现有技能文件，不连接或修改 UE 工程。检查结果见压缩包的 `CHECKS.zh-CN.md`，文件哈希见 `manifest.json`。

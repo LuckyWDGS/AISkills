@@ -16,7 +16,7 @@ from typing import Any
 from .core import default_report_path, resolve_root_context, save_json, slugify, write_text
 
 
-# Version 1 was the UnrealBridge-era report (bridge_* fields, raw_editor_info).
+# Version 1 was the pre-MCP report (bridge_* fields, raw_editor_info).
 SCHEMA_VERSION = "material_domain_audit/2"
 
 

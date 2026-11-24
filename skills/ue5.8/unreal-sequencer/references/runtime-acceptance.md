@@ -2,8 +2,8 @@
 
 These are selectable acceptance procedures, not completed UE tests. Use the
 [shared runtime result record](../../unreal-engine-mcp/references/shared-conventions.md#runtime-result-record).
-The current builder/sample/legacy-render helpers require explicit UI opt-in;
-do not enable that flag for a background task. Use discovered official background
+The current builder/sample/legacy-render helpers require explicit UI opt-in; do
+not enable that flag for a background task. Use discovered official background
 operations where available and mark unsupported runtime checks `not_run` or
 `blocked` with the reason. Inspect structure without opening a timeline.
 

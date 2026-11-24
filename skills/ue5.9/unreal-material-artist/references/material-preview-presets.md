@@ -1,8 +1,14 @@
 # Material Preview Presets
 
+> **UE 5.9 status.** The editor-connected steps described here use helpers that
+> are `unported`: they call UE 5.8 tool names and are refused on a UE 5.9
+> editor. Planning and report modes still run locally. Do the editor steps with
+> the native tools in [ue-5.9-material-mcp.md](ue-5.9-material-mcp.md).
+
 ## Goal
 
-Make `material_preview.py` behave like a real material specialist preview tool, not just a generic screenshot generator.
+Make `material_preview.py` behave like a real material specialist preview tool,
+not just a generic screenshot generator.
 
 Presets define:
 
@@ -21,7 +27,9 @@ The preview tool now scans part of this contract before capture:
 - whether the graph shows evidence of `DynamicParameter`
 - whether a ribbon preset at least declares a ribbon UV expectation
 
-Presets drive the contract scan of `material_preview.py capture --audit-report <material_audit --include-raw-graph report> --carrier <carrier>`; live Niagara integration probes belong to `niagara-vfx-artist`.
+Presets drive the contract scan of
+`material_preview.py capture --audit-report <material_audit --include-raw-graph report> --carrier <carrier>`;
+live Niagara integration probes belong to `niagara-vfx-artist`.
 
 For Niagara-oriented preview presets it now also scans preview-harness facts:
 
@@ -58,8 +66,8 @@ assets/material-preview-presets.json
 - `niagara_sprite_subuv_8x8`
   Sprite preview with renderer `SubImageSize = 8x8`.
 
-- `niagara_ribbon_trail`
-  Ribbon preview using `AttributeReaderTrails` and the `Followers` emitter as the ribbon material target.
+- `niagara_ribbon_trail` Ribbon preview using `AttributeReaderTrails` and the
+  `Followers` emitter as the ribbon material target.
 
 ## Default Behavior
 
@@ -79,8 +87,8 @@ python tools/material_preview.py capture /Game/Materials/MI_Foo --route viewport
 
 ## Current Meaning Of The Preview
 
-- `sprite` / `ribbon`
-  Temporary Niagara-system harness. Closer to real Niagara renderer behavior than a plain plane.
+- `sprite` / `ribbon` Temporary Niagara-system harness. Closer to real Niagara
+  renderer behavior than a plain plane.
 
 - `sprite_card` / `ribbon_card`
   Fast approximation path for quick alpha / UV / emissive checks.
@@ -93,14 +101,16 @@ python tools/material_preview.py capture /Game/Materials/MI_Foo --route viewport
 
 ## Important Limitation
 
-Even the Niagara-oriented presets are still lightweight preview harnesses. They do not replace:
+Even the Niagara-oriented presets are still lightweight preview harnesses. They
+do not replace:
 
 - the exact project's production Niagara system
 - game-specific user parameter hookups
 - final animation timing
 - effect-type scalability interactions
 
-They are for material review and iteration, not full gameplay validation and not live Niagara hookup validation.
+They are for material review and iteration, not full gameplay validation and not
+live Niagara hookup validation.
 
 ## Contract Scan Meaning
 
@@ -108,13 +118,20 @@ The preflight contract scan is intentionally conservative:
 
 - A warning means "this preset expects something the graph does not clearly prove."
 - It does not mean the material is unusable.
-- It does mean the user should stop and verify whether the preset choice or the material graph is mismatched.
+- It does mean the user should stop and verify whether the preset choice or the
+  material graph is mismatched.
 
 This is meant to catch obvious preview-contract drift before trusting the screenshot.
 
-The renderer-side preview scan is stronger than the graph-only scan, because it checks what the temporary preview harness actually wired for review. It is still harness validation, not a guarantee that the project's production Niagara system uses the same bindings.
+The renderer-side preview scan is stronger than the graph-only scan, because it
+checks what the temporary preview harness actually wired for review. It is still
+harness validation, not a guarantee that the project's production Niagara system
+uses the same bindings.
 
-Real-system comparison is `niagara-vfx-artist`'s `niagara_material_integration_probe.py`. A material preview is material-side evidence only; it is still not a live integration gate, parameter-write proof, or replacement for `niagara-vfx-artist`.
+Real-system comparison is `niagara-vfx-artist`'s
+`niagara_material_integration_probe.py`. A material preview is material-side
+evidence only; it is still not a live integration gate, parameter-write proof,
+or replacement for `niagara-vfx-artist`.
 
 This skill should stop at material-side preview confidence:
 
@@ -123,8 +140,11 @@ This skill should stop at material-side preview confidence:
 - SubUV-style preview assumptions can be checked
 - obvious contract drift can be warned about
 
-But real Niagara system binding truth, renderer binding exports, semantic channel plumbing, and live attribute ownership belong to `niagara-vfx-artist`.
+But real Niagara system binding truth, renderer binding exports, semantic
+channel plumbing, and live attribute ownership belong to `niagara-vfx-artist`.
 
 ## Contract Meaning
 
-In practice, this means the preview can tell you whether the material appears compatible with the intended carrier contract, not whether a production Niagara system has correctly supplied every live attribute.
+In practice, this means the preview can tell you whether the material appears
+compatible with the intended carrier contract, not whether a production Niagara
+system has correctly supplied every live attribute.

@@ -1,8 +1,8 @@
 # Epic Python Remote Execution without editor UI
 
 Use only for a demonstrated official MCP gap. Operations already covered by MCP
-stay on MCP. This is Epic's `PythonScriptPlugin` endpoint, not UnrealBridge and
-not unrestricted execution inside ProgrammaticToolset.
+stay on MCP. This is Epic's `PythonScriptPlugin` endpoint; it is separate from
+the restricted execution inside ProgrammaticToolset.
 
 The user wants background automation without mouse-driven consoles, window
 activation or layout changes. Do not fall back to those UI actions automatically.

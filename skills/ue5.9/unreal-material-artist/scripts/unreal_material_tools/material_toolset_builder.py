@@ -1245,7 +1245,7 @@ def ue_property_name(name: str) -> str:
 
 
 VECTOR_TEXT = re.compile(r"([RGBA])\s*=\s*([-+0-9.eE]+)", re.IGNORECASE)
-# UnrealBridge-era pin names in recipe specs -> engine pin names ("" is an unnamed single input).
+# pre-MCP pin names in recipe specs -> engine pin names ("" is an unnamed single input).
 LEGACY_INPUT_NAMES = {"input": "", "coordinates": "UVs", "exponent": "Exp"}
 
 

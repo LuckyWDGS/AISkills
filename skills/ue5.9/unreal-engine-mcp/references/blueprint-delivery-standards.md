@@ -6,6 +6,16 @@ wired and pass a runtime check while still being unreadable, debug-looking, hard
 to diagnose and unexplained. Apply them to every authored or modified graph;
 `scripts/blueprint_lint.py` checks the mechanical parts.
 
+## Contents
+
+- [1. Design before wiring](#1-design-before-wiring)
+- [2. Evidence: state and logs first, screenshots only for visual questions](#2-evidence-state-and-logs-first-screenshots-only-for-visual-questions)
+- [3. Logging is part of the implementation](#3-logging-is-part-of-the-implementation)
+- [4. Readable graph layout](#4-readable-graph-layout)
+- [5. Chinese explanations for functions, variables and modules](#5-chinese-explanations-for-functions-variables-and-modules)
+- [Saving and backups](#saving-and-backups)
+- [Delivery check](#delivery-check)
+
 ## 1. Design before wiring
 
 Write a short feature brief and show it to the user before creating nodes for
@@ -51,7 +61,7 @@ Debug drawing is a development aid, never the delivered presentation:
 ## 2. Evidence: state and logs first, screenshots only for visual questions
 
 - Gameplay logic is verified by reading runtime state (actor location and
-  velocity samples, component properties through ObjectTools, timer state) and
+  velocity samples, component properties through `ObjectToolset`, timer state) and
   by log lines, in a bounded PIE/Simulate session. Record numbers: fuse time,
   bounce count, rest position, spawn/destroy counts.
 - Take a screenshot only to answer a visual question that state cannot answer
@@ -75,10 +85,11 @@ are diagnosed from the log instead of guesswork:
   start/end time, hit actor). Warnings for broken invariants log regardless of
   `bDebugLog`.
 - Read them with `LogsToolset.GetLogEntries` during verification: pass
-  `category: "LogBlueprintUserMessages"` explicitly (without it the call fails with
-  "Log category ... not found") and the Blueprint name as a plain `pattern` (no
-  brackets). Quote the relevant lines in the report. A test that switches
-  `bDebugLog` on at runtime misses lines written before it did (BeginPlay). `bDebugLog` defaults to false at delivery unless the user wants it on.
+  `category: "LogBlueprintUserMessages"` explicitly (without it the call fails
+  with "Log category ... not found") and the Blueprint name as a plain `pattern`
+  (no brackets). Quote the relevant lines in the report. A test that switches
+  `bDebugLog` on at runtime misses lines written before it did (BeginPlay).
+  `bDebugLog` defaults to false at delivery unless the user wants it on.
 
 ## 4. Readable graph layout
 
@@ -112,32 +123,16 @@ tracing wires across the canvas:
 
 Review a named graph first. A request to organize it authorizes scoped layout;
 otherwise preserve the user's arrangement. Before writes use a candidate or
-durable backup. `--all` is reserved for an explicitly requested whole-asset scope:
+durable backup. A whole-asset layout needs an explicit request.
 
-```powershell
-python scripts/blueprint_normalize.py /Game/Path/BP_Feature --graph UpdatePreview --project <Project>
-python scripts/blueprint_layout.py /Game/Path/BP_Feature --graph UpdatePreview --project <Project>
-# After reviewing the proposed scope; writes require a confirmed idle editor:
-python scripts/blueprint_normalize.py /Game/Path/BP_Feature --graph UpdatePreview --write --project <Project>
-python scripts/blueprint_layout.py /Game/Path/BP_Feature --graph UpdatePreview --write --reframe --project <Project>
-```
-
-`blueprint_normalize.py` copies supported pure-call/operator nodes after checking
-pin schemas and input readback; it reports and preserves variable Getters and
-SET outputs. A partial failure leaves unsaved work for inspection; it is not a
-transactional rewrite. `blueprint_layout.py` places nodes with
-size estimates calibrated on UE 5.8 (`blueprint_geometry.py`) and rebuilds each
-comment frame around its module and compares node/pin/default/link signatures
-before saving. The observed frame membership cache depends on the graph having
-been shown and can be lost on duplication. Never open a tab to populate it;
-for several frames pass `--frame-map K2Node_Event_0=BP.Feature.Init,...` or report
-unresolved membership. Equal native overlap or multiple matching map entries
-remain `unmapped`; review the mapping instead of choosing the first module.
-The helper creates a replacement, verifies text/style/members, then removes
-the old frame. Candidate failures retain the original and remove only the
-helper's candidate; an unconfirmed removal reports partial work without saving.
-`BlueprintTools.arrange_nodes` alone does not
-produce this layout.
+`blueprint_normalize.py` and `blueprint_layout.py` are `unported`: they still
+call UE 5.8 tool names and are refused on a UE 5.9 editor. Until they are
+ported, apply the same rules with the native Blueprint tools or a scoped Graph
+DSL edit
+([Blueprint authoring](ue-5.9-blueprint-python.md)). For a layout-only edit,
+keep the exact node/pin/default/link signature and compare it before saving.
+`blueprint_geometry.py` (`local`) estimates node sizes from pins, default-value
+widgets and titles. The native arrange tool alone does not produce this layout.
 
 ## 5. Chinese explanations for functions, variables and modules
 
@@ -153,39 +148,26 @@ produce this layout.
   `抛物线投掷|设置`, `抛物线投掷|调试`) and Chinese-explained names in the
   module frames that use them.
 - **Descriptions:** explain authored functions, member variables and non-obvious
-  locals in Chinese, with units, defaults, owners and side effects. Prefer
-  official metadata tools when live discovery proves coverage. Without a stock
-  hover-metadata write route, the default delivery is the comment frames plus a
-  table keyed by asset/graph/module ID and identifier; missing hover text does
-  not require C++ or make that delivery incomplete.
-- **Optional hover-metadata extension:** only when the user explicitly requests
-  the extension workflow, use `assets/plugins/MCPBlueprintMetadata` and:
+  locals in Chinese, with units, defaults, owners and side effects. Write them
+  with the native variable and function metadata tools and read them back
+  ([Blueprint authoring](ue-5.9-blueprint-python.md)). Add a table keyed by
+  asset/graph/module ID and identifier to the handoff.
 
-  ```powershell
-  python scripts/install_blueprint_metadata_plugin.py --uproject <Project>.uproject --engine-root <UE root>
-  python scripts/blueprint_tooltips.py /Game/Path/BP_Feature --spec <session>/tooltips.json --write --project <Project>
-  ```
-
-  Installing adds C++, compiler and restart requirements. Do not install it
-  automatically for annotations. Use existing authorization for an extension;
-  otherwise finish the official comment/table delivery first. Preserve an
-  already installed extension and use it only within the task's scope; verify
-  metadata readback when used. Do not restart to obtain hover text.
-
-Comment frames are created and read through Epic's public
-`BlueprintGraphEditor` API over Python Remote Execution; see
-[Chinese module annotations](blueprint-programming-mcp.md#chinese-module-annotations).
+Comment frames are created and read with the native comment tools
+(`ListCommentBoxes`, `GetCommentBoxText`, `GetNodesInCommentBox` and the
+matching writes discovered on `BlueprintToolset`). Naming rules:
+[Chinese module annotations](shared-conventions.md#chinese-module-annotations).
 
 ## Saving and backups
 
 Edits made through MCP and editor Python live only in the editor until the asset
 is saved; closing or restarting the editor without saving discards them, and a
-backup made with `AssetTools.duplicate` is an unsaved asset that disappears too.
+duplicate made as a backup is an unsaved asset that disappears too.
 The version on disk is the real backup when the asset was clean before your
 edits. At handoff, state which assets are unsaved, and before any step that needs
 an editor restart (installing a plugin) ask the user to save, or save with their
 explicit consent, and confirm afterwards that the reloaded asset still contains
-the delivery (`blueprint_lint.py`, `blueprint_tooltips.py`).
+the delivery (`blueprint_lint.py`).
 
 ## Delivery check
 

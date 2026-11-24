@@ -6,6 +6,16 @@ wired and pass a runtime check while still being unreadable, debug-looking, hard
 to diagnose and unexplained. Apply them to every authored or modified graph;
 `scripts/blueprint_lint.py` checks the mechanical parts.
 
+## Contents
+
+- [1. Design before wiring](#1-design-before-wiring)
+- [2. Evidence: state and logs first, screenshots only for visual questions](#2-evidence-state-and-logs-first-screenshots-only-for-visual-questions)
+- [3. Logging is part of the implementation](#3-logging-is-part-of-the-implementation)
+- [4. Readable graph layout](#4-readable-graph-layout)
+- [5. Chinese explanations for functions, variables and modules](#5-chinese-explanations-for-functions-variables-and-modules)
+- [Saving and backups](#saving-and-backups)
+- [Delivery check](#delivery-check)
+
 ## 1. Design before wiring
 
 Write a short feature brief and show it to the user before creating nodes for
@@ -75,10 +85,11 @@ are diagnosed from the log instead of guesswork:
   start/end time, hit actor). Warnings for broken invariants log regardless of
   `bDebugLog`.
 - Read them with `LogsToolset.GetLogEntries` during verification: pass
-  `category: "LogBlueprintUserMessages"` explicitly (without it the call fails with
-  "Log category ... not found") and the Blueprint name as a plain `pattern` (no
-  brackets). Quote the relevant lines in the report. A test that switches
-  `bDebugLog` on at runtime misses lines written before it did (BeginPlay). `bDebugLog` defaults to false at delivery unless the user wants it on.
+  `category: "LogBlueprintUserMessages"` explicitly (without it the call fails
+  with "Log category ... not found") and the Blueprint name as a plain `pattern`
+  (no brackets). Quote the relevant lines in the report. A test that switches
+  `bDebugLog` on at runtime misses lines written before it did (BeginPlay).
+  `bDebugLog` defaults to false at delivery unless the user wants it on.
 
 ## 4. Readable graph layout
 

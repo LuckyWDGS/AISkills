@@ -1,9 +1,9 @@
 # UE 5.9：参考图硬表面模型与材质
 
-适用于依据概念图制作可编辑的飞船、载具和道具，并在 UE 中验证外观。
-2026-11-17 在 5.9.0 Preview / CL 60351404 验证了本地参数建模、GLB 原生导入、
-材质槽绑定与离屏渲染。它是参考引导的几何重建，不是 AI 图生 3D，也不要求
-配置外部 Mesh provider。Canvas 原生几何图路线另见 [Canvas Mesh](ue-5.9-canvas-mesh.md)。
+依据概念图制作可编辑的飞船、载具和道具，并在 UE 中验证外观：本地参数建模、GLB 原
+生导入、材质槽绑定与离屏渲染。这是参考引导的几何重建，不是 AI 图生 3D，也不需要
+外部 Mesh provider。Canvas 原生几何图路线见
+[Canvas Mesh](ue-5.9-canvas-mesh.md)。
 
 ## 先确定参考与坐标合同
 
@@ -11,11 +11,10 @@
 和横截面各自的主要参考，记录冲突处理；不要把三张图当作同一模型的精确投影。
 尺寸未标注时可以选定工作尺度，但应称设计尺度。交付时说明哪些细节简化或重构。
 
-建模坐标、GLB 坐标、OBJ 坐标、UE 导入坐标分别记录。先用有明显头尾/上下特征
-的小样验证实际 importer 的方向和单位，检查 bounds 与真实图像后再批量导入。
-本次源模型为米、+X 向前、+Z 向上；GLB 使用 `(X, Z, -Y)`，UE 结果 +X 向前、
-+Z 向上且为厘米。该映射不代替其他 importer 的验证。变换同时应用于 position
-和 normal，依据行列式保持正确 winding；不能通过全局翻纹理 U 来补偿坐标轴。
+建模坐标、GLB 坐标、OBJ 坐标、UE 导入坐标分别记录。先用有明显头尾/上下特征的小样
+验证实际 importer 的方向和单位，检查 bounds 与真实图像后再批量导入。该映射不代替
+其他 importer 的验证。变换同时应用于 position 和 normal，依据行列式保持正确
+winding；不能通过全局翻纹理 U 来补偿坐标轴。
 
 ## 保留编辑结构与独立材质
 
@@ -28,39 +27,37 @@
 通用 GLB PBR 与 UE 经调节的 MI 分别记录，不能声称跨渲染器外观完全一致。
 OBJ 的 MTL 兼容程度取决于导入器；透明/发光的验收以对应渲染器为准。
 
-完整 UV0 存在不等于唯一展开或烘焙完成。本次装甲使用按面投影 UV、标识使用
-独立 RGBA 图集；没有全机唯一烘焙 UV、法线贴图或 lightmap 验收。
+完整 UV0 存在不等于唯一展开或烘焙完成。
 
 ## 原生导入与回读
 
-先刷新实际 `tools/list`，读取 bare `ImportAsset` schema。此插件工具无需虚构
-toolset；本次参数包括 `FilePath`、`DestinationPath`、`AssetName`、`SkipDialog`、
-`AllowOverwrite`。使用新的候选名和 `AllowOverwrite=false`，存储源文件 hash。
-按真实返回的 `assets` 解析路径：importer 会新增资产名目录、StaticMeshes、
-Materials 和 Textures，不能手拼最终位置或把请求成功当成导入完成。
+先刷新实际 `tools/list`，读取 bare `ImportAsset` schema。使用新的候选名和
+`AllowOverwrite=false`，存储源文件 hash。按真实返回的 `assets` 解析路径：
+importer 会新增资产名目录、StaticMeshes、 Materials 和 Textures，不能手拼最终位
+置或把请求成功当成导入完成。
 
-导入后按 slot name 分配自己的 MI，回读每个 slot；组件的 `overrideMaterials`
-也要检查，避免 mesh 正确但场景仍显示旧材质。合并网格的导出顶点可能被 importer
-焊接，分别报告源导出顶点与原生 render vertices，不要求二者恒等。三角数、bounds、
-槽集合和外观应与候选一致。Nanite/source/fallback 区分见 [Canvas Mesh](ue-5.9-canvas-mesh.md)。
+导入后按 slot name 分配自己的 MI，回读每个 slot；组件的 `overrideMaterials` 也要
+检查，避免 mesh 正确但场景仍显示旧材质。合并网格的导出顶点可能被 importer 焊接，
+分别报告源导出顶点与原生 render vertices，不要求二者恒等。三角数、bounds、槽集合
+和外观应与候选一致。Nanite/source/fallback 区分见
+[Canvas Mesh](ue-5.9-canvas-mesh.md)。
 
 ## 真实画面能发现的几何问题
 
-- 面积、边连接数、正体积、有限单位法线是结构检查；另外检查 corner normal 与
-  face normal 的方向。平滑跨过封口或尖端可能产生反向高光；根据形体分硬边，
-  本次 60° crease 处理有效，但不是所有资产的固定阈值。
-- 文字必须在每个承载面的实际观察方向检查。镜像对称件的顶点顺序可能不同；
-  本次主翼需要翻 U，而尾翼已可读，统一翻 U 会破坏尾翼。RGBA 纹理读取正确
-  仍不证明 UV 朝向正确。
+- 面积、边连接数、正体积、有限单位法线是结构检查；另外检查 corner normal 与 face
+  normal 的方向。
+- 文字必须在每个承载面的实际观察方向检查。RGBA 纹理读取正确仍不证明 UV 朝向正
+  确。
 - 薄标识卡检查沿承载面法线的距离、投影是否落在面内，以及前后斜视是否悬空。
   装饰分缝不要穿过文字。毫米间距需随尺度/相机/深度精度评估，不设通用偏移值。
 - 装甲罩/装饰板与底层曲面可能交错，即使双方都闭合。对目标表面采样净距，结合
   Lit 和 Normal 近景修改。检查局部 patch 不等于证明整个装配无穿插。
 
-用最终同一个候选重拍前后斜视、顶/侧/正视和座舱近景，必要时补法线与标识近景。
-保存每张 capture 的源模型 hash、显式相机和 PNG hash；初版/中间版另归档，不能
-混入最终多视图验收。通过自己的独立离屏实例和展示关卡取图，不移动用户相机。
-具体玻璃与标识图节点见 [原生材质](../../unreal-material-artist/references/ue-5.9-material-mcp.md)。
+用最终同一个候选重拍前后斜视、顶/侧/正视和座舱近景，必要时补法线与标识近景。保存
+每张 capture 的源模型 hash、显式相机和 PNG hash；初版/中间版另归档，不能混入最终
+多视图验收。通过自己的独立离屏实例和展示关卡取图，不移动用户相机。具体玻璃与标识
+图节点见
+[原生材质](../../unreal-material-artist/references/ue-5.9-material-mcp.md)。
 
 交付以实际完成范围为准：模型/材质/贴图/编辑源、UE 路径及多视图可组成静态资产
 交付；碰撞、LOD、骨骼、飞行控制、目标平台性能和打包运行需要各自的后续验证。
@@ -69,3 +66,34 @@ Materials 和 Textures，不能手拼最终位置或把请求成功当成导入�
 
 房间分件的枢轴和关卡实例摆位需要分别保存。照片机位拟合、分件导入、材质复查和
 第一人称通行验证见[按照片搭建可编辑室内关卡](ue-5.9-reference-interiors.md)。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+- 适用于依据概念图制作可编辑的飞船、载具和道具，并在 UE 中验证外观。 2026-11-17
+  在 5.9.0 Preview / CL 60351404 验证了本地参数建模、GLB 原生导入、材质槽绑定与
+  离屏渲染。它是参考引导的几何重建，不是 AI 图生 3D，也不要求配置外部 Mesh
+  provider。Canvas 原生几何图路线另见 [Canvas Mesh](ue-5.9-canvas-mesh.md)。
+
+**先确定参考与坐标合同**
+
+- 本次源模型为米、+X 向前、+Z 向上；GLB 使用 `(X, Z, -Y)`，UE 结果 +X 向前、 +Z
+  向上且为厘米。
+
+**保留编辑结构与独立材质**
+
+- 本次装甲使用按面投影 UV、标识使用独立 RGBA 图集；没有全机唯一烘焙 UV、法线贴图
+  或 lightmap 验收。
+
+**原生导入与回读**
+
+- 此插件工具无需虚构 toolset；本次参数包括 `FilePath`、`DestinationPath`、
+  `AssetName`、`SkipDialog`、 `AllowOverwrite`。
+
+**真实画面能发现的几何问题**
+
+- 平滑跨过封口或尖端可能产生反向高光；根据形体分硬边，本次 60° crease 处理有效，
+  但不是所有资产的固定阈值。
+- 镜像对称件的顶点顺序可能不同；本次主翼需要翻 U，而尾翼已可读，统一翻 U 会破坏
+  尾翼。

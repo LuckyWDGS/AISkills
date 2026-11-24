@@ -19,7 +19,7 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .mcp import DEFAULT_MCP_URL, call_tool
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "runtime_param_trace/2"
 COVERAGE_GAPS = [
     "Niagara rapid-iteration parameter values are not exposed by MCP; links use user variables and renderer bindings.",

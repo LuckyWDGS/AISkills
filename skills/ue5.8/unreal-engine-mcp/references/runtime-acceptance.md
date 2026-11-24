@@ -1,10 +1,26 @@
 # UE runtime acceptance
 
-Select cases matching the changed feature; these are procedures, not recorded
-UE test results. Follow the [shared result record and session ownership rules](shared-conventions.md#runtime-result-record).
+Select cases matching the changed feature; these are procedures, not recorded UE
+test results. Follow the
+[shared result record and session ownership rules](shared-conventions.md#runtime-result-record).
 Use official MCP state/log reads and supported background runtime controls.
 Discover the actual runtime objects and tool schemas; do not read CDO values as
 live state or invent debugger APIs. A user's existing PIE session is preserved.
+
+## Contents
+
+- [BP.Jump.Double — two jumps and landing reset](#bpjumpdouble--two-jumps-and-landing-reset)
+- [BP.Surface.Contact — contact VFX, blink and delayed reset](#bpsurfacecontact--contact-vfx-blink-and-delayed-reset)
+- [BP.Throw.Physics — hold, release, fuse and destruction](#bpthrowphysics--hold-release-fuse-and-destruction)
+- [BP.Lifecycle.Async — timers, delegates and EndPlay](#bplifecycleasync--timers-delegates-and-endplay)
+- [ABP.StateMachine — transitions, montage interruption and data ownership](#abpstatemachine--transitions-montage-interruption-and-data-ownership)
+- [UI.MVVM.Binding — 实例数据与界面更新](#uimvvmbinding--实例数据与界面更新)
+- [GAS.ASC.Lifecycle — 能力、效果与属性](#gasasclifecycle--能力效果与属性)
+- [DATA.Registry.Cache — 来源与缓存条目](#dataregistrycache--来源与缓存条目)
+- [PCG.Graph.Output — 执行、数量与属性](#pcggraphoutput--执行数量与属性)
+- [PHYS.Body.Runtime — 刚体与约束](#physbodyruntime--刚体与约束)
+- [Dataflow.Evaluation — 数值求值与失效更新](#dataflowevaluation--数值求值与失效更新)
+- [Automation.Scope — 案例与现场清理](#automationscope--案例与现场清理)
 
 ## BP.Jump.Double — two jumps and landing reset
 

@@ -1,15 +1,26 @@
 # UE 5.9 Preview：生成、动画、渲染与 Web 功能接入矩阵
 
-基础核对日期：2026-11-11；Canvas 补验日期：2026-11-16。
-目标为 **5.9.0 Preview / CL 60351404**；安装对比为
-5.8.4 / CL 58902052。官方 [Preview notes][notes] 标注更新日期 2026-11-09，
-[MegaJam 公告][announcement] 同日发布。这是 Preview 的功能和当前安装验证，
-不能外推为正式版、其他平台或 UE 5.8 回归结果。未另注日期的实例状态属于
-2026-11-11 的审计，不能代表后续进程或插件配置。
+UE 5.9 Preview 中生成、AI 动画、渲染增强与 Web 目标等功能的接入矩阵：官方说明、
+当前安装状态和可采用的路线。这是 Preview 功能与当前安装的核对，不能外推到正式版
+或其他平台。官方背景见 [Preview notes][notes] 与 [MegaJam 公告][announcement]；
+核对日期见文末[验证记录](#验证记录)。
 
 读取本页用于判断“新功能能否进入实际任务”。已验证的原生编辑器操作见
 [实测总览](ue-5.9-preview-audit.md)；共享 client 能动态调用注册 schema，
 没有专用 wrapper 不等于不能调用。
+
+## 目录
+
+- [先区分四种证据](#先区分四种证据)
+- [功能与当前控制边界](#功能与当前控制边界)
+- [其他制作功能：候选路由与未测范围](#其他制作功能候选路由与未测范围)
+- [Canvas：编辑器工具与生成服务分别准备](#canvas编辑器工具与生成服务分别准备)
+- [AI 动画：模型与生成结果还需单独闭环](#ai-动画模型与生成结果还需单独闭环)
+- [Forge 与 Fab：按具体服务接入](#forge-与-fab按具体服务接入)
+- [渲染增强：用读数判断当前启用状态](#渲染增强用读数判断当前启用状态)
+- [DynamicWind 与 PCG：既有体系的控制范围](#dynamicwind-与-pcg既有体系的控制范围)
+- [Wasm / WebGPU：构建目标需要独立工具链](#wasm--webgpu构建目标需要独立工具链)
+- [验证记录](#验证记录)
 
 ## 先区分四种证据
 
@@ -18,22 +29,18 @@
 3. **当前 editor 注册 schema**才说明本实例的调用合同；重新启用插件/重启后重新发现。
 4. **读、写、编译、视觉、runtime、打包**分别记录。读取 CVar 或创建资产不算效果验收。
 
-2026-11-11 只读发现为 98 个 toolset，当时 Canvas、AnimGen/Kimodo、Forge、Fab、
-DynamicWind、Lumen、Wasm 没有专属 live toolset；这只限定该次实例。
-尤其 Fab MCP 已有官方公告，不能根据本机未注册推导“UE 5.9 没有 Fab MCP”。
-2026-11-16 启用 Canvas 相关插件的实例刷新目录后为 100 个 toolset，增加两个
-Annotations owner；顶层另有 66 个直接工具和 4 个 meta-tools。目录有重叠暴露，注册
-数量不表示执行覆盖率。插件分工、缓存刷新、
-实际读写与未测范围见 [MCP / Canvas 插件](ue-5.9-mcp-canvas-plugins.md)。
+尤其 Fab MCP 已有官方公告，不能根据本机未注册推导“UE 5.9 没有 Fab MCP”。目录有重
+叠暴露，注册数量不表示执行覆盖率。插件分工、缓存刷新、实际读写与未测范围见
+[MCP / Canvas 插件](ue-5.9-mcp-canvas-plugins.md)。
 
 ## 功能与当前控制边界
 
-| 功能 | 5.8 → 5.9 安装/官方差别 | 当前实例证据 | 可采用的路线及本轮验收 |
+| 功能 | 5.8 → 5.9 安装/官方差别 | 当前实例证据 | 可采用的路线及验收情况 |
 |---|---|---|---|
-| Unreal Canvas | 官方新增 Experimental 工作空间；本安装新增 Annotations、Bridge、Graph 三包 | 2026-11-11 三包 enabled=false；2026-11-16 已启用相关插件；sidecar v0.21.0 后续 MCP 目录为 132 项，image-generator 可执行列表为空 | 六项 Bridge 读取、Annotation scratch 生命周期、MRG 三通道静帧/原始深度及 12 帧短序列通过；Codex 外部生图另验通过且尺寸有偏差；后续已通过原生图生成程序化星形 GLB 并导入 StaticMesh，见[本地 Mesh](ue-5.9-canvas-mesh.md)；AI Mesh 模型列表为空，原生 AI 生成未测；渲染另见[生成/渲染实测](ue-5.9-canvas-generation-render.md) |
+| Unreal Canvas | 官方新增 Experimental 工作空间；本安装新增 Annotations、Bridge、Graph 三包 | 三包默认 enabled=false；启用相关插件后 sidecar v0.21.0 的 MCP 目录为 132 项，image-generator 可执行列表为空 | 六项 Bridge 读取、Annotation scratch 生命周期、MRG 三通道静帧/原始深度及 12 帧短序列通过；Codex 外部生图另验通过且尺寸有偏差；后续已通过原生图生成程序化星形 GLB 并导入 StaticMesh，见[本地 Mesh](ue-5.9-canvas-mesh.md)；AI Mesh 模型列表为空，原生 AI 生成未测；渲染另见[生成/渲染实测](ue-5.9-canvas-generation-render.md) |
 | AI 动画 | `AnimGen` 两版本已有；新增 `UAFAnimGen`、`AnimGenOffline`、`Kimodo` | 四包均未启用；AnimationAssistant 的 SequencerDirector 工具不等于文本生成 | 先核对模型/骨架/依赖，再查启用后的公开 Python 或原生 schema；未下载、未生成、未重定向 |
 | Forge | 官方定义为编辑器中的一组 **web-based designer tools** | 当前安装未发现同名插件；无同名 live toolset | 先定位具体工具、入口和服务；目前没有可确认的自动化合同，不能发明 `Forge.*` 调用 |
-| Fab 目录/库/安装 MCP | 官方公告新增目录搜索、库浏览、安装免费或已购资产 | 当前无 Fab toolset，`GetPluginInfo("Fab")` 明确未找到；旧 5.8 商店插件存在，5.9 安装无同名描述文件 | 先解决当前构建的官方集成/登录，再发现 schema；本轮未登录、检索、购买或安装资产 |
+| Fab 目录/库/安装 MCP | 官方公告新增目录搜索、库浏览、安装免费或已购资产 | 当前无 Fab toolset，`GetPluginInfo("Fab")` 明确未找到；旧 5.8 商店插件存在，5.9 安装无同名描述文件 | 先解决当前构建的官方集成/登录，再发现 schema；未登录、检索、购买或安装资产 |
 | Fab 图像/网格生成 | 官方 notes 另列为 generative-service integrations | 当前没有可确认的 Fab 专属生成调用合同；不能与传统商店插件或目录 MCP 混为一项 | 核对具体服务、账户、额度/费用与授权；未验 Fab 生成，另一次 Codex 图像服务调用不算 Fab 覆盖 |
 | Lumen World Cache | 本安装新增渲染器实现，官方说明需 Hardware Ray Tracing、按项目开启 | 原生 Console 可读；`Supported=false`、`Allowed=true` | 当前没有启用；只读配置和能力门槛通过，画质/帧预算未测 |
 | AVBOIT | 本安装新增实现；官方标题写作“ABVOIT”，正文/源码/CVar 使用 **AVBOIT** | `r.OIT.Method=0`；Support=1、Nanite=1、NonNanite=0 | 当前未选择 AVBOIT；只能确认支持配置，未做透明叠层画质/开销测试 |
@@ -60,8 +67,7 @@ Forge 和 Fab 的缺失也不能用自写桥接、引擎补丁或无依据启用
 | Sequencer 标记范围 | `MovieSceneSequenceExtensions.AddMarkedFrameRangeToSequence` / `GetMarkedFramesFromSequence` 已在目录；`start==end` 为单帧，范围为 `[start,end)` | 是已注册合同，尚未调用；帧率单位、范围回读、保存重载、吸附/播放行为分别验收。已测 Transform/CameraCut/Fade 不覆盖 marks / mark ranges |
 | Nanite 剔除改进 | notes 描述简单/复杂实例分流与多层级遍历；`NaniteCullRaster.cpp` 的 simple 路线、`NaniteShared.cpp` 的 adaptive fanout 实现可定位 | 属渲染器优化，无独立 Nanite owner；已有 StaticMesh 的 Nanite 查询/启用及 Console 合同。启用网格会 rebuild，不证明新剔除收益；未做代表大场景的可见性/伪影/GPU 对照，不计性能或 runtime 通过 |
 
-上述定位原文、源码行号/哈希和选定注册 schema 保存在本次 session 的
-`feature-supplement-final.json`。它们不扩大既有 Demo、PCG、Sequencer 或网格测试结论。
+它们不扩大既有 Demo、PCG、Sequencer 或网格测试结论。
 
 ## Canvas：编辑器工具与生成服务分别准备
 
@@ -84,22 +90,18 @@ OpenAI key。独立注释和采集工具本身不等于外部生成调用。
 - 模型根提示包含 SAM2、DepthAnything、VGGT、LangSAM、DexiNed、pose-fit 等，
   路径提示不说明权重已下载、可运行或许可已满足。
 
-2026-11-16 的插件状态、直接 MCP 工具读取、临时标注生命周期及 sidecar ready
-已有专项证据，见 [MCP / Canvas 插件](ue-5.9-mcp-canvas-plugins.md)。启动 slow task
-期间缓存的目录曾只含四个 meta-tools；刷新 client 后恢复完整发现，不能将早期
-目录当作工具缺失。前端未 attach 时的零项远端目录与 UE 侧直接工具是不同注册面；
-同日后续 fresh discovery 已取得 132 项 sidecar 工具，`get_graph_docs` 读取成功，
-`list_models` 的 image-generator 列表仍为空。
+启动 slow task 期间缓存的目录曾只含四个 meta-tools；刷新 client 后恢复完整发现，
+不能将早期目录当作工具缺失。前端未 attach 时的零项远端目录与 UE 侧直接工具是不同
+注册面；同日后续 fresh discovery 已取得 132 项 sidecar 工具，`get_graph_docs` 读
+取成功， `list_models` 的 image-generator 列表仍为空。
 
 进入实际 Canvas 任务时：先限定功能和插件，核对该步骤的依赖及需要连接的 server；
-如需重启，保护当前任务和未保存资产。重连后先查 fresh identity 和 live schema。
-只有调用生成模型的步骤才继续核对模型、service registry 与 provider。只提供所需
-认证，不把 key、模型缓存或服务运行产物写进 skill 仓库。采集、生成、导入资产
-绑定与最终画面分别验收。2026-11-11 审计没有启用或启动服务；2026-11-16 补验
-的初始检查覆盖局部读写与本地 sidecar 启动。后续新增的外部 Codex 生图、真实 MRG
-静帧和原始深度，以及 actor 相机时序问题，见
-[生成与实际渲染验收](ue-5.9-canvas-generation-render.md)；没有据此扩大为 Canvas
-原生生成节点或 AI 动画通过。
+如需重启，保护当前任务和未保存资产。重连后先查 fresh identity 和 live schema。只
+有调用生成模型的步骤才继续核对模型、service registry 与 provider。只提供所需认
+证，不把 key、模型缓存或服务运行产物写进 skill 仓库。采集、生成、导入资产绑定与
+最终画面分别验收。后续新增的外部 Codex 生图、真实 MRG 静帧和原始深度，以及 actor
+相机时序问题，见 [生成与实际渲染验收](ue-5.9-canvas-generation-render.md)；没有
+据此扩大为 Canvas 原生生成节点或 AI 动画通过。
 
 主要安装源码（均相对 `Engine/`）：
 
@@ -151,20 +153,18 @@ Plugins/Experimental/UAF/UAFAnimGen/UAFAnimGen.uplugin
 
 ## Forge 与 Fab：按具体服务接入
 
-Forge 的当前可靠定义来自官方 release notes：编辑器中的 web designer tools。
-本轮尚未定位到当前安装的具体入口、服务端或调用 API。正确下一步是定位产品
-组件和所需服务，再核对其合同；不能仅按名称将其当成 Fab，也不能给出未发现的
-插件开关、端口、key 类型或下载命令。
+Forge 的当前可靠定义来自官方 release notes：编辑器中的 web designer tools。正确
+下一步是定位产品组件和所需服务，再核对其合同；不能仅按名称将其当成 Fab，也不能给
+出未发现的插件开关、端口、key 类型或下载命令。
 
 Fab 至少分三件事：传统商店界面、公告中的 catalog/library/install MCP、
 notes 中的 image/mesh generation integrations。当前安装旧商店插件缺失且
 新工具未注册，仍可明确知道官方宣布了后两项；仅创建本地 Material/StaticMesh
 或调用本地 Asset import 不能算 Fab 服务测试通过。
 
-实际资产获取须先确认账号、目录项、许可、来源版本和免费/已购状态。已购项安装
-不等于授权购买新付费项；生成服务的额度与 key 另外核对。成功后还要检查导入的
-实际路径、材质/纹理/骨架引用、编译和游戏目标适配。本轮没有采购、获取或导入
-外部素材，也没有未经证实的 Fab/Forge wrapper。
+实际资产获取须先确认账号、目录项、许可、来源版本和免费/已购状态。已购项安装不等
+于授权购买新付费项；生成服务的额度与 key 另外核对。成功后还要检查导入的实际路
+径、材质/纹理/骨架引用、编译和游戏目标适配。
 
 ## 渲染增强：用读数判断当前启用状态
 
@@ -193,10 +193,10 @@ ABVOIT 与正文拼写不一致，搜索/API 使用源码的 **AVBOIT**。
 开关，`Nanite=1`、`NonNanite=0` 分别控制不同路线，不能合并称为“所有透明已开启”。
 源码见 `Source/Runtime/Renderer/Private/OIT/AVBOIT.cpp` 和 `OIT.cpp`。
 
-官方说明支持 Nanite 和非 Nanite 透明、减少交叠排序跳变，并要求透明材质输出
-自己的颜色以正确合成。真实任务应挑玻璃/烟雾/粒子交叠用例，检查材质、目标平台
-与 shader 支持，再对照内存、overdraw、伪影和帧时。仅使用不透明平台游戏材质
-无需为了展示新版本而开启它。本轮只读设置，没有这类画质或性能验收。
+官方说明支持 Nanite 和非 Nanite 透明、减少交叠排序跳变，并要求透明材质输出自己的
+颜色以正确合成。真实任务应挑玻璃/烟雾/粒子交叠用例，检查材质、目标平台与 shader
+支持，再对照内存、overdraw、伪影和帧时。仅使用不透明平台游戏材质无需为了展示新版
+本而开启它。
 
 ## DynamicWind 与 PCG：既有体系的控制范围
 
@@ -246,12 +246,53 @@ headers 的 Preview Launcher build 或 source build**；不能把“必须自己
 - 手机 Safari、设备内存、线程、音频、页面安全头和部署方式都有版本限制。
   公告还持续列已知问题；本地文档的支持矩阵不是所有设备通过的证据。
 
-这属于编译/cook/打包/部署工作流，当前没有一个 Wasm MCP 工具替代 SDK。
-进入该任务时先验证 C++ target 和工具链，再做最小目标 cook、页面部署、实际
-浏览器输入/画面/音频/重载存档检查，最后才衡量性能与资源预算。本轮没有下载
-SDK、构建、发布或运行 Web 包。
+这属于编译/cook/打包/部署工作流，当前没有一个 Wasm MCP 工具替代 SDK。进入该任务
+时先验证 C++ target 和工具链，再做最小目标 cook、页面部署、实际浏览器输入/画面/
+音频/重载存档检查，最后才衡量性能与资源预算。
 
-## 本页验证记录与使用约束
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404；安装对比为 5.8.4 / CL 58902052。
+
+- 基础核对日期：2026-11-11；Canvas 补验日期：2026-11-16。目标为 **5.9.0 Preview
+  / CL 60351404**；安装对比为 5.8.4 / CL 58902052。官方 [Preview notes][notes]
+  标注更新日期 2026-11-09， [MegaJam 公告][announcement] 同日发布。这是 Preview
+  的功能和当前安装验证，不能外推为正式版、其他平台或 UE 5.8 回归结果。未另注日期
+  的实例状态属于 2026-11-11 的审计，不能代表后续进程或插件配置。
+
+**先区分四种证据**
+
+- 2026-11-11 只读发现为 98 个 toolset，当时 Canvas、AnimGen/Kimodo、Forge、Fab、
+  DynamicWind、Lumen、Wasm 没有专属 live toolset；这只限定该次实例。 2026-11-16
+  启用 Canvas 相关插件的实例刷新目录后为 100 个 toolset，增加两个 Annotations
+  owner；顶层另有 66 个直接工具和 4 个 meta-tools。
+
+**其他制作功能：候选路由与未测范围**
+
+- 上述定位原文、源码行号/哈希和选定注册 schema 保存在本次 session 的
+  `feature-supplement-final.json`。
+
+**Canvas：编辑器工具与生成服务分别准备**
+
+- 2026-11-16 的插件状态、直接 MCP 工具读取、临时标注生命周期及 sidecar ready 已
+  有专项证据，见 [MCP / Canvas 插件](ue-5.9-mcp-canvas-plugins.md)。
+- 2026-11-11 审计没有启用或启动服务；2026-11-16 补验的初始检查覆盖局部读写与本地
+  sidecar 启动。
+
+**Forge 与 Fab：按具体服务接入**
+
+- 本轮尚未定位到当前安装的具体入口、服务端或调用 API。
+- 本轮没有采购、获取或导入外部素材，也没有未经证实的 Fab/Forge wrapper。
+
+**渲染增强：用读数判断当前启用状态**
+
+- 本轮只读设置，没有这类画质或性能验收。
+
+**Wasm / WebGPU：构建目标需要独立工具链**
+
+- 本轮没有下载 SDK、构建、发布或运行 Web 包。
+
+### 本页验证记录与使用约束
 
 2026-11-11 已收集：当时 toolset 清单及选定完整 schema、插件 discovered/enabled 状态、
 上述六个渲染 CVar、两版精确文件存在/哈希、所引用安装源码、官方 notes/公告

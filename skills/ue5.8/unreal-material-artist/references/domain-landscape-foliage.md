@@ -38,14 +38,19 @@ Key risks:
 
 ## Leaf Card Asset Standard
 
-When a foliage reference depends on real leaf cards, require a diffuse/alpha asset or separate albedo plus opacity mask before accepting visual equivalence.
+When a foliage reference depends on real leaf cards, require a diffuse/alpha
+asset or separate albedo plus opacity mask before accepting visual equivalence.
 
 - Search the reusable library with `--category foliage` first.
-- If no approved asset fits, generate with `cm-imagegen`; use the user's plant/reference image when available.
+- If no approved asset fits, generate with `cm-imagegen`; use the user's
+  plant/reference image when available.
 - Prefer power-of-two sizes such as `512x512`, `1024x1024`, or `2048x2048`.
-- Require clean cutout alpha, alpha-friendly RGB edge bleed, no baked ground/shadow, and no watermarks/text.
-- QA with `texture_asset_report.py --role foliage`, then audit UE import settings after import.
-- Preview on a two-sided masked card or small leaf-card cluster; a standalone PNG preview is not enough.
+- Require clean cutout alpha, alpha-friendly RGB edge bleed, no baked
+  ground/shadow, and no watermarks/text.
+- QA with `texture_asset_report.py --role foliage`, then audit UE import
+  settings after import.
+- Preview on a two-sided masked card or small leaf-card cluster; a standalone
+  PNG preview is not enough.
 
 ## Recommended Runtime Controls
 

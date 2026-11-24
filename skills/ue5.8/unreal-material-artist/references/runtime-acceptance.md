@@ -1,7 +1,8 @@
 # Material runtime acceptance
 
 Choose cases matching the material's actual runtime owner. These are procedures,
-not live UE results. Use the [shared result record](../../unreal-engine-mcp/references/shared-conventions.md#runtime-result-record)
+not live UE results. Use the
+[shared result record](../../unreal-engine-mcp/references/shared-conventions.md#runtime-result-record)
 and background MCP first. Read live component/MID values, not only the source MI
 or material CDO. Capture images only for named appearance questions.
 

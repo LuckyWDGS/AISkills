@@ -5,6 +5,14 @@ checks below used background MCP calls. They did not open a widget/timeline,
 move the user's camera or run PIE. Discover current schemas before reuse;
 native ownership changes are not all new capabilities.
 
+## Contents
+
+- [UMG authoring and animation](#umg-authoring-and-animation)
+- [Offscreen scene capture and media](#offscreen-scene-capture-and-media)
+- [Frame statistics and GPU snapshots](#frame-statistics-and-gpu-snapshots)
+- [CSV profiling: callable, but text parsing failed cross-check](#csv-profiling-callable-but-text-parsing-failed-cross-check)
+- [Rewind, knowledge and project files](#rewind-knowledge-and-project-files)
+
 ## UMG authoring and animation
 
 | Task | Live owner |

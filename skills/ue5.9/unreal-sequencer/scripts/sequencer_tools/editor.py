@@ -23,7 +23,7 @@ from contextlib import contextmanager
 from typing import Any
 from uuid import UUID
 
-from .mcp import connect, marker_json, run_python, unwrap_result
+from .mcp import connect_legacy, marker_json, run_python, unwrap_result
 from .background_compat import spawnable_script
 
 SEQ_TOOLS = "SequencerTools"
@@ -79,7 +79,7 @@ class Editor:
 
     def __init__(self, project: str | None = None):
         self.project = project or os.environ.get("UE_MCP_PROJECT")
-        self.client = connect(project=self.project)
+        self.client = connect_legacy(project=self.project)
         self.calls: list[dict[str, Any]] = []
 
     def close(self) -> None:

@@ -1,6 +1,7 @@
 # Prompt Recipes
 
-Use these as starting patterns for system `imagegen` by default, or for another image route when the user explicitly switches providers.
+Use these as starting patterns for system `imagegen` by default, or for another
+image route when the user explicitly switches providers.
 
 Keep the prompt family stable across the whole sequence:
 
@@ -12,7 +13,23 @@ Keep the prompt family stable across the whole sequence:
 
 Prefer black or transparent backgrounds for atlas work.
 
-For Unreal/Niagara review atlases, prefer black-background luminance texture sheets unless the pipeline explicitly needs true alpha. A generated preview is not production-ready until the final atlas has been snapped or packed to a power-of-two texture size. Prefer `2048x2048` or `4096x4096` for final source delivery; use `1024x1024` only for previews, mobile-only outputs, or explicit low-budget variants.
+For Unreal/Niagara review atlases, prefer black-background luminance texture
+sheets unless the pipeline explicitly needs true alpha. A generated preview is
+not production-ready until the final atlas has been snapped or packed to a
+power-of-two texture size. Prefer `2048x2048` or `4096x4096` for final source
+delivery; use `1024x1024` only for previews, mobile-only outputs, or explicit
+low-budget variants.
+
+## Contents
+
+- [Shared Invariants](#shared-invariants)
+- [Dust / Powder](#dust--powder)
+- [Smoke](#smoke)
+- [Fire / Flame](#fire--flame)
+- [Embers / Sparks](#embers--sparks)
+- [Randomizable Sprite Sheets](#randomizable-sprite-sheets)
+- [Prompting Sequence Strategy](#prompting-sequence-strategy)
+- [Additional UE VFX Families](#additional-ue-vfx-families)
 
 ## Shared Invariants
 
@@ -24,7 +41,8 @@ Append a version of these constraints to every frame or anchor-state prompt:
 - no props
 - no text
 - no UI
-- power-of-two final atlas target when delivering a complete sheet, preferably 2K or 4K for final source art
+- power-of-two final atlas target when delivering a complete sheet, preferably
+  2K or 4K for final source art
 - black luma-mask background for smoke/dust texture sheets unless true alpha is required
 - no transparent checkerboard preview background in production atlases
 - centered composition
@@ -158,7 +176,8 @@ State hints:
 
 ## Randomizable Sprite Sheets
 
-Use this pattern when the cells are meant to be independent variants, not one ordered time sequence.
+Use this pattern when the cells are meant to be independent variants, not one
+ordered time sequence.
 
 Good candidates:
 
@@ -196,9 +215,12 @@ Good default sequence strategy:
 
 Boundary reminder:
 
-- if the effect still works when the cells are shuffled, it may not need a strict continuous flipbook
-- if the motion reads incorrectly when the cells are shuffled, it probably does need ordered continuity
-- use `references/sequence-boundaries.md` before overcommitting to a full sequence for sparks, embers, chips, or tiny support particles
+- if the effect still works when the cells are shuffled, it may not need a
+  strict continuous flipbook
+- if the motion reads incorrectly when the cells are shuffled, it probably does
+  need ordered continuity
+- use `references/sequence-boundaries.md` before overcommitting to a full
+  sequence for sparks, embers, chips, or tiny support particles
 
 ## Additional UE VFX Families
 
@@ -217,4 +239,7 @@ These often use flipbooks even though they are not smoke, dust, or fire:
   - `isolated muzzle flash and gun smoke burst, bright flash core, short smoke expansion, fixed camera, consistent scale, black background, flipbook atlas`
   - `isolated weapon slash impact, bright crescent stroke, fragmenting energy tail, fixed camera, consistent scale, black background, flipbook atlas`
 
-For these families, still decide whether the sheet is continuous, randomizable, or mixed before generating. Portals, holograms, water splashes, blood/toxic puffs, and slash impacts usually need ordered motion for the hero layer. Muzzle sparks, droplets, shards, and support glints often work as random sprite sheets.
+For these families, still decide whether the sheet is continuous, randomizable,
+or mixed before generating. Portals, holograms, water splashes, blood/toxic
+puffs, and slash impacts usually need ordered motion for the hero layer. Muzzle
+sparks, droplets, shards, and support glints often work as random sprite sheets.
