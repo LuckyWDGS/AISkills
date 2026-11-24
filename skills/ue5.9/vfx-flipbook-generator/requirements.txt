@@ -1,0 +1,4 @@
+# Image QA, packing and atlas tools. Python 3.10+.
+Pillow>=10
+# Optional fallback when no FFmpeg is installed or bundled under tools/ffmpeg:
+# imageio-ffmpeg

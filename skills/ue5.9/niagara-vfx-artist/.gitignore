@@ -1,0 +1,2 @@
+# FFmpeg binaries are installed per machine, not committed; the flipbook builder is owned by vfx-flipbook-generator
+tools/ffmpeg/

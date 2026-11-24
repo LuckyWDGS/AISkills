@@ -4,6 +4,9 @@
 什么问题、什么时候值得用、以及可以直接复制的开始方式。文档只做解释，
 真正的触发规则和安全边界仍以对应 `skills/<name>/SKILL.md` 为准。
 
+UE 开发的五个技能另有 [统一总览与安装说明](ue-skills-overview.md)，包含
+蓝图、PCG、材质、Niagara、Sequencer 和 Flipbook 的分工、依赖与共享规则。
+
 ## 怎么让 Codex 使用 Skill
 
 通常直接用自然语言描述目标即可，Codex 会按任务选择技能。需要明确指定

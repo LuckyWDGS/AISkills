@@ -4,7 +4,8 @@ Personal Codex skills managed as a single repository.
 
 ## Quick skill picker
 
-This repository contains 22 Codex skill packages. You can simply describe the
+This repository contains 22 Codex skill packages; the five Unreal Engine skills
+exist in a UE 5.8 and a UE 5.9 version. You can simply describe the
 task in natural language; Codex selects a matching skill when available. For
 an explicit request, write `$<skill-name>` in the prompt, for example
 `$unreal-engine-mcp inspect the open UE 5.8 editor and report PIE state`.
@@ -37,7 +38,10 @@ Choose by intent:
 - Work in Unreal Engine: start with `unreal-engine-mcp`; use
   `unreal-material-artist` for materials/shaders, `niagara-vfx-artist` for
   Niagara systems, and `unreal-sequencer` for Level Sequences, cameras and
-  cinematics.
+  cinematics. The five UE skills live in `skills/ue5.8/` and `skills/ue5.9/`
+  with the same names; link one set with `install.ps1 -UEVersion`. See the
+  [UE 技能总览与安装](docs/zh/ue-skills-overview.md) for the bundle,
+  dependencies, shared rules, version switching and setup.
 - Deploy or troubleshoot an owned VPS proxy and subscription with
   [vps-proxy-deploy](skills/vps-proxy-deploy/SKILL.md).
 - Compile screenplay director packages into video prompts with
@@ -61,6 +65,14 @@ skills/
     agents/
     references/
     scripts/
+  ue5.8/                  # UE 5.8 bundle: the five UE skills as siblings
+    unreal-engine-mcp/
+    unreal-material-artist/
+    niagara-vfx-artist/
+    unreal-sequencer/
+    vfx-flipbook-generator/
+  ue5.9/                  # UE 5.9 bundle, same skill names
+    ...
 tools/
   install.ps1
   update.ps1
@@ -76,10 +88,19 @@ Clone this repository, then expose the skills to Codex with junctions:
 powershell -ExecutionPolicy Bypass -File .\tools\install.ps1
 ```
 
-By default this links every `skills/<name>/SKILL.md` package into:
+By default this links every `skills/<name>/SKILL.md` package, plus the five UE
+skills from one `skills/ue<version>/` bundle, into:
 
 ```text
 $HOME\.codex\skills\<name>
+```
+
+The UE bundles share skill names, so only one is linked at a time. Choose it
+with `-UEVersion`; without it the script keeps the currently linked version
+(first install: 5.8). Restart Codex after switching.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\install.ps1 -UEVersion 5.9
 ```
 
 To refresh a machine after pulling updates:

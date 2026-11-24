@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Niagara VFX Artist">
+  <defs>
+    <radialGradient id="bg" cx="38" cy="30" r="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset=".45" stop-color="#312E81"/>
+      <stop offset="1" stop-color="#111827"/>
+    </radialGradient>
+    <linearGradient id="flame" x1="44" y1="25" x2="84" y2="105" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A"/>
+      <stop offset=".45" stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <path d="M65 101c-19-7-31-24-28-43 2-15 13-26 25-34-2 15 10 22 18 34 11 16 4 35-15 43Z" fill="url(#flame)"/>
+  <path d="M62 96c-10-8-13-20-5-32 4 9 16 12 16 24 0 5-4 8-11 8Z" fill="#F8FAFC" opacity=".9"/>
+  <path d="M31 75c27 14 58 8 76-15M33 52c24-17 56-18 79-2" fill="none" stroke="#67E8F9" stroke-width="6" stroke-linecap="round" opacity=".86"/>
+  <circle cx="31" cy="75" r="5" fill="#67E8F9"/>
+  <circle cx="107" cy="60" r="5" fill="#FDE68A"/>
+  <circle cx="35" cy="52" r="4" fill="#F0ABFC"/>
+  <circle cx="112" cy="50" r="4" fill="#FB923C"/>
+  <circle cx="91" cy="34" r="4" fill="#A78BFA"/>
+  <circle cx="24" cy="35" r="3" fill="#FDE68A"/>
+</svg>

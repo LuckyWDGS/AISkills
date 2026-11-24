@@ -1,0 +1,6 @@
+interface:
+  display_name: "VFX Flipbook Gen"
+  short_description: "Plan and generate VFX flipbook atlases from sparse sources"
+  icon_small: "./assets/vfx-flipbook-generator-small.png"
+  icon_large: "./assets/vfx-flipbook-generator.png"
+  default_prompt: "Use $vfx-flipbook-generator to build or extend a VFX flipbook atlas from source footage, references, or generated frames."

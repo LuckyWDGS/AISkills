@@ -3,19 +3,11 @@ name: UE skills offline tests
 on:
   push:
     paths:
-      - 'skills/unreal-engine-mcp/**'
-      - 'skills/unreal-sequencer/**'
-      - 'skills/unreal-material-artist/**'
-      - 'skills/niagara-vfx-artist/**'
-      - 'skills/vfx-flipbook-generator/**'
+      - 'skills/ue*/**'
       - '.github/workflows/ue-skills-tests.yml'
   pull_request:
     paths:
-      - 'skills/unreal-engine-mcp/**'
-      - 'skills/unreal-sequencer/**'
-      - 'skills/unreal-material-artist/**'
-      - 'skills/niagara-vfx-artist/**'
-      - 'skills/vfx-flipbook-generator/**'
+      - 'skills/ue*/**'
       - '.github/workflows/ue-skills-tests.yml'
   workflow_dispatch:
 
@@ -31,8 +23,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ['3.10', '3.12']
+        # Each skills/ue<version>/ bundle holds the five UE skills as siblings.
+        ue-version: ['5.8', '5.9']
     env:
       PYTHONDONTWRITEBYTECODE: '1'
+      UE_SKILLS: skills/ue${{ matrix.ue-version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,9 +37,9 @@ jobs:
         shell: bash
         run: |
           for skill in unreal-sequencer unreal-material-artist niagara-vfx-artist vfx-flipbook-generator; do
-            python -m pip install -r "skills/$skill/requirements.txt"
+            python -m pip install -r "$UE_SKILLS/$skill/requirements.txt"
           done
       # Live-editor checks (live_smoke.py) need a running UE editor and stay local.
       - name: Run offline suites (loopback only)
         shell: bash
-        run: python skills/unreal-engine-mcp/scripts/run_offline_tests.py
+        run: python "$UE_SKILLS/unreal-engine-mcp/scripts/run_offline_tests.py"

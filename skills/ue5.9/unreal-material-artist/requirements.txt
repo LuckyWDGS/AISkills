@@ -1,0 +1,2 @@
+# Image QA, previews and atlas tools. Python 3.10+.
+Pillow>=10
