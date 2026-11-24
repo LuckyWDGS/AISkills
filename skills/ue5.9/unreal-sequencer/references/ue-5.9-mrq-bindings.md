@@ -1,17 +1,25 @@
 # UE 5.9 render bindings and queue ownership
 
-Use when rendering a sequence whose gameplay camera is assigned through an
-empty binding/tag. On 5.9.0 Preview / CL 60351404, the native tools and public
-Python symbols below were discovered live. Installed source was inspected for
-binding migration and classic MRQ setup. This pass did not migrate a binding,
-run an executor or validate rendered frames. Treat this as an execution route
-to verify on the target, separate from the
+Use when rendering a sequence whose gameplay camera is assigned through an empty
+binding or tag. The native tools and public Python symbols below were discovered
+live, and installed source was inspected for binding migration and classic MRQ
+setup. The classic MRQ route has not been executed: verify it on the target
+before relying on it. It is separate from the
 [saved background camera helper](ue-5.9-sequencer.md#native-camera-helper-no-open-timeline-required).
 
-A later 2026-11-16 test rendered a dedicated 12-frame sequence through Canvas
-`TriggerSequenceRender` in an isolated offscreen editor. That evidence is
-described below; it does not retroactively validate the classic MRQ migration
-recipe or an existing gameplay sequence.
+A dedicated 12-frame sequence has been rendered through Canvas
+`TriggerSequenceRender` in an isolated offscreen editor
+([details](#verified-canvas-sequence-render-12-frames-three-captures)). That
+result covers neither the classic MRQ migration recipe nor an existing
+gameplay sequence.
+
+## Contents
+
+- [Classic MRQ may reuse a gameplay sequence actor](#classic-mrq-may-reuse-a-gameplay-sequence-actor)
+- [Build a dedicated render sequence with a map possessable](#build-a-dedicated-render-sequence-with-a-map-possessable)
+- [Own the queue, callbacks and render lifecycle](#own-the-queue-callbacks-and-render-lifecycle)
+- [Verified Canvas sequence render: 12 frames, three captures](#verified-canvas-sequence-render-12-frames-three-captures)
+- [验证记录](#验证记录)
 
 ## Classic MRQ may reuse a gameplay sequence actor
 
@@ -118,10 +126,10 @@ rate and cuts. File growth or `is_rendering=false` alone is insufficient. Follow
 
 ## Verified Canvas sequence render: 12 frames, three captures
 
-On 2026-11-16, the same 5.9 Preview build rendered a new, disposable sequence
-with a placed-camera possessable, Transform animation and CameraCuts, at
-24 fps over `[0,12)`. The original gameplay sequence was not edited or used
-as this render fixture. Read the core
+The same 5.9 Preview build rendered a new, disposable sequence with a
+placed-camera possessable, Transform animation and CameraCuts, at 24 fps over
+`[0,12)`. The original gameplay sequence was not edited or used as this render
+fixture. Read the core
 [Canvas render reference](../../unreal-engine-mcp/references/ue-5.9-canvas-generation-render.md)
 for direct-tool discovery, process isolation and the separate still-camera bug.
 
@@ -153,5 +161,15 @@ their pre-render values. The offscreen viewport's *pixel dimensions* changed
 from 387×90 to 383×86, so do not claim the complete UI layout was identical.
 The original map and gameplay sequence file hashes stayed unchanged. The
 test sequence was removed after output inspection; the render log segment
-contained no errors or warnings. These results do not establish classic MRQ,
-arbitrary bindings, long sequences, audio, Control Rig or UE 5.8 coverage.
+contained no errors or warnings.
+
+## 验证记录
+
+- 2026-11-11，UE 5.9.0 Preview / CL 60351404：原生工具与公开 Python 符号为
+  实时发现；绑定迁移与经典 MRQ 初始化来自安装源码审阅。未迁移绑定、未运行
+  executor、未验证渲染帧。
+- 2026-11-16，同一构建：独立离屏编辑器中通过 Canvas `TriggerSequenceRender`
+  渲染一次性 12 帧 / 24 fps 序列，三个通道各 12 张 320×180 PNG，已解码检查。
+- 未执行：经典 MRQ、任意绑定、长序列、音频、Control Rig。
+
+

@@ -72,7 +72,8 @@ Use static switches for:
 - platform fallbacks
 - domain-specific forks that materially change shader cost
 
-Do not use static switches for every tiny art variation. That belongs in dynamic parameters, scalar toggles, or separate masters.
+Do not use static switches for every tiny art variation. That belongs in dynamic
+parameters, scalar toggles, or separate masters.
 
 ## Layout Strategy
 
@@ -83,7 +84,8 @@ For a large master:
 - lower = output assembly
 - far side = preview/debug notes and reroutes
 
-Use comments and reroutes, but do not let comments become a substitute for modular functions.
+Use comments and reroutes, but do not let comments become a substitute for
+modular functions.
 
 ## High-Value Function Library
 
@@ -118,8 +120,15 @@ Complex does not mean unbounded.
 
 Default textures are part of the shader contract, not harmless placeholders.
 
-- Use color/sRGB defaults only for color, albedo, emissive, or other artist-color inputs.
-- Use mask-compatible defaults for mask, packed, ORM, roughness, metallic, opacity, flow, and scalar-data inputs.
-- For `SAMPLERTYPE_Masks`, create or reuse a tiny project-local white/black texture with `TC_Masks` and `sRGB=false`.
-- Do not use `/Engine/EngineResources/WhiteSquareTexture` as the default for mask/packed sampler slots; it is a color sRGB texture and can trigger sampler-type compile errors.
-- Audit the master before artist textures exist. If the empty master fails because of placeholder texture settings, the master is not production-safe yet.
+- Use color/sRGB defaults only for color, albedo, emissive, or other
+  artist-color inputs.
+- Use mask-compatible defaults for mask, packed, ORM, roughness, metallic,
+  opacity, flow, and scalar-data inputs.
+- For `SAMPLERTYPE_Masks`, create or reuse a tiny project-local white/black
+  texture with `TC_Masks` and `sRGB=false`.
+- Do not use `/Engine/EngineResources/WhiteSquareTexture` as the default for
+  mask/packed sampler slots; it is a color sRGB texture and can trigger
+  sampler-type compile errors.
+- Audit the master before artist textures exist. If the empty master fails
+  because of placeholder texture settings, the master is not production-safe
+  yet.

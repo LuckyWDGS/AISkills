@@ -4,13 +4,16 @@
 
 - A material has a full texture set rather than one isolated texture.
 - BaseColor, Normal, RMA/ORM, Opacity, or Emissive files need to be checked together.
-- Roughness, Metallic, and AO arrive as separate grayscale maps and should become one packed runtime texture.
+- Roughness, Metallic, and AO arrive as separate grayscale maps and should
+  become one packed runtime texture.
 - Imported UE texture assets need a batch `texture_import_fix.py` spec.
-- `delivery_packager.py` needs one texture-set report instead of many disconnected single-texture reports.
+- `delivery_packager.py` needs one texture-set report instead of many
+  disconnected single-texture reports.
 
 ## Purpose
 
-`texture_set_pipeline.py` upgrades single-texture QA into set-level material input QA. It checks:
+`texture_set_pipeline.py` upgrades single-texture QA into set-level material
+input QA. It checks:
 
 - slot coverage for BaseColor, Normal, packed RMA/ORM/MRA, Opacity, and Emissive
 - filename role detection and expected suffixes
@@ -22,9 +25,12 @@
 - opacity mask signal range
 - optional UE import audit reports for actual sRGB/compression mismatches
 - optional import-fix batch spec emission
-- optional RMA/ORM/MRA packing from Roughness/Metallic/AO, with Opacity in alpha when requested
+- optional RMA/ORM/MRA packing from Roughness/Metallic/AO, with Opacity in alpha
+  when requested
 
-The tool is report-first and safe by default. It only writes a packed image when `--pack-rma-out` is supplied, and it only emits an import-fix batch spec when `--emit-import-fix-spec` is supplied.
+The tool is report-first and safe by default. It only writes a packed image when
+`--pack-rma-out` is supplied, and it only emits an import-fix batch spec when
+`--emit-import-fix-spec` is supplied.
 
 ## Table Of Contents
 
@@ -57,9 +63,13 @@ When `--markdown` is set, a sidecar `.md` summary is written next to the JSON.
 python tools/texture_set_pipeline.py audit --effect WingEcho --layer Surface --base-color D:/Textures/T_WingEcho_BaseColor.png --normal D:/Textures/T_WingEcho_Normal.png --rma D:/Textures/T_WingEcho_ORM.png --opacity D:/Textures/T_WingEcho_Opacity.png --emissive D:/Textures/T_WingEcho_Emissive.png --packed-convention ORM --markdown
 ```
 
-Use `--require-opacity` or `--require-emissive` when those slots are mandatory for the material route. Use `--no-require-normal` or `--no-require-rma` for unlit/VFX routes where those inputs are intentionally absent.
+Use `--require-opacity` or `--require-emissive` when those slots are mandatory
+for the material route. Use `--no-require-normal` or `--no-require-rma` for
+unlit/VFX routes where those inputs are intentionally absent.
 
-For Niagara-facing VFX texture sets, use `--profile vfx-unlit`. That profile keeps the normal import expectations but also warns when texture filenames do not end with `VFX`, for example `T_FireFlipbook_VFX` or `T_SmokeOpacity_VFX`.
+For Niagara-facing VFX texture sets, use `--profile vfx-unlit`. That profile
+keeps the normal import expectations but also warns when texture filenames do
+not end with `VFX`, for example `T_FireFlipbook_VFX` or `T_SmokeOpacity_VFX`.
 
 ## Emit UE Import Fix Spec
 
@@ -90,7 +100,8 @@ When you already have `texture_import_audit.py` reports, pass them in:
 python tools/texture_set_pipeline.py audit --scan D:/Textures/WingEcho --import-audit-report D:/reports/texture-import-audit.json --emit-import-fix-spec --markdown
 ```
 
-The pipeline will attach actual imported settings to slots and report sRGB/compression mismatches against each slot's expected role.
+The pipeline will attach actual imported settings to slots and report
+sRGB/compression mismatches against each slot's expected role.
 
 ## Pack Roughness Metallic AO
 
@@ -112,7 +123,9 @@ Conventions:
 - `ORM`: `R=AO`, `G=Roughness`, `B=Metallic`
 - `MRA`: `R=Metallic`, `G=Roughness`, `B=AO`
 
-Record the convention in the material parameter name or material contract. Many teams say "RMA" loosely when they actually mean ORM; this tool makes the channel contract explicit.
+Record the convention in the material parameter name or material contract. Many
+teams say "RMA" loosely when they actually mean ORM; this tool makes the channel
+contract explicit.
 
 ## JSON Spec Shape
 
@@ -147,11 +160,15 @@ python tools/texture_set_pipeline.py audit --spec D:/Textures/wingecho-texture-s
 
 ## Gate Meaning
 
-- `gate.passed=true`: no blocking errors, such as missing required slots, missing files, or failed packing.
+- `gate.passed=true`: no blocking errors, such as missing required slots,
+  missing files, or failed packing.
 - `gate.ready_for_import=true`: no errors and no warnings.
-- Warnings are still important. Typical warnings include mismatched required resolutions, suspicious packed-channel data, missing mask signal, wrong imported sRGB, or wrong compression.
+- Warnings are still important. Typical warnings include mismatched required
+  resolutions, suspicious packed-channel data, missing mask signal, wrong
+  imported sRGB, or wrong compression.
 
-`passed=true` is not artistic approval. It only means the texture set is structurally ready enough to continue material hookup or import review.
+`passed=true` is not artistic approval. It only means the texture set is
+structurally ready enough to continue material hookup or import review.
 
 ## Delivery Flow
 
@@ -160,5 +177,6 @@ python tools/texture_set_pipeline.py audit --spec D:/Textures/wingecho-texture-s
 3. If RMA/ORM is missing but separate channels exist, rerun with `--pack-rma-out`.
 4. If UE asset paths exist, emit the import-fix batch spec.
 5. Run `texture_import_fix.py --batch-spec`.
-6. Rerun `texture_import_audit.py` and pass the result back into `texture_set_pipeline.py`.
+6. Rerun `texture_import_audit.py` and pass the result back into
+   `texture_set_pipeline.py`.
 7. Add the final `texture-set-pipeline.json` to `delivery_packager.py --texture-report`.

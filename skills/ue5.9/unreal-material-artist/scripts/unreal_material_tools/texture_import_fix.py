@@ -20,7 +20,7 @@ from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
 from .texture_import_audit import analyze_texture, asset_package_path, collect, parse_grid
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "texture_import_fix/2"
 ROLE_CHOICES = ["albedo", "emissive", "mask", "packed", "normal", "flow", "ui", "flipbook", "atlas", "sprite"]
 FLAVOR_CHOICES = ["color", "mask", "data"]

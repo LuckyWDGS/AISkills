@@ -124,8 +124,9 @@ the evidenced layer and stay within the user's requested restart/setup scope.
 Keep a short evidence chain: observed failure → candidate cause → supporting
 node/value/source/log → discriminating check → result → scoped fix. Prefer a
 read-only observation or minimal reproduction over a broad speculative rewrite.
-If a check fails to support the explanation, update it before making more changes.
-For an uncertain write, apply the [timeout/readback rule](developer-workflow.md#make-changes-recoverable-and-unambiguous).
+If a check fails to support the explanation, update it before making more
+changes. For an uncertain write, apply the
+[timeout/readback rule](developer-workflow.md#make-changes-recoverable-and-unambiguous).
 
 Temporary diagnostics should identify the module ID, owner instance, relevant
 values and role/time when needed. Use supported official logs or instrumentation;

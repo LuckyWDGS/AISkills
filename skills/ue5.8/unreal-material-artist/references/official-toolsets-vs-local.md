@@ -11,9 +11,9 @@ domain plugins must be loaded in the active project.
 
 Installed Epic source:
 `Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/editor_toolset/toolsets/`.
-MaterialTools delegates graph operations to UMaterialEditingLibrary. These
-are Epic tools, not project-local replacements. Module prefixes can change;
-never hard-code the old `toolset_registry.toolsets.core.*` namespace.
+MaterialTools delegates graph operations to UMaterialEditingLibrary. These are
+Epic tools, not project-local replacements. Module prefixes can change; never
+hard-code the old `toolset_registry.toolsets.core.*` namespace.
 
 ## Coverage in the installed source
 
@@ -62,21 +62,20 @@ The JSON file must match the live schema. `--mcp-url` or UNREAL_MCP_URL selects
 the editor endpoint. Reports record actual transport and resolved toolset. Tool
 errors produce a failed report and nonzero exit code, without retry.
 
-UnrealBridge (custom plugin + TCP) is retired and no tool here constructs a plugin
-client any more. Every editor-connected tool reads or writes through Epic MCP:
-`material_audit`, `material_domain_audit`, `texture_import_audit`,
-`material_function_linter`, `shader_permutation_report` and `runtime_param_trace`
-(ProgrammaticToolset reads), `material_preview capture` (EditorAppToolset),
-`material_instance_batch` and `texture_import_fix` (plan, then `builtin_mcp`
-batch with readbacks), and `material_toolset_builder build` (a create script for
-the expressions, then a batch for properties and wiring).
-`graph_refactor_apply --execute` supports candidate-asset refactors; it does not
-authorize an in-place rewrite of unrelated graphs. `preview_matrix --execute`
-captures supported axes; unsupported environment/time/quality axes remain pending
-staging. `preview_environment_executor --execute --staged` captures an environment
+Every editor-connected tool reads or writes through Epic MCP: `material_audit`,
+`material_domain_audit`, `texture_import_audit`, `material_function_linter`,
+`shader_permutation_report` and `runtime_param_trace` (ProgrammaticToolset
+reads), `material_preview capture` (EditorAppToolset), `material_instance_batch`
+and `texture_import_fix` (plan, then `builtin_mcp` batch with readbacks), and
+`material_toolset_builder build` (a create script for the expressions, then a
+batch for properties and wiring). `graph_refactor_apply --execute` supports
+candidate-asset refactors; it does not authorize an in-place rewrite of
+unrelated graphs. `preview_matrix --execute` captures supported axes;
+unsupported environment/time/quality axes remain pending staging.
+`preview_environment_executor --execute --staged` captures an environment
 already staged in the level; it does not apply the light rig, background or
-exposure. Claim coverage per executed cell/axis and recorded environment.
-See [porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
+exposure. Claim coverage per executed cell/axis and recorded environment. See
+[porting legacy writers](../../unreal-engine-mcp/references/porting-legacy-writers.md)
 when adding a genuinely missing executor.
 
 The MCP graph source remains the default. `--graph-source remote` is an explicit

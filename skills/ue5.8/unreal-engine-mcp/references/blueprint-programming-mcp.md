@@ -9,6 +9,14 @@ For implementation/refactoring, use [developer workflow](developer-workflow.md)
 for scoped edits, uncertain-write readback and acceptance. For code lookup or a
 failure, use [debugging and source navigation](debugging-and-source-navigation.md).
 
+## Contents
+
+- [Discover before implementing](#discover-before-implementing)
+- [Graph edits](#graph-edits)
+- [Animation and AI features](#animation-and-ai-features)
+- [Programmer checks for a scoped gameplay feature](#programmer-checks-for-a-scoped-gameplay-feature)
+- [Extend with the appropriate official plugin](#extend-with-the-appropriate-official-plugin)
+
 ## Discover before implementing
 
 Enable Epic's `ModelContextProtocol` and `EditorToolset` plugins in the intended
@@ -97,9 +105,10 @@ future agents. Apply this to each new or modified module, including gameplay
 Blueprints, animation/state graphs, materials and Niagara as appropriate:
 
 - Wrap the module in a visible **Chinese comment frame**. Use a stable,
-  searchable title such as `【初始化】【调试打印】【BP.BeginPlay.PrintSequence】开始运行：每隔0.3秒打印`.
-  The Chinese labels and ID are textual search labels, not runtime Gameplay Tags.
-  Preserve an existing module ID when extending its implementation.
+  searchable title such as
+  `【初始化】【调试打印】【BP.BeginPlay.PrintSequence】开始运行：每隔0.3秒打印`.
+  The Chinese labels and ID are textual search labels, not runtime Gameplay
+  Tags. Preserve an existing module ID when extending its implementation.
 - Explain the module's purpose, entry, significant parameters and important
   timing/branch conditions in the frame or relevant node comments. Add short
   Chinese comments to non-obvious nodes rather than restating every wire.
@@ -110,10 +119,12 @@ Blueprints, animation/state graphs, materials and Niagara as appropriate:
   (purpose, inputs, outputs, side effects, caller). Details-panel function
   descriptions, variable tooltips and function categories had no verified stock
   write route in the audited 5.8.4 build; recheck live tools after upgrades.
-  Default to comment frames, supported categories and a handoff description table.
-  The bundled MCPBlueprintMetadata plugin is optional for explicitly requested
-  hover metadata ([delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules)). Keep project/API
-  identifiers stable; do not rename existing references just to translate them.
+  Default to comment frames, supported categories and a handoff description
+  table. The bundled MCPBlueprintMetadata plugin is optional for explicitly
+  requested hover metadata
+  ([delivery standards](blueprint-delivery-standards.md#5-chinese-explanations-for-functions-variables-and-modules)).
+  Keep project/API identifiers stable; do not rename existing references just to
+  translate them.
 - Keep frame titles on one line (about 40 characters) and the explanation in the
   frame's details text; frames must not overlap or share members. A long wrapped
   title is how two frame headers end up drawn on top of each other.
@@ -265,16 +276,17 @@ programming-related families:
 - `AutomationTestToolset`: test discovery/execution.
 - `PluginToolset`, `LiveCodingToolset`: project plugin/build and C++ iteration.
 - `AIModuleToolset`, `StateTreeToolset`: AI and StateTree tooling.
-- `GameplayTagsToolset`, `GASToolsets`, `GameFeaturesToolset`: gameplay framework tooling.
+- `GameplayTagsToolset`, `GASToolsets`, `GameFeaturesToolset`: gameplay
+  framework tooling.
 - `SlateInspectorToolset`, `MVVMToolset`: editor UI inspection and UI binding tooling.
 - `DataRegistryToolset`, `PCGToolset`: data and procedural gameplay/editor workflows.
 
 These families were verified in installed source. A follow-up enabled and
 discovered AIModuleToolset and StateTreeToolset live; the remaining listed
-families were not enabled by this audit. UMG and animation tools can also live inside their owning
-official plugins: inspect those descriptors instead of assuming every toolset
-has a separate plugin with the same name. Do not enable `AllToolsets` merely to
-work around one missing dependency.
+families were not enabled by this audit. UMG and animation tools can also live
+inside their owning official plugins: inspect those descriptors instead of
+assuming every toolset has a separate plugin with the same name. Do not enable
+`AllToolsets` merely to work around one missing dependency.
 
 For other programmer features, start with the existing Blueprint architecture:
 input/actions and actor components, interfaces/dispatchers, data assets/tables,

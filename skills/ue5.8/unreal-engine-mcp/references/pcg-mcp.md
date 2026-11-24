@@ -4,6 +4,16 @@
 遵守[共享后台规则](shared-conventions.md)；PCG 图中的数据边不是 K2 执行线。
 可搜索：override、selector、零点、坡度、ISM、Box、确定性、外部包。
 
+## 目录
+
+- [发现当前能力](#发现当前能力)
+- [只读检查：先确认真实引脚和连线](#只读检查先确认真实引脚和连线)
+- [编图与参数连通](#编图与参数连通)
+- [包装为开发者可用的蓝图](#包装为开发者可用的蓝图)
+- [执行与验收](#执行与验收)
+- [常见失败的下一步](#常见失败的下一步)
+- [官方资料与源码核对点](#官方资料与源码核对点)
+
 ## 发现当前能力
 
 先确认目标工程、PIE 状态，读取 `PCGToolset` / `PCGSpatialToolset` 的简表和所需工具
@@ -43,9 +53,10 @@ python scripts/pcg_inspect.py /Game/PCG/MyGraph --project <full.uproject> --veri
 
 1. `GetGraphStructure` 取得节点 **path**、设置、位置和 edges；默认出口在当前构建叫
    `DefaultOutputNode`，不要猜成 Output。
-2. `ObjectTools.list_properties/get_properties` 读取每个 PCGNode 的 inputPins/outputPins，
-   再读每个 PCGPin 的 node、properties.label、edges。这里能看到实际 override/dynamic pins；
-   `GetNativeNodeSchema` 的基本引脚列表可能没有它们。
+2. `ObjectTools.list_properties/get_properties` 读取每个 PCGNode 的
+   inputPins/outputPins，再读每个 PCGPin 的 node、properties.label、edges。这里
+   能看到实际 override/dynamic pins； `GetNativeNodeSchema` 的基本引脚列表可能没
+   有它们。
 3. 读每个 PCGEdge 的 inputPin/outputPin，并核对两端 pin.edges 都含该边、所属节点和
    方向正确，实际边集合与图结构一致。**PCGEdge.InputPin 是上游的输出引脚，
    OutputPin 是下游的输入引脚**，不要按字段名字反转方向。
@@ -133,9 +144,9 @@ Box 控制明确的生成边界，PCG 组件管理生成/清理，Graph Paramete
 采用 [PCG.Graph.Output 案例](runtime-acceptance.md#pcggraphoutput--执行数量与属性)，
 区分编辑器生成、PIE 和打包目标。执行、点数据、生成实例与截图各有不同证据。
 
-- 检查是否会改世界，只执行当前授权的 owner。`RunPCGInstantGraph` 不是无副作用
-  沙箱；Spawner 仍能生成内容。不要运行
-  `AI.Toolsets.PCGToolset.Execution.*` 于用户工作世界，其 fixture 会删除全部 APCGVolume。
+- 检查是否会改世界，只执行当前授权的 owner。`RunPCGInstantGraph` 不是无副作用沙
+  箱；Spawner 仍能生成内容。不要运行 `AI.Toolsets.PCGToolset.Execution.*` 于用户
+  工作世界，其 fixture 会删除全部 APCGVolume。
 - 同一图的执行和 DataView **串行**。DataView 会开启 inspection，第一次没缓存时需要
   重新执行；先核对 owner 和已完成状态。Loop/多实例化节点当前不支持逐迭代 DataView，
   报限制而不是重复执行到“成功”。不要在 UE 主线程里 sleep 等生成。
@@ -171,9 +182,12 @@ Box 控制明确的生成边界，PCG 组件管理生成/清理，Graph Paramete
 
 ## 官方资料与源码核对点
 
-- [PCG 概览](https://dev.epicgames.com/documentation/en-us/unreal-engine/procedural-content-generation-overview)：组件、图参数、实例与生成所有权。
-- [原生节点参考](https://dev.epicgames.com/documentation/en-us/unreal-engine/procedural-content-generation-framework-node-reference-in-unreal-engine)：采样、属性、变换和生成语义。
-- [PCG 与 World Partition](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-pcg-with-world-partition-in-unreal-engine)：Data Layers、HLOD 及 Spawn Actor 的归属设置。
+- [PCG 概览](https://dev.epicgames.com/documentation/en-us/unreal-engine/procedural-content-generation-overview)：
+  组件、图参数、实例与生成所有权。
+- [原生节点参考](https://dev.epicgames.com/documentation/en-us/unreal-engine/procedural-content-generation-framework-node-reference-in-unreal-engine)：
+  采样、属性、变换和生成语义。
+- [PCG 与 World Partition](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-pcg-with-world-partition-in-unreal-engine)：Data
+  Layers、HLOD 及 Spawn Actor 的归属设置。
 
 这些是领域资料；MCP 参数取实时 schema。升级时核对安装引擎的 PCGToolset.cpp、
 PCGAttributePropertySelectorConverter.cpp、PCGWorldData.cpp、PCGEdge.h、

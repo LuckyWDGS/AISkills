@@ -20,7 +20,7 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect, python_remote
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "material_audit/2"
 
 MATERIAL_PROPERTIES = [

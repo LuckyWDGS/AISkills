@@ -5,6 +5,16 @@
 没有播放音频/视频、运行 PIE、录制、渲染、打开窗口或修改原资产。
 原始 schema、源码对照和结果保存在忽略的 session 目录。
 
+## 目录
+
+- [实际注册与版本差异](#实际注册与版本差异)
+- [MetaSound：先查类型和真实引脚](#metasound先查类型和真实引脚)
+- [SoundWave：导入导出封装与属性读取分开](#soundwave导入导出封装与属性读取分开)
+- [Media：读文件与视频帧，不是媒体播放器控制](#media读文件与视频帧不是媒体播放器控制)
+- [MRQ / MRG：官方 Python 只读路径已通](#mrq--mrg官方-python-只读路径已通)
+- [Control Rig：延续读取已复验，原生序列路径仍需 fixture](#control-rig延续读取已复验原生序列路径仍需-fixture)
+- [验证记录](#验证记录)
+
 ## 实际注册与版本差异
 
 | 领域 / live owner | 注册数 | 与 5.8 的关系 |
@@ -49,9 +59,8 @@ MRQ/MRG 在此构建**没有独立 queue/graph 工具 owner**。
 筛选是精确类型匹配，不能把 `Float` 当作 `Float:Array`。有 suffix 分组时
 先选出真实类名，再查具体引脚；不要只凭中文显示名连线。
 
-Inspector 的参数是**命名 builder**，不是 asset path。本轮没有 attach 或
-create builder，所以没有执行 13 项图检查，也没有验证图编辑、保存、声音
-输出或性能。内置 MetaSound 资产存在，并不等于已经有可用 builder fixture。
+Inspector 的参数是**命名 builder**，不是 asset path。内置 MetaSound 资产存在，并
+不等于已经有可用 builder fixture。
 
 后续作者任务先读取 live 官方 `MetaSoundFundamentalsSkill`，再按需取
 workflows、presets、trigger_topology、paged_graphs、recipes 或 performance。
@@ -62,9 +71,8 @@ workflows、presets、trigger_topology、paged_graphs、recipes 或 performance�
 
 ## SoundWave：导入导出封装与属性读取分开
 
-`SoundWaveToolset` 只注册 `ImportFile` 和 `ExportWav`。本轮没有执行它们；
-导入会写资产，导出会写文件。注册这两个接口不代表存在音频播放、混音、
-波形编辑或听感验收工具。
+`SoundWaveToolset` 只注册 `ImportFile` 和 `ExportWav`。注册这两个接口不代表存在
+音频播放、混音、波形编辑或听感验收工具。
 
 通过现有 `AssetToolset.FindAssets` 和 `ObjectToolset`，已读取工程中的一个
 SoundWave：时长约 1.702154 秒，双声道，采样率/导入采样率 44100，
@@ -79,12 +87,12 @@ volume 约 0.05、pitch 1。属性先由 `ListProperties` 发现，再使用真�
 
 四个 live 工具：
 
-| 工具 | 合同与本轮覆盖 |
+| 工具 | 合同与覆盖 |
 |---|---|
 | `ReadImageFile` | 读取 PNG/JPEG/GIF/BMP/WebP 编码，最多 64 MiB；实际读 PNG，返回字节与文件 SHA-256 完全一致 |
-| `GetVideoInfo` | Windows Media Foundation 容器元数据；需要视频 fixture，本轮未测 |
-| `SkimVideo` | 按已知时长取中点间隔帧；本轮未测 |
-| `SampleFrames` | 在半开时间段取中点间隔帧、消除相邻重复；本轮未测 |
+| `GetVideoInfo` | Windows Media Foundation 容器元数据；需要视频 fixture，未测 |
+| `SkimVideo` | 按已知时长取中点间隔帧；未测 |
+| `SampleFrames` | 在半开时间段取中点间隔帧、消除相邻重复；未测 |
 
 视频采样 schema 的帧数上限 30，最长边限制 64–1568 且不放大。
 输出声明为带实际 presentation time 的 JPEG；只有执行后检查实际帧/时间
@@ -101,9 +109,7 @@ base64 bytes；仅 unwrap JSON 会丢失图像。
 ## MRQ / MRG：官方 Python 只读路径已通
 
 已从 live `AgentSkillToolset` 取回 MovieRenderQueueSkill 和
-MovieRenderGraphSkill。文案中的 `execute_python_in_editor` 名称不是此 MCP
-会话的可调用工具；本轮使用实际发现的 `PythonScriptingTools.execute_python`，
-先读 `read_me`，并逐项 `get_symbol` 检查公开 API。
+MovieRenderGraphSkill。
 
 只读结果：
 
@@ -135,13 +141,35 @@ dirty 队列，并验证输出路径、任务/shot、取消/错误、完成回�
 `GetControlRigs(explicitSequence)` 对当前无 rig track 的序列返回空数组。
 这验证了调用合同，没有验证任何控制值、绑定、层、空间切换或求解结果。
 
-本轮没有合适的 sequencer rig binding fixture，也没有调用可能评估场景的
-逐帧 transform getters。名字带 Get/Find 不代表纯读，尤其是 GetOrCreate /
-FindOrCreate；检查 live accessMode、文档和实际状态。
-写 rig graph、bake、FBX、Control Rig timeline evaluation 以及 runtime
-变形仍未覆盖。后续使用官方 SequencerControlRigSkill 与
-[Sequencer 版本参考](../../unreal-sequencer/references/ue-5.9-sequencer.md)，
-逐项移植所需合同，不能把旧 72 个 wrapper 和新 230 个注册函数直接相减。
+名字带 Get/Find 不代表纯读，尤其是 GetOrCreate / FindOrCreate；检查 live
+accessMode、文档和实际状态。写 rig graph、bake、FBX、Control Rig timeline
+evaluation 以及 runtime 变形仍未覆盖。后续使用官方 SequencerControlRigSkill 与
+[Sequencer 版本参考](../../unreal-sequencer/references/ue-5.9-sequencer.md)，逐
+项移植所需合同，不能把旧 72 个 wrapper 和新 230 个注册函数直接相减。
 
 这些代表读取没有 UE 5.8 编辑器回归含义。新增接口、已迁移合同、通用反射
 读取和完整工作流，应在任务报告中分别说明。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+**MetaSound：先查类型和真实引脚**
+
+- 本轮没有 attach 或 create builder，所以没有执行 13 项图检查，也没有验证图编
+  辑、保存、声音输出或性能。
+
+**SoundWave：导入导出封装与属性读取分开**
+
+- 本轮没有执行它们；导入会写资产，导出会写文件。
+
+**MRQ / MRG：官方 Python 只读路径已通**
+
+- 文案中的 `execute_python_in_editor` 名称不是此 MCP 会话的可调用工具；本轮使用
+  实际发现的 `PythonScriptingTools.execute_python`，先读 `read_me`，并逐项
+  `get_symbol` 检查公开 API。
+
+**Control Rig：延续读取已复验，原生序列路径仍需 fixture**
+
+- 本轮没有合适的 sequencer rig binding fixture，也没有调用可能评估场景的逐帧
+  transform getters。

@@ -1,8 +1,11 @@
 # Niagara Ribbon Flame Trail
 
-Use this when the material side of a Niagara ribbon/trail needs a fire, flame, ember, lava, heat, plasma, or energy-flame look with an additive/emissive shader and a packed mask texture.
+Use this when the material side of a Niagara ribbon/trail needs a fire, flame,
+ember, lava, heat, plasma, or energy-flame look with an additive/emissive shader
+and a packed mask texture.
 
-This is material-side scope only. Niagara owns the live System, Emitter, Renderer, bindings, bounds, culling, and integration proof.
+This is material-side scope only. Niagara owns the live System, Emitter,
+Renderer, bindings, bounds, culling, and integration proof.
 
 ## Table Of Contents
 
@@ -20,12 +23,18 @@ This is material-side scope only. Niagara owns the live System, Emitter, Rendere
 Default route:
 
 - `Material Domain`: `Surface`
-- `Blend Mode`: `Additive` for glow/fire/energy trails; use `Translucent` only when true alpha compositing or depth relationship matters.
+- `Blend Mode`: `Additive` for glow/fire/energy trails; use `Translucent` only
+  when true alpha compositing or depth relationship matters.
 - `Shading Model`: `Unlit`
-- `Two Sided`: usually `true` for ribbon readability unless the renderer/carrier proves one-sided is enough. Record the brightness multiplier risk when it is enabled.
-- Outputs: drive `EmissiveColor`; wire `Opacity` only when the blend route uses it meaningfully. Do not wire unused lit pins.
-- Usage flags: require `Used with Niagara Ribbons`; also set `Beam Trails` if the material is shared with beam/trail renderers.
-- Runtime inputs: `ParticleColor.A` for lifetime fade by default; optional `ParticleColor.RGB` for emitter-side tint.
+- `Two Sided`: usually `true` for ribbon readability unless the renderer/carrier
+  proves one-sided is enough. Record the brightness multiplier risk when it is
+  enabled.
+- Outputs: drive `EmissiveColor`; wire `Opacity` only when the blend route uses
+  it meaningfully. Do not wire unused lit pins.
+- Usage flags: require `Used with Niagara Ribbons`; also set `Beam Trails` if
+  the material is shared with beam/trail renderers.
+- Runtime inputs: `ParticleColor.A` for lifetime fade by default; optional
+  `ParticleColor.RGB` for emitter-side tint.
 
 Preferred scaffold command:
 
@@ -33,7 +42,13 @@ Preferred scaffold command:
 python tools/material_toolset_builder.py recipe fire_ribbon_additive --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
 ```
 
-The recipe builds a first-pass packed-mask additive material scaffold with raw U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`, Time-driven main/noise panners, B-channel distortion, centered raw-V width falloff, `ParticleColor`, `DynamicParameter.Param1/Param2`, and `EmissiveColor` / `Opacity` outputs. Treat the generated spec as offline graph scaffolding: run live UE pin-name smoke, texture import QA, carrier preview, and Android one-sample fallback review before delivery.
+The recipe builds a first-pass packed-mask additive material scaffold with raw
+U/V split, `Tiling_Length`, optional `Use_Flow_UV_Remap`, Time-driven main/noise
+panners, B-channel distortion, centered raw-V width falloff, `ParticleColor`,
+`DynamicParameter.Param1/Param2`, and `EmissiveColor` / `Opacity` outputs. Treat
+the generated spec as offline graph scaffolding: run live UE pin-name smoke,
+texture import QA, carrier preview, and Android one-sample fallback review
+before delivery.
 
 Android / low-tier fallback command:
 
@@ -41,15 +56,24 @@ Android / low-tier fallback command:
 python tools/material_toolset_builder.py recipe fire_ribbon_additive_android --effect WingEcho --layer RibbonTrail --folder-path /Game/Materials/VFX --markdown
 ```
 
-The fallback recipe keeps the same ribbon UV contract and artist-facing control names where practical, but uses one `Texture_Mask` sample, no secondary noise/distortion sample, and lower brightness defaults. Use it for Android or low-end variants after the full route has established the visual target, or when the task explicitly prioritizes low-tier cost from the start.
+The fallback recipe keeps the same ribbon UV contract and artist-facing control
+names where practical, but uses one `Texture_Mask` sample, no secondary
+noise/distortion sample, and lower brightness defaults. Use it for Android or
+low-end variants after the full route has established the visual target, or when
+the task explicitly prioritizes low-tier cost from the start.
 
-`Texture_Mask` defaults to a same-folder `T_FireRibbonMask_VFX` asset reference in the generated builder spec. If the texture is imported elsewhere, edit the spec before `--execute`, then validate the imported texture settings before delivery.
+`Texture_Mask` defaults to a same-folder `T_FireRibbonMask_VFX` asset reference
+in the generated builder spec. If the texture is imported elsewhere, edit the
+spec before `--execute`, then validate the imported texture settings before
+delivery.
 
 ## Ribbon UV Contract
 
-Use the canonical contract in [carrier-and-ribbon-rules.md](carrier-and-ribbon-rules.md#niagara-ribbon-uv-contract):
-raw `U` = length (flame travel, noise scroll, length tiling), raw `V` = width (width
-masks, edge fades, center core), and the documented `Flow_UV` art-space exception.
+Use the canonical contract in
+[carrier-and-ribbon-rules.md](carrier-and-ribbon-rules.md#niagara-ribbon-uv-contract):
+raw `U` = length (flame travel, noise scroll, length tiling), raw `V` = width
+(width masks, edge fades, center core), and the documented `Flow_UV` art-space
+exception.
 
 ## Packed Mask Convention
 
@@ -81,37 +105,47 @@ Minimum readable route:
    - art-space exception: `Flow_UV = float2(V, U)`
 4. Pan main and noise UVs with `Time * Speed_Main` / `Time * Speed_Noise`.
 5. Sample the packed mask once for slow B-channel breakup/distortion.
-6. Use `B` to offset or perturb the main sample lightly; clamp distortion so the ribbon does not swim across its width.
+6. Use `B` to offset or perturb the main sample lightly; clamp distortion so the
+   ribbon does not swim across its width.
 7. Sample the packed mask again on the distorted main UV for R/G color masks.
 8. Combine `G` body + `R` core/filament + optional ember edge.
-9. Multiply by `Color_Main`, `Color_Core`, `Intensity`, width falloff, and `ParticleColor.A`.
-10. Output to `EmissiveColor` and wire opacity when the Additive route uses it for fade/softness.
+9. Multiply by `Color_Main`, `Color_Core`, `Intensity`, width falloff, and
+   `ParticleColor.A`.
+10. Output to `EmissiveColor` and wire opacity when the Additive route uses it
+    for fade/softness.
 
 Avoid:
 
-- Refraction, scene depth, or expensive depth reads unless the visual target requires heat haze and the platform allows it.
+- Refraction, scene depth, or expensive depth reads unless the visual target
+  requires heat haze and the platform allows it.
 - Multiple high-res samples before the one-sample packed route has been previewed.
 - Width panning that makes the flame crawl sideways.
 - Unbounded HDR intensity that only looks good on black backgrounds.
 
 ## Android One-Sample Fallback
 
-Use `fire_ribbon_additive_android` when Android, low-tier, or heavy overdraw makes the full dual-sample distortion route too expensive.
+Use `fire_ribbon_additive_android` when Android, low-tier, or heavy overdraw
+makes the full dual-sample distortion route too expensive.
 
 Fallback graph differences:
 
 - One `Texture_Mask` sample only.
 - Keep raw `TexCoord0.U` for length flow and raw `TexCoord0.V` for width falloff.
-- Keep optional `Use_Flow_UV_Remap` for art-space textures; it costs graph math, not another sample.
+- Keep optional `Use_Flow_UV_Remap` for art-space textures; it costs graph math,
+  not another sample.
 - Omit secondary B-channel noise panner and UV distortion.
-- Lower defaults: `Intensity=1.5`, `Core_Boost=1.5`, `OpacityScale=0.85`, `Tiling_Length=2.0`.
+- Lower defaults: `Intensity=1.5`, `Core_Boost=1.5`, `OpacityScale=0.85`,
+  `Tiling_Length=2.0`.
 - Prefer `256x128` or `512x256` packed mask size before shipping to Android.
 
-Do not call the fallback equivalent to the deep route. It is a platform variant: compare it on the intended carrier/background, then record the visible losses such as less breakup, less internal motion, or flatter flame edges.
+Do not call the fallback equivalent to the deep route. It is a platform variant:
+compare it on the intended carrier/background, then record the visible losses
+such as less breakup, less internal motion, or flatter flame edges.
 
 ## Chinese Artist Parameters
 
-Use English binding names for MI/Niagara/Blueprint compatibility and Chinese descriptions for artist-facing controls.
+Use English binding names for MI/Niagara/Blueprint compatibility and Chinese
+descriptions for artist-facing controls.
 
 | Binding | 中文说明 | Default PC | Android fallback | Range | Owner |
 |---|---|---:|---:|---|---|
@@ -142,8 +176,10 @@ Android first-pass target:
 
 - 0-2 samples, ideally one packed mask.
 - 256-512 texture for common gameplay trails unless close-up proof needs more.
-- Shorter lifetime, lower opacity/intensity, simpler distortion, fewer overlapping ribbons.
-- Prefer `QualitySwitch` / tiered MI values instead of adding static switch combinations.
+- Shorter lifetime, lower opacity/intensity, simpler distortion, fewer
+  overlapping ribbons.
+- Prefer `QualitySwitch` / tiered MI values instead of adding static switch
+  combinations.
 - Test on black, neutral, bright, and busy backgrounds.
 
 ## MI Handoff Checklist
@@ -154,21 +190,28 @@ Return this to the VFX lead or artist:
 - Material instance path.
 - Packed texture path and import settings.
 - Overrides list with defaults and platform fallback values.
-- Required Niagara inputs: `ParticleColor.A`, optional tint, optional Dynamic Parameters.
+- Required Niagara inputs: `ParticleColor.A`, optional tint, optional Dynamic
+  Parameters.
 - Ribbon UV assumption and whether `Flow_UV` art-space remap is used.
 - Usage flags.
-- Preview evidence required: ribbon carrier, background contrast, shader complexity or audit, Android/low tier when in scope.
-- Known risks: overdraw, two-sided brightness, mip shimmer, high-frequency masks, bloom/exposure clipping.
+- Preview evidence required: ribbon carrier, background contrast, shader
+  complexity or audit, Android/low tier when in scope.
+- Known risks: overdraw, two-sided brightness, mip shimmer, high-frequency
+  masks, bloom/exposure clipping.
 
 ## Validation
 
 Minimum material-side validation:
 
-- `material_audit.py`: no compile errors, expected outputs, sampler/instruction counts, no stale MI overrides.
+- `material_audit.py`: no compile errors, expected outputs, sampler/instruction
+  counts, no stale MI overrides.
 - `material_domain_audit.py`: `Surface + Additive + Unlit`, expected usage flags.
-- `texture_asset_report.py` or `texture_import_audit.py`: packed mask role, `sRGB=false`, compression and dimensions.
-- `material_preview.py capture --route viewport --carrier ribbon`: ribbon-carrier readability on a placed ribbon.
+- `texture_asset_report.py` or `texture_import_audit.py`: packed mask role,
+  `sRGB=false`, compression and dimensions.
+- `material_preview.py capture --route viewport --carrier ribbon`:
+  ribbon-carrier readability on a placed ribbon.
 - `preview_readability_score.py`: when the preview may be invisible or too bright.
 - `platform_scalability_planner.py`: once delivery evidence exists.
 
-Hand real Niagara integration proof to `niagara-vfx-artist`; this skill should not inspect or mutate the live Niagara renderer graph.
+Hand real Niagara integration proof to `niagara-vfx-artist`; this skill should
+not inspect or mutate the live Niagara renderer graph.

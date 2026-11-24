@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from ue_mcp import DEFAULT_PROTOCOL, UnrealMcpClient, default_cache_dir, default_session_dir, unwrap_result
-from ue_mcp.skill_api import DEFAULT_MCP_URL
+from ue_mcp.skill_api import DEFAULT_MCP_URL, refuse_unported
 
 
 READ_CALLS = {
@@ -300,6 +300,7 @@ def main() -> int:
         parser.error('Output directory must be new or empty')
     client = UnrealMcpClient(args.url, DEFAULT_PROTOCOL, args.timeout, expected_project=args.project,
                              cache_dir=default_cache_dir(), session_dir=default_session_dir())
+    refuse_unported(client, 'pcg_inspect.py')  # reads through the UE 5.8 ObjectTools/AssetTools names
     code = capture(client, args.graph, args.out, verify_snapshot=args.verify_snapshot)
     print(json.dumps({'exit_code':code, 'report':str(args.out.resolve()/'report.md')}, ensure_ascii=False))
     return code

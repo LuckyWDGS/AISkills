@@ -8,8 +8,8 @@ CDO function evaluations, without PIE. Later gameplay evidence is recorded in
 
 ## Native authoring contract
 
-`BlueprintToolsets.BlueprintToolset` replaces most former Python
-`BlueprintTools` graph APIs. This is more than a case change. Examples:
+`BlueprintToolsets.BlueprintToolset` owns graph authoring. Copy every name and
+argument from the live schema. Examples:
 
 | Operation | 5.9 contract |
 |---|---|
@@ -37,11 +37,11 @@ Data readback alone was insufficient: before the exec link, the canonical DSL
 contained the signature without a return statement. After connecting it,
 `Read` returned `(return InputValue)`.
 
-Native metadata removes the need for the optional MCPBlueprintMetadata project
-extension for the tested variable/function descriptions. Keep Chinese purpose,
-inputs/outputs, side effects, caller and a stable module ID in a comment frame.
-Do not infer that every native comment-membership query has complete persisted
-membership after a reload; report unavailable membership honestly.
+Write variable and function descriptions with the native metadata tools. Keep
+Chinese purpose, inputs/outputs, side effects, caller and a stable module ID in
+a comment frame. Do not infer that every native comment-membership query has
+complete persisted membership after a reload; report unavailable membership
+honestly.
 
 ## Native Graph DSL is the preferred scoped rewrite route
 
@@ -79,10 +79,10 @@ Python DSL limitation is not a blanket 5.9 native-DSL limitation.
 
 ### Read the actual control flow, not just successful compilation
 
-A 2026-11-16 packaged input test found an analog-input tail outside the intended
-position branch in the canonical graph. It compiled, but sent keyboard and
-gamepad movement together before the threshold. A no-value `(return)` also read
-back as an empty branch; it did not establish the intended early exit.
+A packaged input test found an analog-input tail outside the intended position
+branch in the canonical graph. It compiled, but sent keyboard and gamepad
+movement together before the threshold. A no-value `(return)` also read back as
+an empty branch; it did not establish the intended early exit.
 
 For this shape, move the sequential tail into a small function and call it as
 the terminal action of an explicit guard. Recheck state after an earlier branch
@@ -132,6 +132,11 @@ looked-up `load_object` and `Object.call_method('EchoProbe', args=(value,))`:
 inputs `-3, 0, 2.5, 42` returned `-1, 2, 4.5, 44`. This proves sampled compiled
 editor execution, not spawning, networking, BeginPlay or PIE behavior.
 
-The 5.8 `ProgrammaticToolset.execute_tool_script` environment (`def run()` and
-`execute_tool(full_name, json_text)`) remains a separate compatibility route.
-Do not convert it by changing only the executor's tool name.
+## 验证记录
+
+- 2026-11-11，UE 5.9.0 Preview / CL 60351404：原生创建、变量/函数中文元数据、参
+  数与双向接线、注释、编译；DSL revision/edit、stale 拒绝、graph diff；CDO 输入
+  -3/0/2.5/42 得到 -1/2/4.5/44。
+- 2026-11-16：独立包输入测试在 canonical graph 中发现位置分支外的模拟输入尾部；
+  可编译，但会在阈值前同时发送键盘与手柄移动。
+- 未执行：BeginPlay、网络与 PIE 行为。

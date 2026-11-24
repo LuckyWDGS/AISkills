@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Re-record the report-contract fixtures from a running UE 5.8+ editor (read-only).
+"""Re-record the report-contract fixtures from a running editor (read-only).
+
+Not ported to UE 5.9: this runner still drives the UE 5.8 helper contracts and is refused on a UE 5.9 editor.
 
 The material and Niagara contract tests replay real collector output stored in
 ``<skill>/scripts/fixtures``. After an engine upgrade, re-record them, rerun the
@@ -54,7 +56,7 @@ def strip_module_inputs(raw: dict) -> None:
 def record(project: str | None, material_dir: Path, niagara_dir: Path) -> list[Path]:
     skill_root = SKILLS / "unreal-material-artist"
     module = builtin_mcp()
-    client = connect(project=project)
+    client = connect(project=project, contract="5.8")  # not ported to UE 5.9
     written: list[Path] = []
     try:
         owner = client.editor_owner()

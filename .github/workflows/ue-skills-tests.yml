@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - 'skills/ue*/**'
+      - 'tools/ue_docs_lint.py'
       - '.github/workflows/ue-skills-tests.yml'
   pull_request:
     paths:
       - 'skills/ue*/**'
+      - 'tools/ue_docs_lint.py'
       - '.github/workflows/ue-skills-tests.yml'
   workflow_dispatch:
 
@@ -43,3 +45,6 @@ jobs:
       - name: Run offline suites (loopback only)
         shell: bash
         run: python "$UE_SKILLS/unreal-engine-mcp/scripts/run_offline_tests.py"
+      - name: Lint the bundle's Markdown against the documentation conventions
+        shell: bash
+        run: python tools/ue_docs_lint.py "$UE_SKILLS"

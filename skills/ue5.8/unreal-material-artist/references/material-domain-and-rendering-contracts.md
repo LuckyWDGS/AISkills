@@ -1,8 +1,12 @@
 # Material Domain And Rendering Contracts
 
-Use this when a material might be using the wrong `Material Domain`, `Blend Mode`, `Shading Model`, output pins, or render path for its intended carrier.
+Use this when a material might be using the wrong `Material Domain`,
+`Blend Mode`, `Shading Model`, output pins, or render path for its intended
+carrier.
 
-This is material-side scope only. It can define what a material requires from the caller, but it must not inspect or write live Niagara systems, renderer bindings, or emitter graphs.
+This is material-side scope only. It can define what a material requires from
+the caller, but it must not inspect or write live Niagara systems, renderer
+bindings, or emitter graphs.
 
 ## Domain Contracts
 
@@ -33,23 +37,37 @@ This is material-side scope only. It can define what a material requires from th
 Review output pins against the selected domain and shading model:
 
 - `PostProcess` should normally output through `EmissiveColor`; PBR pins are suspect.
-- `Unlit` needs `EmissiveColor`; lit-only pins such as `Metallic`, `Specular`, `Roughness`, and `Normal` are ignored or wasted.
+- `Unlit` needs `EmissiveColor`; lit-only pins such as `Metallic`, `Specular`,
+  `Roughness`, and `Normal` are ignored or wasted.
 - `Masked` needs `OpacityMask`; `Opacity` alone does not cut pixels.
-- `Translucent` / `Additive` should make alpha, depth, sorting, and overdraw costs explicit.
-- `Two Sided + Additive` on a closed mesh or light-volume shell is a brightness multiplier, not just a visibility toggle. Front and back faces can both contribute to the same screen pixel, so tune emissive and opacity against the carrier's actual layer count.
-- `DefaultLit` and other physical surface models should not omit `BaseColor`, `Roughness`, and `Normal` without a reason.
-- `WorldPositionOffset` and `PixelDepthOffset` are not just visual features; they are render-contract features with bounds, Nanite, shadow, sorting, and platform implications.
-- `Use Material Attributes` moves the contract into a material-attributes chain. Audit `MakeMaterialAttributes`, `BreakMaterialAttributes`, `BlendMaterialAttributes`, and `MaterialAttributeLayers` instead of only checking individual output pins.
+- `Translucent` / `Additive` should make alpha, depth, sorting, and overdraw
+  costs explicit.
+- `Two Sided + Additive` on a closed mesh or light-volume shell is a brightness
+  multiplier, not just a visibility toggle. Front and back faces can both
+  contribute to the same screen pixel, so tune emissive and opacity against the
+  carrier's actual layer count.
+- `DefaultLit` and other physical surface models should not omit `BaseColor`,
+  `Roughness`, and `Normal` without a reason.
+- `WorldPositionOffset` and `PixelDepthOffset` are not just visual features;
+  they are render-contract features with bounds, Nanite, shadow, sorting, and
+  platform implications.
+- `Use Material Attributes` moves the contract into a material-attributes chain.
+  Audit `MakeMaterialAttributes`, `BreakMaterialAttributes`,
+  `BlendMaterialAttributes`, and `MaterialAttributeLayers` instead of only
+  checking individual output pins.
 
 ## When To Run A Domain Audit
 
 Run `material_domain_audit.py` before deeper graph work when:
 
 - a material is not a regular opaque surface
-- a reference image implies glass, water, skin, hair, cloth, UI, decals, post process, light projection, or terrain blending
+- a reference image implies glass, water, skin, hair, cloth, UI, decals, post
+  process, light projection, or terrain blending
 - a graph compiles but looks wrong in the target carrier
-- a performance issue might come from blend mode, overdraw, WPO/PDO, SceneTexture, RVT, or Substrate/layering rather than ordinary math
-- a master material is being reused across domains that should probably be separate masters
+- a performance issue might come from blend mode, overdraw, WPO/PDO,
+  SceneTexture, RVT, or Substrate/layering rather than ordinary math
+- a master material is being reused across domains that should probably be
+  separate masters
 
 ## Acceptance Notes
 

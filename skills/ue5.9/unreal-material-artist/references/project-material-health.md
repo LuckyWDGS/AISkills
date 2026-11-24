@@ -2,19 +2,30 @@
 
 ## Use This When
 
-- You need a project-level material triage report instead of reviewing one material at a time.
-- Existing evidence already includes `material_audit.py`, `material_domain_audit.py`, `material_regression.py`, `graph_diff_refactor.py`, `graph_refactor_apply.py`, `texture_set_pipeline.py`, `texture_import_audit.py`, or `shader_permutation_report.py` reports.
-- You want heatlists for instruction count, sampler count, static-switch pressure, texture risk, failed regressions, graph diffs, graph-refactor apply candidates, parameter naming collisions, or suspicious master-material candidates.
+- You need a project-level material triage report instead of reviewing one
+  material at a time.
+- Existing evidence already includes `material_audit.py`,
+  `material_domain_audit.py`, `material_regression.py`,
+  `graph_diff_refactor.py`, `graph_refactor_apply.py`,
+  `texture_set_pipeline.py`, `texture_import_audit.py`, or
+  `shader_permutation_report.py` reports.
+- You want heatlists for instruction count, sampler count, static-switch
+  pressure, texture risk, failed regressions, graph diffs, graph-refactor apply
+  candidates, parameter naming collisions, or suspicious master-material
+  candidates.
 
 ## Purpose
 
-`project_material_health.py` is an evidence aggregator. It does not pretend to live-scan `/Game` by itself when Unreal is offline. Instead, it scans report roots, usually:
+`project_material_health.py` is an evidence aggregator. It does not pretend to
+live-scan `/Game` by itself when Unreal is offline. Instead, it scans report
+roots, usually:
 
 ```text
 <project>/.codex/session/material-delivery/
 ```
 
-It builds one project health report from the reports already emitted by the material workflow.
+It builds one project health report from the reports already emitted by the
+material workflow.
 
 ## Table Of Contents
 
@@ -85,7 +96,9 @@ Use stricter budgets for mobile or project-specific performance targets:
 python tools/project_material_health.py scan --instruction-budget 120 --sampler-budget 6 --texture-max-dimension 1024 --high-risk-score 60 --strict --markdown
 ```
 
-`--strict` returns non-zero when the project health gate fails. The gate fails when there are high-risk materials, high-risk textures, high-risk texture sets, failed regressions, or invalid report files.
+`--strict` returns non-zero when the project health gate fails. The gate fails
+when there are high-risk materials, high-risk textures, high-risk texture sets,
+failed regressions, or invalid report files.
 
 ## Recommended Evidence Feed
 
@@ -113,32 +126,59 @@ python tools/project_material_health.py scan --markdown
 Important fields:
 
 - `summary.tool_counts`: which report types were found.
-- `summary.high_risk_material_count`: number of materials above the configured risk threshold.
-- `summary.high_risk_texture_count`: number of textures above the configured risk threshold.
-- `summary.high_risk_texture_set_count`: number of failed or high-risk full texture-set reports.
-- `summary.graph_refactor_apply_review_count`: candidate refactors that are not ready for acceptance, including dry-run plans, skipped operations, or missing regression baselines.
-- `summary.graph_refactor_apply_failed_count`: candidate refactors with operation failures, failed regression, failed preview, or domain errors.
+- `summary.high_risk_material_count`: number of materials above the configured
+  risk threshold.
+- `summary.high_risk_texture_count`: number of textures above the configured
+  risk threshold.
+- `summary.high_risk_texture_set_count`: number of failed or high-risk full
+  texture-set reports.
+- `summary.graph_refactor_apply_review_count`: candidate refactors that are not
+  ready for acceptance, including dry-run plans, skipped operations, or missing
+  regression baselines.
+- `summary.graph_refactor_apply_failed_count`: candidate refactors with
+  operation failures, failed regression, failed preview, or domain errors.
 - `hotlists.materials_by_score`: highest priority material triage list.
 - `hotlists.materials_by_instructions`: shader-cost hotlist.
 - `hotlists.materials_by_static_switches`: possible permutation pressure.
 - `hotlists.textures_by_score`: texture/import/texture-set risk hotlist.
 - `hotlists.texture_sets_by_score`: broken or warning-heavy texture sets.
-- `hotlists.failed_regressions`: visual regressions that should be resolved or accepted as new baselines.
-- `hotlists.graph_diffs_requiring_review`: graph changes that explain or may explain visual drift.
-- `hotlists.graph_refactor_applies_needing_review`: safe-apply candidates that still need review, rollback, baseline, or promotion decisions.
-- `hotlists.parameter_name_collisions`: repeated parameter names, especially suspicious when the same normalized name has mixed types.
-- `hotlists.suspicious_master_candidates`: materials with large graphs, many switches, or many texture parameters.
+- `hotlists.failed_regressions`: visual regressions that should be resolved or
+  accepted as new baselines.
+- `hotlists.graph_diffs_requiring_review`: graph changes that explain or may
+  explain visual drift.
+- `hotlists.graph_refactor_applies_needing_review`: safe-apply candidates that
+  still need review, rollback, baseline, or promotion decisions.
+- `hotlists.parameter_name_collisions`: repeated parameter names, especially
+  suspicious when the same normalized name has mixed types.
+- `hotlists.suspicious_master_candidates`: materials with large graphs, many
+  switches, or many texture parameters.
 
 ## Triage Order
 
 Use this order unless there is a known production fire:
 
-1. Failed regressions, graph diffs requiring review, and graph-refactor apply candidates that are not ready for acceptance.
+1. Failed regressions, graph diffs requiring review, and graph-refactor apply
+   candidates that are not ready for acceptance.
 2. Compile errors and domain-audit errors.
 3. Instruction and sampler hot materials.
 4. Static-switch and permutation pressure.
-5. Texture-set errors, oversized textures, wrong sRGB/compression, and packed-channel problems.
+5. Texture-set errors, oversized textures, wrong sRGB/compression, and
+   packed-channel problems.
 6. Parameter name collisions and stale overrides.
 7. Dead branches and cleanup-only findings.
 
-The tool is a prioritizer, not a replacement for review. Use it to pick the next material or texture set to inspect with the specialized tools.
+The tool is a prioritizer, not a replacement for review. Use it to pick the next
+material or texture set to inspect with the specialized tools.
+
+## Material function dependency map
+
+`material_function_dependency_map.py` combines a function-linter report with
+the function-call data of material audits. It reports function-to-material
+dependencies, reuse hotspots, large or switch-heavy functions and duplicate
+function names, as a risk map for project governance and later refactors.
+
+```powershell
+python tools/material_function_dependency_map.py --function-linter-report D:/path/to/material-function-linter.json --audit-report D:/path/to/material-audit.json --markdown
+```
+
+Output: `functions[]`, `materials[]` and `hotspots[]`.

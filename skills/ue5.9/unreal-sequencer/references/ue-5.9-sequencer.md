@@ -1,20 +1,31 @@
-# Sequencer in UE 5.9 Preview
+# UE 5.9 Sequencer control
 
-Live checked on 5.9.0 Preview, CL 60351404. This page records background
-asset authoring, API discovery and the separately identified runtime checks
-in an isolated test project. The camera helper's checks do not open a timeline
-or evaluate a game world; the 2026-11-16 Trigger-event pass adds the runtime
-evidence below. Render acceptance still requires its own evidence.
+Background asset authoring, API discovery and runtime checks for Level Sequences
+on UE 5.9. Curve checks, runtime playback and rendered output are separate
+[evidence levels](../../unreal-engine-mcp/references/shared-conventions.md#evidence-levels);
+what was run on which date is listed under [验证记录](#验证记录).
 
-The second pass added read-only rig hierarchy, native reference keys, four
-Sequence Validator rules, and official Python MRQ queue / MRG topology reads.
-Read the shared [audio / media / rig / MRQ reference](../../unreal-engine-mcp/references/ue-5.9-audio-media-tools.md)
-and [validator boundaries](../../unreal-engine-mcp/references/ue-5.9-dataflow-data-tools.md)
-for those operations. This pass did not validate rig keying or rendering.
+Rig hierarchy reads, native reference keys, Sequence Validator rules and the
+official Python MRQ queue / MRG topology reads are in the shared
+[audio, media, rig and MRQ reference](../../unreal-engine-mcp/references/ue-5.9-audio-media-tools.md)
+and
+[validator boundaries](../../unreal-engine-mcp/references/ue-5.9-dataflow-data-tools.md).
 
-## Discover the new owners
+## Contents
 
-The 5.8 `SequencerTools` / keyframing namespaces are not the 5.9 API contract.
+- [Discover the owners](#discover-the-owners)
+- [Verified background chain](#verified-background-chain)
+- [Native camera helper: no open timeline required](#native-camera-helper-no-open-timeline-required)
+- [Runtime camera ownership](#runtime-camera-ownership)
+- [Bound Trigger events: title and audio cues](#bound-trigger-events-title-and-audio-cues)
+- [TimeWarp and TemplateSequence: discovered routes](#timewarp-and-templatesequence-discovered-routes)
+- [Control Rig: explicit sequence does not imply background operation](#control-rig-explicit-sequence-does-not-imply-background-operation)
+- [MRQ: own the render queue without replacing the user's queue](#mrq-own-the-render-queue-without-replacing-the-users-queue)
+- [Background spawnable gap](#background-spawnable-gap)
+- [验证记录](#验证记录)
+
+## Discover the owners
+
 Discover these live toolsets and describe each called tool:
 
 | Task | 5.9 owner and useful tools |
@@ -31,9 +42,8 @@ Discover these live toolsets and describe each called tool:
 | Active timeline, playback and UI | `LevelSequenceEditorSubsystem`; many methods still require an open Sequencer |
 | Control Rig | Discover `ControlRigSequencerEditorLibrary` and `ControlRigTools`; presence does not validate a particular rig operation |
 
-Use the sibling MCP client's plural discovery support. Native names use PascalCase
-and arguments use names such as `sequence`, `startFrame`, `trackType` and `inTime`.
-Do not mechanically capitalize old arguments or pass an old helper's schema.
+Native names use PascalCase and arguments use names such as `sequence`,
+`startFrame`, `trackType` and `inTime`. Copy every name from the live schema.
 
 ## Verified background chain
 
@@ -182,8 +192,8 @@ only its own delegates, input mapping and HUD; normal gameplay exits keep
 their restoration. The scope-only change compiled/saved and passed 13 PIE
 lifecycle assertions. The rebuilt Development package subsequently returned 0
 for exit during Intro (1 second), after natural completion (12 seconds) and
-through the root launcher (5 seconds). At that stage, packaged full gameplay/
-restart was not exercised; the 2026-11-16 follow-up is recorded below.
+through the root launcher (5 seconds). Packaged full gameplay and restart
+are covered by the Trigger-event follow-up below.
 A separate CSV/screenshot instrumented run returned 777003 after
 clean game-log shutdown; keep that Preview limitation in the
 [core audit](../../unreal-engine-mcp/references/ue-5.9-preview-audit.md).
@@ -193,11 +203,10 @@ not forbid an owner from stopping/restoring its player before tearing it down.
 
 ## Bound Trigger events: title and audio cues
 
-The 2026-11-16 StarHop pass authored and compiled two Director endpoints with
-a typed player input, each calling a parameterless gameplay handler, on a
-player-bound Trigger track, then exercised natural playback
-and an early Enter skip in PIE. These are separate results from the camera
-helper's curve checks and the earlier schema-only event review.
+The StarHop fixture authored and compiled two Director endpoints with a
+typed player input, each calling a parameterless gameplay handler, on a
+player-bound Trigger track, then exercised natural playback and an early Enter
+skip in PIE. These results are separate from the camera helper's curve checks.
 
 ### Author a typed binding and endpoint
 
@@ -206,7 +215,7 @@ helper's curve checks and the earlier schema-only event review.
    Verify its possessed-object class is the intended generated player class;
    the camera helper's untyped empty binding does not establish this contract.
    Remove only the authoring actor in `finally` and compare the level actor
-   set before/after. This pass retained 122 actors with no temporary player.
+   set before/after. The fixture kept 122 actors with no temporary player.
 2. Reacquire the binding through native `GetBindings` and match its possessed
    class before tagging it `StarHop.IntroPlayer`. Do not serialize a reflected
    GUID with `str(binding.binding_id)`: this build produced a Struct debug
@@ -230,8 +239,8 @@ helper's curve checks and the earlier schema-only event review.
 5. Obtain the Director Blueprint reference through `GetOrCreateDirectorBlueprint`,
    then read that asset with `BlueprintDslToolset.Read`. Verify both
    typed endpoint calls, compile the Director separately with warnings as
-   errors, and save the intended sequence. This pass completed those steps;
-   successful key creation alone would not establish a working event.
+   errors, and save the intended sequence. Successful key creation alone
+   does not establish a working event.
 
 ### Bind the live player and gate side effects
 
@@ -280,7 +289,7 @@ counter values were collected in a separate post-completion snapshot.
 
 These counters verify handler execution and suppression, not audio audibility
 or a rendered title. Reverse playback, looping, editor scrubbing, Repeater
-events, payload arguments and MRQ output were not covered by this pass.
+events, payload arguments and MRQ output are not covered.
 The subsequent Windows Development package also passed natural cue-count
 checks during complete mapped-input gameplay, menu restart and save/load
 travel. A separate one-second intentional exit retained Intro-phase samples,
@@ -295,8 +304,8 @@ route, author a real body, compile and add a separate runtime test.
 
 ## TimeWarp and TemplateSequence: discovered routes
 
-The 2026-11-15 schema/source review found the routes below. They were not
-executed in the camera or Trigger-event passes.
+These routes come from a schema and source review. They have not been
+executed.
 
 - **TimeWarp:** discover the section's supported time-warp contract before
   `SetSectionPlayRate` or `SetCustomTimeWarp`. Sections without a time warp reject
@@ -317,8 +326,8 @@ executed in the camera or Trigger-event passes.
   accepts camera classes only, and multiple spawnables are rejected as an
   ambiguous root. On a candidate, require a valid nonzero returned binding,
   correct bound class, preserved keys/tracks, resolved components and actual
-  playback for acceptance; save only the intended candidate. This route does not establish
-  that generic background LevelSequence spawnable creation now works.
+  playback for acceptance; save only the intended candidate. This route does not
+  establish that generic background LevelSequence spawnable creation now works.
 
 ## Control Rig: explicit sequence does not imply background operation
 
@@ -337,8 +346,8 @@ these focus/selection requirements or make cancellation rollback an applied edit
 Discover rigs with `MakeControlRigReference`, inspect the exact control types,
 and distinguish hierarchy reads, typed value writes, key authoring and an
 evaluated skeletal pose. Layered tracks and animation import/bake require
-Backwards Solve; FK Control Rig supplies it. This pass only read hierarchy
-and discovered APIs; no typed key, solve or playback result is claimed.
+Backwards Solve; FK Control Rig supplies it. Only hierarchy reads and API
+discovery have been run; typed keys, solve and playback are unverified.
 
 ## MRQ: own the render queue without replacing the user's queue
 
@@ -375,11 +384,10 @@ This source finding is not a claim about every MRG path.
 Use a map-resolving possessable in a dedicated render sequence, or verify an
 explicit render-player binding route. The
 [5.9 render-binding reference](ue-5.9-mrq-bindings.md) gives the exact discovered
-native/Python route and migration checks. Queue rendering and binding migration
-were not executed in this pass. Do not advertise a production-render helper
-based solely on symbol discovery.
+native/Python route and migration checks. Queue rendering and binding
+migration have not been executed, so there is no production-render helper.
 
-## Background spawnable gap remains
+## Background spawnable gap
 
 On this build, `LevelSequenceEditorSubsystem.AddSpawnableFromClass` with an
 explicit sequence and `CineCameraActor` while no timeline was open returned:
@@ -389,19 +397,28 @@ explicit sequence and `CineCameraActor` while no timeline was open returned:
 ```
 
 `MovieSceneSequenceExtensions.GetBindings` then returned an empty array. Treat
-this as a failed write, even though MCP did not set `isError`. Do not build tracks
-on that proxy, retry by opening UI, or claim that 5.9 fixes the 5.8 limitation.
-Inspect a public background API via 5.9 `PythonScriptingTools` for this exact gap
-if the task needs it. The existing `background_compat.py` 5.8.4 build allowlist
-was not broadened by this test.
+this as a failed write, even though MCP did not set `isError`. Build no tracks
+on that proxy and keep the UI closed. Use a possessable or the tagged empty
+binding from the camera helper. When a task needs a spawnable, inspect a
+public background API through `PythonScriptingTools` for this exact gap.
 
-## Existing helper scope
+## 验证记录
 
-The legacy plan builder, inspector, sampler and render helpers retain their
-5.8 contracts unless individually ported and exercised. The new native camera
-helper is the create-only 5.9 path described above. Shared transport support
-does not make every high-level helper compatible. Use current native schemas
-and official Python for verified gaps; retain existing UI authorization gates.
+构建：UE 5.9.0 Preview / CL 60351404，独立测试工程。
 
-No 5.8 editor regression was performed by this 5.9 pass. Save/compile, curve data,
-PIE runtime and final rendered image acceptance are separate results.
+- 2026-11-11：后台链路（创建序列、`30000/1001` 帧率、`[0,120)` 范围、Fade
+  轨道/段、2 个 Linear 键、61 个曲线采样、frame 30 = 0.5、指定保存）全部
+  在未打开 timeline 的情况下完成；`GetCurrentLevelSequence` 前后均为空。
+- 同轮：原生相机 helper 创建带 tag 的空相机绑定及 Transform / CameraCut /
+  Fade 轨道并逐帧验证 Linear 曲线；未打开 timeline，未求值游戏世界。
+- 同轮：后台 `AddSpawnableFromClass` 返回零 GUID、`sequence=null`，
+  `GetBindings` 为空。
+- 2026-11-15：TimeWarp 与 TemplateSequence 仅做 schema / 源码审阅，未执行。
+- 2026-11-16：StarHop 工程的 Trigger 事件（两个 Director endpoint、玩家
+  绑定）在 PIE 中完成自然播放与 Enter 提前跳过；Windows Development 包
+  通过自然 cue 计数与退出检查。
+- 第二轮只读：rig hierarchy、原生 reference keys、四条 Sequence Validator
+  规则、官方 Python 的 MRQ 队列与 MRG 拓扑。
+- 未执行：Control Rig 键控/solve/播放、经典 MRQ 出片与绑定迁移、反向播放、
+  循环、编辑器 scrub、Repeater 事件、事件 payload 参数。
+- 未做 UE 5.8 编辑器回归。

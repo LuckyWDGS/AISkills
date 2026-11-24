@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live smoke test of the UE skills' tools against a running UE 5.8+ editor.
+"""Live smoke test of the UE skills' tools against a running UE 5.8 editor.
 
 Runs each tool through its real command line against template content (or the
 assets you pass), checks key report fields, and fails if any touched asset's

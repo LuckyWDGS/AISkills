@@ -260,11 +260,12 @@
 不要把“资产创建成功”当成“效果创建成功”。
 
 - [ ] 系统和发射器读回后，角色分工还是你预期的 source / receiver / trail route
-- [ ] renderer 类型和命名目标一致
-  例：名字叫 `RibbonTrail`，live receiver 却仍然只有 `SpriteRendererProperties`，这就是未完成测试资产
+- [ ] renderer 类型和命名目标一致例：名字叫 `RibbonTrail`，live receiver 却仍然
+  只有 `SpriteRendererProperties`，这就是未完成测试资产
 - [ ] live renderer material 真的存在，不是空绑定
 - [ ] 如果只是测试系统，路径应该在临时/调试区域，而不是正式 VFX 目录
-- [ ] 打开后如果图看起来奇怪，不要先猜截图，先读回 graph/function/renderers/material bindings
+- [ ] 打开后如果图看起来奇怪，不要先猜截图，先读回
+  graph/function/renderers/material bindings
 
 ### 临时测试资产留在正式目录
 
@@ -311,8 +312,10 @@
 
 - [ ] 参考图/设计理解：当前锚点是不是用户确认的那张，裁切和高清图是否足够清楚
 - [ ] 纹理/源图：mask、alpha、噪声、羽片、火花图集、flipbook 帧是否本身就缺细节
-- [ ] 材质/shader：Blend、Emissive、Opacity、UV 流动、Dynamic Parameter、Depth Fade、Fresnel 是否导致风格偏差
-- [ ] Niagara 粒子/Renderer：Spawn、Lifetime、Width、RibbonID、LinkOrder、Renderer Binding、排序、Bounds 是否导致形态偏差
+- [ ] 材质/shader：Blend、Emissive、Opacity、UV 流动、Dynamic Parameter、Depth
+  Fade、Fresnel 是否导致风格偏差
+- [ ] Niagara 粒子/Renderer：Spawn、Lifetime、Width、RibbonID、LinkOrder、
+  Renderer Binding、排序、Bounds 是否导致形态偏差
 - [ ] 动画/接入：是否绑定到正确骨骼/Socket，是否在挥动峰值触发，方向和缩放是否正确
 - [ ] 预览 harness：相机、焦点、DesiredAge、背景亮度、截帧时机是否让效果看起来偏弱或裁切
 

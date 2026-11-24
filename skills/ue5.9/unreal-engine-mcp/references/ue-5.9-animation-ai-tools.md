@@ -6,6 +6,17 @@
 启动 PIE、应用输入、构建导航、启动日志记录或写资产。
 原始 schema、源码对照、项目身份和结果保存在忽略的 session 目录。
 
+## 目录
+
+- [新增接入、迁移与延续能力](#新增接入迁移与延续能力)
+- [AnimBlueprint：外层 pose 与规则可读，状态机容器限制仍在](#animblueprint外层-pose-与规则可读状态机容器限制仍在)
+- [Behavior Tree / Blackboard / EQS：原生作者与证据范围](#behavior-tree--blackboard--eqs原生作者与证据范围)
+- [NavMesh：可直接诊断配置，实际导航需要数据](#navmesh可直接诊断配置实际导航需要数据)
+- [Input：资产配置读取与玩家输入控制是两条路线](#input资产配置读取与玩家输入控制是两条路线)
+- [CommonUI / UMG：静态问题可查，运行诊断仍需会话](#commonui--umg静态问题可查运行诊断仍需会话)
+- [技能接入边界](#技能接入边界)
+- [验证记录](#验证记录)
+
 ## 新增接入、迁移与延续能力
 
 | 当前 live owner | 注册数 | 与比较的 5.8 安装的关系 |
@@ -24,10 +35,8 @@
 Input、CommonUI、EQS 和 UMG 本身在旧版引擎已存在；此处“新增”指所比较安装
 提供的 MCP 控制界面。插件目录变化不能替代 live schema，也不能证明完整工作流。
 
-`AnimationAssistantToolset` 没有变成完整 gameplay ABP 编辑器：本次注册的
-`animation_toolset.toolsets.controlrig.ControlRigTools` 仍为 44 项，两版 decorated
-方法集合相同；另有 4 项 `SequencerDirectorToolset`。大量旧 Sequencer 封装已迁至
-原生 owner，参见 [Control Rig / 音频媒体审计](ue-5.9-audio-media-tools.md) 和
+大量旧 Sequencer 封装已迁至原生 owner，参见
+[Control Rig / 音频媒体审计](ue-5.9-audio-media-tools.md) 和
 [Sequencer 版本参考](../../unreal-sequencer/references/ue-5.9-sequencer.md)。
 
 静态盘点还应搜索 **`AIRuntimeCallable`**：本构建 Input 和 NavMesh 使用此标记。
@@ -49,7 +58,6 @@ Input、CommonUI、EQS 和 UMG 本身在旧版引擎已存在；此处“新增�
 5.9 原生 `FindNodes` 的实现仍以 `TArray<UK2Node*>` 接收 `ListAllNodes`。
 pose 节点可派生自 UK2Node，状态机内的 state/entry/transition 节点则不是这一
 继承链。schema 的返回类型写作 UEdGraphNode，也不能证明实现已枚举所有节点。
-该限制延续了 [5.8 动画检查](animation-state-machines-mcp.md) 中的实测行为。
 
 因此，扩展已有逻辑时先读取可见的 EventGraph、pose 和 rule graph；不要在空结果
 基础上重建或替换生产状态机。完整 state/conduit/transition 拓扑读取和作者操作
@@ -85,9 +93,7 @@ BT 的对象层次需区分：`BehaviorTreeGraphNode` 是编辑器图节点，`G
 `GetAllowedBlackboardKeys(node, selectorPropertyName)`，并使用真实 selector
 属性名。EQS 同样区分 graph node 与 option/generator/test instance。
 
-只读轮在 `/Game` 和全部挂载内容中没有找到 BehaviorTree、BlackboardData 或
-EnvQuery，当时仅确认注册、schema 与空搜索。后续平台 Demo 使用独立候选范围，
-实际完成以下作者路径，详见 [Gameplay AI 与动画](gameplay-ai-animation.md)：
+已在独立候选范围完成过的作者路径，详见 [Gameplay AI 与动画](gameplay-ai-animation.md)：
 
 - 创建 Character、AIController、两个 BTTask 蓝图、BT、BB，独立复制 locomotion
   ABP；五个 Blueprint/ABP 均以 `bWarningsAsErrors=true` 编译成功。
@@ -119,20 +125,17 @@ StateTree 是另一种资产与状态系统，其候选创建、绑定和编译�
 bounds volume 和 mainNavData 均为空；没有构建任务、dirty area 或锁定。
 这证明配置/空状态查询可用，没有证明场景已可寻路。
 
-其余 schema 可以按世界/agent/navData 查询路径、投影、raycast、poly/tile、
-可达区域、障碍/links/modifiers/invokers 等。21 项均声明 read；本轮没有构建
-导航、放置 bounds，亦未执行需要 navmesh 的路径和空间查询。
+其余 schema 可以按世界/agent/navData 查询路径、投影、raycast、poly/tile、可达区
+域、障碍/links/modifiers/invokers 等。
 
-不要从工具名字推断默认参数。本构建部分参数即使源码有默认值，在 live schema
-仍是 required。使用完整 schema；本轮 build-status 调用接受 `navData:null`、
-`agentName:""` 和显式 world。空 navData 的成功返回不能算寻路数值验收。
+不要从工具名字推断默认参数。本构建部分参数即使源码有默认值，在 live schema 仍是
+required。空 navData 的成功返回不能算寻路数值验收。
 
 ## Input：资产配置读取与玩家输入控制是两条路线
 
 `InputToolset` / EnhancedInput 插件均启用，两项工具也已注册。但它是
 `ULocalPlayerSubsystem` 的实例派发：没有 PIE/Game 本地玩家时，读取
-`IsInputApplied` 会返回 dispatch target 不存在。本轮实际遇到这个会话限制，
-没有调用 `ApplyInput`，也没有为读取而启动 PIE。
+`IsInputApplied` 会返回 dispatch target 不存在。
 
 按当前 schema：
 
@@ -152,17 +155,14 @@ bounds volume 和 mainNavData 均为空；没有构建任务、dirty area 或锁
 action 级 triggers/modifiers 为空；IMC 默认表有 13 项，含 SpaceBar→Jump 与
 W/S/A/D→Move 和对应 modifier 引用。
 
-默认表位于 **`defaultKeyMappings.mappings`**，顶层已弃用的 `mappings` 本次为空。
-两版 InputMappingContext 头文件也字节相同，这不是 5.9 新的数据布局。
-继续检查 `mappingProfileOverrides`、添加 context 的逻辑/优先级、消费与输入模式；
-配置表不代表玩家已启用。详见 [Enhanced Input 既有路线](official-capability-map.md#enhanced-input)。
+两版 InputMappingContext 头文件也字节相同，这不是 5.9 新的数据布局。继续检查
+`mappingProfileOverrides`、添加 context 的逻辑/优先级、消费与输入模式；配置表不
+代表玩家已启用。
 
 ## CommonUI / UMG：静态问题可查，运行诊断仍需会话
 
 CommonUI 的事件 logger 状态读取成功：未记录、事件/丢弃数均 0、订阅玩家 0。
-`GetActivatableTree` 明确返回没有 PIE。输入路由、focus、action binding 和
-激活树必须结合实际 player/router；本轮没有激活/关闭 widget、锁输入类型、
-刷新焦点、打开树可视化或启动事件日志。
+`GetActivatableTree` 明确返回没有 PIE。
 
 `UMGDebuggerSubsystem` 的 lifetime logger 状态和事件读取成功：未记录、未抓
 invalidation、记录/丢弃为 0、events=[]。空 recorder 是可读取的空状态，
@@ -180,8 +180,7 @@ Applied 时只是 uncertain guess。保留 `applicationStatus` / `bCertain` 和�
 不要把推断的 winner 当作实际运行时最后赋值或视觉验收。
 
 UMG widget 作者和 animation 的首轮创建/编译/关键帧结果见
-[编辑器工具审计](ue-5.9-editor-tools.md)。本轮只补验证上述静态覆盖分析与空
-诊断状态，没有 MVVM fixture、runtime ViewModel、HUD 布局/交互或生命周期录像。
+[编辑器工具审计](ue-5.9-editor-tools.md)。
 
 ## 技能接入边界
 
@@ -195,3 +194,39 @@ UMG widget 作者和 animation 的首轮创建/编译/关键帧结果见
 第二轮只读检查前后 actor 数为 129、选择为空、dirty map/content 为空，未运行 PIE。
 这些是该轮的状态证据；后续 Demo 作者不改变其历史含义，也不提供 UE 5.8 live
 回归结论。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+**新增接入、迁移与延续能力**
+
+- `AnimationAssistantToolset` 没有变成完整 gameplay ABP 编辑器：本次注册的
+  `animation_toolset.toolsets.controlrig.ControlRigTools` 仍为 44 项，两版
+  decorated 方法集合相同；另有 4 项 `SequencerDirectorToolset`。
+
+**Behavior Tree / Blackboard / EQS：原生作者与证据范围**
+
+- 只读轮在 `/Game` 和全部挂载内容中没有找到 BehaviorTree、BlackboardData 或
+  EnvQuery，当时仅确认注册、schema 与空搜索。后续平台 Demo 使用独立候选范围，实
+  际完成以下作者路径，详见 [Gameplay AI 与动画](gameplay-ai-animation.md)：
+
+**NavMesh：可直接诊断配置，实际导航需要数据**
+
+- 21 项均声明 read；本轮没有构建导航、放置 bounds，亦未执行需要 navmesh 的路径和
+  空间查询。
+- 使用完整 schema；本轮 build-status 调用接受 `navData:null`、 `agentName:""` 和
+  显式 world。
+
+**Input：资产配置读取与玩家输入控制是两条路线**
+
+- 本轮实际遇到这个会话限制，没有调用 `ApplyInput`，也没有为读取而启动 PIE。
+- 默认表位于 **`defaultKeyMappings.mappings`**，顶层已弃用的 `mappings` 本次为
+  空。
+
+**CommonUI / UMG：静态问题可查，运行诊断仍需会话**
+
+- 输入路由、focus、action binding 和激活树必须结合实际 player/router；本轮没有激
+  活/关闭 widget、锁输入类型、刷新焦点、打开树可视化或启动事件日志。
+- 本轮只补验证上述静态覆盖分析与空诊断状态，没有 MVVM fixture、runtime
+  ViewModel、HUD 布局/交互或生命周期录像。

@@ -1,115 +1,120 @@
 ---
 name: unreal-sequencer
-description: Build, inspect and verify Unreal Engine Level Sequences through Epic MCP for cinematics, cutscenes, camera moves, actor animation, fades, events, subsequences and Control Rig. Uses UE 5.9 native background tools and official Python where covered, with conditional UE 5.8 helpers. Requires the sibling unreal-engine-mcp skill.
+description: Build, inspect and verify Unreal Engine 5.9 Level Sequences through Epic MCP. Use when the task involves cinematics, cutscenes, intro or outro sequences, camera moves and camera cuts, actor or transform animation, fades, event tracks, subsequences or Control Rig tracks, or when checking that a sequence plays, skips and hands control back to gameplay correctly. Requires the sibling unreal-engine-mcp skill.
 ---
 
-# Unreal Sequencer
+# Unreal Sequencer (UE 5.9)
 
-Use the sibling [core MCP skill](../unreal-engine-mcp/SKILL.md) for the client,
-fresh editor/project identity, tool discovery and official Python execution.
-Follow [shared conventions](../unreal-engine-mcp/references/shared-conventions.md),
-including Chinese module descriptions, stable module IDs and scoped saves.
-Background operation is the default; do not open/focus a timeline or move the
-user's viewport as an automation fallback.
+> **Scope.** This skill targets UE 5.9 only and was verified on **UE 5.9.0
+> Preview, CL 60351404**. A later build can rename tools and arguments, so read
+> the live schema before each first call. Movie Render Queue output has not
+> been accepted on this build; see [Known limits](#known-limits).
 
-## Choose the target engine contract
+Use the sibling [core MCP skill](../unreal-engine-mcp/SKILL.md) for the
+client, editor and project identity, tool discovery and official Python.
+Follow the [shared conventions](../unreal-engine-mcp/references/shared-conventions.md):
+background operation, Chinese module descriptions with stable IDs, scoped
+saves and the evidence levels. The user's open timeline and viewport stay as
+they are.
 
-- **UE 5.9:** read [5.9 Sequencer control](references/ue-5.9-sequencer.md).
-  Prefer native tools with explicit sequence/track/section/channel references.
-  The create-only `sequence_native_camera.py` helper builds a tagged empty
-  camera binding, Transform/CameraCut/Fade tracks and verifies every visible
-  Linear curve sample without an open timeline. Its binding must be assigned
-  a real camera before playback. Use `PythonScriptingTools` for a verified native gap after
-  reading its instructions and looking up the public API. An API's presence
-  does not establish background behavior.
-- **UE 5.8:** read [the existing tool map](references/sequencer-mcp-toolsets.md)
-  and the helper scope below. Its namespaces, object shapes and compatibility
-  fallbacks remain conditional on that engine contract.
+## When to use
 
-Do not run a 5.8 high-level builder against 5.9 merely because the shared
-transport connects. Describe every called tool and inspect the returned data.
+- Create or change a Level Sequence: bindings, tracks, sections, keys.
+- Build a camera move, a camera cut or a fade.
+- Wire a sequence into gameplay: triggers, events, skip and restore.
+- Check an existing sequence for gaps, unbound cuts or stray keys.
 
-## Build and verify
+## Workflow
 
-1. Write the shot brief: purpose, duration, beats, subject actors, framing,
-   lens and move per shot, and gameplay trigger when applicable. Use
+1. **Write the shot brief.** Purpose, duration, beats, subject actors, framing,
+   lens and move per shot, and the gameplay trigger when there is one. Use the
    [delivery standards](references/cinematic-delivery-standards.md) and the
-   [shot plan format](references/shot-plan.md) for larger plans. Offline plan
-   validation remains available with `python scripts/sequence_plan_apply.py plan.json`.
-2. Inspect the intended sequence, bindings, tracks, sections, channels, dirty
-   state and active timeline. Prefer a new candidate path. Modify only the
-   requested content in existing assets; retain a verified backup before a
-   destructive rebuild. Never replace a currently open sequence.
-3. Author through the selected native contract. Read back rates, ranges,
-   binding membership, channel values and evaluated curves. A successful
-   setter alone does not prove that the target binding or track exists.
-4. Check camera-cut gaps/overlaps, unbound cuts, unused cameras, empty
-   tracks/sections, missing animations and keys outside the intended range.
-   Reacquire references after destructive edits or reconstruction.
-5. Verify the requested outcome with the appropriate evidence: authored
-   curves, evaluated object state, inspected images, runtime cases or a
-   completed render. A 5.9 offscreen scene capture through the core helper
-   can answer a framing question, but does not evaluate a sequence by itself.
-   Timeline curve data does not prove game camera ownership, event firing,
-   skeletal playback, fades or Finish/Stop/Skip/Abort cleanup. Use
-   [runtime acceptance](references/runtime-acceptance.md) when those matter.
-6. Save only the intended packages when requested or implied by delivery.
-   Report the sequence path, shots, measured checks, visual findings, actual
-   save state and remaining coverage. Empty checks are `collected`, not passed.
+   [shot plan format](references/shot-plan.md) for larger plans. Validate a
+   plan offline with `python scripts/sequence_plan_apply.py plan.json`.
+2. **Inspect.** Read the sequence, bindings, tracks, sections, channels, dirty
+   state and the active timeline. Work on a new candidate path. In an existing
+   asset change only the requested content, and keep a verified backup before
+   a destructive rebuild. A sequence that is currently open is left in place.
+3. **Author with native tools** on explicit sequence, track, section and
+   channel references ([5.9 Sequencer control](references/ue-5.9-sequencer.md)).
+   `scripts/sequence_native_camera.py` creates a tagged empty camera binding
+   with Transform, CameraCut and Fade tracks and verifies every Linear curve
+   sample without an open timeline. Assign a real camera to that binding
+   before playback. For a verified native gap use `PythonScriptingTools` after
+   reading its instructions and looking the API up.
+4. **Read back.** Rates, ranges, binding membership, channel values and
+   evaluated curves. Check the binding inventory after every binding write.
+5. **Lint the result.** Camera-cut gaps and overlaps, unbound cuts, unused
+   cameras, empty tracks and sections, missing animations, keys outside the
+   intended range. Reacquire references after a destructive edit.
+6. **Verify the requested outcome** at the matching
+   [evidence level](../unreal-engine-mcp/references/shared-conventions.md#evidence-levels):
+   authored curves, evaluated object state, inspected images or runtime cases.
+   Camera ownership, event firing, skeletal playback, fades and
+   Finish/Stop/Skip/Abort cleanup are runtime questions; select cases from
+   [runtime acceptance](references/runtime-acceptance.md).
+7. **Save and report.** Save only the intended packages. Report the sequence
+   path, shots, measured checks, visual findings, the actual save state and
+   what was not run.
 
 ## Contracts that affect correctness
 
-- Preserve rational display rates: `30000/1001` differs from decimal `29.97`.
-  Verify each API's display-frame/tick-frame/seconds unit and inclusive versus
-  exclusive bounds. Explicitly bound new sections; Fade defaults can be unbounded.
-- Pass complete numeric channel and key descriptors back unchanged. Handles
-  are live identities, not durable indices. Float-property channels may be
-  named `None`. Transform `Rotation.X/Y/Z` convention is roll/pitch/yaw; set
-  every channel default to the current transform before partially keying it.
-- Background `AddSpawnableFromClass` still returned a zero GUID and null
-  sequence in the tested 5.9 build. Verify the binding inventory before
-  adding dependent tracks. Do not open UI as an automatic retry. The old
-  `background_compat.py` fallback remains limited to its audited 5.8.4 build;
-  this test does not authorize widening that guard.
-- Preserve the complete camera-cut binding ID, including sequence ID and
-  parent resolution data. The 5.9 native camera helper exercised
-  `SetCameraCutBinding` and root binding-tag lookup; root-local parent index
-  0 and root-resolved -1 can represent the same root binding. Preserve each
-  returned descriptor rather than rewriting IDs or comparing dictionaries.
-  The 5.8 GUID workaround remains in the old tool map.
-- Control Rig track creation can activate Animation Mode; typed keying and
-  world-space operations can require a focused sequence. Read the 5.9
-  reference before treating an explicit-sequence API as background-safe.
-- For MRQ, use an independently owned queue when available, preserve the
-  active queue, and coordinate the executor's PIE lifecycle. The classic
-  pipeline can reuse or create a sequence actor; do not assume gameplay
-  binding overrides survive its setup. Read the
-  [5.9 render-binding route](references/ue-5.9-mrq-bindings.md) before rendering
-  a deferred camera binding.
-- A timeout has unknown completion. Read affected state before retrying a
-  write; stop when its outcome cannot be determined.
+- **Rates and ranges.** Keep rational display rates: `30000/1001` is not
+  `29.97`. Check each API's unit (display frame, tick frame or seconds) and
+  whether its end bound is exclusive. Bound every new section explicitly; a
+  Fade section can default to unbounded.
+- **Channels and keys.** Pass returned channel and key descriptors back
+  unchanged. A key handle is a live identity, not an index. A float-property
+  channel may be named `None`. Transform `Rotation.X/Y/Z` is roll/pitch/yaw.
+  Set every channel default to the current transform before keying part of it.
+- **Camera cuts.** Keep the complete camera-cut binding ID, including sequence
+  ID and parent resolution data. Root-local parent index 0 and root-resolved
+  -1 can name the same root binding, so preserve each returned descriptor
+  instead of comparing dictionaries.
+- **Control Rig.** Creating a Control Rig track can activate Animation Mode,
+  and typed keying and world-space operations can need a focused sequence.
+  Read the Control Rig section of the reference before using them.
+- **Timeouts.** A timeout has unknown completion. Read the affected state
+  before another write.
 
-## Conditional 5.8 helpers
+## Known limits
 
-These helpers retain their 5.8 contracts. Their presence is not 5.9 coverage.
-Read the [5.8 tool reference](references/sequencer-mcp-toolsets.md) before use.
+- Background `AddSpawnableFromClass` returns a zero GUID and a null sequence
+  on this build without setting `isError`. Treat it as a failed write and use
+  a possessable or the tagged empty binding instead.
+- Movie Render Queue: use an independently owned queue, preserve the user's
+  active queue and coordinate the executor's PIE lifecycle. Read the
+  [render-binding route](references/ue-5.9-mrq-bindings.md) before rendering a
+  deferred camera binding. A classic MRQ render of a gameplay sequence has not
+  been run on this build.
+- A posed offscreen capture from the core skill answers a framing question.
+  It does not evaluate the sequence.
 
-| Helper | Scope |
+## Scripts
+
+Status labels are defined in the
+[shared conventions](../unreal-engine-mcp/references/shared-conventions.md#engine-version-and-tool-status).
+
+| Script | Status | Use |
+|---|---|---|
+| `sequence_native_camera.py` | `5.9` | Create-only camera binding with Transform, CameraCut and Fade tracks, verified sample by sample |
+| `sequence_plan_apply.py` (no `--execute`) | `local` | Validate a shot plan offline |
+| `sequence_plan_apply.py --execute` | `unported` | Plan builder |
+| `sequence_inspect.py` | `unported` | Structure and lint report |
+| `sequence_sample.py` | `unported` | Timeline evaluation |
+| `sequence_render.py` | `unported` | Preview frame capture |
+
+Run `python -m unittest discover -s scripts -p "test_*.py"` after changing a
+helper.
+
+## References
+
+| Need | Read |
 |---|---|
-| `sequence_inspect.py` | Read-only structure and lint report; validate its tool contract on the target |
-| `sequence_plan_apply.py --execute` | Builder depends on an open timeline; `--allow-editor-ui` only for a user-requested UI workflow |
-| `sequence_sample.py` | UI evaluation; refuses playing/nested sessions and restores the prior idle root timeline |
-| `sequence_render.py` | Legacy preview capture; UI opt-in, explicit frame rate/pre-roll, completion callback and expected-size PNGs required |
-
-The legacy builder's replacement mode requires `--replace --backup-path
-/Game/.../LS_Backup --save`; it saves and verifies the backup first. Existing
-UI gates must remain. Legacy preview capture is separate from Movie Render
-Queue/Graph production acceptance. Use a unique run directory; old files or
-file-count growth cannot prove completion. Render-image checks use Pillow
-from `requirements.txt`.
-
-For Blueprint triggers and event receivers use the core
-[Blueprint standards](../unreal-engine-mcp/references/blueprint-delivery-standards.md).
-Use the sibling material or Niagara skill for effects inside a shot. Run
-`python -m unittest discover -s scripts -p "test_*.py"` for helper changes;
-offline tests and 5.9 editor checks do not establish 5.8 editor regression.
+| Native owners, background authoring chain, camera helper, events, Control Rig, MRQ ownership | [5.9 Sequencer control](references/ue-5.9-sequencer.md) |
+| Rendering a deferred camera binding; queue and callback ownership | [Render bindings](references/ue-5.9-mrq-bindings.md) |
+| Runtime cases: exit paths, events, binding lifetime, time hierarchy, render output | [Runtime acceptance](references/runtime-acceptance.md) |
+| Brief, shot grammar, evidence, gameplay integration, handoff | [Cinematic delivery standards](references/cinematic-delivery-standards.md) |
+| Shot plan JSON format | [Shot plan](references/shot-plan.md) |
+| Blueprint triggers and event receivers | [Blueprint delivery standards](../unreal-engine-mcp/references/blueprint-delivery-standards.md) |
+| Materials or effects inside a shot | [unreal-material-artist](../unreal-material-artist/SKILL.md), [niagara-vfx-artist](../niagara-vfx-artist/SKILL.md) |

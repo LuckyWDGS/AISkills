@@ -12,7 +12,7 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .mcp import DEFAULT_MCP_URL, call_tool, run_tool_script
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report;
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report;
 # version 2 still synthesized its export-text `properties`; version 3 carries structured fields only.
 SCHEMA_VERSION = "niagara_audit/3"
 

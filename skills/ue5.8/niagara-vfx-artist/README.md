@@ -19,9 +19,10 @@ Parameter、Alpha、Blend Mode、Sorting、平台预算），Ribbon UV 约定以
 
 ## 编辑器通道
 
-所有连接编辑器的工具都走 Epic 内置 MCP（经由 `../unreal-engine-mcp/scripts/ue_mcp`），
-UnrealBridge 插件已退役。预览截图用 `../unreal-engine-mcp/scripts/capture.py`。
-详见 `references/niagara-mcp-toolsets.md`。
+本目录是 UE 5.8 版本。所有连接编辑器的工具都走 Epic 内置 MCP（经由
+`../unreal-engine-mcp/scripts/ue_mcp`）。预览截图用
+`../unreal-engine-mcp/scripts/capture.py`。详见
+`references/niagara-mcp-toolsets.md`。
 
 ## 目录
 
@@ -29,14 +30,16 @@ UnrealBridge 插件已退役。预览截图用 `../unreal-engine-mcp/scripts/cap
 - `references/`：Niagara 知识与流程，`references/index.md` 说明每篇何时读
 - `tools/`：命令行入口（薄封装）
 - `scripts/vfx_delivery/`：工具实现；`mcp.py` 是共享 MCP 客户端的入口
-- `scripts/test_*.py`：离线测试，由 `../unreal-engine-mcp/scripts/run_offline_tests.py` 统一运行
+- `scripts/test_*.py`：离线测试，由
+  `../unreal-engine-mcp/scripts/run_offline_tests.py` 统一运行
 
 ## 维护约定
 
 - 改触发条件、工作流和职责边界：改 `SKILL.md`。
 - 改 Niagara 细节知识：改 `references/` 下对应文档，并更新 `references/index.md`。
 - 改闭环工具：改 `scripts/vfx_delivery/` 和 `tools/`，同时补离线测试。
-- 改材质图、纹理、HLSL、材质性能：改 `../unreal-material-artist/`，不要把实现细节加回 Niagara。
+- 改材质图、纹理、HLSL、材质性能：改 `../unreal-material-artist/`，不要把实现细
+  节加回 Niagara。
 
 ## 常用验证
 

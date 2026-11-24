@@ -9,6 +9,15 @@ PCG、PhysicsAsset、SemanticSearch、SlateInspector、工具缺口。
 实现这些域时按需读[官方领域工作流](official-domain-workflows.md)；
 运行验收按[对应案例](runtime-acceptance.md)。这里用于选路，不复制完整工具 schema。
 
+## 目录
+
+- [先确认能力层级](#先确认能力层级)
+- [优先复用当前 EditorToolset](#优先复用当前-editortoolset)
+- [对蓝图程序员值得按需加载的官方插件](#对蓝图程序员值得按需加载的官方插件)
+- [其他领域的选择范围](#其他领域的选择范围)
+- [官方来源和后台操作分别判断](#官方来源和后台操作分别判断)
+- [推荐增量顺序](#推荐增量顺序)
+
 ## 先确认能力层级
 
 1. **安装源码存在**：插件/类/函数声明可见，尚未证明已加载。
@@ -129,9 +138,10 @@ UMG/MVVM 的结构回读、编译、实际分辨率布局、输入焦点和绑�
 
 ## 官方来源和后台操作分别判断
 
-**SlateInspectorToolset** 提供 Snapshot/Observe、Screenshot、Click、Hover、Type、PressKey、
-SelectOption、Drag、Windows、WaitFor 和 FillForm。它用 Slate 事件驱动 UI；
-`Windows(select)` 切换窗口，`Type` 聚焦控件。来自 Epic 不代表符合后台资产操作要求。
+**SlateInspectorToolset** 提供 Snapshot/Observe、Screenshot、Click、Hover、
+Type、PressKey、 SelectOption、Drag、Windows、WaitFor 和 FillForm。它用 Slate 事
+件驱动 UI； `Windows(select)` 切换窗口，`Type` 聚焦控件。来自 Epic 不代表符合后
+台资产操作要求。
 
 按用户偏好，不为普通蓝图/资产修改启用它，不在数据接口失败后自动用它兜底。
 仅在用户明确请求相应 UI 操作时评估；Observe 会留下周期观察者，要对应清理。

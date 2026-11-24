@@ -1,6 +1,8 @@
 # Specialized Shading Models
 
-Use this when a material is not plain `DefaultLit`, or when a reference image implies skin, foliage transmission, hair, cloth fuzz, eyes, water, glass, clear coat, stylized unlit, or per-pixel shading-model selection.
+Use this when a material is not plain `DefaultLit`, or when a reference image
+implies skin, foliage transmission, hair, cloth fuzz, eyes, water, glass, clear
+coat, stylized unlit, or per-pixel shading-model selection.
 
 ## Shading Model Map
 
@@ -29,23 +31,36 @@ Use textures when the detail is spatial, art-directed, or reused:
 - Hair: strand alpha, root-tip color, ID/random mask, tangent direction where needed.
 - Cloth: weave normal, fuzz/sheen mask, roughness variation, dirt/wear mask.
 - Foliage: alpha mask, subsurface/transmission color, normal, wind/variation masks.
-- Water/glass: normal waves, foam/depth masks, dirt/scratch masks, packed roughness/opacity.
+- Water/glass: normal waves, foam/depth masks, dirt/scratch masks, packed
+  roughness/opacity.
 - Clear coat/paint: flake mask, orange-peel normal, coat roughness, edge wear.
 
-Prefer pure math when the look is simple, low-frequency, globally adjustable, and cheaper than sampling. Prefer baked/packed textures when math becomes noisy, repeated, branchy, or hard to art-direct.
+Prefer pure math when the look is simple, low-frequency, globally adjustable,
+and cheaper than sampling. Prefer baked/packed textures when math becomes noisy,
+repeated, branchy, or hard to art-direct.
 
 ## Review Flow
 
-1. Identify whether the reference truly needs a specialized shading model or whether `DefaultLit` plus a better texture/function stack is enough.
-2. Confirm domain and blend mode first; a correct shading model on the wrong domain still fails.
+1. Identify whether the reference truly needs a specialized shading model or
+   whether `DefaultLit` plus a better texture/function stack is enough.
+2. Confirm domain and blend mode first; a correct shading model on the wrong
+   domain still fails.
 3. Verify required outputs and profiles/assets.
 4. Inspect texture roles and import settings.
-5. Check whether a cheaper legacy model, Material Layer, or Substrate route is more appropriate.
-6. Preview on a carrier that exposes the model: hair cards/groom, foliage planes, eye mesh, water plane, cloth fold, or coated shaderball.
-7. Report cost risks, especially two-sided shading, translucency, masked overdraw, multi-layer normals, and Substrate/layer stacks.
+5. Check whether a cheaper legacy model, Material Layer, or Substrate route is
+   more appropriate.
+6. Preview on a carrier that exposes the model: hair cards/groom, foliage
+   planes, eye mesh, water plane, cloth fold, or coated shaderball.
+7. Report cost risks, especially two-sided shading, translucency, masked
+   overdraw, multi-layer normals, and Substrate/layer stacks.
 
-For water, also read `complex-water-material-playbook.md`. Single Layer Water requires a concrete node route for normals, absorption/scattering, surface color, optional foam/caustics, and carrier preview; naming the shading model alone is not a water material.
+For water, also read `complex-water-material-playbook.md`. Single Layer Water
+requires a concrete node route for normals, absorption/scattering, surface
+color, optional foam/caustics, and carrier preview; naming the shading model
+alone is not a water material.
 
 ## Boundary Note
 
-If a specialized material is used by Niagara or another runtime system, this skill may define the material inputs it expects. It should not verify live Niagara parameter sources or write into a Niagara emitter/system.
+If a specialized material is used by Niagara or another runtime system, this
+skill may define the material inputs it expects. It should not verify live
+Niagara parameter sources or write into a Niagara emitter/system.

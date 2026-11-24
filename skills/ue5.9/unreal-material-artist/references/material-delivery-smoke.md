@@ -1,9 +1,15 @@
 # Material Delivery Smoke
 
+> **UE 5.9 status.** The editor-connected steps described here use helpers that
+> are `unported`: they call UE 5.8 tool names and are refused on a UE 5.9
+> editor. Planning and report modes still run locally. Do the editor steps with
+> the native tools in [ue-5.9-material-mcp.md](ue-5.9-material-mcp.md).
+
 ## Use This When
 
 - 你已经有 package、parameter schema，以及大部分材质侧证据。
-- 你不想再手工一条条串 `variant_runner -> instance_batch -> preview_matrix -> readability -> regression -> acceptance -> library gate`。
+- 你不想再手工一条条串
+  `variant_runner -> instance_batch -> preview_matrix -> readability -> regression -> acceptance -> library gate`。
 - 你要一个真正的 end-to-end material-side smoke runner。
 
 ## Purpose
@@ -41,11 +47,14 @@ python tools/material_delivery_smoke.py --package D:/path/to/material-delivery-p
 
 - 默认 smoke tiers 是 `default` 和 `gameplay-safe`
 - `material_variant_runner.py` 会先生成只供 smoke 使用的 MI batch spec
-- 如果 schema 里有 static switch，`static_switch_variant_expander.py` 会把 tier 进一步扩成 permutation 变体
+- 如果 schema 里有 static switch，`static_switch_variant_expander.py` 会把 tier
+  进一步扩成 permutation 变体
 - `permutation_budget_guard.py` 会在真正跑 UE 前先看单材质 permutation 压力
-- `preview_matrix.py` 会按每个 smoke tier 单独跑，避免把“parameter tier 标签”误当成真实参数变化
+- `preview_matrix.py` 会按每个 smoke tier 单独跑，避免把“parameter tier 标签”误
+  当成真实参数变化
 - 如果 baseline 不存在，`material_regression.py` 会被明确标成 advisory，而不是假装通过
-- 如果没有 `asset_id`，`library_promotion_gate.py` 仍可做 advisory ready 判断，但不会 `--apply`
+- 如果没有 `asset_id`，`library_promotion_gate.py` 仍可做 advisory ready 判断，
+  但不会 `--apply`
 - 加 `--resume-cache` 后，会复用没变输入下已经存在的 step 报告
 
 ## Output
@@ -66,3 +75,14 @@ python tools/material_delivery_smoke.py --package D:/path/to/material-delivery-p
 
 - 它不替代真实 Niagara System/Emitter/Renderer 集成验证
 - 真实 Niagara 绑定和系统级 ready gate 仍属于 `niagara-vfx-artist`
+
+## Resume cache
+
+`smoke_resume_cache.py` backs `material_delivery_smoke.py --resume-cache`. A
+step is reused when its name, command and the fingerprints of its input
+reports and files are unchanged.
+
+```powershell
+python tools/smoke_resume_cache.py inspect --effect WingEcho --markdown
+python tools/smoke_resume_cache.py prune --effect WingEcho --apply --markdown
+```

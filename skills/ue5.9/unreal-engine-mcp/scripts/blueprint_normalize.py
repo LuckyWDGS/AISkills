@@ -124,7 +124,7 @@ class Editor:
         from ue_mcp.skill_api import connect
 
         self.asset, self.project = asset, project
-        self.client = connect(project=project)
+        self.client = connect(project=project, contract="5.8")  # not ported to UE 5.9
         self._unwrap = unwrap_result
 
     def bt(self, tool: str, **args: Any) -> Any:

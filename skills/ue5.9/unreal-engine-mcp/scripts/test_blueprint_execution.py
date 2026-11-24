@@ -24,13 +24,13 @@ class ExecutionTests(unittest.TestCase):
     def test_normalize_passes_project_to_connection(self):
         with patch('ue_mcp.skill_api.connect') as connect:
             normalize.Editor('/Game/T/BP.BP', 'ExpectedProject')
-        connect.assert_called_once_with(project='ExpectedProject')
+        connect.assert_called_once_with(project='ExpectedProject', contract='5.8')
 
     def test_layout_passes_project_to_connection(self):
         client = client_for(lambda ts, name, args: [] if name == 'find_nodes' else {'refPath': 'G'})
         with patch('ue_mcp.skill_api.connect', return_value=client) as connect, redirect_stdout(io.StringIO()):
             self.assertEqual(layout.main(['/Game/T/BP', '--graph', 'Fn', '--project', 'ExpectedProject']), 0)
-        connect.assert_called_once_with(project='ExpectedProject')
+        connect.assert_called_once_with(project='ExpectedProject', contract='5.8')
         client.close.assert_called_once()
 
     def test_missing_or_conflicting_graph_scope_fails_before_connect(self):

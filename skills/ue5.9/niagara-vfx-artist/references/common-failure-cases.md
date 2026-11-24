@@ -142,7 +142,8 @@
 - `S_TrailTailOpacity`: 降低
 - Ribbon Width: 做头尾宽度变化
 - `S_FlowSpeed`: 加入轻微内部流动
-- 如果是“连续蛇形”而不是“多道残影”，优先修 Niagara 的 RibbonID 分段、LinkOrder 或触发时序，不要继续只加亮度
+- 如果是“连续蛇形”而不是“多道残影”，优先修 Niagara 的 RibbonID 分段、LinkOrder
+  或触发时序，不要继续只加亮度
 - 如果轮廓已经对但像塑料带，才优先修材质的软边、噪声、UV flow 和 alpha falloff
 - 如果材质逻辑对但内部纹理糊，回到纹理/mask 生成质量，不要硬靠粒子数补细节
 
@@ -257,7 +258,8 @@
 
 ### 已验证的真实 fix-case
 
-2026-05-15 已在 `/Game/CodexTemp/ToolsetRegistrySmoke/NS_Toolset_ModuleSmoke` 跑通两个真实 fix：
+已在 `/Game/CodexTemp/ToolsetRegistrySmoke/NS_Toolset_ModuleSmoke` 跑通两个真实
+fix：
 
 - `GPU上不支持事件处理器`
   - 造法：把 emitter `Smoke` 设成 `GPUComputeSim`，再给它挂粒子 event handler
@@ -280,7 +282,8 @@
 
 ### 一句话经验
 
-`ApplyOfficialStackIssueFix` 只有在“造出真实 fix-style 问题 -> 应用 fix -> 读回结构和 issue 状态”三步都闭环后，才算真的可用。
+`ApplyOfficialStackIssueFix` 只有在“造出真实 fix-style 问题 -> 应用 fix -> 读回
+结构和 issue 状态”三步都闭环后，才算真的可用。
 
 ### 失败症状
 

@@ -9,6 +9,16 @@ Use [developer workflow](developer-workflow.md) for scoped edits and acceptance,
 and [debugging and source navigation](debugging-and-source-navigation.md) for
 animation data flow, native implementation lookup and failure diagnosis.
 
+## Contents
+
+- [Choose the actual state system](#choose-the-actual-state-system)
+- [Discover by operation, not plugin name](#discover-by-operation-not-plugin-name)
+- [Existing ABP: read supported graphs first](#existing-abp-read-supported-graphs-first)
+- [Build a gameplay animation feature](#build-a-gameplay-animation-feature)
+- [BlendSpace, Montage and animation events](#blendspace-montage-and-animation-events)
+- [StateTree and Behavior Tree features](#statetree-and-behavior-tree-features)
+- [Sequencer and Control Rig](#sequencer-and-control-rig)
+
 ## Choose the actual state system
 
 - **Animation Blueprint state machine:** selects and blends poses inside an

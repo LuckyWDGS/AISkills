@@ -39,7 +39,9 @@ Choose by intent:
   `unreal-material-artist` for materials/shaders, `niagara-vfx-artist` for
   Niagara systems, and `unreal-sequencer` for Level Sequences, cameras and
   cinematics. The five UE skills live in `skills/ue5.8/` and `skills/ue5.9/`
-  with the same names; link one set with `install.ps1 -UEVersion`. See the
+  with the same names; link one set with `install.ps1 -UEVersion`. Each set
+  targets only its own engine version, and its client refuses an editor of the
+  other one. See the
   [UE 技能总览与安装](docs/zh/ue-skills-overview.md) for the bundle,
   dependencies, shared rules, version switching and setup.
 - Deploy or troubleshoot an owned VPS proxy and subscription with

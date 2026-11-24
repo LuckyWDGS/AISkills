@@ -18,7 +18,7 @@ from .core import default_report_path, normalize_cli_global_args_no_subcommand, 
 from .mcp import DEFAULT_MCP_URL, run_tool_script
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "live_asset_verify/2"
 
 

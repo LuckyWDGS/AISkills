@@ -1,10 +1,27 @@
 # UE runtime acceptance
 
-Select cases matching the changed feature; these are procedures, not recorded
-UE test results. Follow the [shared result record and session ownership rules](shared-conventions.md#runtime-result-record).
+Select cases matching the changed feature; these are procedures, not recorded UE
+test results. Follow the
+[shared result record and session ownership rules](shared-conventions.md#runtime-result-record).
 Use official MCP state/log reads and supported background runtime controls.
 Discover the actual runtime objects and tool schemas; do not read CDO values as
 live state or invent debugger APIs. A user's existing PIE session is preserved.
+
+## Contents
+
+- [BP.Jump.Double — two jumps and landing reset](#bpjumpdouble--two-jumps-and-landing-reset)
+- [BP.Surface.Contact — contact VFX, blink and delayed reset](#bpsurfacecontact--contact-vfx-blink-and-delayed-reset)
+- [BP.Throw.Physics — hold, release, fuse and destruction](#bpthrowphysics--hold-release-fuse-and-destruction)
+- [BP.Lifecycle.Async — timers, delegates and EndPlay](#bplifecycleasync--timers-delegates-and-endplay)
+- [ABP.StateMachine — transitions, montage interruption and data ownership](#abpstatemachine--transitions-montage-interruption-and-data-ownership)
+- [UI.MVVM.Binding — 实例数据与界面更新](#uimvvmbinding--实例数据与界面更新)
+- [GAS.ASC.Lifecycle — 能力、效果与属性](#gasasclifecycle--能力效果与属性)
+- [DATA.Registry.Cache — 来源与缓存条目](#dataregistrycache--来源与缓存条目)
+- [PCG.Graph.Output — 执行、数量与属性](#pcggraphoutput--执行数量与属性)
+- [PHYS.Body.Runtime — 刚体与约束](#physbodyruntime--刚体与约束)
+- [Dataflow.Evaluation — 数值求值与失效更新](#dataflowevaluation--数值求值与失效更新)
+- [Automation.Scope — 案例与现场清理](#automationscope--案例与现场清理)
+- [验证记录](#验证记录)
 
 ## BP.Jump.Double — two jumps and landing reset
 
@@ -125,7 +142,7 @@ live state or invent debugger APIs. A user's existing PIE session is preserved.
 
 ## PCG.Graph.Output — 执行、数量与属性
 
-实现与数据读取细节见 [PCG 专项流程](pcg-mcp.md#执行与验收)。以下案例按本次功能选用，
+实现与数据读取细节见 [StateTree / PCG](ue-5.9-statetree-pcg.md)。以下案例按功能选用，
 记录编辑器生成、PIE 或打包目标，不能相互替代。
 
 - 记录实际图、实例/组件、Seed、输入边界和生成节点，先审查是否会改世界。
@@ -143,9 +160,8 @@ live state or invent debugger APIs. A user's existing PIE session is preserved.
   改 Seed 后按图约定变化，再恢复原 Seed/参数，确认原结果恢复；不同 owner 不强求相等。
 - 改 Box 时回读全部半尺寸与 lastGeneratedBounds；分别验证 X/Y/Z，不能只检查一个边界。
   清理后实例/组件计数归零，再生成应恢复。普通 BP Actor 组件的异步完成状态需外部轮询。
-- 对生成地表、边界/坡度和密度分布做有明确目的的视觉检查；保存本次图/BP/外部包，
-  删除临时 owner，核对原 Actor、选择、页签与 dirty。保留并记录工作期间观察到的其他变化，
-  不为通过现场比较而关闭用户页签或清除 dirty。
+- 保留并记录工作期间观察到的其他变化，不为通过现场比较而关闭用户页签或清除
+  dirty。
 
 ## PHYS.Body.Runtime — 刚体与约束
 
@@ -172,3 +188,10 @@ live state or invent debugger APIs. A user's existing PIE session is preserved.
   继续追踪副作用；不能清 dirty 或保存整个关卡掩盖问题。
 - 报告案例实际断言的内容；工具单元测试、资产编辑验证、项目运行验收分开计数。
   不将少量抽样成功外推为全部 MCP 工具通过。
+
+## 验证记录
+
+**PCG.Graph.Output — 执行、数量与属性**
+
+- 对生成地表、边界/坡度和密度分布做有明确目的的视觉检查；保存本次图/BP/外部包，
+  删除临时 owner，核对原 Actor、选择、页签与 dirty。

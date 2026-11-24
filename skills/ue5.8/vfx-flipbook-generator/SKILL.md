@@ -1,249 +1,185 @@
 ---
 name: vfx-flipbook-generator
-description: Plan, generate, extend, repair, and pack VFX flipbook atlases for smoke, dust, powder, fire, flame, embers, sparks, explosions, mist, clouds, and other sprite/SubUV effects. Use when Codex needs to turn short alpha videos, sparse footage, still references, web-searched motion examples, or text direction into a production-ready flipbook grid or atlas; when the requested grid has more cells than the usable source samples; when the user asks for a flipbook, sequence atlas, SubUV atlas, sprite sheet, missing-frame extension, or wants system-imagegen-generated smoke, fire, or particle frames assembled into a power-of-two atlas.
+description: Plan, generate, extend, repair and pack VFX flipbook atlases for smoke, dust, powder, fire, flame, embers, sparks, explosions, mist, clouds and other sprite or SubUV effects. Use when the user asks for a flipbook, sequence atlas, SubUV atlas or sprite sheet; when short alpha videos, sparse footage, still references or text direction must become a production-ready grid; when the requested grid has more cells than the usable source frames; or when generated smoke, fire or particle frames need assembling into a power-of-two atlas.
 ---
 
 # VFX Flipbook Generator
 
-## Unreal handoff
+Atlas generation, FFmpeg extraction, alpha QA, packing and manifests run
+locally: every tool in this skill is `local` and needs no editor. Only the
+final [Unreal handoff](#unreal-handoff) touches UE.
 
-When importing or wiring atlases in UE, follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background
-editor connections only, MCP first, and Chinese annotations on UE modules you
-author or change. Local-only atlas generation needs no UE annotations.
+## When to use
 
-Atlas generation, FFmpeg extraction, alpha QA, packing, and manifests run locally and do not need an Unreal editor plugin. When importing or wiring the atlas into UE 5.8+, follow the sibling `unreal-engine-mcp` official MCP policy: discover TextureTools.import_file, ObjectTools properties, MaterialTools/MaterialInstanceTools, AssetTools, and NiagaraToolsets, then use direct MCP. Read ProgrammaticToolset's environment before batching. The MCP route is: `unreal-material-artist`'s `texture_import_fix.py` for the atlas import settings, its `material_toolset_builder.py recipe fire_flipbook --execute` (or an MI batch) for the SubUV material, NiagaraToolset_System for the renderer hookup, and `niagara-vfx-artist`'s `live_asset_verify.py` for the route check. File readiness alone is not live material/Niagara binding proof.
+Use this skill when the user wants a flipbook atlas rather than a single
+concept image:
 
-Use this skill when the user wants a flipbook atlas, not just a single concept image.
+- choose between source footage, hybrid generation and full generation;
+- gather references and generate frames when source material is short or weak;
+- assemble frames into a power-of-two atlas ready for SubUV use;
+- scaffold a job pack from a short request such as `smoke 8x8 6s`;
+- turn a job into a per-frame batch plan and run it phase by phase with anchor
+  approval gates;
+- gate Unreal delivery with a readiness check.
 
-This skill covers:
-
-1. Decide whether the job should use source footage, hybrid generation, or full generation.
-2. Use search/reference gathering and image generation when source material is too short or too weak.
-3. Assemble frames into a power-of-two atlas that is ready for SubUV-style use, preferring 2K or 4K source delivery when the platform budget allows.
-4. Scaffold a reusable flipbook job pack from a short request such as `smoke 8x8 6s`.
-5. Turn a scaffolded job into a per-frame batch plan before the actual image generation run.
-6. Run the batch plan one phase at a time, stop on anchor approval gates, and prefer image-reference edit for intra-phase fill after an anchor is accepted.
-7. Gate Unreal/Niagara delivery with a UE readiness check before calling an atlas direct material/SubUV-ready.
-
-Resolve script paths relative to this skill directory. Sample media/job paths below are placeholders in the active workspace.
+Resolve script paths relative to this skill directory. Media and job paths in
+the examples are placeholders. Scripts need Python 3.10+.
 
 ## Workflow
 
-1. Quantify the source before committing to a grid.
-   - If the user only gives a short natural-language request like `smoke 8x8 6s`, scaffold a job pack first.
-   - Run:
+1. **Quantify the source before committing to a grid.**
+   - For a short request such as `smoke 8x8 6s`, scaffold a job pack first:
 
-```powershell
-python tools/flipbook_job_scaffold.py "smoke 8x8 6s"
-```
+     ```powershell
+     python tools/flipbook_job_scaffold.py "smoke 8x8 6s"
+     ```
 
-   - The scaffold writes:
-     - route advice
-     - search queries
-     - anchor prompts
-     - output folder plan
-     - packing command template
-   - If the user gives a video, get the usable clip duration, fps, and approximate source sample count.
-   - Run:
+     It writes route advice, search queries, anchor prompts, an output folder
+     plan and a packing command template.
+   - For a video, measure usable clip duration, fps and approximate sample
+     count, then ask the route advisor:
 
-```powershell
-python tools/flipbook_route_advisor.py --grid 8x8 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
-```
+     ```powershell
+     python tools/flipbook_route_advisor.py --grid 8x8 --effect dust --clip-duration 6.2 --source-fps 23.976 --markdown
+     ```
 
-   - Treat the route result as the first decision, not as a hard law.
+   - Treat the route as the first decision, open to revision.
 
-2. Use the correct route.
-   - `direct-extract`
-     - Use when source sample pressure is healthy enough for the requested grid.
-     - Prefer `tools/flipbook_builder.py`.
-     - Scripts need Python 3.10+. The tool auto-discovers local FFmpeg binaries under `tools/ffmpeg` (not committed; install per machine) before falling back to system `PATH`,
-       then the `imageio-ffmpeg` package. On a new machine run `winget install Gyan.FFmpeg` or unpack a Windows build into `tools/ffmpeg/<build>/bin`.
-     - Keep `--fit contain` unless you explicitly want cropping. `contain` scales the full source frame into the cell and pads as needed; `cover` crops to fill.
-   - `hybrid`
-     - Use when the source has some good motion but not enough clean temporal coverage.
-     - Keep the best real motion from source footage.
-     - Generate missing states or bridge frames with system `imagegen` by default.
-     - Pack the final frame set with `frame_atlas_packer.py`.
-   - `full-generated`
-     - Use when the user has little or no usable source footage, or when the desired effect is fundamentally custom and source reuse would fight the art direction.
-     - Gather references first, then generate a consistent frame family with system `imagegen` by default, then pack it.
+2. **Use the matching route.**
+   - `direct-extract`: the source has enough samples for the grid. Use
+     `tools/flipbook_builder.py`. It finds FFmpeg under `tools/ffmpeg` (not
+     committed; install per machine), then on `PATH`, then the
+     `imageio-ffmpeg` package. On a new machine run
+     `winget install Gyan.FFmpeg` or unpack a build into
+     `tools/ffmpeg/<build>/bin`. Keep `--fit contain` (scale and pad) unless
+     cropping is wanted (`cover`).
+   - `hybrid`: the source has good motion but thin temporal coverage. Keep the
+     best real motion, generate missing states or bridge frames with the
+     system image generator, and pack with `frame_atlas_packer.py`.
+   - `full-generated`: little or no usable footage, or a custom effect that
+     source reuse would fight. Gather references, generate a consistent frame
+     family, then pack.
 
-3. Search when reference coverage is weak or the user explicitly asks for it.
-   - If the user explicitly asks to search, browse.
-   - Use web/image search to understand motion language, shape breakup, density, timing, and silhouette.
-   - Search for reference, not for direct asset ripping.
-   - Do not scrape a stock atlas and pass it off as newly made work.
-   - Record the useful search queries and what each reference contributed.
-   - Good search targets are motion cues such as `falling dust alpha`, `smoke plume reference`, `torch flame side view`, `embers burst reference`, not just generic beauty images.
+3. **Search when reference coverage is weak or the user asks.**
+   - Search for motion language, shape breakup, density, timing and
+     silhouette: `falling dust alpha`, `smoke plume reference`,
+     `torch flame side view`, `embers burst reference`.
+   - References inform the work. Stock atlases are not ripped or presented as
+     new work.
+   - Record the useful queries and what each reference contributed.
 
-4. When generating frames, keep invariants locked.
-   - Use one fixed canvas size for the whole family.
-   - Prefer native `2048x2048` or `4096x4096` power-of-two generation/packing for final atlas sources. Use `1024x1024` only for chat previews, quick reviews, mobile-only assets, or an explicit low-budget derivative.
-   - When the provider cannot natively generate 2K/4K, keep the best raw output, document the limitation, and create a 2K/4K derivative for delivery only if the user accepts that it is an upscale rather than recovered detail.
-   - Keep one fixed camera angle.
-   - Keep one fixed background policy:
-     - black when extracting luminance-style VFX cards
-     - transparent when the route reliably supports it
-   - Keep the subject centered and similarly scaled from frame to frame.
-   - Keep the same effect family and shell structure.
-   - Do not let the model change the effect into a different phenomenon halfway through the sequence.
-   - Prefer generating 4-8 anchor states first, review them, then fill the family, instead of asking for 100+ uncontrolled frames in one leap.
-   - After a phase anchor is accepted, prefer image-reference edit for the rest of that phase before falling back to fresh text generation.
-   - Before asking for strict continuity, check [references/sequence-boundaries.md](references/sequence-boundaries.md) and decide whether the effect truly needs ordered time evolution or whether a randomizable sprite set would be better.
+4. **Keep invariants locked while generating.**
+   - One canvas size, one camera angle, one background policy (black for
+     luminance-style cards, transparent when the route supports it), the
+     subject centered at a stable scale, one effect family.
+   - Generate at `2048x2048` or `4096x4096` for final atlas sources. Use
+     `1024x1024` for chat previews, quick reviews, mobile-only assets or an
+     explicit low-budget derivative. When the provider cannot generate 2K/4K,
+     keep the best raw output, record the limit, and make an upscaled
+     derivative only with the user's acceptance.
+   - Generate 4-8 anchor states, review them, then fill the family. After a
+     phase anchor is accepted, fill that phase by image-reference edit before
+     falling back to text generation.
+   - Before demanding strict continuity, read
+     [sequence-boundaries.md](references/sequence-boundaries.md): a
+     randomizable sprite set may serve the effect better.
 
-5. Do not hide frame scarcity with slow playback alone.
-   - If the route advisor says the source is thin, do not assume Niagara time stretching will save it.
-   - For smoke, dust, powder, and mist:
-     - keep internal motion reasonably close to source timing
-     - let Niagara extend life with size, alpha, drag, and lingering support layers
-   - For flame and hero fire:
-     - treat low source coverage as a generation problem earlier
-     - slow playback exposes stepping quickly
+5. **Solve frame scarcity at the source.**
+   - A thin source stays thin when Niagara stretches time.
+   - Smoke, dust, powder and mist: keep internal motion near source timing and
+     let Niagara extend life with size, alpha, drag and support layers.
+   - Flame and hero fire: treat low coverage as a generation problem early,
+     because slow playback exposes stepping.
 
-6. Pack frames into an atlas.
-   - For source-video extraction, use `flipbook_builder.py`.
-   - Prefer `--fit contain` for video-derived flipbooks when the user wants the full frame preserved.
-   - For pre-made frame folders, generated anchor families, or hand-curated PNG frames, use:
+6. **Pack frames into an atlas.**
+   - Source video: `flipbook_builder.py`, with `--fit contain` when the full
+     frame must be kept.
+   - Frame folders, generated families or curated PNGs:
 
-```powershell
-python tools/frame_atlas_packer.py D:/path/to/frames --grid 8x8 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
-```
+     ```powershell
+     python tools/frame_atlas_packer.py D:/path/to/frames --grid 8x8 --cell-size 256x256 --out-dir D:/path/to/out --atlas-name smoke_flipbook.png
+     ```
 
-   - Default to power-of-two final atlas output.
-   - For final Unreal/Niagara delivery, prefer `2048x2048` or `4096x4096` atlases with exact grid divisibility. Downscale from that source when smaller variants are needed.
-   - When padding to power-of-two, expand and center every cell within its final UV tile. Do not pad only the outside of the atlas; that shifts SubUV boundaries. Record final and source cell dimensions.
-   - For direct UE/Niagara SubUV output, require the final atlas dimensions to divide evenly by columns and rows. A `10x10` review sheet at `1024x1024` is not direct production SubUV-ready under the default contract.
+   - Output is power-of-two by default. For Unreal delivery use `2048x2048` or
+     `4096x4096` with exact grid divisibility, and downscale from that source
+     for smaller variants.
+   - When padding to power-of-two, expand and center every cell inside its
+     final UV tile and record final and source cell dimensions. Padding only
+     the outside of the atlas shifts SubUV boundaries.
+   - Job scaffolds require power-of-two row and column counts. For 144 source
+     frames use `16x16 --frames 144` with playback indices `0..143` and leave
+     the other 112 cells unused. Packers reject excess frames. An exact
+     `12x12` or `10x10` grid needs an explicit `--atlas-size-mode raw` NPOT
+     plan and platform validation.
 
-   - Default job scaffolds require power-of-two row/column counts. For 144 source frames use `16x16 --frames 144`, with valid playback indices `0..143`; leave the other 112 cells unused. Packers reject excess frames instead of silently dropping them. An exact `12x12` or `10x10` request needs an explicit `--atlas-size-mode raw` NPOT plan and platform validation, rather than a forced power-of-two snap.
+7. **Run a QC pass before delivery.**
+   - No accidental blank rows or columns; consistent alpha and background
+     policy; limited frame-to-frame scale drift; transparent padding that is
+     expected rather than a sign to switch from `contain` to `cover`.
+   - For Unreal, report grid columns and rows, frame count, final atlas
+     dimensions, exact cell dimensions or a divisibility warning, raw pre-snap
+     dimensions, suggested playback fps, frame order, start and end frame,
+     alpha policy and blend-mode recommendation, then run the readiness gate:
 
-7. Run a quick QC pass before delivery.
-   - Check that there are no obvious blank accidental rows or columns.
-   - Check that alpha/background policy stayed consistent.
-   - Check that frame-to-frame scale drift is not extreme.
-   - Check whether transparent padding is expected or a sign the fit mode should change from `contain` to `cover`.
-   - If the atlas is for Unreal, report:
-     - grid columns and rows
-     - frame count
-     - final atlas dimensions
-     - exact cell dimensions or a grid-divisibility warning
-     - raw pre-snap dimensions when snapped
-     - suggested playback fps
-     - frame order, start frame, end frame, alpha policy, and blend-mode recommendation
-   - For Unreal-bound atlases, run:
+     ```powershell
+     python tools/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
+     ```
 
-```powershell
-python tools/ue_flipbook_readiness.py D:/path/to/atlas.png --manifest D:/path/to/flipbook-manifest.json --mode both --alpha-policy auto
-```
+   - For a folder of candidates, build a selection catalog:
 
-   - When a folder contains multiple generated candidates, build a selection catalog so the user can see recommended, usable, conditional, and blocked variants in one place:
+     ```powershell
+     python tools/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
+     ```
 
-```powershell
-python tools/flipbook_asset_catalog.py D:/path/to/atlas-folder --out D:/path/to/atlas-folder/atlas-catalog.md --json-out D:/path/to/atlas-folder/atlas-catalog.json
-```
-
-8. Hand off to the right downstream skill when needed.
-   - Use `niagara-vfx-artist` when the atlas needs UE/Niagara hookup, SubUV setup, or renderer validation.
-   - Use `unreal-material-artist` when the material route, blend mode, alpha behavior, or flipbook texture strategy needs material-side ownership.
-   - Use system built-in `imagegen` as the default image generation route for generated frames and reference-image generation.
-   - Use `cm-imagegen` only when the user explicitly wants the local CLI route or when a local automation path is more important than the default manual system-imagegen flow.
+8. **Hand off downstream.**
+   - `niagara-vfx-artist` for Niagara hookup, SubUV setup and renderer
+     validation.
+   - `unreal-material-artist` for the material route, blend mode, alpha
+     behavior and flipbook texture strategy.
+   - The system image generator is the default for generated frames;
+     `cm-imagegen` when the user wants the local CLI route or local automation.
 
 ## Commands
 
-Source-video route:
+| Task | Command |
+|---|---|
+| Source video to atlas | `python tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 16x16 --frames 144 --cell-size 128x128 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two` |
+| Route decision | `python tools/flipbook_route_advisor.py --grid 8x8 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown` |
+| Job scaffold | `python tools/flipbook_job_scaffold.py "smoke 8x8 6s" --out-root D:/flipbook-jobs` |
+| Per-frame plan | `python tools/flipbook_batch_plan.py <job>/job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"` |
+| Phase status and run | `python tools/flipbook_batch_runner.py status <job>/frame-plan.json`, then `run` |
+| Import an approved anchor | `python tools/flipbook_batch_runner.py import-frame <job>/frame-plan.json --frame 1 --path "D:/generated/frame_001.png" --approve-anchor` |
+| Pack generated frames | `python tools/frame_atlas_packer.py D:/frames/smoke_a --grid 8x8 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_8x8.png` |
+| Readiness gate | `python tools/ue_flipbook_readiness.py D:/atlas_out/smoke_8x8.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto` |
+| Candidate catalog | `python tools/flipbook_asset_catalog.py D:/atlas_out --out D:/atlas_out/atlas-catalog.md --json-out D:/atlas_out/atlas-catalog.json` |
+| 2K/4K derivatives | `python tools/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres` |
 
-```powershell
-python tools/flipbook_builder.py build D:/clip.mov --start 0.2 --end 6.5 --grid 16x16 --frames 144 --cell-size 128x128 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two
-```
+## Unreal handoff
 
-Route decision:
+> **Scope.** This bundle targets UE 5.8 (verified on UE 5.8.4). For a UE 5.9
+> editor the user links `skills/ue5.9/` instead.
 
-```powershell
-python tools/flipbook_route_advisor.py --grid 8x8 --effect smoke --clip-duration 3.5 --source-fps 25 --markdown
-```
+Follow the [shared conventions](../unreal-engine-mcp/references/shared-conventions.md):
+background connections and Chinese annotations on UE modules you author or
+change. Local atlas generation adds no UE annotations.
 
-Job scaffold from a short request:
+1. Import the atlas with `TextureTools.import_file`, then fix its settings
+   with the material skill's `texture_import_fix.py` (plan, then `--apply`).
+2. Build the flipbook material with
+   `material_toolset_builder.py recipe fire_flipbook --execute`, or assign an
+   instance through a material-instance batch.
+3. Hook up the renderer and SubUV settings with `niagara-vfx-artist`, then run
+   its `live_asset_verify.py`.
+4. For playback changes select cases from
+   [runtime acceptance](references/runtime-acceptance.md). A ready file is
+   static evidence; the live material and Niagara binding is a separate check.
 
-```powershell
-python tools/flipbook_job_scaffold.py "smoke 8x8 6s" --out-root D:/flipbook-jobs
-```
+## References
 
-Frame-plan scaffold with default system-imagegen workflow:
-
-```powershell
-python tools/flipbook_batch_plan.py D:/flipbook-jobs/smoke-8x8-6s/.../job-spec.json --prompt-suffix "gravity-driven downward motion, no environment"
-```
-
-Phase runner with anchor approval gates:
-
-```powershell
-python tools/flipbook_batch_runner.py status D:/flipbook-jobs/smoke-8x8-6s/.../frame-plan.json
-python tools/flipbook_batch_runner.py run D:/flipbook-jobs/smoke-8x8-6s/.../frame-plan.json
-python tools/flipbook_batch_runner.py import-frame D:/flipbook-jobs/smoke-8x8-6s/.../frame-plan.json --frame 1 --path "D:/path/to/generated/frame_001.png" --approve-anchor
-```
-
-Generated-frame packing:
-
-```powershell
-python tools/frame_atlas_packer.py D:/frames/smoke_a --grid 8x8 --cell-size 256x256 --fit contain --background transparent --atlas-size-mode pad-to-power-of-two --out-dir D:/atlas_out --atlas-name smoke_8x8.png
-```
-
-Unreal/Niagara readiness gate:
-
-```powershell
-python tools/ue_flipbook_readiness.py D:/atlas_out/smoke_8x8.png --manifest D:/atlas_out/flipbook-manifest.json --mode both --alpha-policy auto
-```
-
-Asset catalog for a candidate folder:
-
-```powershell
-python tools/flipbook_asset_catalog.py D:/atlas_out --out D:/atlas_out/atlas-catalog.md --json-out D:/atlas_out/atlas-catalog.json
-```
-
-Resize a ready atlas/alpha pair to 2K and 4K delivery derivatives:
-
-```powershell
-python tools/flipbook_atlas_resizer.py D:/atlas_out/fx_sheet_4x4_1024.png --alpha-path D:/atlas_out/fx_sheet_alpha_4x4_1024.png --grid 4x4 --targets 2048 4096 --out-dir D:/atlas_out/highres
-```
-
-For UE playback changes, select the relevant [runtime acceptance cases](references/runtime-acceptance.md); local image readiness is only static evidence.
-
-## Reference Map
-
-- [references/workflow.md](references/workflow.md)
-  Use for route selection, search policy, hybrid planning, and QC expectations.
-
-- [references/prompt-recipes.md](references/prompt-recipes.md)
-  Use when the user needs generated smoke, dust, powder, fire, embers, sparks, or other VFX frame families through system `imagegen` or another image route.
-
-- [references/sequence-boundaries.md](references/sequence-boundaries.md)
-  Use when deciding whether a requested effect should be a true continuous flipbook, a mixed hero-plus-support setup, or a non-continuous random sprite sheet.
-
-- [references/ue-niagara-readiness.md](references/ue-niagara-readiness.md)
-  Use before calling an atlas direct Unreal material-ready or Niagara SubUV-ready. Covers dimensions, grid divisibility, alpha/luma route, material contract, Niagara frame range, and common non-smoke/fire/dust flipbook uses.
-
-- [tools/flipbook_route_advisor.py](tools/flipbook_route_advisor.py)
-  Use to estimate duplicate-frame pressure and select `direct-extract`, `hybrid`, or `full-generated`.
-
-- [tools/frame_atlas_packer.py](tools/frame_atlas_packer.py)
-  Use to turn a folder of PNG frames into a power-of-two flipbook atlas plus manifest.
-
-- [tools/ue_flipbook_readiness.py](tools/ue_flipbook_readiness.py)
-  Use to statically check whether an atlas and manifest are ready, conditional, or blocked for direct UE material/Niagara SubUV use.
-
-- [tools/flipbook_asset_catalog.py](tools/flipbook_asset_catalog.py)
-  Use to scan a folder of atlas PNGs, manifests, and readiness reports into a Markdown/JSON selection catalog with RGB/alpha pairing, status summaries, warnings, and UE/Niagara handoff notes.
-
-- [tools/flipbook_atlas_resizer.py](tools/flipbook_atlas_resizer.py)
-  Use to make 2K/4K power-of-two derivatives from a ready atlas and optional alpha support PNG, preserving grid divisibility and writing a new manifest. Prefer native 2K/4K generation when available; use resizing as a delivery derivative when the provider only gave a smaller source.
-
-- [tools/flipbook_job_scaffold.py](tools/flipbook_job_scaffold.py)
-  Use to turn a short request into a full working package with route advice, search queries, prompts, folders, and packing templates.
-
-- [tools/flipbook_batch_plan.py](tools/flipbook_batch_plan.py)
-  Use to turn a scaffolded job into a per-frame prompt plan plus a default system-imagegen workflow and an optional `cm-imagegen` fallback script.
-
-- [tools/flipbook_batch_runner.py](tools/flipbook_batch_runner.py)
-  Use to coordinate a frame plan one phase at a time, stop for anchor approval, and prefer image-reference edit for phase fill after an anchor is accepted. Its default provider mode is system `imagegen`.
-
-- [tools/flipbook_builder.py](tools/flipbook_builder.py)
-  Use to inspect a source video, extract frames with local FFmpeg, and build a PNG atlas plus manifest from inside this skill.
+| Need | Read |
+|---|---|
+| Route selection, search policy, hybrid planning, QC expectations | [workflow.md](references/workflow.md) |
+| Prompts for generated smoke, dust, fire, embers and sparks | [prompt-recipes.md](references/prompt-recipes.md) |
+| Continuous flipbook versus hero-plus-support versus random sprite sheet | [sequence-boundaries.md](references/sequence-boundaries.md) |
+| Dimensions, grid divisibility, alpha route, material contract, frame range | [ue-niagara-readiness.md](references/ue-niagara-readiness.md) |
+| Playback cases in UE | [runtime-acceptance.md](references/runtime-acceptance.md) |

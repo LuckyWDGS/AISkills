@@ -1,8 +1,13 @@
 # Fire, Energy, Burning Material Playbook
 
-Use this when the user asks for fire, flame, torch, campfire, magical fire, burning edge, scorch, ember, smoke material, heat haze, lava, magma, plasma, energy flame, or any material where animated emissive heat is the main visual subject.
+Use this when the user asks for fire, flame, torch, campfire, magical fire,
+burning edge, scorch, ember, smoke material, heat haze, lava, magma, plasma,
+energy flame, or any material where animated emissive heat is the main visual
+subject.
 
-This file exists because "use Additive + Emissive" is not enough. A usable fire-family material needs a route, carrier, texture plan, node graph, motion plan, preview, and audit.
+This file exists because "use Additive + Emissive" is not enough. A usable
+fire-family material needs a route, carrier, texture plan, node graph, motion
+plan, preview, and audit.
 
 ## Table Of Contents
 
@@ -24,36 +29,53 @@ This file exists because "use Additive + Emissive" is not enough. A usable fire-
 
 Official Epic references to keep in mind:
 
-- Emissive material values can exceed `1.0` and push the material into HDR/bloom territory.
-- Fully emissive materials that do not need scene lighting should usually use the `Unlit` shading model because it is cheaper than lit shading.
+- Emissive material values can exceed `1.0` and push the material into HDR/bloom
+  territory.
+- Fully emissive materials that do not need scene lighting should usually use
+  the `Unlit` shading model because it is cheaper than lit shading.
 - Additive blend adds source color onto the background and is not dynamically lit.
-- Translucent/additive materials can become expensive through overdraw; use shader complexity view for particle and transparency-heavy effects.
-- Niagara/SubUV sprite workflows use sprite atlases/flipbooks and renderer Sub Image Size or SubUV animation, but the real renderer timing belongs to `niagara-vfx-artist`.
+- Translucent/additive materials can become expensive through overdraw; use
+  shader complexity view for particle and transparency-heavy effects.
+- Niagara/SubUV sprite workflows use sprite atlases/flipbooks and renderer Sub
+  Image Size or SubUV animation, but the real renderer timing belongs to
+  `niagara-vfx-artist`.
 
 Useful source anchors:
 
-- Epic Material Inputs: `https://dev.epicgames.com/documentation/en-us/unreal-engine/material-inputs-in-unreal-engine`
-- Epic Emissive Material Input: `https://dev.epicgames.com/documentation/en-us/unreal-engine/using-the-emissive-material-input-in-unreal-engine`
-- Epic Material Properties and Blend Modes: `https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-properties`
-- Epic Transparency Performance: `https://dev.epicgames.com/documentation/en-us/unreal-engine/using-transparency-in-unreal-engine-materials`
-- Epic Viewport Shader Complexity: `https://dev.epicgames.com/documentation/en-us/unreal-engine/viewport-modes-in-unreal-engine`
-- Epic Niagara smoke SubUV tutorial: `https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-create-a-smoke-effect-using-sprite-particles-in-niagara-for-unreal-engine`
+- Epic Material Inputs:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/material-inputs-in-unreal-engine`
+- Epic Emissive Material Input:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/using-the-emissive-material-input-in-unreal-engine`
+- Epic Material Properties and Blend Modes:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-material-properties`
+- Epic Transparency Performance:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/using-transparency-in-unreal-engine-materials`
+- Epic Viewport Shader Complexity:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/viewport-modes-in-unreal-engine`
+- Epic Niagara smoke SubUV tutorial:
+  `https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-create-a-smoke-effect-using-sprite-particles-in-niagara-for-unreal-engine`
 
 ## Learn-Build-Audit Rule
 
-If the exact fire-family target is unfamiliar, do not answer from vague memory and do not stop at a concept paragraph.
+If the exact fire-family target is unfamiliar, do not answer from vague memory
+and do not stop at a concept paragraph.
 
 Use this loop:
 
 1. Search project assets and this skill's references for an existing route.
-2. If still uncertain, read official docs or a source tutorial/case study and extract the material contract.
-3. Decide whether the material can be built directly from graph nodes, needs generated textures, or needs a Niagara-owned carrier contract.
-4. Build the smallest truthful UE material that has the required route, not just constants.
+2. If still uncertain, read official docs or a source tutorial/case study and
+   extract the material contract.
+3. Decide whether the material can be built directly from graph nodes, needs
+   generated textures, or needs a Niagara-owned carrier contract.
+4. Build the smallest truthful UE material that has the required route, not just
+   constants.
 5. Read the graph back and audit it.
 6. Preview it on the relevant carrier or a material-side harness.
 7. Promote only reusable lessons back into this skill.
 
-If UE automation or required assets are blocked, report the exact blocker and the graph/texture contract that remains to be built. Do not present a plan as a finished material.
+If UE automation or required assets are blocked, report the exact blocker and
+the graph/texture contract that remains to be built. Do not present a plan as a
+finished material.
 
 ## First Decision
 
@@ -74,14 +96,24 @@ Pick the route from the target look:
 
 Before building, write a compact read of:
 
-- Flame type: torch, campfire, gas flame, magical flame, stylized anime flame, electric/plasma, lava, burn edge, heat haze.
-- Visual identity: white-hot core, yellow/orange/red bands, blue core, smoky edges, black soot, tongues, flicker speed, ember density, crack shapes, lava crust, stylized outline.
-- Carrier: sprite, card mesh, ribbon, decal, surface mesh, post process, or material instance animation.
-- Carrier topology: flat/open card, closed cone/cylinder/shell, wrapped mesh UV seam, one-sided or two-sided rendering, and expected number of additive layers visible at once.
-- Motion: flipbook, panner, threshold animation, vertex/WPO flicker, UV distortion, random atlas cells, or external Niagara timing.
-- Required texture roles: fire flipbook, flame tongue mask, ember atlas, smoke flipbook, dissolve mask, crack mask, flow/noise, distortion normal.
+- Flame type: torch, campfire, gas flame, magical flame, stylized anime flame,
+  electric/plasma, lava, burn edge, heat haze.
+- Visual identity: white-hot core, yellow/orange/red bands, blue core, smoky
+  edges, black soot, tongues, flicker speed, ember density, crack shapes, lava
+  crust, stylized outline.
+- Carrier: sprite, card mesh, ribbon, decal, surface mesh, post process, or
+  material instance animation.
+- Carrier topology: flat/open card, closed cone/cylinder/shell, wrapped mesh UV
+  seam, one-sided or two-sided rendering, and expected number of additive layers
+  visible at once.
+- Motion: flipbook, panner, threshold animation, vertex/WPO flicker, UV
+  distortion, random atlas cells, or external Niagara timing.
+- Required texture roles: fire flipbook, flame tongue mask, ember atlas, smoke
+  flipbook, dissolve mask, crack mask, flow/noise, distortion normal.
 
-If the user provides a reference image, the reference controls the visible flame shape and color bands. A generic library fire mask is only a candidate and must not replace the requested look.
+If the user provides a reference image, the reference controls the visible flame
+shape and color bands. A generic library fire mask is only a candidate and must
+not replace the requested look.
 
 ## Route: Hero Fire Flipbook
 
@@ -128,9 +160,11 @@ T_FireFlipbook_VFX.A or luminance
 
 Notes:
 
-- If the flipbook is black-background RGB with no alpha, it is a prototype mask unless luminance extraction is intentional and tested.
+- If the flipbook is black-background RGB with no alpha, it is a prototype mask
+  unless luminance extraction is intentional and tested.
 - If using `AlphaComposite`, verify premultiplied behavior and black-edge cleanliness.
-- The material can declare SubUV expectations, but Niagara owns frame timing and renderer bindings.
+- The material can declare SubUV expectations, but Niagara owns frame timing and
+  renderer bindings.
 - VFX texture asset names should end in `_VFX`, for example `T_FireFlipbook_VFX`.
 
 ## Route: Single-Mask Panning Fire Detail
@@ -175,8 +209,10 @@ FlameMask * S_Opacity
 
 Audit note:
 
-- This can look acceptable for a small layer, but it is not a hero flame body unless the reference is very stylized/static.
-- If it looks like one repeated scrolling texture, move to flipbook or add atlas variation.
+- This can look acceptable for a small layer, but it is not a hero flame body
+  unless the reference is very stylized/static.
+- If it looks like one repeated scrolling texture, move to flipbook or add atlas
+  variation.
 
 ## Route: Burning Dissolve Edge
 
@@ -213,11 +249,14 @@ Optional T_ScorchMask / darkened base color
 Audit note:
 
 - Opacity mask data must use `TC_Masks` and `sRGB=false`.
-- If the reference has a directional burn front, generic tileable noise is not enough; create a directed mask or combine mask with object/world-space gradient.
+- If the reference has a directional burn front, generic tileable noise is not
+  enough; create a directed mask or combine mask with object/world-space
+  gradient.
 
 ## Route: Lava / Magma Surface
 
-Use this for ground cracks, lava pools, molten metal-like fantasy surfaces, and hot rock.
+Use this for ground cracks, lava pools, molten metal-like fantasy surfaces, and
+hot rock.
 
 Material settings:
 
@@ -289,7 +328,8 @@ Audit note:
 
 ## Texture Strategy
 
-Search the reusable asset library first, but only reuse an asset if it matches the reference and technical role.
+Search the reusable asset library first, but only reuse an asset if it matches
+the reference and technical role.
 
 Common roles:
 
@@ -355,9 +395,11 @@ Generated texture gate:
 1. Prefer power-of-two sizes.
 2. Run `texture_asset_report.py`.
 3. Import mask/data as `TC_Masks`, `sRGB=false`.
-4. If alpha is required, verify real alpha or run an alpha extraction/normalization step.
+4. If alpha is required, verify real alpha or run an alpha
+   extraction/normalization step.
 5. Preview on card/sprite/surface carrier before accepting.
-6. Register reusable successes as `candidate` first unless tiling, alpha, channel semantics, and visual style are verified.
+6. Register reusable successes as `candidate` first unless tiling, alpha,
+   channel semantics, and visual style are verified.
 
 ## Preview Gates
 
@@ -384,16 +426,22 @@ Must verify:
 - Mask textures use data import settings when sampled as masks.
 - Fire/smoke/lava textures match the reference, not merely the category.
 - Additive/translucent overdraw is measured or called out.
-- Two-sided additive carriers are compensated for front/back layer multiplication; high emissive values are judged with bloom/exposure enabled, not only by raw parameter values.
+- Two-sided additive carriers are compensated for front/back layer
+  multiplication; high emissive values are judged with bloom/exposure enabled,
+  not only by raw parameter values.
 - Bloom/exposure are not hiding bad shape language.
 - Stale parameters and dead branches are removed after the route is confirmed.
 
 Classify findings:
 
-- Must-fix: compile errors, wrong domain/blend/shading model, missing alpha/mask, wrong import settings, invisible material on intended background.
-- Effect-first acceptable for prototype: high emissive, high instruction count, no low-end quality switch, if the look is still being established.
-- Optimize-without-look-change: channel packing, lower helper texture size, shared samplers, quality switch, atlas trim, dead branch removal.
-- Visual tradeoff: replacing flipbook with panning mask, removing heat distortion, lowering flame frame count, removing smoke layer.
+- Must-fix: compile errors, wrong domain/blend/shading model, missing
+  alpha/mask, wrong import settings, invisible material on intended background.
+- Effect-first acceptable for prototype: high emissive, high instruction count,
+  no low-end quality switch, if the look is still being established.
+- Optimize-without-look-change: channel packing, lower helper texture size,
+  shared samplers, quality switch, atlas trim, dead branch removal.
+- Visual tradeoff: replacing flipbook with panning mask, removing heat
+  distortion, lowering flame frame count, removing smoke layer.
 
 ## Minimum Deliverable For A Fire-Family Request
 
@@ -404,4 +452,5 @@ Deliver these artifacts or explicitly mark what is still missing:
 - Required texture assets or generated candidates with QA reports.
 - Preview on card/sprite/surface/heat-haze carrier as appropriate.
 - Audit report separating visual-fidelity status from performance risks.
-- A clear boundary note if Niagara must own particle spawn, SubUV timing, renderer sorting, or system integration.
+- A clear boundary note if Niagara must own particle spawn, SubUV timing,
+  renderer sorting, or system integration.

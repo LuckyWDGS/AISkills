@@ -2,7 +2,8 @@
 
 ## 用途
 
-这份文档现在只作为配方路由入口。按任务读取更窄的 reference，避免为了一个材质路线加载整本手册。
+这份文档现在只作为配方路由入口。按任务读取更窄的 reference，避免为了一个材质路线
+加载整本手册。
 
 适合在这些场景读取：
 - 需要快速选择该读哪份配方
@@ -16,7 +17,9 @@
 python tools/material_toolset_builder.py recipe <recipe> --effect <Effect> --layer <Layer> --markdown
 ```
 
-详细规则见 `references/material-toolset-builder.md`。配方 references 负责解释视觉和节点经验，`material_toolset_builder.py recipe` 负责把常见路线固化成参数表、贴图需求、预览/审计计划和 builder spec。
+详细规则见 `references/material-toolset-builder.md`。配方 references 负责解释视
+觉和节点经验，`material_toolset_builder.py recipe` 负责把常见路线固化成参数表、
+贴图需求、预览/审计计划和 builder spec。
 
 ---
 
@@ -37,7 +40,8 @@ python tools/material_toolset_builder.py recipe <recipe> --effect <Effect> --lay
 当用户说“帮我做某种效果”时，先从上面的窄 reference 里选一个接近的材质配方，再结合：
 - `SKILL.md` 里的核心工作流和硬规则
 - `references/texture-vs-compute.md` 里的贴图/计算取舍
-- `references/platform-scalability-planner.md` 里的 PC / Android / low-end 假设与降级计划
+- `references/platform-scalability-planner.md` 里的 PC / Android / low-end 假设
+  与降级计划
 - `references/material-node-map.md` 里的节点族和 HLSL 读图方式
 - `references/niagara-ribbon-flame-trail.md` 里的 Ribbon 火焰拖尾专项配方
 

@@ -17,7 +17,7 @@ from .core import default_report_path, resolve_root_context, save_json, slugify,
 from .mcp import DEFAULT_MCP_URL, run_tool_script
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "material_function_linter/2"
 INPUT_PROPS = ["inputName", "description", "inputType", "sortPriority", "bUsePreviewValueAsDefault"]
 OUTPUT_PROPS = ["outputName", "description", "sortPriority"]
@@ -84,7 +84,7 @@ def build_collect_script(folder: str, max_results: int, include_graph: bool) -> 
 
 
 def function_row(raw: dict[str, Any]) -> dict[str, Any]:
-    """A collected function in the report's (UnrealBridge-era) field names."""
+    """A collected function in the report's (pre-MCP) field names."""
     info = raw.get("info") or {}
     categories = info.get("libraryCategoriesText") or []
     row = {

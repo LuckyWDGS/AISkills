@@ -1,28 +1,42 @@
 # UE 5.9 native material control
 
-Verified on UE 5.9.0 Preview, CL 60351404, on 2026-11-11. These are live MCP
-results from isolated candidate assets. They do not establish UE 5.8 runtime
-compatibility, target-platform costs or visual approval.
+Native MCP control of materials, functions and instances on UE 5.9. Structural
+edits, compile results, statistics and visual approval are separate
+[evidence levels](../../unreal-engine-mcp/references/shared-conventions.md#evidence-levels);
+what was run is listed under [验证记录](#验证记录).
 
 For the second-pass StaticMesh quality/collision getters, Texture pixel
 read/export, transient Geometry and untested TextureGraph authoring surface,
-read the shared [geometry / texture reference](../../unreal-engine-mcp/references/ue-5.9-geometry-texture-tools.md).
+read the shared
+[geometry / texture reference](../../unreal-engine-mcp/references/ue-5.9-geometry-texture-tools.md).
+
+## Contents
+
+- [Discovery and routing](#discovery-and-routing)
+- [Author and verify](#author-and-verify)
+- [Statistics and diffs are native](#statistics-and-diffs-are-native)
+- [Live coverage and limits](#live-coverage-and-limits)
+- [Parameter palettes for gameplay assets](#parameter-palettes-for-gameplay-assets)
+- [Reimported glTF material instances](#reimported-gltf-material-instances)
+- [Fixed-camera surface comparisons](#fixed-camera-surface-comparisons)
+- [Thin-translucent cockpit and masked markings](#thin-translucent-cockpit-and-masked-markings)
+- [Unlit world-height backdrop](#unlit-world-height-backdrop)
+- [验证记录](#验证记录)
 
 ## Discovery and routing
 
-Read the core [5.9 audit](../../unreal-engine-mcp/references/ue-5.9-preview-audit.md)
-first. Discover `EditorToolset.MaterialToolset`, `MaterialInstanceToolset`,
+Read the core
+[5.9 audit](../../unreal-engine-mcp/references/ue-5.9-preview-audit.md) first.
+Discover `EditorToolset.MaterialToolset`, `MaterialInstanceToolset`,
 `ObjectToolset` and `AssetToolset`. The suffixes are unique in the inspected
-inventory. Native methods and arguments use PascalCase and camelCase,
-respectively; old Python names such as `MaterialTools.create_material` are a
-different contract.
+inventory. Native methods use PascalCase and arguments camelCase. Copy every
+name from the live schema.
 
 Use native MCP for each covered operation. For dependent batches, read
 `PythonScriptingTools.read_me`, look up the exact tool signatures with
 `get_symbol`, and use `await call_tool(full_name, **arguments)`. Public Python
-APIs in `execute_python` fill an identified native-tool gap. The existing
-5.8 recipe/audit executors require separate validation before use on 5.9;
-renaming only their toolset cannot translate their arguments or return values.
+APIs in `execute_python` fill an identified native-tool gap. The bundled recipe
+and audit helpers are `unported`.
 
 ## Author and verify
 
@@ -146,14 +160,49 @@ ordinary material authoring does not test those services or renderer modes.
 
 ## Reimported glTF material instances
 
-In the UE 5.9 kitchen scene, Interchange replaced meshes and returned newly created materials while reusing earlier instances and textures. Four reused instances still had their old `BaseColorFactor`. Their slots pointed to the expected materials, yet the oak and enamel colours were visibly different from the revised source.
+In the UE 5.9 kitchen scene, Interchange replaced meshes and returned newly
+created materials while reusing earlier instances and textures. Four reused
+instances still had their old `BaseColorFactor`. Their slots pointed to the
+expected materials, yet the oak and enamel colours were visibly different from
+the revised source.
 
-1. Read the source glTF material and the intended overrides for this asset. Compare `baseColorFactor` as linear RGBA, including the tint when a base-colour texture is present. Resolve `baseColorTexture.index → textures[index].source → images[source]` and match that image to the imported texture object in the target library. Compare roughness and metallic as separate factors.
-2. Read the actual instance parent and its `scalarParameterValues`, `vectorParameterValues` and `textureParameterValues` via `ObjectToolset.GetProperties`. These arrays describe explicit overrides. Where an entry is inherited, query the effective value from the parent/instance parameter contract. This Interchange parent exposed `BaseColorFactor`, `BaseColorTexture`, `RoughnessFactor` and `MetallicFactor`. Look up names on the active parent. For layered instances also preserve parameter association and index.
-3. For a source-owned global parameter with an unambiguous name, use `MaterialInstanceToolset.SetScalarParameter` or `SetVectorParameter` to correct a mismatch. For a wrong texture binding, the exposed `SetTextureParameter(instance, name, value)` takes the texture object reference. Check the exact returned path with `GetTextureParameter` before saving. The kitchen's texture bindings already matched. When the project has art-directed overrides, compare the previous import, the current MI and the revised source before changing it. Read each changed parameter back and verify both the mesh's named slot and the placed component's override. Check a close view under the scene's intended exposure before adjusting lighting or roughness again.
-4. If the import log flags an unsupported material on a window pane or bottle, inspect the slot's effective blend mode and `StaticMeshToolset.IsNaniteMesh`. For a mesh that needs translucency on this build, a tested path is `SetNaniteEnabled(mesh, bEnabled=false)`. This rebuilds the mesh. Save it, read its state back, and inspect transparency in the next UE render. Keep decisions about opaque geometry separate and measure target-platform cost where relevant.
+1. Read the source glTF material and the intended overrides for this asset.
+   Compare `baseColorFactor` as linear RGBA, including the tint when a
+   base-colour texture is present. Resolve
+   `baseColorTexture.index → textures[index].source → images[source]` and match
+   that image to the imported texture object in the target library. Compare
+   roughness and metallic as separate factors.
+2. Read the actual instance parent and its `scalarParameterValues`,
+   `vectorParameterValues` and `textureParameterValues` via
+   `ObjectToolset.GetProperties`. These arrays describe explicit overrides.
+   Where an entry is inherited, query the effective value from the
+   parent/instance parameter contract. This Interchange parent exposed
+   `BaseColorFactor`, `BaseColorTexture`, `RoughnessFactor` and
+   `MetallicFactor`. Look up names on the active parent. For layered instances
+   also preserve parameter association and index.
+3. For a source-owned global parameter with an unambiguous name, use
+   `MaterialInstanceToolset.SetScalarParameter` or `SetVectorParameter` to
+   correct a mismatch. For a wrong texture binding, the exposed
+   `SetTextureParameter(instance, name, value)` takes the texture object
+   reference. Check the exact returned path with `GetTextureParameter` before
+   saving. The kitchen's texture bindings already matched. When the project has
+   art-directed overrides, compare the previous import, the current MI and the
+   revised source before changing it. Read each changed parameter back and
+   verify both the mesh's named slot and the placed component's override. Check
+   a close view under the scene's intended exposure before adjusting lighting or
+   roughness again.
+4. If the import log flags an unsupported material on a window pane or bottle,
+   inspect the slot's effective blend mode and `StaticMeshToolset.IsNaniteMesh`.
+   For a mesh that needs translucency on this build, a tested path is
+   `SetNaniteEnabled(mesh, bEnabled=false)`. This rebuilds the mesh. Save it,
+   read its state back, and inspect transparency in the next UE render. Keep
+   decisions about opaque geometry separate and measure target-platform cost
+   where relevant.
 
-For module bounds, placement and saved-level checks, see [photo-based interiors](../../unreal-engine-mcp/references/ue-5.9-reference-interiors.md). For three-way review and selected updates to global glTF MI parameters, use [the reimport workflow](../../unreal-engine-mcp/references/ue-5.9-reimport-reconciliation.md).
+For module bounds, placement and saved-level checks, see
+[photo-based interiors](../../unreal-engine-mcp/references/ue-5.9-reference-interiors.md).
+For three-way review and selected updates to global glTF MI parameters, use
+[the reimport workflow](../../unreal-engine-mcp/references/ue-5.9-reimport-reconciliation.md).
 
 ## Fixed-camera surface comparisons
 
@@ -225,9 +274,9 @@ For an RGBA colour-and-cutout atlas, use TextureSampleParameter2D RGB to
 BaseColor and A to OpacityMask. Set `BLEND_Masked` first, then set the dependent
 `opacityMaskClipValue` in a subsequent call. Keep sRGB enabled for colour RGB;
 alpha remains the mask. Read back compression/alpha preservation and the actual
-RGBA texture, plus the MI texture override. The carrier in this test was a
-thin mesh card, not a DeferredDecal. Correct sample wiring does not prove
-orientation or surface contact; inspect each carrier's UV and grazing views.
+RGBA texture, plus the MI texture override. The verified carrier was a thin mesh
+card, not a DeferredDecal. Correct sample wiring does not prove orientation or
+surface contact; inspect each carrier's UV and grazing views.
 
 After finishing the graph, recompile the final masters and inspect a bounded
 new log interval. Keep historical construction failures separately: scanning
@@ -254,3 +303,22 @@ the scoped clean save passed; geometry placement and gameplay appearance
 remain separate validation. Compiled statistics were 103 pixel instructions,
 147 vertex instructions, zero samplers and three pixel texture samples for
 this configuration, not a general platform budget.
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404；所有写入只针对独立候选资产。
+- 2026-11-11：材质图（创建、标量参数、中文说明/注释、输出连接回读、重编译、指定
+  保存）、材质函数（输出/数值节点、按发现的输入名连接、相同与修改后的 diff）、材
+  质实例（从父材质创建、列出参数、0.8 标量覆盖回读）、反射（嵌套 schema、
+  EditCondition 与类型拒绝后原值不变）、持久化（5 个候选保存后
+  `IsDirty=false`）。测试材质统计为 187 像素指令、147 顶点指令、1 个 sampler。
+- 平台游戏调色板：1 个 default-lit 不透明主材质和 10 个实例；`AssetToolset.Move`
+  后引用解析到新路径。
+- 厨房场景 glTF 重导入：4 个被复用的实例仍保留旧 `BaseColorFactor`；1080 × 720
+  水槽镜头中 275 × 46 像素区域的重复基线差为 0.14（8 位），强方向粗糙度为
+  11.87，细拉丝为 0.78。
+- 硬表面资产：不透明 PBR、薄半透明玻璃、遮罩标记三个主材质共 13 个槽位；玻璃使用
+  `RM_None`，未验证折射。
+- 世界高度背景材质：103 像素指令、147 顶点指令、0 sampler。
+- 未执行：运行时 MID/MPC 行为、cook、移动端 shader 平台、Substrate/层编辑、纹理
+  导入回归。

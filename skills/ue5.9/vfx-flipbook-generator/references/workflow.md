@@ -1,8 +1,19 @@
 # Flipbook Workflow
 
+## Contents
+
+- [1. Goal](#1-goal)
+- [2. Route Decision](#2-route-decision)
+- [3. Search Policy](#3-search-policy)
+- [4. Hybrid Route](#4-hybrid-route)
+- [5. Full-Generated Route](#5-full-generated-route)
+- [6. QC Checklist](#6-qc-checklist)
+- [7. Unreal Handoff](#7-unreal-handoff)
+
 ## 1. Goal
 
-Use this workflow when the user wants a reusable flipbook atlas for VFX work and the source situation is not trivial.
+Use this workflow when the user wants a reusable flipbook atlas for VFX work and
+the source situation is not trivial.
 
 Typical requests:
 
@@ -93,8 +104,10 @@ Local direct-extract tool:
 
 - `python tools/flipbook_builder.py recommend D:/clip.mov`
 - `python tools/flipbook_builder.py build D:/clip.mov --grid 16x16 --frames 144 --fit contain --atlas-size-mode pad-to-power-of-two`
-- the tool looks for `ffmpeg.exe` and `ffprobe.exe` under `tools/ffmpeg` (a per-machine install, ignored by git) before checking system `PATH`
-- `contain` preserves the entire frame and pads when aspect ratios differ; `cover` crops to fill the cell and should only be used intentionally
+- the tool looks for `ffmpeg.exe` and `ffprobe.exe` under `tools/ffmpeg` (a
+  per-machine install, ignored by git) before checking system `PATH`
+- `contain` preserves the entire frame and pads when aspect ratios differ;
+  `cover` crops to fill the cell and should only be used intentionally
 
 ## 5. Full-Generated Route
 
@@ -105,8 +118,10 @@ Use full-generated when:
 - source timing is incompatible with the requested effect
 - the user wants a stylized or game-specific look
 
-Before committing to a strict ordered sequence, check `references/sequence-boundaries.md`.
-Some requested effects are better as randomizable sprite sets or mixed hero/support layers than as one fully continuous 100-frame atlas.
+Before committing to a strict ordered sequence, check
+`references/sequence-boundaries.md`. Some requested effects are better as
+randomizable sprite sets or mixed hero/support layers than as one fully
+continuous 100-frame atlas.
 
 Full-generated sequence advice:
 
@@ -121,14 +136,24 @@ Full-generated sequence advice:
 
 For one-shot generated atlas previews, still finish with a production snap:
 
-- use a black luminance-style background when matching common smoke/dust flipbook textures
+- use a black luminance-style background when matching common smoke/dust
+  flipbook textures
 - remove checkerboard preview backgrounds before accepting the asset
-- force the final atlas to a power-of-two square and prefer `2048x2048` or `4096x4096` as the source-delivery size when budget permits
-- treat `1024x1024` as a chat/review/mobile-low-budget derivative unless the user explicitly accepts it as final
+- force the final atlas to a power-of-two square and prefer `2048x2048` or
+  `4096x4096` as the source-delivery size when budget permits
+- treat `1024x1024` as a chat/review/mobile-low-budget derivative unless the
+  user explicitly accepts it as final
 - keep a raw generated copy when resizing or snapping the preview output
-- if an alpha material route is needed, derive a separate alpha PNG from the black-background luminance map or regenerate through a true alpha-capable path
+- if an alpha material route is needed, derive a separate alpha PNG from the
+  black-background luminance map or regenerate through a true alpha-capable path
 
-Note: `12x12` and `10x10` grids cannot divide `1024x1024`, `2048x2048`, or `4096x4096` into integer-pixel cells. Do not force either grid into a power-of-two atlas: default packers reject it before output. Use a separately planned raw NPOT route if exact row/column counts are required, or use `16x16` for 144 valid frames with playback `0..143`. For direct UE SubUV production output, prefer `8x8`, `16x8`, `16x16`, or another grid whose rows and columns divide the atlas dimensions exactly.
+Note: `12x12` and `10x10` grids cannot divide `1024x1024`, `2048x2048`, or
+`4096x4096` into integer-pixel cells. Do not force either grid into a
+power-of-two atlas: default packers reject it before output. Use a separately
+planned raw NPOT route if exact row/column counts are required, or use `16x16`
+for 144 valid frames with playback `0..143`. For direct UE SubUV production
+output, prefer `8x8`, `16x8`, `16x16`, or another grid whose rows and columns
+divide the atlas dimensions exactly.
 
 Recommended planning step after `flipbook_job_scaffold.py`:
 
@@ -155,11 +180,13 @@ python tools/flipbook_batch_runner.py approve-anchor D:/path/to/frame-plan.json 
 Runner behavior:
 
 - default provider mode is `system-imagegen`
-- in default mode, `run` emits the next manual system-imagegen step or phase packet instead of calling a local CLI automatically
+- in default mode, `run` emits the next manual system-imagegen step or phase
+  packet instead of calling a local CLI automatically
 - import accepted outputs back into runner state with `import-frame`
 - after anchor approval, the next `run` fills the rest of that phase
 - fill frames prefer image-reference `edit` after an anchor is accepted
-- if a local CLI automation route is explicitly needed, switch the runner to `--provider cm-imagegen`
+- if a local CLI automation route is explicitly needed, switch the runner to
+  `--provider cm-imagegen`
 
 Typical state ladders:
 
@@ -190,21 +217,29 @@ Typical state ladders:
 - Same canvas on every frame
 - Same background policy on every frame
 - Final atlas dimensions are power-of-two when the asset is destined for Unreal/Niagara
-- Final production source is preferably `2048x2048` or `4096x4096`; `1024x1024` is intentionally marked preview, mobile-only, or low-budget when used
-- Atlas dimensions divide evenly by the requested columns and rows when it is destined for direct Unreal/Niagara SubUV playback
-- Black-background luminance atlases should look like real alpha masks, not transparent checkerboard previews
+- Final production source is preferably `2048x2048` or `4096x4096`; `1024x1024`
+  is intentionally marked preview, mobile-only, or low-budget when used
+- Atlas dimensions divide evenly by the requested columns and rows when it is
+  destined for direct Unreal/Niagara SubUV playback
+- Black-background luminance atlases should look like real alpha masks, not
+  transparent checkerboard previews
 - Same effect family across the sequence
 - No random extra particles that appear in only one frame unless intentional
 - No frame-to-frame scale popping
 - No accidental cutoffs from `cover`
 - No suspicious transparent bands unless `contain` padding was intentional
-- Pad each cell independently to its final integer UV tile when expanding to power-of-two; never add only an outer atlas border. Record source and final cell dimensions
+- Pad each cell independently to its final integer UV tile when expanding to
+  power-of-two; never add only an outer atlas border. Record source and final
+  cell dimensions
 - Final atlas dimensions reported
-- Whether the delivered atlas is native high-resolution generation, repacked high-resolution frames, or an upscale derivative reported
+- Whether the delivered atlas is native high-resolution generation, repacked
+  high-resolution frames, or an upscale derivative reported
 - Raw pre-snap dimensions reported when snapped
 - Exact cell size reported when the grid divides the atlas
-- Blank/unused cells excluded from Niagara end-frame playback unless they are intentional fade or hold cells
-- Edge contact checked so important alpha/luma is not clipped or bleeding into adjacent cells
+- Blank/unused cells excluded from Niagara end-frame playback unless they are
+  intentional fade or hold cells
+- Edge contact checked so important alpha/luma is not clipped or bleeding into
+  adjacent cells
 - Run `tools/ue_flipbook_readiness.py` for Unreal-bound atlases
 
 ## 7. Unreal Handoff

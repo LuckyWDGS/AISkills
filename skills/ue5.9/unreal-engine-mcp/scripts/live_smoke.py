@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Live smoke test of the UE skills' tools against a running UE 5.8+ editor.
+"""Live smoke test of the UE skills' tools against a running editor.
+
+Not ported to UE 5.9: this runner still drives the UE 5.8 helper contracts and is refused on a UE 5.9 editor.
 
 Runs each tool through its real command line against template content (or the
 assets you pass), checks key report fields, and fails if any touched asset's
@@ -108,7 +110,7 @@ def load(path: str | Path) -> Any:
 class Smoke:
     def __init__(self, args: argparse.Namespace, work: Path) -> None:
         self.args, self.work = args, work
-        self.client = connect(project=args.project)
+        self.client = connect(project=args.project, contract="5.8")  # not ported to UE 5.9
         self.results: list[dict[str, Any]] = []
 
     def tool(self, name: str, *args: str, timeout: float = 300) -> tuple[int, str]:

@@ -1,213 +1,251 @@
 ---
 name: niagara-vfx-artist
-description: Use when the user needs Unreal Engine Niagara VFX help or a complete usable Niagara effect from text, reference images or existing UE assets. Acts as the VFX Lead - effect direction, reference deconstruction, layers and carriers, systems/emitters/renderers/modules, events and gameplay integration, structural validation and preview capture through Epic MCP, scalability, cleanup and PC/Android performance. Material graphs, textures, HLSL and shader cost go to unreal-material-artist alongside this skill.
+description: VFX lead for Unreal Engine 5.9 Niagara effects through Epic MCP. Use when the user needs Niagara help or a complete usable effect from text, reference images or existing assets - effect direction, reference deconstruction, layers and carriers, systems, emitters, renderers and modules, events and gameplay integration, structural validation, preview capture, scalability, cleanup, and PC or Android performance. Material graphs, textures, HLSL and shader cost go to unreal-material-artist alongside this skill.
 ---
 
-# Niagara VFX Artist
+# Niagara VFX Artist (UE 5.9)
 
-## Editor transport
+> **Scope.** This skill targets UE 5.9 only and was verified on **UE 5.9.0
+> Preview, CL 60351404**. A later build can rename tools and arguments, so read
+> the live schema before each first call. Editor work goes through the native
+> Niagara tools; the bundled editor helpers are not ported yet (see
+> [Tools](#tools)).
 
-**Sibling skills:** install `unreal-engine-mcp` (every editor-connected tool imports its shared `scripts/ue_mcp` client) and `vfx-flipbook-generator` (only `tools/flipbook_builder.py` re-exports its builder) in the same `skills/` folder; a missing one stops with a clear error. `unreal-material-artist` is a workflow partner, not a code dependency.
+## When to use
 
-Follow the [shared UE conventions](../unreal-engine-mcp/references/shared-conventions.md): background editor connections only, MCP first with
-official Python for a verified gap, and Chinese emitter/module display
-descriptions with stable IDs on new or modified Niagara modules (existing
-parameter namespaces and bindings unchanged).
+- Design a Niagara effect from a brief, a reference image or an existing asset.
+- Build or repair systems, emitters, renderers, modules and user parameters.
+- Hook an effect into gameplay and check activation, completion and cleanup.
+- Review an effect for readability, structure and platform cost.
 
-For gameplay integration or lifetime changes, select the relevant
-[runtime acceptance cases](references/runtime-acceptance.md): activation,
-completion, pooling/reset, owner destruction, moving bounds and verified age/seek behavior.
+## Roles
 
-For UE 5.9 start with [verified Niagara control and script metadata](references/ue-5.9-niagara-mcp.md),
-using the sibling `unreal-engine-mcp/scripts/builtin_mcp.py`. Discover the live
-`NiagaraToolset_System`, `NiagaraToolset_Assets`, `NiagaraToolset_Component`,
-`NiagaraToolset_Blueprint`, `NiagaraToolset_Info` contracts and
-`EditorToolset.AssetToolset`. Use native summaries,
-topology, renderer/stack data, module/user-variable editing, compile state and
-stack issues. Compose registered tools through `PythonScriptingTools.execute_python`
-with `await call_tool(...)`; read `read_me` and look up symbols first. For a
-verified native gap, use public `unreal.*` APIs through that official MCP tool
-before considering Remote Execution. Report remaining unsupported operations
-without adding a custom plugin.
+- `niagara-vfx-artist` is the VFX Lead and owns the whole effect: visual
+  intent, gameplay readability, reference decomposition, layers, carriers,
+  systems, emitters, renderers, events, bounds, preview, integration and final
+  delivery.
+- `unreal-material-artist` is the Material/Shader Specialist. Niagara decides
+  what each layer needs from a material (for example `Additive Unlit`,
+  `ParticleColor`, `DynamicParameter`, a soft-edge mask, flipbook support, a
+  sampler budget) and hands over a contract. Material builds or audits that
+  route; Niagara then binds, previews, tunes and validates.
+- Ownership runs one way: Niagara directs material work, and Niagara system
+  reads, writes and hookup decisions stay here.
 
-The existing Niagara audit, asset-assistant and capture executors retain their
-5.8 contracts unless separately validated on the target build. In 5.8 read
-`ProgrammaticToolset`'s execution environment before batching. In 5.9 use the
-native/Python route above; old asset-tool names and Programmatic scripts are
-not interchangeable with the new schemas.
+## Editor route
 
-If diagnostics wait on first-load compilation, check compile readiness and a
-supported background asset-load route before treating the timeout as a capability
-gap. The historical 5.8.4 case involved opening an asset; it does not authorize
-opening/focusing editor UI for this user. If background loading cannot establish
-readiness, report that specific boundary rather than repeatedly sending writes.
+Install the sibling `unreal-engine-mcp` and `vfx-flipbook-generator` skills
+from the same `skills/ue5.9/` folder and follow the
+[shared conventions](../unreal-engine-mcp/references/shared-conventions.md):
+background connections, Chinese emitter and module descriptions with stable
+IDs on new or modified modules (existing parameter namespaces and bindings
+unchanged) and the evidence levels.
 
-The local report/reference/image-processing workflow stays local. UnrealBridge
-(custom plugin + TCP) is retired. Version-specific Epic MCP helpers include
-`niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`,
-`ue_smoke`, `effect_control_schema` / `control_provenance_check`, `asset_cleanup`
-and `delivery_finalize --promote-assets`. Use them on their validated contracts;
-their presence does not prove 5.9 execution support. See
-[references/niagara-mcp-toolsets.md](references/niagara-mcp-toolsets.md).
+All editor operations use the native tools in
+[native Niagara control](references/ue-5.9-niagara-mcp.md), called through
+`../unreal-engine-mcp/scripts/builtin_mcp.py`:
 
-## Overview
+| Operation | Native owner and tools |
+|---|---|
+| Create from a template, add or remove emitters | `NiagaraToolset_System`: `CreateNiagaraSystem`, `AddEmitter`, `RemoveEmitter` |
+| Structure reads | `GetSystemSummary`, `GetEmitterTopology`, `GetScriptStackTopology`, `GetEmitterData`, `GetRendererData` |
+| Renderer, stack and module edits | `SetRendererData`, `SetStackInputData`, `SetModuleEnabled`, `SetSystemData` |
+| User parameters | `AddUserVariables`, `GetUserVariables` |
+| Compile and diagnostics | `GetSystemCompileState`, `GetStackIssues` |
+| Script descriptions | `NiagaraToolset_Assets.SetNiagaraScriptDescription`, `GetNiagaraScriptDigest` |
+| Find, duplicate, save, reload | `AssetToolset` |
+| Dependent batches, public-API gaps | `PythonScriptingTools` (`await call_tool(...)`) |
 
-Use this skill as the VFX Lead for Unreal Engine Niagara effect design, implementation, critique, integration, and optimization. It owns the effect-level direction: visual intent, gameplay readability, reference decomposition, layer structure, carrier choices, systems, emitters, renderers, events, modules, simulation targets, bounds, culling, preview, integration, and final effect delivery.
-
-Niagara does not lose material judgment. It should decide what each layer needs from a material, such as `Additive Unlit`, `ParticleColor`, `DynamicParameter`, soft-edge mask, flipbook support, low sampler budget, or translucent sorting constraints. When the work needs Material graphs, Material Instances, texture plans, Custom HLSL, material performance analysis, or cm-imagegen texture generation, use `unreal-material-artist` as the Material/Shader Specialist for implementation and audit.
-
-Default team model:
-
-- `niagara-vfx-artist` is the VFX Lead and total effect owner.
-- `unreal-material-artist` is the Material/Shader Specialist.
-- Full VFX tasks should usually use both: Niagara defines layers and material contracts, Material builds or audits the material route, then Niagara binds, previews, tunes, and validates the full effect.
-- The collaboration is one-way in ownership terms: Niagara may call or direct Material work, but Material should not own Niagara system reads, writes, or hookup decisions.
+`GetSystemCompileState` and `GetStackIssues` wait for an in-flight compile.
+Call them separately with a bounded timeout. When a first-load compile keeps
+diagnostics waiting, check compile readiness through a background asset load
+and report that boundary; the Niagara editor stays closed.
 
 ## Workflow
 
-1. Identify the target effect.
-   Capture the visual intent, gameplay purpose, camera distance, timing, platform, performance budget, integration point, and whether references are available.
+1. **Identify the target effect.** Visual intent, gameplay purpose, camera
+   distance, timing, platform, performance budget, integration point and the
+   available references.
 
-2. Cache and inspect supplied design images.
-   When the user provides a design sheet, reference image, concept image, or keyframe image, save or preserve a local copy under the active workspace before analysis whenever possible. Prefer the closed-loop tool suite:
-   - `tools/reference_cache.py`
-   - `tools/reference_acceptance.py`
-   - `tools/layer_evidence.py`
-   - `tools/visual_layer_map.py`
-   - `tools/design_compare_checklist.py`
-   - `tools/preview_approval.py`
-   Before implementation, state which design/reference image is the active implementation anchor and the scope inside it, such as `full effect`, `single layer`, `drag trail only`, or another precise sub-scope. Proceed when exactly one image is supplied and the request names the scope; stop and ask only when several images could be the anchor, the scope is ambiguous, or the anchor changes an earlier approved one.
+2. **Cache and inspect supplied images.** Save a local copy of every design
+   sheet, reference or keyframe under the workspace before analysis, using
+   `reference_cache`, `reference_acceptance`, `layer_evidence`,
+   `visual_layer_map`, `design_compare_checklist` and `preview_approval`.
+   State which image is the active implementation anchor and its scope
+   (`full effect`, `single layer`, `drag trail only`, ...). Proceed when one
+   image is supplied and the request names the scope. Ask when several images
+   could be the anchor, the scope is ambiguous or the anchor replaces an
+   approved one.
 
-3. Respect anchor authority and continuity.
-   - If the active anchor changes, treat earlier previews, diffs, tuning notes, and diagnoses as historical only until they are revalidated against the new anchor.
-   - If the intended active anchor exists only in the thread and has not been cached locally, stop before implementation and mark the task blocked by missing durable anchor cache.
-   - Do not assume a broad composite sheet and a single-layer crop are interchangeable just because they came from the same conversation.
+3. **Respect anchor authority.** When the anchor changes, earlier previews,
+   diffs, tuning notes and diagnoses are historical until revalidated. An
+   anchor that exists only in the conversation blocks implementation until it
+   is cached locally. A composite sheet and a single-layer crop are different
+   anchors.
 
-4. Decompose the effect into Niagara layers.
-   Decide what each layer needs from Niagara: sprite, ribbon, mesh, component renderer, beam/trail behavior, source/receiver events, spawn timing, lifetime, velocity, curves, bounds, attachment, and scalability.
+4. **Decompose the effect into layers.** For each layer decide renderer
+   (sprite, ribbon, mesh, component), beam or trail behavior, source and
+   receiver events, spawn timing, lifetime, velocity, curves, bounds,
+   attachment and scalability.
 
-5. Request a material contract when needed.
-   If a layer needs a material, define the required carrier contract for `unreal-material-artist`: renderer type, UV expectations, Particle Color/Dynamic Parameter usage, required texture channels, alpha behavior, blend mode expectation, sorting risk, and platform budget.
-   For Niagara Ribbon / trail layers, hand over the ribbon UV contract (`U = ribbon length`, `V = ribbon width`; motion on `U`, width falloff on `V`) from [carrier-and-ribbon-rules.md](../unreal-material-artist/references/carrier-and-ribbon-rules.md#niagara-ribbon-uv-contract). If a renderer uses custom UV overrides or the material remaps art-space axes, read it back and document the exception in the contract.
+5. **Request a material contract when a layer needs one.** Give
+   `unreal-material-artist` the renderer type, UV expectations, Particle Color
+   and Dynamic Parameter usage, texture channels, alpha behavior, blend mode,
+   sorting risk and platform budget. For ribbons and trails hand over the ribbon
+   UV contract (`U = length`, `V = width`; motion on `U`, width falloff on `V`)
+   from
+   [carrier-and-ribbon-rules.md](../unreal-material-artist/references/carrier-and-ribbon-rules.md#niagara-ribbon-uv-contract).
+   Read back and document any custom UV override.
 
-6. Implement or plan Niagara.
-   Prefer template-first creation and reviewable mutation plans. In 5.9 use
-   native `CreateNiagaraSystem` / `AddEmitter`, then renderer, stack and user
-   variable tools with readback per write; save the intended assets only after
-   verification. A planned stack edit must respect its live visibility,
-   editability, type and static-switch dependencies. The 5.8 asset-assistant
-   route remains `niagara_asset_assistant.py` (`plan-template`, `repair-plan`,
-   `new-plan`; offline `apply --plan <plan>`, then `--execute` on a validated
-   editor). Its unsupported operations require the discovered official tools.
-   For a missing capability, inspect current MCP schemas, then use the 5.9
-   official MCP Python route or, on a verified 5.8 gap, background Remote
-   Execution. Do not write custom C++ wrappers or editor plugins.
+6. **Build.** Start from a template and write a reviewable mutation plan
+   (`niagara_asset_assistant plan-template`, `repair-plan`, `new-plan`; these
+   planning modes are local). Apply it with the native tools, reading back
+   after each write. A stack edit respects the input's live visibility,
+   editability, type and static-switch dependencies; re-query topology after
+   changing a static switch.
 
-7. Validate structurally before visual tuning.
-   Read the live Niagara system: emitter roles, renderer bindings, event handlers, source/receiver data flow, user parameters, parameter namespaces, bounds, sim target, renderer materials, and expected carrier route.
-   Do not collapse an emitter's responsibilities into one exclusive label. A ribbon receiver can also be an Attribute Reader receiver. Treat `role` as the human-facing primary role, and record composite `roles` plus `capabilities` from official structural evidence. The legacy audit's report schema can guide local interpretation without requiring its bridge executor.
+7. **Validate structure before tuning the look.** Read emitter roles,
+   renderer bindings, event handlers, source and receiver data flow, user
+   parameters, namespaces, bounds, sim target and renderer materials. Record
+   one primary `role` per emitter plus its composite `roles` and
+   `capabilities`: a ribbon receiver can also be an Attribute Reader receiver.
 
-8. Capture and self-review.
-   After structural validation, discover the target's background Epic MCP
-   capture route. In 5.9 start with `SceneCaptureToolset`; the shared
-   `../unreal-engine-mcp/scripts/capture.py` commands below retain their
-   separately validated 5.8 contract:
-   - `capture.py viewport --pose x,y,z,pitch,yaw,roll --frames 3 --interval 0.5 --out-dir .codex/session/vfx-delivery/captures/<effect>` for a system already placed in the level (find it with `SceneTools.find_actors`). A posed capture renders from that pose without moving the user's viewport camera; omit `--pose` to use the current camera.
-   - `capture.py asset <system path>` only for a thumbnail; it is not a simulation preview.
-   Feed the PNGs to `visual_diff_qa.py`, `preview_approval.py` or `effect_preview_approval.py` through `--preview-path`. Distinct frame hashes do not prove motion (temporal AA alone changes them); judge silhouette, timing and evolution visually. Whether the simulation advances between frames depends on the editor viewport being realtime; if the frames show one simulation state, report that boundary rather than toggling viewport UI.
-   Compare the effect against the approved design for silhouette, timing, density, width, color, brightness, spacing, and gameplay readability.
+8. **Capture and self-review.** Place the system in the level and capture it
+   with `../unreal-engine-mcp/scripts/capture.py viewport --pose
+   x,y,z,pitch,yaw,roll --frames 3 --interval 0.5 --out-dir
+   .codex/session/vfx-delivery/captures/<effect>`. The capture renders that
+   pose offscreen through `SceneCaptureToolset`, so the user's camera stays
+   put. `capture.py asset <system path>` gives a thumbnail only. Feed the PNGs
+   to `visual_diff_qa`, `preview_approval` or `effect_preview_approval` with
+   `--preview-path`, and judge silhouette, timing, density, width, color,
+   brightness, spacing and gameplay readability against the approved design.
+   When the frames show a single simulation state, report that boundary.
 
-9. Treat generated textures as provisional until live.
-   A generated texture is not part of the active implementation just because the file exists. It only becomes a valid implementation asset after:
-   - import into UE succeeds
-   - the intended material or renderer actually references it in the live route being reviewed
-   Until then, treat it as a candidate, not as delivered implementation state
+9. **Treat new assets as provisional until read back.**
+   - A generated texture counts once it is imported and the live material or
+     renderer in the reviewed route references it.
+   - A new or repaired system counts once its summary, topology, renderer and
+     stack data, `GetSystemCompileState` and `GetStackIssues` match the plan,
+     its receiver and source roles, renderer family, material bindings and
+     data flow are confirmed, and no test asset sits in a production folder.
+   - A system named `Ribbon` or `Trail` whose live receiver is still
+     sprite-only or has no material is an incomplete test route.
 
-10. Treat newly created Niagara assets as provisional until readback.
-   A newly created or repaired Niagara System/Emitter is not a valid implementation asset just because the asset exists in Content Browser. After any write-side Niagara operation:
-   - in 5.9 read the official summary, affected topology/renderer/stack data,
-     `GetSystemCompileState` and `GetStackIssues`; keep structural, compile and
-     runtime results separate. The validated 5.8 helper is `niagara_audit.py`
-     with `--diagnostics` and a bounded `--diagnostics-timeout`
-   - confirm the expected receiver/source roles, renderer family, live material bindings, and data-flow bindings
-   - confirm temporary/test assets are not left in production folders as if they were implementation candidates
-   If a system name implies `Ribbon` or `Trail` but the live receiver route is still sprite-only or material-less, treat that as an incomplete test route, not as a finished effect.
+10. **Integrate and accept.** For gameplay hookup or lifetime changes select
+    cases from [runtime acceptance](references/runtime-acceptance.md):
+    activation, completion, pooling and reset, owner destruction, moving
+    bounds, age and seek behavior.
 
-## Closed-Loop Tools
+## Validation rules
 
-Editor-connected tools run on Epic MCP; the rest are local. Commands, flags and outputs:
-[tool-suite.md](references/tool-suite.md).
+**Structure**
 
-| Stage | Tools |
-| --- | --- |
-| Reference and anchor (steps 2-3) | `reference_cache`, `reference_acceptance`, `layer_evidence`, `visual_layer_map` |
-| Planning | `asset_plan`, `integration_plan`, `effect_control_schema`, `control_preset`, `control_binding_generator` |
-| Build and repair | `niagara_asset_assistant` (`plan-template` / `repair-plan`, then `apply` through MCP); flipbooks via `vfx-flipbook-generator`, then `unreal-material-artist`'s `texture_import_fix` and `material_toolset_builder recipe fire_flipbook --execute` |
-| Readback | `niagara_audit`, `niagara_material_integration_probe`, `live_asset_verify`, `control_provenance_check`; material graphs with `../unreal-material-artist/tools/official_tool_call.py` |
-| Preview and QA (step 8) | `../unreal-engine-mcp/scripts/capture.py`, `visual_diff_qa`, `design_compare_checklist`, `motion_qa`, `effect_preview_approval` |
+- Structure is proven by tool reads of emitter handles, renderer types,
+  material bindings, event handlers, sim target and bounds.
+- Classify the owner of a visual mismatch before tuning: reference, texture,
+  material, Niagara, renderer, integration, preview or performance.
+- Niagara owns the parameter truth. When a material expects `ParticleColor`,
+  `DynamicParameter`, `SubImageIndex`, `RibbonWidth` or custom attributes,
+  verify who writes them, where they are bound and that the live system feeds
+  the expected values. Prove the system, emitter and renderer binding with
+  `GetRendererData` and the stack reads; list data-interface bindings the
+  reads cannot show as coverage gaps.
+- An emitter can hold several roles. A `Followers` emitter with a Ribbon
+  renderer, a bound ribbon material, `NiagaraDataInterfaceParticleRead` and
+  `SpawnParticlesFromOtherEmitter` is both `trail-receiver` and
+  `attribute-reader-receiver`.
+- A missing renderer material starts with the renderer slot: empty
+  `RendererProperties` means the renderer or emitter was never constructed.
+- Edit through the official tools. When no official route exists, report the
+  gap; reflection and export-text writes stay out.
+
+**Look**
+
+- Wrong silhouette or timing: diagnose carrier, renderer and animation before
+  raising material brightness.
+- Right silhouette but wrong color, alpha, UV flow, edge softness or shader
+  detail: hand the material side to `unreal-material-artist`.
+- Flipbook and SubUV atlases are power-of-two on both axes. Rebuild or resize
+  a non-conforming atlas (for example `2160x4090` to `2048x4096`) and keep the
+  raw dimensions in the manifest.
+
+**Delivery**
+
+- Keep previews, audits, tuning logs and diagnoses under
+  `.codex/session/vfx-delivery/`.
+- Final delivery uses `delivery_package.py --require-ready`, or
+  `delivery_package.py check --index <delivery-index.json> --require-ready`.
+  Add `--require-visual-qa` for design-fidelity delivery; without it `ready`
+  covers structure and asset routes only.
+- With `--final-material`, the package consumes the approved material
+  delivery report from the sibling `material-delivery` session tree.
+- Use structural contract flags or `--effect-type-contract` for
+  non-negotiable structure such as Ribbon renderers, material binding,
+  Attribute Reader data flow, FixedBounds and no test emitters.
+- An approved preview counts for the current anchor revision and the current
+  system and material route. Older approvals are historical.
+- Promote assets after the delivery index is ready, with `AssetToolset`
+  duplicate or move and save, verifying references and refusing an existing
+  target. `delivery_finalize.py --dry-run-promote` lists the mappings.
+
+## Image generation
+
+Use `cm-imagegen` for concept images, visual direction and style targets. For
+textures, masks, flipbooks and atlases, `unreal-material-artist` decides and
+generates the material-facing asset. Cache an existing reference image and use
+it as the anchor for generation.
+
+## Tools
+
+Status labels are defined in the
+[shared conventions](../unreal-engine-mcp/references/shared-conventions.md#engine-version-and-tool-status).
+Commands, flags and outputs: [tool-suite.md](references/tool-suite.md). No
+Niagara helper has been ported to UE 5.9 yet, so every editor step uses the
+native route above.
+
+| Stage | `local` tools |
+|---|---|
+| Reference and anchor | `reference_cache`, `reference_acceptance`, `layer_evidence`, `visual_layer_map` |
+| Planning | `asset_plan`, `integration_plan`, `control_preset`, `control_binding_generator`, `effect_control_schema` and `control_provenance_check` (without `--live`), `niagara_asset_assistant` (plan modes) |
+| Preview and QA | `visual_diff_qa`, `design_compare_checklist`, `motion_qa`, `preview_approval`, `effect_preview_approval` |
 | Tuning | `gap_diagnosis`, `parameter_tuning_log` |
-| Closeout | `delivery_package`, `delivery_dashboard`, `delivery_finalize`, `delivery_chain_smoke`, `ue_smoke`, `learning_loop`, `asset_cleanup` |
+| Closeout | `delivery_package`, `delivery_dashboard`, `delivery_finalize` (`--dry-run-promote`), `learning_loop`, `flipbook_builder` |
 
-## Niagara Validation Rules
+| `unported` tool | Native route on UE 5.9 |
+|---|---|
+| `niagara_audit`, `live_asset_verify`, `ue_smoke` | `GetSystemSummary`, `GetEmitterTopology`, `GetEmitterData`, `GetRendererData`, `GetSystemCompileState`, `GetStackIssues` |
+| `niagara_material_integration_probe`, `--live` modes of `effect_control_schema` and `control_provenance_check` | `GetRendererData`, `GetStackInputData`, `GetUserVariables` |
+| `niagara_asset_assistant apply --execute` | The native writes, one per plan operation, each read back |
+| `asset_cleanup`, `delivery_finalize --promote-assets`, `delivery_chain_smoke` | `AssetToolset` duplicate, move, save and referencer reads |
 
-- Do not trust editor UI screenshots as the source of truth for Niagara structure.
-- Before tuning a visual mismatch, classify the likely owner layer: reference, texture, material, Niagara, renderer, integration, preview, performance, or unknown.
-- Never use reflection or export-text writes to bypass editor semantics when an official route is missing; report the gap instead.
-- Keep runtime previews, audits, tuning logs and gap diagnoses under `.codex/session/vfx-delivery/`; do not commit them, generated previews, caches or one-off experiments unless explicitly promoted.
-- Inspect emitter handles, renderer types, material bindings, event handlers, sim target, bounds, and source/receiver responsibilities before tuning.
-- Own the real Niagara parameter truth: if a material expects `ParticleColor`, `DynamicParameter`, `SubImageIndex`, `RibbonWidth`, or custom attributes, Niagara must verify who writes them, where they are bound, and whether the live system is feeding the expected values.
-- When a material contract exists, prove the real System/Emitter/Renderer binding, SubUV/SubImage, ParticleColor, DynamicParameter, RibbonWidth, sorting and bounds route through official structural queries: run `niagara_material_integration_probe.py`, which reads the live system through `niagara_audit` (MCP). Data-interface bindings the audit cannot read are listed in its `coverage_gaps`; prove those separately instead of counting them as passed. Material-side preview evidence is not real-system integration proof.
-- Final `delivery_package.py --require-ready` should include a passing material integration probe whenever both `--final-system` and `--final-material` are supplied.
-- Attribute Reader source/receiver checks must preserve composite evidence. For example, a `Followers` emitter with a Ribbon renderer, bound ribbon material, `NiagaraDataInterfaceParticleRead`, and `SpawnParticlesFromOtherEmitter` / `SampleParticlesFromOtherEmitter` is both `trail-receiver` and `attribute-reader-receiver`; do not mark it failed just because the primary display role is `trail-receiver`.
-- If a renderer material appears missing, first determine whether the renderer slot exists. Empty `RendererProperties` is a missing renderer/emitter construction problem, not merely a material-binding problem.
-- Read emitter modules and renderers through the official Niagara MCP topology/stack/renderer tools (`niagara_audit.py`). Do not call `NiagaraPythonEmitter.get_modules()` on arbitrary/template emitters over Remote Execution as a discovery shortcut; it crashed NiagaraEditor (`SharedPointer IsValid()`) on UE 5.7, and no newer build has shown it safe.
-- Do not treat "I duplicated a base system" as equivalent to "I safely authored a multi-emitter effect." If the current official tools cannot yet add or duplicate emitters inside one system safely, stop and record that capability gap rather than forcing half-written Niagara graph assets into existence.
-- Also avoid assuming raw `EmitterHandles` export-text overwrite is a fallback. A live 2026-05-13 test against a `CodexTemp` Niagara system showed the engine rejected the write and round-tripped the property back unchanged. Treat that route as non-viable until a more authoritative engine-side construction path is found.
-- If the silhouette or timing is wrong, diagnose Niagara carrier/renderer/animation before pushing material brightness.
-- If the silhouette is right but color, alpha, UV flow, edge softness, or shader detail is wrong, hand the material side to `unreal-material-artist`.
-- Generated flipbook/SubUV atlas PNGs must be power-of-two on both axes by default. If a generated atlas is non-power-of-two, immediately rebuild or resize it to the nearest valid power-of-two dimensions per axis, such as raw `2160x4090` -> final `2048x4096`, and keep the raw dimensions recorded in the manifest.
-- When `tools/delivery_package.py` is given `--final-material` paths, expect it to consume approved material delivery reports from the sibling `material-delivery` session tree. A final material is stronger when Niagara delivery can prove both the Niagara-side effect package and the material-side approved delivery report.
-- For final delivery, prefer `delivery_package.py --require-ready` or `delivery_package.py check --index <delivery-index.json> --require-ready`.
-- For write-side Niagara work, prefer official MCP edits followed by official structural/compile/issue readback and local delivery reports. `niagara_asset_assistant.py apply --execute` is the reviewed route for plan-shaped edits.
-- Approved previews only prove readiness when they match the current anchor revision and the current final system/material route. Old approvals become historical evidence, not current delivery proof.
-- Use Niagara structural contract flags or `--effect-type-contract` when a package has non-negotiable structure, for example requiring Ribbon renderers, material binding, Attribute Reader data flow, FixedBounds, and no test/debug emitters.
-- Use `--require-visual-qa` for design-fidelity delivery; otherwise `ready` only proves structural/asset route health, not that the preview visually matches the accepted design.
-- Use `delivery_chain_smoke.py` on real effects before claiming a workflow is production-safe. A smoke can pass tool execution while still reporting `risk` or `incomplete` package health; that is useful evidence, not a failure to hide.
-- Plan promotion only after the delivery index is ready. Use official AssetTools for covered duplicate/move/save operations and verify resulting references. `delivery_finalize.py --dry-run-promote` shows the mappings; `--promote-assets` runs them as an AssetTools batch (duplicate or move, optional save) with existence readbacks and refuses a target that already exists.
+Capture uses the core skill's `capture.py` (`5.9`).
 
-## Image Generation Bridge
+## References
 
-Use `cm-imagegen` for concept images, visual direction, style targets, and reference exploration. For generated textures, masks, flipbooks, atlases, or material-specific texture assets, use `unreal-material-artist` to decide and generate the material-facing asset.
+Read only what the task needs. [references/index.md](references/index.md)
+lists every reference with when to use it.
 
-When a reference image exists, cache it and use it as an anchor. Do not generate key visual targets from text alone when a relevant local reference is available.
+| Need | Start with |
+|---|---|
+| Native tool contracts and verified recipes | [ue-5.9-niagara-mcp.md](references/ue-5.9-niagara-mcp.md) |
+| Intake and art direction | [core.md](references/core.md), [request-intake-template.md](references/request-intake-template.md) |
+| Building Niagara | [niagara-fundamentals.md](references/niagara-fundamentals.md), [common-effect-patterns.md](references/common-effect-patterns.md) |
+| Fluids | [fluids-and-flowmaps.md](references/fluids-and-flowmaps.md) |
+| Production and delivery | [production-workflow-map.md](references/production-workflow-map.md), [validation-and-qa.md](references/validation-and-qa.md) |
+| Debugging and performance | [debugging.md](references/debugging.md), [platform-optimization.md](references/platform-optimization.md) |
+| Tool commands | [tool-suite.md](references/tool-suite.md) |
+| Runtime cases | [runtime-acceptance.md](references/runtime-acceptance.md) |
 
-## Reference Map
+## Response shape
 
-Read only what the task needs. [references/index.md](references/index.md) says when to use each one. Ignore [README.md](README.md) for normal task execution.
-
-- **Intake and art direction:** [core](references/core.md), [request-intake-template](references/request-intake-template.md), [reference-deconstruction-patterns](references/reference-deconstruction-patterns.md), [reference-analysis-output-spec](references/reference-analysis-output-spec.md), [idea-to-prompt-fastloop](references/idea-to-prompt-fastloop.md), [vfx-direction-bible-template](references/vfx-direction-bible-template.md), [art-direction-patterns](references/art-direction-patterns.md), [aesthetics-and-readability-strategy](references/aesthetics-and-readability-strategy.md), [style-consistency-guide](references/style-consistency-guide.md), [feasibility-and-fidelity-guide](references/feasibility-and-fidelity-guide.md), [implementation-confidence-template](references/implementation-confidence-template.md), [model-turnaround-and-asset-gen-guide](references/model-turnaround-and-asset-gen-guide.md)
-- **Building Niagara:** [niagara-fundamentals](references/niagara-fundamentals.md), [niagara-operations-and-workflows](references/niagara-operations-and-workflows.md), [common-effect-patterns](references/common-effect-patterns.md), [non-fluid-effects-playbook](references/non-fluid-effects-playbook.md), [implementation-presets](references/implementation-presets.md), [advanced-techniques](references/advanced-techniques.md), [system-integration-patterns](references/system-integration-patterns.md), [engine-integration-checklist](references/engine-integration-checklist.md), [examples](references/examples.md), [case-studies](references/case-studies.md), [quick-reference](references/quick-reference.md)
-- **Fluids:** [fluids-and-flowmaps](references/fluids-and-flowmaps.md), [fluids-parameters](references/fluids-parameters.md), [fluids-production-pipeline](references/fluids-production-pipeline.md), [fluids-recipes](references/fluids-recipes.md), [fluids-troubleshooting](references/fluids-troubleshooting.md)
-- **Production and delivery:** [production-workflow-map](references/production-workflow-map.md), [end-to-end-vfx-delivery-map](references/end-to-end-vfx-delivery-map.md), [effect-layer-production-gate](references/effect-layer-production-gate.md), [asset-planning-checklist](references/asset-planning-checklist.md), [project-bootstrap-checklist](references/project-bootstrap-checklist.md), [review-checklist](references/review-checklist.md), [validation-and-qa](references/validation-and-qa.md), [self-training-and-iteration-loop](references/self-training-and-iteration-loop.md)
-- **Debugging and performance:** [debugging](references/debugging.md), [common-failure-cases](references/common-failure-cases.md), [ribbon-actor-trail-debugging](references/ribbon-actor-trail-debugging.md), [platform-optimization](references/platform-optimization.md), [mobile-checklist](references/mobile-checklist.md)
-- **Tools and editor:** [tool-suite](references/tool-suite.md), [niagara-mcp-toolsets](references/niagara-mcp-toolsets.md), [capability-gap-map](references/capability-gap-map.md)
-
-## Output Expectations
-
-When responding with this skill:
-
-- Start from the intended visual result and gameplay readability.
-- Explain why each major emitter, renderer, event route, and integration choice exists.
-- Prefer concrete Niagara modules, curves, spawn logic, renderer settings, bounds, and scalability settings over vague advice.
-- Be explicit about platform risk, especially on Android or low-end hardware.
-- For implementation work, validate Niagara structure first and visual result second.
-- Treat self-review against the approved design as part of completion.
-
-## Default Response Shape
+Start from the intended visual result and gameplay readability, and explain
+why each major emitter, renderer, event route and integration choice exists.
+Prefer concrete modules, curves, spawn logic, renderer settings, bounds and
+scalability settings. State platform risk, especially on Android.
 
 1. Artistic direction and effect breakdown
 2. Feasibility or approximation notes
-3. Niagara system, emitter, renderer, and event plan
-4. Material contract for `unreal-material-artist`, if needed
+3. Niagara system, emitter, renderer and event plan
+4. Material contract for `unreal-material-artist`, when needed
 5. Integration and scalability notes
 6. Validation and self-test plan

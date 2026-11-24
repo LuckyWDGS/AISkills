@@ -3,17 +3,24 @@
 The case definitions below are selectable acceptance procedures. Only explicitly
 labeled fixture observations report completed tests. Use the
 [shared runtime result record](../../unreal-engine-mcp/references/shared-conventions.md#runtime-result-record).
-The current builder/sample/legacy-render helpers require explicit UI opt-in;
-do not enable that flag for a background task. Use discovered official background
-operations where available and mark unsupported runtime checks `not_run` or
-`blocked` with the reason. Inspect structure without opening a timeline.
+Use the discovered background operations and mark an unsupported runtime check
+`not_run` or `blocked` with the reason. Inspect structure without opening a
+timeline.
+
+## Contents
+
+- [UE 5.9 observation routes](#ue-59-observation-routes)
+- [SEQ.Gameplay.Exit — play, finish, stop, skip and abort](#seqgameplayexit--play-finish-stop-skip-and-abort)
+- [SEQ.Events.Once — director events and scrub behavior](#seqeventsonce--director-events-and-scrub-behavior)
+- [SEQ.Bindings.Lifetime — spawnables, possessables and animations](#seqbindingslifetime--spawnables-possessables-and-animations)
+- [SEQ.Time.Hierarchy — rational rates and boundary frames](#seqtimehierarchy--rational-rates-and-boundary-frames)
+- [SEQ.Render.Output — preview versus production output](#seqrenderoutput--preview-versus-production-output)
 
 ## UE 5.9 observation routes
 
-These routes were discovered on 5.9.0 Preview / CL 60351404. `ListWorlds` and
-`ListViews` were exercised as read-only PIE snapshots; the capture/recording
-schemas and Python symbols below were discovered, not executed as part of
-that observation pass. Refresh their schemas on the target editor.
+`ListWorlds` and `ListViews` have been exercised as read-only PIE snapshots.
+The capture and recording schemas and the Python symbols below were discovered
+and not executed; refresh their schemas on the target editor.
 
 Use `SceneCaptureToolset.ListWorlds({})`, select the intended `worldType`,
 `mapPath` and `pIEInstance`, and pass its complete `world` reference to

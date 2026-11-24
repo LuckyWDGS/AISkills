@@ -1,13 +1,17 @@
 # UE 5.9：MVVM 作者与 UI 运行诊断
 
-用于数据驱动 HUD、菜单/弹窗输入故障，以及 Widget 重建后丢焦点等问题。
-2026-11-15 复核了 5.9.0 Preview / CL 60351404 的 live schema 与安装源码；
-2026-11-16 补充普通 UMG、Manual ViewModel 作者/编译、PIE 绑定传播，以及独立包
-实际控件、设置和读档验证。隐藏 PIE 的焦点检查与截图有缺口，后续独立包用虚拟
-Slate 用户和含 UI 截图补验；CommonUI 路由、真实设备导航和全部 DPI 仍未验收。
-此前静态作者证据见
-[编辑器工具](ue-5.9-editor-tools.md) 与 [动画 / AI / UI](ue-5.9-animation-ai-tools.md)。
-先按 [core 入口](../SKILL.md) 验证项目身份并读取每项完整 schema。
+用于数据驱动 HUD、菜单/弹窗输入故障，以及 Widget 重建后丢焦点等问题：MVVM 的作者
+与编译、普通 UMG 菜单，以及 CommonUI / UMG / Slate 三层事件的诊断。静态作者合同
+见[编辑器工具](ue-5.9-editor-tools.md)；实测范围与未验收项见文末
+[验证记录](#验证记录)。
+
+## 目录
+
+- [MVVM：先作者和编译，再验证实例传播](#mvvm先作者和编译再验证实例传播)
+- [普通 UMG 菜单：作者、游戏输入与 Slate 分开](#普通-umg-菜单作者游戏输入与-slate-分开)
+- [CommonUI、UMG 与 Slate：把三层事件对齐](#commonuiumg-与-slate把三层事件对齐)
+- [Recording 归属、缓冲与清理](#recording-归属缓冲与清理)
+- [验证记录](#验证记录)
 
 ## MVVM：先作者和编译，再验证实例传播
 
@@ -27,10 +31,10 @@ View 配置。无需为它们增加逐项转发 wrapper；按目标绑定的实�
    兼容。路径按声明类型解析；若叶字段只存在于派生类，先绑定中间对象，再在
    WBP 的 Pure Const 转换函数中转换类型，避免伪造不可解析的路径。
 3. 用 `CreateViewBinding` 连接准确的 source/destination context 与 property
-   path。`conversionName` 虽在说明中称 optional，实际 schema 列入 required；
-   自动推断时显式传空字符串。回读非零 binding ID、方向、转换函数、enabled/compile 标志。需要时
-   用 `SetBindingMode`、转换参数 literal/path 工具调整。OneTime、OneWay 与
-   TwoWay 的验收不同，只制作当前产品需要的模式。
+   path。`conversionName` 虽在说明中称 optional，实际 schema 列入 required；自动
+   推断时显式传空字符串。回读非零 binding ID、方向、转换函数、enabled/compile 标
+   志。需要时用 `SetBindingMode`、转换参数 literal/path 工具调整。OneTime、
+   OneWay 与 TwoWay 的验收不同，只制作当前产品需要的模式。
 4. 检查 `GetWidgetViewConfig`，再按需要提交完整配置并回读。安装实现会在
    sources 不自动初始化时，将 bindings 自动初始化强制为 false；不能只记录
    请求值。明确初始化来源、绑定和事件的时机，避免把尚未初始化当成通知失败。
@@ -40,10 +44,9 @@ View 配置。无需为它们增加逐项转发 wrapper；按目标绑定的实�
    目标属性得到什么值仍需检查生成图并实测，不能假设它与普通 property binding
    一样复制 source。条件还受项目 MVVM developer setting 控制，不要为通过
    测试偷偷修改该设置。
-6. 对 WBP 单独执行 `CompileWidgetBlueprint` 并读取错误/警告，同时确认 VM
-   编译成功，再保存这两个候选包。部分 literal/condition setter 会自动编译，
-   但**编译失败仍保留编辑**，返回成功或非空 condition 不能当作编译通过。
-   `ListViewConditions` 的编译信息可辅助定位，最终以本次独立编译结果为准。
+6. 对 WBP 单独执行 `CompileWidgetBlueprint` 并读取错误/警告，同时确认 VM 编译成
+   功，再保存这两个候选包。部分 literal/condition setter 会自动编译，但**编译失
+   败仍保留编辑**，返回成功或非空 condition 不能当作编译通过。
 
 ### Manual 实例与 FieldNotify setter
 
@@ -68,12 +71,10 @@ live `Schema`，作者时显式命名 `self` 与字段值 pin，例如以下示�
 (set `/Game/UI/VM_HUD.Status` :`self` (`self.ViewModel`) :`Status` "READY")
 ```
 
-本构建 canonical 回读将值放在目标之前；命名 pin 写入后以本次读回为准，
-不把正确的 value-first 读回再次“修正”为 target-first。
-安装源码仅在新旧值不同时广播；相同值通知次数仍需单独测试。此次 PIE 的实际
-金币拾取经玩家 setter 改变 VM 后，HUD 文本同步变化；没有以直接 `SetText`
-代替通知验证。打包前另核对 `ModelViewViewModel` runtime 插件被纳入 Game target；
-编辑器专用 `MVVMToolset` 可用不能证明运行模块随包存在。
+安装源码仅在新旧值不同时广播；相同值通知次数仍需单独测试。此次 PIE 的实际金币拾
+取经玩家 setter 改变 VM 后，HUD 文本同步变化；没有以直接 `SetText` 代替通知验
+证。打包前另核对 `ModelViewViewModel` runtime 插件被纳入 Game target；编辑器专用
+`MVVMToolset` 可用不能证明运行模块随包存在。
 
 MVVM 的部分查询会请求创建缺失的 View：本构建
 `ListWidgetViewModels`、`ListWidgetViewBindings`、`ListWidgetViewEventBindings`
@@ -100,11 +101,10 @@ MVVM 的部分查询会请求创建缺失的 View：本构建
 ## 普通 UMG 菜单：作者、游戏输入与 Slate 分开
 
 本构建 `BlueprintDslToolset.Read` 对 `WidgetBlueprint` 返回
-`unsupported-asset-class`，只支持 plain Blueprint。不要继续向 WBP 写 DSL 图。
-已验证的替代结构是用官方 Widget/MVVM 工具作者控件树和绑定，将交互逻辑放在
-普通 Player/Controller Blueprint，绑定暴露控件的 `Button.OnClicked`、
-`Slider.OnValueChanged` 到签名匹配的函数。每个菜单实例绑定一次，EndPlay/重建时
-清理本轮绑定与旧 Widget 引用；不为普通菜单额外引入 CommonUI stack。
+`unsupported-asset-class`，只支持 plain Blueprint。不要继续向 WBP 写 DSL 图。已
+验证的替代结构是用官方 Widget/MVVM 工具作者控件树和绑定，将交互逻辑放在普通
+Player/Controller Blueprint，绑定暴露控件的 `Button.OnClicked`、
+`Slider.OnValueChanged` 到签名匹配的函数。
 
 暂停菜单可保留同一个 Widget，打开时设置可见性、暂停、鼠标与
 `SetInputMode_GameAndUIEx`，给首个按钮设置焦点；关闭时恢复先前玩法状态、
@@ -120,20 +120,16 @@ MVVM 的部分查询会请求创建缺失的 View：本构建
 | `WidgetInteractionComponent` 虚拟 Slate 用户 | 给实际 Widget 设置虚拟焦点后，以 PressKey/ReleaseKey 走 Slate 和控件委托 | 不证明 OS 鼠标命中、真实设备焦点、手柄导航或无障碍支持 |
 
 `CaptureGameViewport` 在能重绘所属 Slate 窗口时可包含 UMG；重绘失败会降级为
-scene-only 并给 warning。隐藏 PIE 的本次结果确实只有场景，即使菜单实例已是
-Visible。同时检查工具 warning、返回元数据和实际图像；成功 PNG 不等于 UI
-截图。无法取得合成 UI 或正式 Slate 输入时，将视觉/点击/导航列为未验证，
+scene-only 并给 warning。同时检查工具 warning、返回元数据和实际图像；成功 PNG 不
+等于 UI 截图。无法取得合成 UI 或正式 Slate 输入时，将视觉/点击/导航列为未验证，
 不要用场景截图或 handler 调用填补，也不突破 core 的后台操作边界。
 
-2026-11-16 的独立 Development 包补验了后台路线：`-RenderOffscreen` 配合
-`shot -showui` 实际得到含 UMG 的菜单 PNG，并已检查完整布局；WIC 的 Enter 按下/
-释放触发了真正 Resume 按钮委托，handler 恰好一次，菜单隐藏且解除暂停。
-游戏按键 P 的暂停及游戏时间冻结另有检查。首轮虽然控件检查通过，路线仍失败，
-该失败记录保留。最终同一包的通关、重开、设置写入与独立进程读取均通过：实际
-控件覆盖 Resume、Restart、Load Checkpoint、Quality、Discard、Defaults、音量
-滑块 Left 输入、Apply 和 Save & Quit；后者走产品正常退出而非测试 SoftQuit。
-Quit Without Saving 另以全新 UserDir 实测：修改画质草稿但不 Apply，经真实按钮
-委托调用产品退出，18 项检查通过且没有生成主档；不以 Save & Quit 代验。
+游戏按键 P 的暂停及游戏时间冻结另有检查。首轮虽然控件检查通过，路线仍失败，该失
+败记录保留。最终同一包的通关、重开、设置写入与独立进程读取均通过：实际控件覆盖
+Resume、Restart、Load Checkpoint、Quality、Discard、Defaults、音量滑块 Left 输
+入、Apply 和 Save & Quit；后者走产品正常退出而非测试 SoftQuit。 Quit Without
+Saving 另以全新 UserDir 实测：修改画质草稿但不 Apply，经真实按钮委托调用产品退
+出，18 项检查通过且没有生成主档；不以 Save & Quit 代验。
 
 已实看 1280×720 的设置菜单：音量 95%、画质 3、保存状态均可读，控件没有溢出。
 截图仍需逐张检查：OpenLevel 前后请求的截图可能是模糊过渡帧或已切换的下一状态，
@@ -146,13 +142,11 @@ WIC 设独立 VirtualUserIndex/PointerIndex，清理自己按下的键；Release
 在 Development 且显式 QA 参数同时成立时才安装这类驱动，正式玩法仍由产品输入
 和控件委托执行。不要将自动化的虚拟焦点写成隐藏 PIE 的 user focus 已通过。
 
-旅行前还要释放 WIC 的虚拟用户焦点。本次独立包重开曾触发
-`SObjectWidget destroyed while collecting garbage`；调用栈显示 WIC 和虚拟用户
-handle 到 GC 析构时才注销焦点路径。修复是在自有 QA EndPlay 中，先释放按键，
-再对有效 WIC 调用 `ActorComponent.Deactivate`，然后按原顺序移除 Widget。
-该构建 Deactivate 会注销虚拟用户并清空 handle；独立包的两次关卡初始化和正常
-退出复测通过，相关 ensure 不再出现。不要用 `SetFocus(None)` 清焦点，此构建
-实现直接解引用 Widget；也不因这个测试资源问题向 Sequencer EndPlay 加恢复调用。
+旅行前还要释放 WIC 的虚拟用户焦点。修复是在自有 QA EndPlay 中，先释放按键，再对
+有效 WIC 调用 `ActorComponent.Deactivate`，然后按原顺序移除 Widget。该构建
+Deactivate 会注销虚拟用户并清空 handle；独立包的两次关卡初始化和正常退出复测通
+过，相关 ensure 不再出现。不要用 `SetFocus(None)` 清焦点，此构建实现直接解引用
+Widget；也不因这个测试资源问题向 Sequencer EndPlay 加恢复调用。
 
 ## CommonUI、UMG 与 Slate：把三层事件对齐
 
@@ -174,11 +168,10 @@ root、弹窗和返回行为。`ActivateWidget` / `DeactivateWidget` 操作的�
 具体 `GetFocusEventDetail(seq)` 取原因链。保留 player、PIE instance、时间基准
 和 dropped count；有限缓冲丢失事件时不能断言事件从未发生。
 
-对自有 fixture 验证菜单打开、弹窗覆盖、Back/关闭、重复打开与 Widget 重建，
-核对顶部激活节点、消费/恢复输入和预期焦点。`RefreshActiveRootFocus`、
-输入类型 lock 与显式激活会修改运行状态，只在已识别原因后用于验证假设。
-使用本轮独有的 lock reason，清理时仅移除该 lock。不要先“刷新焦点”再采集，
-否则会覆盖原始故障证据。停止自有 PIE；保留用户原本的会话。
+对自有 fixture 验证菜单打开、弹窗覆盖、Back/关闭、重复打开与 Widget 重建，核对顶
+部激活节点、消费/恢复输入和预期焦点。`RefreshActiveRootFocus`、输入类型 lock 与
+显式激活会修改运行状态，只在已识别原因后用于验证假设。不要先“刷新焦点”再采集，否
+则会覆盖原始故障证据。停止自有 PIE；保留用户原本的会话。
 
 UMG Destructed 是 Widget 生命周期事件，不等于 UObject 已被 GC；重新加入
 视口可以有多次 Construct/Destruct。按实例与期望复用方式解释计数，不把
@@ -193,16 +186,12 @@ UMG Destructed 是 Widget 生命周期事件，不等于 UObject 已被 GC；重
 重配它。若需新的独立采集，先导出有关旧证据并协调 recording 归属；不得把
 重启 recorder 当作可回滚操作，也不在 finally 中调用 Clear。
 
-对本轮拥有的 recorder 设置有界容量和短时间窗口；默认只收必要上下文，遇到
-问题再考虑 callstack/invalidation。先开始记录，再触发一次操作；用短调用读取
-timeline/status，结束时只 Stop 本轮启动的 recorder 并导出数据。UMG events
-为 newest-first，CommonUI/Slate timeline 为 oldest-first，合并前先统一顺序。
-Slate 过滤参数和 MaxCount 受 schema 限制；无匹配/空记录不代表用例通过。
+UMG events 为 newest-first，CommonUI/Slate timeline 为 oldest-first，合并前先统
+一顺序。 Slate 过滤参数和 MaxCount 受 schema 限制；无匹配/空记录不代表用例通过。
 
 安装实现另有一个清理细节：`StartFocusRecording` 会设置
-`SlateNav.CaptureCallstack`，`StopFocusRecording` 只取消订阅，**不恢复该 cvar**。
-若要启动自有 Slate recording，先通过已发现的 console 读取路线记录原值；
-停止后恢复本轮改变的值并回读。未确认该值与录制归属前，不声称状态已完整恢复。
+`SlateNav.CaptureCallstack`，`StopFocusRecording` 只取消订阅，**不恢复该
+cvar**。未确认该值与录制归属前，不声称状态已完整恢复。
 
 采集 API 不要求打开日志窗口。当前后台流程跳过
 `ShowWidgetLifetimeLogWindow` 和 `SetTreeVisualization`，不切换资产编辑器，
@@ -212,3 +201,45 @@ Slate 过滤参数和 MaxCount 受 schema 限制；无匹配/空记录不代表�
 报告分别列出作者/读回、VM/WBP 编译、绑定传播、输入/焦点、生命周期及视觉
 结果；未执行部分标 `not_run`。独立包仅限上列普通 UMG 用例，不扩展为 CommonUI、
 全部 UI 记录器或 UE 5.8 的回归通过。
+
+## 验证记录
+
+构建：UE 5.9.0 Preview / CL 60351404。
+
+- 用于数据驱动 HUD、菜单/弹窗输入故障，以及 Widget 重建后丢焦点等问题。
+  2026-11-15 复核了 5.9.0 Preview / CL 60351404 的 live schema 与安装源码；
+  2026-11-16 补充普通 UMG、Manual ViewModel 作者/编译、PIE 绑定传播，以及独立包
+  实际控件、设置和读档验证。隐藏 PIE 的焦点检查与截图有缺口，后续独立包用虚拟
+  Slate 用户和含 UI 截图补验；CommonUI 路由、真实设备导航和全部 DPI 仍未验收。此
+  前静态作者证据见 [编辑器工具](ue-5.9-editor-tools.md) 与
+  [动画 / AI / UI](ue-5.9-animation-ai-tools.md)。先按 [core 入口](../SKILL.md)
+  验证项目身份并读取每项完整 schema。
+
+**MVVM：先作者和编译，再验证实例传播**
+
+- `ListViewConditions` 的编译信息可辅助定位，最终以本次独立编译结果为准。
+- 本构建 canonical 回读将值放在目标之前；命名 pin 写入后以本次读回为准，不把正确
+  的 value-first 读回再次“修正”为 target-first。
+
+**普通 UMG 菜单：作者、游戏输入与 Slate 分开**
+
+- 每个菜单实例绑定一次，EndPlay/重建时清理本轮绑定与旧 Widget 引用；不为普通菜单
+  额外引入 CommonUI stack。
+- 隐藏 PIE 的本次结果确实只有场景，即使菜单实例已是 Visible。
+- 2026-11-16 的独立 Development 包补验了后台路线：`-RenderOffscreen` 配合
+  `shot -showui` 实际得到含 UMG 的菜单 PNG，并已检查完整布局；WIC 的 Enter 按下/
+  释放触发了真正 Resume 按钮委托，handler 恰好一次，菜单隐藏且解除暂停。
+- 本次独立包重开曾触发 `SObjectWidget destroyed while collecting garbage`；调用
+  栈显示 WIC 和虚拟用户 handle 到 GC 析构时才注销焦点路径。
+
+**CommonUI、UMG 与 Slate：把三层事件对齐**
+
+- 使用本轮独有的 lock reason，清理时仅移除该 lock。
+
+**Recording 归属、缓冲与清理**
+
+- 对本轮拥有的 recorder 设置有界容量和短时间窗口；默认只收必要上下文，遇到问题再
+  考虑 callstack/invalidation。先开始记录，再触发一次操作；用短调用读取
+  timeline/status，结束时只 Stop 本轮启动的 recorder 并导出数据。
+- 若要启动自有 Slate recording，先通过已发现的 console 读取路线记录原值；停止后
+  恢复本轮改变的值并回读。

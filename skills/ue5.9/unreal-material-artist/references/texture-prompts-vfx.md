@@ -2,7 +2,8 @@
 
 ## 用途
 
-读取这份 reference 当任务需要火焰、余烬、烟雾、闪电等 VFX 纹理 prompt，或者需要把这些 prompt 接回 UE/Niagara。实际生成仍默认使用 cm-imagegen 并接受后续 QA。
+读取这份 reference 当任务需要火焰、余烬、烟雾、闪电等 VFX 纹理 prompt，或者需要
+把这些 prompt 接回 UE/Niagara。实际生成仍默认使用 cm-imagegen 并接受后续 QA。
 
 ## 目录
 

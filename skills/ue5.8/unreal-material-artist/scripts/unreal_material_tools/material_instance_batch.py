@@ -21,7 +21,7 @@ from .material_audit import object_path
 from .mcp import DEFAULT_MCP_URL, builtin_mcp, connect
 
 
-# Report contract; bump when a consumer-visible field changes. Version 1 was the UnrealBridge-era report.
+# Report contract; bump when a consumer-visible field changes. Version 1 was the pre-MCP report.
 SCHEMA_VERSION = "material_instance_batch/2"
 
 MI = "MaterialInstanceTools"

@@ -2,7 +2,8 @@
 
 ## 用途
 
-读取这份 reference 当任务需要决定单张静态纹理、Flipbook/SubUV、随机图集、UE/Niagara 接入方式，或需要生成纹理前的硬性 QA 规则。
+读取这份 reference 当任务需要决定单张静态纹理、Flipbook/SubUV、随机图集、
+UE/Niagara 接入方式，或需要生成纹理前的硬性 QA 规则。
 
 ## 目录
 
@@ -42,7 +43,8 @@
 - 爆炸云团
 - 流体感更强的层
 
-Epic 官方烟雾 Niagara 教程直接使用 `M_smoke_subUV`，并在 Sprite Renderer 里设置 `Sub Image Size`，再用 `SubUV Animation` 模块播放整张 8x8 图集中的 64 帧。
+Epic 官方烟雾 Niagara 教程直接使用 `M_smoke_subUV`，并在 Sprite Renderer 里设置
+`Sub Image Size`，再用 `SubUV Animation` 模块播放整张 8x8 图集中的 64 帧。
 
 Epic 官方 Flipbook Baker 文档也说明：
 - 可以从 Niagara 系统生成 flipbook
@@ -254,7 +256,8 @@ Flipbook 纹理常见问题是 alpha 黑边。
 
 这里有一个非常关键的判断：
 
-**持续燃烧的火把、篝火、香炉，不应该直接把“一整段从无到有再到无的烟雾 plume flipbook”循环播在单个常驻粒子上。**
+**持续燃烧的火把、篝火、香炉，不应该直接把“一整段从无到有再到无的烟雾 plume
+flipbook”循环播在单个常驻粒子上。**
 
 原因：
 - 那类烟雾图集本质上是“一次性 puff / plume”
@@ -294,7 +297,8 @@ Flipbook 纹理常见问题是 alpha 黑边。
 
 这比错误循环 plume flipbook 更自然。
 
-但如果用户目标是高真实感、强体积感或明确参考图，先做正确的持续 Spawn + 生命周期 flipbook 版本，再基于它优化；不要默认从低配烟雾方案开始交付。
+但如果用户目标是高真实感、强体积感或明确参考图，先做正确的持续 Spawn + 生命周期
+flipbook 版本，再基于它优化；不要默认从低配烟雾方案开始交付。
 
 ### 对你这张图的判断
 
@@ -309,8 +313,12 @@ Flipbook 纹理常见问题是 alpha 黑边。
 ## 11. 生成纹理时的硬规则
 
 - `sRGB` 不是默认全关，也不是默认“保持现状不动”；必须按贴图最终用途判断
-- 必须开启 `sRGB` 的情况：这张贴图最终是给玩家看到“颜色”的，例如 `BaseColor` / `Albedo`、`Emissive` 颜色、Flipbook 或 Sprite 的可见 `RGB` 固有色
-- 必须关闭 `sRGB` 的情况：这张贴图最终是数据、遮罩或方向向量，例如 `Normal Map`、`Roughness` / `Specular` / `Metallic`、`Opacity` / `Alpha Mask`、打包的 `ORM` / `RMA` / `MRA`、`Noise`、`FlowMap`、单独拿来做 mask 的通道
+- 必须开启 `sRGB` 的情况：这张贴图最终是给玩家看到“颜色”的，例如 `BaseColor` /
+  `Albedo`、`Emissive` 颜色、Flipbook 或 Sprite 的可见 `RGB` 固有色
+- 必须关闭 `sRGB` 的情况：这张贴图最终是数据、遮罩或方向向量，例如
+  `Normal Map`、`Roughness` / `Specular` / `Metallic`、`Opacity` /
+  `Alpha Mask`、打包的 `ORM` / `RMA` / `MRA`、`Noise`、`FlowMap`、单独拿来做
+  mask 的通道
 - 现有纹理不要批量盲改；先按材质里的实际采样用途审查，再决定该开还是该关
 - 背景纯黑，或明确透明
 - 每格主体居中

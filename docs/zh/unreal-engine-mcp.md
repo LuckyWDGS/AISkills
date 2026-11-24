@@ -1,6 +1,6 @@
 # unreal-engine-mcp
 
-`unreal-engine-mcp`（原 `unreal-bridge`）优先使用 UE 5.8+ 内置的 Epic MCP，面向蓝图程序开发、动画蓝图和状态机，以及编辑器资产操作。显示名称为 **Unreal Engine MCP**。
+`unreal-engine-mcp` 使用 UE 内置的 Epic MCP（按引擎版本分为 `skills/ue5.8/` 与 `skills/ue5.9/` 两套，下文命令以 5.8 版为例），面向蓝图程序开发、动画蓝图和状态机，以及编辑器资产操作。显示名称为 **Unreal Engine MCP**。
 
 ## 使用范围
 
@@ -61,7 +61,7 @@ python scripts/inspect_blueprint.py /Game/Blueprints/BP_Player --out <项目运�
 
 ## 官方优先与已知边界
 
-每次从正在运行的 UE 获取工具清单和参数，按 **Epic MCP → 官方 Python Remote Execution（公开 `unreal.*` API）** 两级路由，第二级只用于 MCP 已证实未覆盖的单个操作。UnrealBridge 自定义插件及其 TCP 连接已停用，不再安装、启动或作为后备；也不修改引擎实现来绕过限制。
+每次从正在运行的 UE 获取工具清单和参数，按 **Epic MCP → 官方 Python Remote Execution（公开 `unreal.*` API）** 两级路由，第二级只用于 MCP 已证实未覆盖的单个操作。不安装自定义插件或 bridge，也不修改引擎实现来绕过限制。
 
 ```powershell
 python scripts/python_remote.py nodes
@@ -74,6 +74,15 @@ UE 5.8.4 的中文编辑器中，DSL 导出可能对非空图返回空字符串�
 
 详细方法见技能中的 `references/blueprint-graph-inspection.md`、`references/animation-state-machines-mcp.md` 和 `references/ue-5.8.4-audit.md`。版本和工具数量是实测快照，后续更新以实时发现结果为准。
 
-本包保留 `MCPBlueprintMetadata` 的可选源码，只服务于另行明确要求的悬浮元数据扩展；普通中文注释、蓝图开发和连接不需要安装它。
+5.8 包保留 `MCPBlueprintMetadata` 的可选源码，只服务于另行明确要求的悬浮元数据扩展；普通中文注释、蓝图开发和连接不需要安装它。
+
+## UE 5.9 版的差异
+
+- 只调用 5.9 原生工具（PascalCase 工具名、camelCase 参数），实测于 5.9.0 Preview / CL 60351404；正式版可能改名，调用前读实时 schema。
+- 路由为 **域工具 → 官方 MCP Python（`python-readme`、`execute-python`）→ Python Remote Execution**；`run-script` 是 5.8 的入口，在 5.9 包中被拒绝。
+- 截图用 `SceneCaptureToolset` 离屏渲染指定机位，不移动用户相机。
+- 变量和函数说明用原生元数据工具写入，不附带 `MCPBlueprintMetadata`。
+- `blueprint_normalize.py`、`blueprint_layout.py`、`pcg_inspect.py`、`live_smoke.py`、`record_fixtures.py` 尚未迁移（`unported`），在 5.9 编辑器上会被拒绝。
+- 详见 [SKILL.md](../../skills/ue5.9/unreal-engine-mcp/SKILL.md)、[MCP client](../../skills/ue5.9/unreal-engine-mcp/references/mcp-client.md) 和 [5.9 审计](../../skills/ue5.9/unreal-engine-mcp/references/ue-5.9-preview-audit.md)。
 
 五个技能的组合、依赖与安装方式见 [UE 技能总览](ue-skills-overview.md)。

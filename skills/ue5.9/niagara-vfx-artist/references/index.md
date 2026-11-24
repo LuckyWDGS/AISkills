@@ -2,35 +2,45 @@
 
 When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
 
-- [core.md](core.md)
-  Use for the main interaction pattern, design principles, Niagara basics, and implementation framing.
+- [core.md](core.md) Use for the main interaction pattern, design principles,
+  Niagara basics, and implementation framing.
 
-- [niagara-fundamentals.md](niagara-fundamentals.md)
-  Use for Systems, Emitters, renderer families, emitter count inference, and translating visual targets into Niagara layers.
+- [niagara-fundamentals.md](niagara-fundamentals.md) Use for Systems, Emitters,
+  renderer families, emitter count inference, and translating visual targets
+  into Niagara layers.
 
-- [niagara-operations-and-workflows.md](niagara-operations-and-workflows.md)
-  Use for templates, user parameters, scratch pad usage, renderers, animation notifies, and practical Niagara workflows.
+- [niagara-operations-and-workflows.md](niagara-operations-and-workflows.md) Use
+  for templates, user parameters, scratch pad usage, renderers, animation
+  notifies, and practical Niagara workflows.
 
-- [niagara-mcp-toolsets.md](niagara-mcp-toolsets.md)
-  Use for official MCP coverage, supported references/topology, legacy script boundaries, and remaining fallback decisions.
+- [ue-5.9-niagara-mcp.md](ue-5.9-niagara-mcp.md) Use for the native UE 5.9
+  Niagara tools: creation, topology, renderer and stack edits, user variables,
+  script descriptions, compile state and verified recipes.
 
-- [common-effect-patterns.md](common-effect-patterns.md)
-  Use for common effects such as explosions, shields, trails, hits, sigils, fire, smoke, projectiles, beams, and portals.
+- [common-effect-patterns.md](common-effect-patterns.md) Use for common effects
+  such as explosions, shields, trails, hits, sigils, fire, smoke, projectiles,
+  beams, and portals.
 
-- [implementation-presets.md](implementation-presets.md)
-  Use for practical starting presets, emitter breakdowns, module order, renderer choices, and first-pass ranges.
+- [implementation-presets.md](implementation-presets.md) Use for practical
+  starting presets, emitter breakdowns, module order, renderer choices, and
+  first-pass ranges.
 
-- [reference-analysis-output-spec.md](reference-analysis-output-spec.md)
-  Use when the user provides a reference image, video, or design sheet and wants a full implementation package.
+- [reference-analysis-output-spec.md](reference-analysis-output-spec.md) Use
+  when the user provides a reference image, video, or design sheet and wants a
+  full implementation package.
 
-- [effect-layer-production-gate.md](effect-layer-production-gate.md)
-  Use when a complex design sheet needs a stricter path from reference to UE-ready layer preview.
+- [effect-layer-production-gate.md](effect-layer-production-gate.md) Use when a
+  complex design sheet needs a stricter path from reference to UE-ready layer
+  preview.
 
 - [reference-deconstruction-patterns.md](reference-deconstruction-patterns.md)
-  Use for deeper reference/video deconstruction and deciding whether a layer is Niagara-driven, material-driven, mesh-driven, flipbook-driven, or fluid-driven.
+  Use for deeper reference/video deconstruction and deciding whether a layer is
+  Niagara-driven, material-driven, mesh-driven, flipbook-driven, or
+  fluid-driven.
 
-- [fluids-and-flowmaps.md](fluids-and-flowmaps.md)
-  Use for fluid-like effects and deciding between Niagara Fluids, flow-map style material support, or baked flipbooks.
+- [fluids-and-flowmaps.md](fluids-and-flowmaps.md) Use for fluid-like effects
+  and deciding between Niagara Fluids, flow-map style material support, or baked
+  flipbooks.
 
 - [fluids-recipes.md](fluids-recipes.md)
   Use for concrete fluid-style effect recipes.
@@ -44,29 +54,38 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
 - [fluids-production-pipeline.md](fluids-production-pipeline.md)
   Use for end-to-end fluid production decisions and baking workflows.
 
-- [non-fluid-effects-playbook.md](non-fluid-effects-playbook.md)
-  Use for hits, slashes, projectiles, beams, shields, sigils, portals, buffs, sparks, and related gameplay readability.
+- [non-fluid-effects-playbook.md](non-fluid-effects-playbook.md) Use for hits,
+  slashes, projectiles, beams, shields, sigils, portals, buffs, sparks, and
+  related gameplay readability.
 
-- [platform-optimization.md](platform-optimization.md)
-  Use for Niagara scalability, particle budgets, bounds, culling, platform quality levels, and PC/Android tradeoffs. For material-specific cost, use `unreal-material-artist`.
+- [platform-optimization.md](platform-optimization.md) Use for Niagara
+  scalability, particle budgets, bounds, culling, platform quality levels, and
+  PC/Android tradeoffs. For material-specific cost, use
+  `unreal-material-artist`.
 
-- [debugging.md](debugging.md)
-  Use for troubleshooting visibility, timing, sorting, renderer, integration, platform, and performance problems in Niagara effects.
+- [debugging.md](debugging.md) Use for troubleshooting visibility, timing,
+  sorting, renderer, integration, platform, and performance problems in Niagara
+  effects.
 
-- [ribbon-actor-trail-debugging.md](ribbon-actor-trail-debugging.md)
-  Use when an Actor-attached Niagara Ribbon / Location Event trail shows white source orbs, folded cards, vertical sheets, wrinkles, hard seams, or large-motion discontinuity artifacts.
+- [ribbon-actor-trail-debugging.md](ribbon-actor-trail-debugging.md) Use when an
+  Actor-attached Niagara Ribbon / Location Event trail shows white source orbs,
+  folded cards, vertical sheets, wrinkles, hard seams, or large-motion
+  discontinuity artifacts.
 
 - [review-checklist.md](review-checklist.md)
   Use when the user wants to review or critique an existing Niagara effect.
 
-- [asset-planning-checklist.md](asset-planning-checklist.md)
-  Use when moving from design into production naming, systems, emitters, instances, textures, and low-end planning. Delegate material details to `unreal-material-artist`.
+- [asset-planning-checklist.md](asset-planning-checklist.md) Use when moving
+  from design into production naming, systems, emitters, instances, textures,
+  and low-end planning. Delegate material details to `unreal-material-artist`.
 
-- [validation-and-qa.md](validation-and-qa.md)
-  Use for final acceptance checks including distance, background, stress, hookup, platform readiness, and delivery criteria.
+- [validation-and-qa.md](validation-and-qa.md) Use for final acceptance checks
+  including distance, background, stress, hookup, platform readiness, and
+  delivery criteria.
 
-- [engine-integration-checklist.md](engine-integration-checklist.md)
-  Use for animation notifies, Blueprints, GAS, Sequencer, user parameters, effect types, scalability, and platform switching.
+- [engine-integration-checklist.md](engine-integration-checklist.md) Use for
+  animation notifies, Blueprints, GAS, Sequencer, user parameters, effect types,
+  scalability, and platform switching.
 
 - [tool-suite.md](tool-suite.md)
   Use when the request is about the closed-loop production tools and their CLI workflow.
@@ -96,13 +115,19 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
   这份文档用于把“能做多少、像到什么程度”的表达标准化。
 
 - [model-turnaround-and-asset-gen-guide.md](model-turnaround-and-asset-gen-guide.md)
-  这份文档用于规范：什么时候该做模型、什么时候不该优先做模型，以及如果要用生成式模型辅助建模，应该怎么准备多视图输入。
+  这份文档用于规范：什么时候该做模型、什么时候不该优先做模型，以及如果要用生成式
+  模型辅助建模，应该怎么准备多视图输入。
 
 - [advanced-techniques.md](advanced-techniques.md)
-  1. [纹理生成与优化](advanced-techniques.md#纹理生成与优化) 2. [Flipbook 工作流](advanced-techniques.md#flipbook-工作流) 3. [HLSL 自定义模块](advanced-techniques.md#hlsl-自定义模块) 4. [Flow Maps 流向图](advanced-techniques.md#flow-maps-流向图) 5. [通道打包优化](advanced-techniques.md#通道打包优化)
+  1. [纹理生成与优化](advanced-techniques.md#纹理生成与优化) 2.
+     [Flipbook 工作流](advanced-techniques.md#flipbook-工作流) 3.
+     [HLSL 自定义模块](advanced-techniques.md#hlsl-自定义模块) 4.
+     [Flow Maps 流向图](advanced-techniques.md#flow-maps-流向图) 5.
+     [通道打包优化](advanced-techniques.md#通道打包优化)
 
-- [system-integration-patterns.md](system-integration-patterns.md)
-  这份文档用于定义 Niagara 与 Unreal 其他系统之间的标准接法，减少“效果本身没问题，但接入方式混乱”的问题。
+- [system-integration-patterns.md](system-integration-patterns.md) 这份文档用于
+  定义 Niagara 与 Unreal 其他系统之间的标准接法，减少“效果本身没问题，但接入方式
+  混乱”的问题。
 
 - [examples.md](examples.md)
   /niagara
@@ -116,14 +141,17 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
 - [production-workflow-map.md](production-workflow-map.md)
   这份文档用于把需求输入、方案设计、资产规划、实现、Review、QA、交付串成一条标准工作流。
 
-- [end-to-end-vfx-delivery-map.md](end-to-end-vfx-delivery-map.md)
-  Use this reference when the goal is not just advice, but a complete usable UE effect from a text brief or reference image.
+- [end-to-end-vfx-delivery-map.md](end-to-end-vfx-delivery-map.md) Use this
+  reference when the goal is not just advice, but a complete usable UE effect
+  from a text brief or reference image.
 
-- [project-bootstrap-checklist.md](project-bootstrap-checklist.md)
-  这份文档用于回答：一个新项目刚开始做 VFX 时，第一周应该先准备什么，避免后面代价很大的返工。
+- [project-bootstrap-checklist.md](project-bootstrap-checklist.md) 这份文档用于
+  回答：一个新项目刚开始做 VFX 时，第一周应该先准备什么，避免后面代价很大的返
+  工。
 
-- [self-training-and-iteration-loop.md](self-training-and-iteration-loop.md)
-  这份文档用于建立一种“自己训练自己”的工作方式，让特效设计不是只靠灵感，而是靠一套可以重复执行的迭代方法。
+- [self-training-and-iteration-loop.md](self-training-and-iteration-loop.md) 这
+  份文档用于建立一种“自己训练自己”的工作方式，让特效设计不是只靠灵感，而是靠一套
+  可以重复执行的迭代方法。
 
 - [common-failure-cases.md](common-failure-cases.md)
   这份文档用于沉淀 Niagara 特效制作中最常见、最容易反复踩的失败案例，以及快速修复思路。
@@ -131,6 +159,7 @@ When to read each reference. [SKILL.md](../SKILL.md) lists them by group.
 - [mobile-checklist.md](mobile-checklist.md)
   这份文档专门用于 Android 和低端硬件上的 Niagara 特效落地检查。
 
-- [capability-gap-map.md](capability-gap-map.md)
-  Use to see which workflow capabilities exist, which still need tightening, the build priority, and which production checks are worth automating.
+- [capability-gap-map.md](capability-gap-map.md) Use to see which workflow
+  capabilities exist, which still need tightening, the build priority, and which
+  production checks are worth automating.
 

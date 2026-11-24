@@ -5,6 +5,14 @@ C++ and their asset dependencies. For explanation-only tasks, use
 [graph inspection](blueprint-graph-inspection.md); for a failure, also use
 [debugging and source navigation](debugging-and-source-navigation.md).
 
+## Contents
+
+- [Resolve the actual implementation](#resolve-the-actual-implementation)
+- [Make changes recoverable and unambiguous](#make-changes-recoverable-and-unambiguous)
+- [Annotate the authored module](#annotate-the-authored-module)
+- [Validate the changed contract](#validate-the-changed-contract)
+- [When the task involves AI crowds](#when-the-task-involves-ai-crowds)
+
 ## Resolve the actual implementation
 
 Translate the request into an observable trigger and result: who invokes it,
@@ -74,7 +82,8 @@ to UI automatically.
 
 ## Annotate the authored module
 
-Follow the shared [Chinese annotation convention](blueprint-programming-mcp.md#chinese-module-annotations).
+Follow the shared
+[Chinese annotation convention](blueprint-programming-mcp.md#chinese-module-annotations).
 Use a stable module ID in the comment frame and, where useful, in temporary
 diagnostic logs. Explain ownership, entry, significant values and timing rather
 than narrating every node. Preserve existing parameter names and bindings.
@@ -97,7 +106,8 @@ Keep logs that the user explicitly requested as part of the feature.
 For gameplay Blueprints, the delivery bar is in
 [Blueprint delivery standards](blueprint-delivery-standards.md): feature brief,
 production presentation, log path, readable layout, Chinese explanations, and
-state/log evidence instead of screenshots, finished by `scripts/blueprint_lint.py --strict`.
+state/log evidence instead of screenshots, finished by
+`scripts/blueprint_lint.py --strict`.
 
 Choose checks according to the change and existing project policy:
 

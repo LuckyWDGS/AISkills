@@ -1,4 +1,4 @@
-"""Offline checks for the tools ported from UnrealBridge to Epic MCP: their pure planning and report code."""
+"""Offline checks for the tools ported to Epic MCP: their pure planning and report code."""
 
 import json
 from pathlib import Path

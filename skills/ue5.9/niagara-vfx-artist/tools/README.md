@@ -1,6 +1,7 @@
 # Tools
 
-`tools/` contains the user-facing CLI entry points for the Niagara VFX closed-loop workflow.
+`tools/` contains the user-facing CLI entry points for the Niagara VFX
+closed-loop workflow.
 
 - `reference_cache.py`
 - `reference_acceptance.py`
@@ -31,5 +32,9 @@
 - `asset_cleanup.py`
 - `parameter_tuning_log.py`
 
-Every CLI has the same three-line body: `_launch.py` puts `scripts/` on `sys.path` and runs `main()` of the `scripts/vfx_delivery/` module with the same name (`ALIASES` lists the two that differ). Add a tool by copying any shim; `unreal-engine-mcp/scripts/test_tool_entry_points.py` checks that every shim resolves.
-Material auditing now lives in `../unreal-material-artist/tools/material_audit.py`.
+Every CLI has the same three-line body: `_launch.py` puts `scripts/` on
+`sys.path` and runs `main()` of the `scripts/vfx_delivery/` module with the same
+name (`ALIASES` lists the two that differ). Add a tool by copying any shim;
+`unreal-engine-mcp/scripts/test_tool_entry_points.py` checks that every shim
+resolves. Material auditing now lives in
+`../unreal-material-artist/tools/material_audit.py`.

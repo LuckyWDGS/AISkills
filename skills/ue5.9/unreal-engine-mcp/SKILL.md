@@ -1,216 +1,210 @@
 ---
 name: unreal-engine-mcp
-description: Build and debug Unreal Engine 5.8/5.9 games through Epic MCP. Author Blueprints, characters, Behavior Trees, animation, input, UMG, levels and gameplay. Reconstruct editable modular interiors from reference photos. Connect material, Niagara and Sequencer skills for complete demos. Discover live schemas, compile, save and verify runtime behavior with native tools and official Python.
+description: Drive a running Unreal Engine 5.9 editor through Epic's built-in MCP server to build, inspect and debug games. Use when the task involves Blueprints, Animation Blueprints and state machines, Behavior Trees, StateTree, PCG graphs, Enhanced Input, UMG/MVVM UI, actors, assets, levels, static meshes or packaging; when reading graph logic and pin connections, navigating engine or project source, or diagnosing compile, runtime and crash failures; and as the shared transport for the material, Niagara, Sequencer and flipbook skills.
 ---
 
-# Unreal Engine MCP
+# Unreal Engine MCP (UE 5.9)
 
-Use Epic's built-in MCP server and this checkout's `scripts/ue_mcp` client.
-Read the serving editor's schemas; names, ownership and result types changed
-substantially in 5.9. The independent UE 5.8 installation remains a baseline.
-Never install a custom bridge or patch the engine to fill an automation gap.
+> **Scope.** This skill targets UE 5.9 only and was verified on **UE 5.9.0
+> Preview, CL 60351404**. A later build can rename tools and arguments, so read
+> the live schema before each first call. For a UE 5.8 editor the user links
+> `skills/ue5.8/` instead; the client refuses an editor of another engine line.
 
-Follow [shared conventions](references/shared-conventions.md): background
-connections, Chinese module descriptions and stable module IDs, scoped saves,
-and separate structural, compile, editor-evaluation and runtime evidence.
-Keep the user's editor, timeline and viewport undisturbed. Use a dedicated,
-identity-checked offscreen editor when a render needs camera piloting. Keep OS
-keystrokes and UI automation out of MCP fallbacks.
+Use Epic's built-in MCP server through this skill's `scripts/ue_mcp` client.
+Follow the [shared conventions](references/shared-conventions.md): background
+connections, scoped saves, Chinese module annotations with stable IDs, and the
+[evidence levels](references/shared-conventions.md#evidence-levels) used in
+every report.
+
+## When to use
+
+- Author or change gameplay: Blueprints, characters, input, UI, AI, levels.
+- Explain what an existing graph does, or find the exact pin to change.
+- Diagnose a compile error, a runtime failure or a crash, including a trace
+  into engine or project source.
+- Give the material, Niagara, Sequencer and flipbook skills their editor
+  connection. All five skills come from the same `skills/ue5.9/` folder.
 
 ## Connect to the intended editor
 
-Use the five sibling UE skill packages from the same `skills/ue5.9/` folder;
-never mix them with `skills/ue5.8/`. The user selects which set Codex links with
-`tools/install.ps1 -UEVersion`; do not switch it yourself. Keep local
-paths, schema dumps, scripts and continuation notes in ignored `.codex/session/`.
-
-For concurrent editors reserve port 8000 for the stable setup and prefer 8001
-for the test editor. Use an explicit absolute project guard and a separate
-cache. These variables apply only to the current shell:
+With two editors, port 8000 belongs to the stable setup and 8001 to the test
+editor. Set the endpoint, an absolute project guard and a separate cache for
+the current shell:
 
 ```powershell
 $env:UNREAL_MCP_URL = 'http://127.0.0.1:8001/mcp'
-$env:UE_MCP_PROJECT = '<absolute test .uproject path>'
+$env:UE_MCP_PROJECT = '<absolute .uproject path>'
 $env:UE_MCP_CACHE_DIR = '<repo>/.codex/session/ue59-mcp-state'
 python scripts/builtin_mcp.py --no-cache --new-session status
 python scripts/builtin_mcp.py --refresh-schema list-toolsets
 ```
 
-`status` reports the listener's current process, executable, project and engine,
-plus the server's identity metadata when available. Verify 5.9 and the intended
-absolute project path before writing. Same-named project copies require the
-full path. A resumed session token never substitutes for a fresh process check.
-`--url`, `--expect-project` and `--out` are global CLI options, before the command.
+1. `status` reports the listener's process, project, engine version and level.
+   Confirm UE 5.9 and the intended absolute project path before any write.
+2. `ensure` checks readiness and explains how to start the server. It never
+   launches or restarts an editor.
+3. After a launch, poll `--timeout 5 status` against a bounded deadline, then
+   confirm the domain's toolset is registered and make one safe state read.
 
-Startup requires `ModelContextProtocol` and the relevant official toolset
-plugins. An authorized launch may use `-ModelContextProtocolStartServer
--ModelContextProtocolPort=8001`; `ensure` checks readiness and never launches or
-restarts an editor. Poll with a short timeout while reading startup logs, with
-a bounded deadline. Initialize alone is insufficient: discover the domain and
-make a safe editor-state read. Do not mistake UE's MCP-client settings for the
-server endpoint; the server uses Streamable HTTP at `/mcp`.
-`status` / `ensure` preserve state-read errors with `ready=false` and a nonzero
-exit code, including temporary slow-task refusals.
+Startup options, discovery modes, caching and sessions:
+[MCP client](references/mcp-client.md). Keep local paths, schema dumps, scripts
+and notes in the ignored `.codex/session/` directory.
 
-## Select the live contract
+## Call a tool
 
-Read [the 5.9 audit](references/ue-5.9-preview-audit.md) for a 5.9 task, or the
-[5.8 transport reference](references/builtin-mcp.md) for a 5.8 editor.
-
-| Live discovery | Route |
-|---|---|
-| `list_toolsets`, `describe_toolsets`, `describe_tools`, `call_tool` | 5.9 search mode; batch toolset discovery or fetch a single tool descriptor |
-| `list_toolsets`, `describe_toolset`, `call_tool` | 5.8 search mode |
-| Qualified tools directly in `tools/list` | Native discovery, including pagination |
-
-The client supports all three without changing editor settings. Resolved
-toolset calls validate required and unknown argument names before dispatch
-and treat `isError=true` as failure. Search mode can also expose bare plugin
-tools alongside the meta-tools in `tools/list`; they need no invented owner.
-Use the [direct-tool route](references/ue-5.9-mcp-canvas-plugins.md) for those
-names rather than forcing them through the `--toolset` examples below.
-A missing domain may mean a stale inventory or disabled plugin: refresh
-discovery and inspect the descriptor/dependencies before calling it an MCP gap.
-
-Before the first operation in a domain:
+Before the first operation in a domain, read the schema of every tool you will
+call, including struct fields, enums, reference shapes and output fields:
 
 ```powershell
 python scripts/builtin_mcp.py describe-toolset BlueprintToolset --brief
 python scripts/builtin_mcp.py describe-tool BlueprintToolset AddVariable
 python scripts/builtin_mcp.py call IsPIERunning --toolset EditorAppToolset
-python scripts/builtin_mcp.py call <exact-tool> --toolset <live-toolset> --args-file <session>/args.json
+python scripts/builtin_mcp.py call <tool> --toolset <toolset> --args-file <session>/args.json
 ```
 
-Use the full schema for every tool you call, including struct fields, enums,
-reference shapes and output fields. Large toolsets should be viewed with
-`--brief`; keep full schemas in local files with global `--out`. The 5.9 client
-uses `describe_tools` for individual calls. Do not translate snake_case names
-to PascalCase by guesswork: parameters, ownership and behavior changed too.
+Route each operation through the first route that covers it:
 
-UE 5.9 can explicitly refuse a call during a slow task with **Not run** and
-**This call made no changes**. Retain that result, do independent work, and
-retry only after the task ends. A timeout has unknown completion: inspect the
-affected state before another write. The client never automatically retries
-a tool error or a timed-out write.
+1. **Domain tool.** Use the discovered toolset, or `ObjectToolset` reflected
+   properties where they cover the operation. Read the value back.
+2. **Official Python through MCP.** `PythonScriptingTools` composes tools with
+   `await call_tool(...)` and reaches public `unreal.*` APIs for a verified
+   domain-tool gap. Run `python-readme` once per conversation and look symbols
+   up with `get_symbol` before `execute-python`.
+3. **Python Remote Execution**, for an operation neither MCP route covers
+   ([reference](references/official-python-remote.md)).
 
-Disk schemas are scoped to the current editor process/instance and server
-build as well as its inventory. An unidentifiable instance uses memory only.
-After startup completes, late plugin registration or an in-process reload,
-refresh both `list-tools` and `list-toolsets` with `--refresh-schema` or
-`--no-cache --new-session`; a held client can use `reinitialize()`. A reused
-session can retain an early inventory even in the same PID. `--no-cache` alone
-does not discard that session inventory. The same names and counts do not prove
-that argument schemas stayed unchanged.
+When no route covers the operation, report the operation, the tools checked
+and the engine build.
 
-## Transport routing
+For ordered writes, validate with `batch <steps.jsonl> --dry-run`, then run the
+plan. Each step has its own result and optional readback; the batch stops at
+the first failure and is not a rollback. Put each save in its own final step.
 
-1. **Discovered Epic MCP tool.** Use domain tools and `ObjectToolset` reflected
-   properties/schema where they cover the operation. Read values back.
-2. **Official Python through MCP on 5.9.** Use `PythonScriptingTools` to compose
-   tools with `await call_tool(...)`, or reach a public Unreal API for a
-   verified domain-tool gap. This is the normal 5.9 scripting route.
-3. **Epic Python Remote Execution.** Use only when the required operation is
-   uncovered by the target's MCP tools, including its Python executor. On
-   5.8, `ProgrammaticToolset` composes registered tools but is not unrestricted
-   Python. Read its execution environment before use.
+Two results need care:
 
-If none covers the operation, report the precise gap and engine build.
-Do not silently replay legacy scripts through a new executor.
+- **Not run / This call made no changes** means a slow task refused the call.
+  Keep the result and retry after the task ends.
+- **A timeout** has unknown completion. Inspect the affected state before
+  another write.
 
-For 5.9, read `python-readme` once per conversation and look up Unreal APIs
-with `search_symbols` / `get_symbol` before calling them:
+## Blueprint and gameplay work
 
-```powershell
-python scripts/builtin_mcp.py python-readme
-python scripts/builtin_mcp.py call get_symbol --toolset PythonScriptingTools --args-file <session>/symbol.json
-python scripts/builtin_mcp.py execute-python <session>/probe.py
-```
+Blueprint is the preferred implementation surface for gameplay. A request for
+Blueprint logic is already the language decision: proceed in Blueprint and
+recommend C++ only for a demonstrated API limit, a measured performance need
+or an existing project convention.
 
-Scripts run on the game thread in a fresh namespace. `unreal`, `asyncio` and
-`call_tool` are available; top-level `await` works. End with the expression to
-return; `print` writes to LogPython. Prefer tools over equivalent Python,
-inspect their exact return fields, and yield with `await asyncio.sleep(0)`
-between costly chunks. Blocking `time.sleep` and synchronous network/process
-calls are rejected. `run-script` retains the different 5.8 `def run()` /
-`execute_tool` contract; it is not the 5.9 executor.
+1. **Read first.** Read the entry, owners, variables, components, graphs and
+   both ends of each relevant wire. `scripts/inspect_blueprint.py` captures the
+   topology read-only ([graph inspection](references/blueprint-graph-inspection.md)).
+2. **Author with native tools.** Use native variable and function metadata and
+   comment tools. For a scoped rewrite use the Graph DSL: call `Docs`, `Read`
+   the exact asset and scope, edit the canonical text with its latest revision,
+   and handle `bDslOmitted` and warnings. Re-resolve node and pin references
+   after a DSL edit or a compile
+   ([Blueprint authoring](references/ue-5.9-blueprint-python.md)).
+3. **Deliver to the standard.** Feature brief, production visuals, a state and
+   error log path, meaningful functions and tuning variables, Chinese comment
+   frames and metadata
+   ([delivery standards](references/blueprint-delivery-standards.md)).
+4. **Keep the change in scope.** A layout-only change keeps the logic
+   signature. An annotation-only change needs text and membership readback,
+   without PIE or a whole-graph rearrangement.
+5. **Verify.** Compile, read errors and warnings, run the relevant
+   [runtime cases](references/runtime-acceptance.md) for changed behavior, and
+   finish with `scripts/blueprint_lint.py --strict`.
 
-Legacy helper scripts that use this contract get a migration error when only
-the modern executor is registered. They are never automatically translated or
-sent to `execute-python`. This diagnostic does not migrate their domain calls.
+## Captures
 
-Use `batch <steps.jsonl> --dry-run` for ordered writes, then execute the
-validated plan. Each step has its own result and optional readback/expectation;
-it stops at the first failure. Save intended packages in separate final steps.
-It checks PIE and named-package dirty state. A batch is not an atomic rollback.
-Failed dirty prechecks refuse execution; failed postchecks preserve completed
-steps and report unknown state. Reconcile that state without replaying writes.
+`scripts/capture.py viewport --pose x,y,z,pitch,yaw,roll --out-dir <dir>`
+renders the given pose offscreen through `SceneCaptureToolset` and records the
+editor view before and after, so the user's camera stays where it was.
+`capture.py asset <path>` saves the editor thumbnail. The image is the MCP
+image block of the result; a `urn:toolresult` string is a correlation ID, not
+a file. Open each image and answer the named visual question.
 
-## Blueprint and programmer work
+## Scripts
 
-Blueprint is the preferred implementation surface for gameplay. For 5.9 start
-with [native Blueprint and Graph DSL](references/ue-5.9-blueprint-python.md).
-The old Python palette IDs and native Graph DSL references are different.
+Status labels are defined in the
+[shared conventions](references/shared-conventions.md#engine-version-and-tool-status).
 
-Read the existing entry, owners, variables, components, graphs and both ends
-of each relevant wire. `inspect_blueprint.py` captures topology read-only;
-`blueprint_lint.py` checks layout and annotations. Follow their actual version
-coverage. Use native variable/function metadata in 5.9; the optional legacy
-MCPBlueprintMetadata extension is unnecessary for these tested operations.
+| Script | Status | Use |
+|---|---|---|
+| `builtin_mcp.py` | `5.9` | Client CLI: status, discovery, call, batch, official Python |
+| `capture.py` | `5.9` | Offscreen posed scene capture and asset thumbnails |
+| `inspect_blueprint.py` | `5.9` | Read-only Blueprint topology, wires and comment frames |
+| `blueprint_lint.py` | `5.9` | Layout, logging and Chinese-annotation lint |
+| `reconcile_scene_import.py` | `5.9` | Three-way review of a reimported modular scene |
+| `python_remote.py` | `untested` | Epic Python Remote Execution client |
+| `fit_reference_camera.py` | `local` | Fit a camera to labelled points in a photo (needs numpy) |
+| `blueprint_geometry.py`, `blueprint_comment_geometry.py` | `local` | Node-size and comment-bounds estimates used by the lint |
+| `run_offline_tests.py` | `local` | All five offline suites with networking blocked |
+| `blueprint_normalize.py`, `blueprint_layout.py` | `unported` | Graph cleanup and layout |
+| `pcg_inspect.py` | `unported` | Read-only PCG pins and edges |
+| `live_smoke.py`, `record_fixtures.py` | `unported` | Live sampling of the skills' CLIs and fixture recording |
 
-For Graph DSL, call `Docs`, then `Read` for the exact asset and scope. Edit the
-canonical text with its latest revision; handle `bDslOmitted` and warnings.
-Stale revisions reject the edit. Validate semantic completeness before any
-whole-entry rewrite. Re-resolve node and pin references after DSL edits or
-compilation because nodes may be reconstructed.
+## References
 
-For gameplay work follow [delivery standards](references/blueprint-delivery-standards.md):
-feature brief, production visuals, a scoped state/error log path, meaningful
-functions and tuning variables, Chinese comment frames and metadata, compile,
-and relevant runtime cases. Do not add a new language confirmation to an
-already authorized Blueprint task. A layout-only change preserves logic.
-Annotation-only work does not justify PIE or whole-graph rearrangement.
+Read only what the task needs.
 
-## Domain routes and evidence
+**Transport and shared rules**
 
-| Work | Read |
+| Need | Read |
 |---|---|
-| 5.9 complete small game, input/HUD/audio/interaction/lifecycle and package workflow | [Game production](references/game-production.md) |
-| 5.9 character AI, Behavior Tree / Blackboard / tasks, animation and runtime observability | [Gameplay AI / animation](references/gameplay-ai-animation.md) |
-| 5.9 MVVM HUD, CommonUI menus and UMG/Slate focus or lifetime diagnosis | [UI workflows](references/ue-5.9-ui-workflows.md) |
-| 5.9 data-driven gameplay, GAS inspection, sockets/physics, saves/settings/localization and scoped automation | [Game systems](references/ue-5.9-game-systems.md) |
-| 5.9 Unreal MCP versus MCP Client, Metadata, Canvas Bridge/Annotations, direct-tool discovery and plugin checks | [MCP / Canvas plugins](references/ue-5.9-mcp-canvas-plugins.md) |
-| Canvas model availability, Codex image generation, isolated MRG renders and the actor-camera timing issue | [Generation / render verification](references/ue-5.9-canvas-generation-render.md) |
-| Canvas mesh graphs, batched GeometryScript assemblies, material partitions and StaticMesh import | [Canvas mesh generation](references/ue-5.9-canvas-mesh.md) |
-| Reference-image hard-surface modeling, editable GLB assemblies, native import and multi-view checks | [Reference-guided static meshes](references/ue-5.9-reference-mesh.md) |
-| Rebuild an interior, validate a graybox, compare the saved camera and test lighting in fixed shots | [Photo to playable interior](references/ue-5.9-reference-interiors.md), [camera and cabinet checks](references/ue-5.9-reference-camera-qa.md) |
-| Reimport modular scenes while preserving manual edits, or trace a blocked aisle and measure a packaged walkthrough | [Three-way reimport](references/ue-5.9-reimport-reconciliation.md), [packaged movement and profiling](references/ue-5.9-interior-walkthrough.md) |
-| 5.9 Canvas, AI animation, Fab/Forge, Lumen/OIT/wind and Web target evidence/dependencies | [Production feature matrix](references/ue-5.9-production-feature-matrix.md) |
-| 5.9 registered capability overview, measured improvements and remaining gaps | [5.9 audit](references/ue-5.9-preview-audit.md) |
-| What changed from 5.8 skills, callable domains lacking helpers and evidence levels | [Tool coverage](references/ue-5.9-tool-coverage.md) |
-| 5.9 Blueprint, native metadata, revision edits and async MCP scripting | [Blueprint / Python](references/ue-5.9-blueprint-python.md) |
-| 5.9 StateTree and PCG authoring/evaluation | [StateTree / PCG](references/ue-5.9-statetree-pcg.md) |
-| 5.9 Dataflow, CurveAtlas, enums/structs, Deformer Graph and sequence validation | [Data and graphs](references/ue-5.9-dataflow-data-tools.md) |
-| 5.9 Geometry, StaticMesh, Texture and TextureGraph contracts | [Geometry / texture tools](references/ue-5.9-geometry-texture-tools.md) |
-| 5.9 MetaSound, audio, Media, Control Rig and official MRQ/MRG Python workflows | [Audio / media / render](references/ue-5.9-audio-media-tools.md) |
-| 5.9 ABP visibility limits, BehaviorTree/EQS, NavMesh, Input and UI diagnostics | [Animation / AI / UI](references/ue-5.9-animation-ai-tools.md) |
-| 5.9 UMG, scene capture, profiling and editor tools | [Editor tools](references/ue-5.9-editor-tools.md) |
-| Materials, statistics, diff and MI | Sibling [material skill](../unreal-material-artist/SKILL.md) |
-| Niagara stack/renderer/user parameters/compile | Sibling [Niagara skill](../niagara-vfx-artist/SKILL.md) |
-| Sequencer and Control Rig, background versus active-timeline limits | Sibling [Sequencer skill](../unreal-sequencer/SKILL.md) |
-| Atlas generation/import/handoff | Sibling [flipbook skill](../vfx-flipbook-generator/SKILL.md) |
-| Safe scoped implementation, source navigation and failures | [Developer workflow](references/developer-workflow.md), [debugging](references/debugging-and-source-navigation.md) |
-| Gameplay/ABP/UI/GAS/PCG runtime cases | [Runtime acceptance](references/runtime-acceptance.md) |
-| Legacy graph/programming/animation/domain workflows | [Blueprint](references/blueprint-programming-mcp.md), [graph inspection](references/blueprint-graph-inspection.md), [animation](references/animation-state-machines-mcp.md), [domains](references/official-domain-workflows.md) |
+| Startup, discovery modes, CLI, batch format, cache and sessions | [MCP client](references/mcp-client.md) |
+| Rules shared by the five skills, tool status, evidence levels | [Shared conventions](references/shared-conventions.md) |
+| What was verified on this build and the known engine issues | [5.9 audit](references/ue-5.9-preview-audit.md) |
+| Coverage per domain and which workflows are still missing | [Tool coverage](references/ue-5.9-tool-coverage.md) |
+| Bare-name direct tools, MCP Client, Canvas Bridge and Annotations | [MCP and Canvas plugins](references/ue-5.9-mcp-canvas-plugins.md) |
+| Remote Execution for an operation MCP does not cover | [Python Remote Execution](references/official-python-remote.md) |
+| Moving an `unported` helper to UE 5.9 | [Porting a helper](references/porting-helpers.md) |
 
-Image capture uses `scripts/capture.py`: 5.9 `SceneCaptureToolset` renders an
-explicit pose offscreen; 5.8 uses `EditorAppToolset.CaptureViewport`. Preserve
-raw MCP image blocks: a 5.9 `urn:toolresult` correlation string is not a file or
-URL. Inspect images before claiming visual acceptance. A thumbnail is not a
-simulation preview, and different frame hashes alone do not prove motion.
+**Gameplay programming**
 
-Keep originals and dirty state intact. Create test/candidate assets in a
-scoped folder, save only the intended packages, and never invoke Save All,
-clear unrelated dirty flags or overwrite a user's active runtime session.
-Separate readback, compilation, editor evaluation, visual checks and runtime
-acceptance in the report. UE 5.9 tests do not establish UE 5.8 regression
-coverage. Raw evidence and machine paths belong in session output, not skills.
+| Need | Read |
+|---|---|
+| Blueprint authoring, metadata, Graph DSL, async Python | [Blueprint authoring](references/ue-5.9-blueprint-python.md) |
+| What a graph does and how its pins connect | [Graph inspection](references/blueprint-graph-inspection.md) |
+| Feature brief, visuals, logging, layout, Chinese explanations, lint | [Delivery standards](references/blueprint-delivery-standards.md) |
+| Scoped, recoverable implementation and acceptance | [Developer workflow](references/developer-workflow.md) |
+| Compile, runtime and crash diagnosis; source navigation | [Debugging](references/debugging-and-source-navigation.md) |
+| Runtime cases for gameplay, animation, UI, GAS, PCG and physics | [Runtime acceptance](references/runtime-acceptance.md) |
+| A complete small game: input, HUD, audio, interaction, lifecycle, package | [Game production](references/game-production.md) |
+
+**Animation, AI and UI**
+
+| Need | Read |
+|---|---|
+| Character AI, Behavior Tree, Blackboard, tasks, animation, observability | [Gameplay AI and animation](references/gameplay-ai-animation.md) |
+| Animation Blueprint and state-machine reads, EQS, NavMesh, Input contracts | [Animation and AI tools](references/ue-5.9-animation-ai-tools.md) |
+| MVVM HUD, CommonUI menus, UMG and Slate focus or lifetime diagnosis | [UI workflows](references/ue-5.9-ui-workflows.md) |
+| UMG authoring, scene capture, profiling, project files | [Editor tools](references/ue-5.9-editor-tools.md) |
+
+**Systems and data**
+
+| Need | Read |
+|---|---|
+| Data-driven gameplay, GAS, sockets and physics, saves, settings, localization, automation | [Game systems](references/ue-5.9-game-systems.md) |
+| StateTree and PCG authoring and evaluation | [StateTree and PCG](references/ue-5.9-statetree-pcg.md) |
+| Dataflow, CurveAtlas, enums and structs, Deformer Graph, sequence validation | [Data and graphs](references/ue-5.9-dataflow-data-tools.md) |
+| MetaSound, audio, Media, Control Rig, MRQ/MRG Python | [Audio, media and render](references/ue-5.9-audio-media-tools.md) |
+
+**Meshes, scenes and rendering**
+
+| Need | Read |
+|---|---|
+| Geometry, StaticMesh, Texture and TextureGraph contracts | [Geometry and textures](references/ue-5.9-geometry-texture-tools.md) |
+| Canvas mesh graphs, GeometryScript assemblies, StaticMesh import | [Canvas mesh generation](references/ue-5.9-canvas-mesh.md) |
+| Hard-surface modeling from a reference image, GLB assemblies | [Reference-guided meshes](references/ue-5.9-reference-mesh.md) |
+| An interior rebuilt from photos: graybox, camera match, reimport, walkthrough | [Reference interiors](references/ue-5.9-reference-interiors.md) |
+| Canvas model availability, image generation, isolated MRG renders | [Generation and render checks](references/ue-5.9-canvas-generation-render.md) |
+| Canvas, AI animation, Fab, Lumen/OIT/wind and Web target dependencies | [Production feature matrix](references/ue-5.9-production-feature-matrix.md) |
+
+**Sibling skills**
+
+| Need | Use |
+|---|---|
+| Materials, shaders, statistics, diffs, Material Instances | [unreal-material-artist](../unreal-material-artist/SKILL.md) |
+| Niagara systems, emitters, renderers, user parameters | [niagara-vfx-artist](../niagara-vfx-artist/SKILL.md) |
+| Level Sequences, cameras, cinematics, Control Rig | [unreal-sequencer](../unreal-sequencer/SKILL.md) |
+| Flipbook atlas generation and handoff | [vfx-flipbook-generator](../vfx-flipbook-generator/SKILL.md) |
