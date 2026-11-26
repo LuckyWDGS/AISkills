@@ -30,10 +30,12 @@ description: "搭建、维护和排查用户自有 VPS 代理及 Clash Verge、F
 | 新建、修改服务端、REALITY 握手失败 | [服务端部署](references/deployment.md) |
 | 同出口 HY2/AnyTLS/REALITY、fallback、频繁切协议和长连接 | [多协议与切换](references/multi-protocol.md) |
 | 为长时间运行的 CLI 选择主用、把排序同步到另一台 VPS、检查防火墙修改后的网速 | [协议优先级与实测速率](references/protocol-priority.md) |
+| 核对运行版本、TLS、AnyTLS 会话版本、实际连接的 BBR 或 REALITY 下线 | [协议、BBR 与订阅终验](references/protocol-verification.md) |
 | HTTPS 订阅、节点名、流量、月重置、证书 | [订阅与维护](references/subscription.md) |
 | 测速失败、能导入却断网、Clash Verge、DNS 检测 | [验证与排障](references/validation.md) |
 | 怀疑大陆方向封锁、跨运营商对照、最新传输方案与抗干扰能力 | [网络过滤与传输选型](references/filtering-and-transports.md) |
 | Net.Coffee、ping0、环境评分、“全绿”与真实泄漏证据 | [检测站与评分边界](references/detection-sites.md) |
+| 线路实测、验证实际出口、交叉核对 IP 归属与信誉 | [线路实测与出口 IP 交叉核验](references/route-and-ip-quality.md) |
 | 有 DNS 错误日志、AdGuard 上游异常、先修 DNS 再对比 BBR | [DNS 故障与局部修复](references/dns-repair.md) |
 | 开启/关闭 BBR、比较国内延迟与速率、YABS | [BBR 与性能对比](references/performance.md) |
 | 指定软件、局域网/NAS、国内服务直连、持久分流 | [客户端分流](references/routing.md) |
