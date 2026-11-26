@@ -1,6 +1,6 @@
 ---
 name: vps-proxy-deploy
-description: "搭建、维护和排查用户自有 VPS 代理及 Clash Verge/Mihomo 订阅，包括跨网可达性、REALITY/XHTTP 等传输选型、HTTPS 订阅、BBR、DNS、国内服务白名单分流、WebRTC/CLI 出口保护、代理故障拒绝直连和本机回环排障。用于自用节点部署、订阅修复、分流和防泄漏验证。仅解释检测时保持只读；不用于代理购买推荐或网站风控规避。"
+description: "搭建、维护和排查用户自有 VPS 代理及 Clash Verge、FlClash、Mihomo 订阅，包括跨网可达性、传输选型、HTTPS 订阅、BBR、DNS、国内服务分流、WebRTC/CLI 出口保护和本机回环。也用于配置和验证 Windows Claude Desktop 的 FlClash 分流、原生代理策略及断线保护。仅解释检测时保持只读。不用于代理购买推荐或网站风控规避。"
 ---
 
 # VPS 自用节点搭建与排障
@@ -21,7 +21,7 @@ description: "搭建、维护和排查用户自有 VPS 代理及 Clash Verge/Mih
 
 隔离客户端测试可使用独立目录、仅回环监听、关闭 TUN 的临时核心，不更换正式订阅或系统代理。为测 VPS 所需的最小接口/路由发现可以提前只读进行；本机全面加固放在 VPS 验收之后。导入/切换正式订阅、修改 GUI/脚本、浏览器、防火墙、IPv6、环境变量及维护任务均属于本机变更；停核、断网和真实业务测试还需落在用户明确授权的测试范围内。
 
-先把 VPS 和可审阅的本机建议做完整，再等待决定。本机未获授权或尚有未测项时分别交付状态，不以“部署完成”为由擅自改本机，也不把本机待授权写成服务器部署失败。当前用户“不打开/运行 Claude”和“WebRTC 暂不改”等选择见上述参考，后续明确指令优先。
+先把 VPS 和可审阅的本机建议做完整，再等待决定。本机未获授权或尚有未测项时分别交付状态，不以“部署完成”为由擅自改本机，也不把本机待授权写成服务器部署失败。历史选择见上述参考，后续明确指令优先。仅处理 Claude Desktop 与 FlClash 时，直接核对现有客户端和已授权的 Windows 配置。
 
 ## 按任务读取
 
@@ -37,6 +37,7 @@ description: "搭建、维护和排查用户自有 VPS 代理及 Clash Verge/Mih
 | 有 DNS 错误日志、AdGuard 上游异常、先修 DNS 再对比 BBR | [DNS 故障与局部修复](references/dns-repair.md) |
 | 开启/关闭 BBR、比较国内延迟与速率、YABS | [BBR 与性能对比](references/performance.md) |
 | 指定软件、局域网/NAS、国内服务直连、持久分流 | [客户端分流](references/routing.md) |
+| Windows Claude Desktop、FlClash 换订阅、`Claude-AI`、专用 DNS 和监听故障恢复 | [Claude Desktop 与 FlClash](references/claude-network.md) |
 | 明确直连白名单、WebRTC/CLI 出口保护、UDP 回退与物理网卡阻断 | [流量防泄漏](references/traffic-privacy.md) |
 | 用户要求代理失效、TUN 关闭、断网与恢复的严格实测 | [故障测试](references/failure-testing.md) |
 | localhost、127.0.0.1、::1、UE/Zen 本机连接异常 | [本机回环排障](references/loopback.md) |

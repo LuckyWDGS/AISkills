@@ -1,12 +1,13 @@
 # vps-proxy-deploy
 
-搭建、维护和排查用户自有 VPS 的代理节点，以及 Clash Verge/Mihomo 订阅、DNS、应用分流与性能。
+搭建、维护和排查用户自有 VPS 的代理节点，以及 Clash Verge、FlClash 和 Mihomo 的订阅、DNS、应用分流与性能。
 
 执行流程与参考资料见[技能入口](../../skills/vps-proxy-deploy/SKILL.md)。
 
 - 使用当前选定的服务器、客户端和协议，优先局部修复现有配置。
 - 只读诊断与实际部署按用户请求区分；真实服务器地址、凭据和订阅地址由用户本地提供。
 - 历史分流候选表需要现场复核，不应整表自动安装。
+- Windows Claude Desktop 可沿用原应用图标，通过 FlClash 的 `Claude-AI` 规则分流。参见 [配置、验证与回滚](../../skills/vps-proxy-deploy/references/claude-network.md)。
 - 不用于代理购买推荐或网站风控规避。
 
 开始示例：

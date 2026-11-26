@@ -1,6 +1,6 @@
 interface:
   display_name: "VPS 自用节点搭建与排障"
-  short_description: "排查自用 VPS 跨网可达性、评估传输方案，维护 DNS、分流与 WebRTC/CLI 出口保护"
+  short_description: "排查自用 VPS、订阅、DNS 和分流，维护 Windows Claude Desktop 的 FlClash 出口"
   default_prompt: "使用 $vps-proxy-deploy 优先部署并测试我提供的 VPS 与最终订阅，之后只读检查本机并报告具体建议，等我明确同意才修改本机；仅要求研究时保持正式网络不变。"
 
 policy:
