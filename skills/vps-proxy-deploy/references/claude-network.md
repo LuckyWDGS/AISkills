@@ -25,6 +25,14 @@
 3. 在日常 Windows 账户执行 `.\Install-ClaudeUserTools.ps1` 预演，确认后加 `-Apply` 安装登录时的监测任务和 Claude 用户代理策略。已有监测任务时可单独执行 `.\Set-ClaudeDesktopProxy.ps1 -Apply`。如果用户策略受权限限制，从同一账户打开管理员 PowerShell 重试。允许实机测试时，完全退出 Claude 再从原来的应用图标启动。
 4. 运行 `.\Test-ClaudeNetwork.ps1` 读取监听、DNS、有效防火墙和用户策略。网络探测获授权时加 `-ProbeNetwork`，分别验证 HTTPS 显式代理和 DNS。`ClaudeDedicatedProxyConnections` 是瞬时采样，应在 Claude 有连接活动时复核并记录实际命中的 FlClash 节点。
 
+## 节点故障时保留当前订阅
+
+活动订阅或 `Claude-AI` 的节点失效、改名或被移除时，保留当前订阅，不自动切换到备用订阅或另选节点。保持 `Claude-AI` 使用用户选定的具体节点。该节点不可达时，Claude 连接失败。缺少有效选择时，组默认使用 `REJECT`。Claude 出口不回退到 `DIRECT`。
+
+只检查当前活动订阅、选定节点和生效规则，报告故障后等待用户明确指定是否切换。备用订阅里的节点选择仅供手动切换后使用。换订阅验证也应取得对应授权。
+
+节点不可用时，普通代理 `7890` 仍可能监听。此时不触发国内站点的临时直连例外。只有普通监听连续失联且满足系统代理条件时，监测才进入下面的恢复流程。
+
 ## 当前覆盖范围
 
 Windows 分域 DNS 及 FlClash 使用相同的五组 Claude 域名。[Claude DNS 清单](claude-dns-coverage.md)
